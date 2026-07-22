@@ -1,0 +1,52 @@
+# Dependencies & build
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Python
+**/venv/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+*.db
+
+# Env / secrets
+.env
+**/.env
+*.pem
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Large archives & packaged builds
+*.zip
+v1.2/
+v1.2-extracted/
+astra-mvp/
+
+# Playwright
+.playwright-mcp/
+test-results/
+playwright-report/
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local audio caches / chroma if huge
+**/chroma_db/
+src/localhost_*.log

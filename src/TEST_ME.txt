@@ -1,0 +1,58 @@
+Astra Interview Copilot — test this build
+========================================
+
+All fixes live in this folder:
+  C:\Users\montg\OneDrive\Desktop\Astra\src
+
+Do NOT use the old .zip packages for testing (they are outdated).
+
+Quick start (Windows)
+---------------------
+1. Open a terminal in this folder (src).
+
+2. One-time setup (if you don't already have a venv):
+     setup_windows.bat
+   Or manually:
+     python -m venv venv
+     venv\Scripts\activate
+     pip install -r requirements.txt
+
+3. Run the app:
+     run.bat
+   Or:
+     venv\Scripts\activate
+     python main.py
+
+4. Optional unit tests:
+     pip install -r requirements-dev.txt
+     python -m pytest tests -q
+
+What to try
+-----------
+- License screen → Start Session (auto-listen should start; Auto-Answer ON)
+- Job field: e.g. "Barista at Starbucks" or "software internship"
+- Advanced settings: device / confidence / tone (collapsed by default)
+- Play a YouTube "interview questions" video; watch status:
+    Listening → Hearing → Understanding → Writing your answer
+- "Say this" pane should stream and scroll; Quick tips on the side
+- Focus mode during a mock call
+- Ingest: Start screen → pick a folder with your resume (PDF/MD/TXT)
+
+If answers sound like old robotics/SAP content
+---------------------------------------------
+Delete or rename the old prompts file so new defaults load:
+  %APPDATA%\astra\prompts.yaml
+Then click Reload in Advanced, or restart the app.
+
+API key / licensing
+-------------------
+Licensing is TEMPORARILY OFF (config.LICENSE_ENABLED = False).
+The app uses OPENAI_API_KEY from the project .env (or environment).
+To re-enable license + proxy later: set LICENSE_ENABLED = True in config.py.
+
+
+Notes
+-----
+- First launch loads Whisper (splash: "Loading speech model…") — can take a bit.
+- System audio = what your speakers play (Zoom/Meet through this PC).
+- 99 automated tests passed in this workspace (1 skipped without PyQt6).

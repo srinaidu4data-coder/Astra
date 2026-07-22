@@ -1,0 +1,150 @@
+export type NavRoute =
+  | 'copilot'
+  | 'knowledge'
+  | 'practice'
+  | 'analytics'
+  | 'settings'
+
+export type AnswerMode =
+  | 'star'
+  | 'shorter'
+  | 'technical'
+  | 'code'
+
+export type InterviewerPersona =
+  | 'strict-tech-lead'
+  | 'behavioral-hr'
+  | 'system-design'
+  | 'friendly-recruiter'
+
+export interface StarMemory {
+  id: string
+  situation: string
+  task: string
+  action: string
+  result: string
+  metrics: string[]
+  tags: string[]
+  sourceFile?: string
+  score?: number
+}
+
+export interface ResumeDocument {
+  id: string
+  name: string
+  type: 'resume' | 'job' | 'notes'
+  text: string
+  uploadedAt: string
+  sizeBytes: number
+}
+
+export interface JobMatch {
+  jobId: string
+  title: string
+  company?: string
+  description: string
+  matchedMemories: StarMemory[]
+  matchScore: number
+}
+
+export interface TranscriptLine {
+  id: string
+  role: 'interviewer' | 'you' | 'system'
+  text: string
+  ts: number
+  final?: boolean
+}
+
+export interface SuggestedAnswer {
+  id: string
+  mode: AnswerMode
+  bullets: string[]
+  star?: {
+    situation: string
+    task: string
+    action: string
+    result: string
+  }
+  codeSnippet?: string
+  metrics: string[]
+  streaming: boolean
+  latencyMs?: number
+  /** Interviewer question this answer is for */
+  question?: string
+}
+
+/** One paced Q&A card — user steps through these */
+export interface QACard {
+  id: string
+  question: string
+  answer: SuggestedAnswer
+}
+
+export interface AudioDeviceInfo {
+  deviceId: string
+  label: string
+  kind: 'audioinput' | 'audiooutput'
+}
+
+export interface PipelineMetrics {
+  vadMs: number
+  sttMs: number
+  firstTokenMs: number
+  totalMs: number
+  lastUpdated: number
+}
+
+export interface PracticeSession {
+  id: string
+  persona: InterviewerPersona
+  startedAt: string
+  endedAt?: string
+  questions: number
+  fillerWords: number
+  starCoverage: number
+  confidence: number
+  technicalDepth: number
+  notes: string[]
+}
+
+export interface AnalyticsPoint {
+  date: string
+  confidence: number
+  technicalDepth: number
+  fillerRate: number
+  starScore: number
+}
+
+export interface StealthSettings {
+  contentProtection: boolean
+  alwaysOnTop: boolean
+  opacity: number
+  clickThrough: boolean
+  hotkey: string
+}
+
+export interface AppSettings {
+  openaiKey: string
+  deepgramKey: string
+  anthropicKey: string
+  demoMode: boolean
+  jobContext: string
+  tone: 'professional' | 'casual' | 'confident'
+}
+
+declare global {
+  interface Window {
+    interviewPulse?: {
+      platform: () => Promise<string>
+      setContentProtection: (enabled: boolean) => Promise<{ ok: boolean }>
+      openOverlay: () => Promise<{ ok: boolean }>
+      closeOverlay: () => Promise<{ ok: boolean }>
+      setOverlayOpacity: (opacity: number) => Promise<{ ok: boolean }>
+      setClickThrough: (enabled: boolean) => Promise<{ ok: boolean }>
+      setAlwaysOnTop: (enabled: boolean) => Promise<{ ok: boolean }>
+      onToggleClickThrough: (cb: () => void) => () => void
+    }
+  }
+}
+
+export {}

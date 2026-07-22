@@ -1,0 +1,23 @@
+AI/ML Practice Interview — 20 questions
+Gap between questions: 12s
+
+1. Tell me about yourself and why you're interested in AI and machine learning.
+2. What is the difference between supervised and unsupervised learning?
+3. Explain overfitting, and how would you prevent it?
+4. What is the bias variance tradeoff?
+5. How does a decision tree make predictions?
+6. Explain gradient descent in simple terms.
+7. What is the difference between L one and L two regularization?
+8. How would you handle missing values in a dataset?
+9. What is cross validation, and why is it useful?
+10. Explain precision, recall, and the F one score.
+11. What is a confusion matrix, and when would you use it?
+12. How does a neural network learn from data?
+13. What is the vanishing gradient problem?
+14. What is the difference between bagging and boosting?
+15. What is transfer learning, and when would you use it?
+16. How do you choose evaluation metrics for a classification problem?
+17. What is an embedding in natural language processing?
+18. Explain at a high level how transformer models work.
+19. How would you deploy a machine learning model to production?
+20. Tell me about a machine learning project you worked on end to end.
