@@ -1,6 +1,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { DEMO_ANALYTICS, DEMO_MEMORIES, DEMO_SESSIONS } from '@/lib/demo-data'
+import {
+  fetchAuthConfig,
+  fetchMe,
+  getToken,
+  setToken,
+  type AuthConfig,
+  type AuthUser,
+} from '@/services/auth'
 import type {
   AnalyticsPoint,
   AnswerMode,
@@ -21,6 +29,17 @@ import type {
 interface AppState {
   route: NavRoute
   setRoute: (r: NavRoute) => void
+
+  /** Auth / billing gate */
+  authReady: boolean
+  authConfig: AuthConfig | null
+  user: AuthUser | null
+  authToken: string | null
+  setAuth: (p: { user: AuthUser; token: string }) => void
+  setAuthFromUser: (user: AuthUser) => void
+  clearAuth: () => void
+  refreshAuth: () => Promise<void>
+  bootstrapAuth: () => Promise<void>
 
   settings: AppSettings
   updateSettings: (p: Partial<AppSettings>) => void
@@ -80,9 +99,61 @@ interface AppState {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       route: 'copilot',
       setRoute: (route) => set({ route }),
+
+      authReady: false,
+      authConfig: null,
+      user: null,
+      authToken: getToken(),
+      setAuth: ({ user, token }) => {
+        setToken(token)
+        set({ user, authToken: token })
+      },
+      setAuthFromUser: (user) => {
+        set({
+          user: {
+            ...user,
+            subscription_active: Boolean(user.subscription_active),
+          },
+        })
+      },
+      clearAuth: () => {
+        setToken(null)
+        set({ user: null, authToken: null })
+      },
+      refreshAuth: async () => {
+        const me = await fetchMe()
+        if (!me) {
+          set({ user: null, authToken: null })
+          return
+        }
+        set({
+          user: { ...me.user, subscription_active: me.subscription_active },
+          authToken: getToken(),
+        })
+      },
+      bootstrapAuth: async () => {
+        const config = await fetchAuthConfig()
+        set({ authConfig: config })
+        if (getToken()) {
+          try {
+            const me = await fetchMe()
+            if (me) {
+              set({
+                user: { ...me.user, subscription_active: me.subscription_active },
+                authToken: getToken(),
+              })
+            } else {
+              set({ user: null, authToken: null })
+            }
+          } catch {
+            set({ user: null })
+          }
+        }
+        set({ authReady: true })
+      },
 
       settings: {
         openaiKey: '',

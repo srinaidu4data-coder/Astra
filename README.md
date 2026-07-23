@@ -40,5 +40,7 @@ npm run dev
 - API key: `src/.env` → `OPENAI_API_KEY=...`  
 - Practice WAV: `src/test_audio/ai_ml_interview_20q.wav`  
 - Desktop overlay: `cd interview-pulse-ai && npm run dev:electron`  
+- **Before public signup:** fill Google OAuth + Gmail SMTP + Stripe monthly keys in `src/.env` (see `src/.env.example`). Gate order is Google sign-in → welcome email → Stripe checkout → app.  
+- **Your answer** panel is the large right-hand reading surface on Copilot (wide column, tall scroll).  
 
 See `interview-pulse-ai/HANDOFF.md` and `src/HANDOFF.md` for detail.

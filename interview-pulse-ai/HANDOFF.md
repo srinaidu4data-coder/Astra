@@ -60,10 +60,50 @@ Overlay hotkey: **Ctrl+Shift+S**
 
 Default **ON** in Settings. No API keys required. Simulated pipeline streams STAR answers from ranked resume memories.
 
+## Mock interview (Final Round–style)
+
+Sidebar **Mock** → `PracticePage`.
+
+Flow: setup (role/JD/persona/difficulty/focus/timer) → timed Qs → score → optional follow-up → debrief report.
+
+API on `:8787`:
+- `POST /v1/mock/start` — generate question set (OpenAI or offline bank)
+- `POST /v1/mock/score` — STAR/depth/comm scores + model bullets + follow-up
+- `POST /v1/mock/report` — session grade + practice plan
+- `GET /v1/mock/personas`
+
+Bells: mic dictation (Chrome), live filler estimate, copy report, Analytics session table (grade/overall).
+
+## Auth + billing (before public signup)
+
+**Order:** Google sign-in → welcome email (Gmail SMTP) → Stripe monthly → app unlock.
+
+### Wired flow (fixed)
+1. Google OAuth **or** email/password register/login  
+2. **Forgot password:** `POST /v1/auth/forgot-password` → Gmail SMTP reset link → `#/auth/reset?token=…` → `POST /v1/auth/reset-password`  
+3. Callback creates user, **retries welcome email** if SMTP failed last time  
+4. Checkout success URL includes `{CHECKOUT_SESSION_ID}` → `POST /v1/billing/confirm-session`  
+5. **Refunds:** revoke access + email  
+6. UI polls subscription every 60s so refunds lock the app  
+
+### Routes
+- Auth: `/v1/auth/config|google|google/callback|me|resend-welcome|dev-bypass`  
+- Password: `/v1/auth/register|login|forgot-password|reset-password`  
+- Billing: `/v1/billing/checkout|portal|status|sync|confirm-session|webhook`  
+
+### Gmail SMTP notes
+- Use a Google **App Password** (2FA required), not the normal Gmail password  
+- Spaces in the 16-char password are stripped automatically  
+- Failed welcome emails store `last_email_error` on the user; Settings → **Resend welcome email**  
+- `.env` is loaded encoding-safe from `src/.env` (cp1252/utf-8)
+
+Config template: `src/.env.example`  
+Without `GOOGLE_CLIENT_ID`, the app stays open for local interview work.
+
 ## Next wiring (production)
 
-1. Deepgram Nova-2 WebSocket in place of demo STT  
-2. Claude 3.5 / GPT-4o-mini streaming for answers  
-3. Silero VAD ONNX for end-of-turn  
+1. Paste Google OAuth + Gmail SMTP app password + Stripe keys into `src/.env`  
+2. Stripe CLI: `stripe listen --forward-to localhost:8787/v1/billing/webhook`  
+3. Deepgram Nova-2 WebSocket in place of demo STT  
 4. Native WASAPI loopback (system audio) in Electron  
 5. Supabase + pgvector for durable STAR embeddings  

@@ -355,9 +355,9 @@ export function CopilotPage() {
           : 'Idle'
 
   return (
-    <div className="grid gap-10 xl:grid-cols-12 xl:gap-12">
-      <div className="flex flex-col gap-8 xl:col-span-5">
-        <section className="glass rounded-[28px] p-8 md:p-10">
+    <div className="grid min-h-[calc(100vh-9rem)] gap-8 xl:grid-cols-12 xl:items-stretch xl:gap-10">
+      <div className="flex flex-col gap-6 xl:col-span-4">
+        <section className="glass rounded-[28px] p-6 md:p-8">
           <div className="mb-8 flex items-start justify-between gap-4">
             <div className="space-y-1">
               <h2 className="text-[17px] font-medium tracking-tight text-white/95">
@@ -523,18 +523,20 @@ export function CopilotPage() {
         </section>
       </div>
 
-      <div className="flex min-h-[560px] flex-col gap-8 xl:col-span-7">
-        <WhisperStream
-          cards={cards}
-          cardIndex={cardIndex}
-          onCardIndex={updateCardIndex}
-          mode={answerMode}
-          onMode={(m) => void handleModeChange(m)}
-          preparing={sessionOn && phase === 'processing'}
-          regenerating={regenerating}
-        />
+      <div className="flex min-h-[720px] flex-col gap-5 xl:col-span-8 xl:min-h-0">
+        <div className="min-h-0 flex-1">
+          <WhisperStream
+            cards={cards}
+            cardIndex={cardIndex}
+            onCardIndex={updateCardIndex}
+            mode={answerMode}
+            onMode={(m) => void handleModeChange(m)}
+            preparing={sessionOn && phase === 'processing'}
+            regenerating={regenerating}
+          />
+        </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-5">
+        <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
           {[
             { label: 'Session', value: sessionOn ? 'ON' : 'Off' },
             { label: 'Latency', value: metrics ? formatMs(metrics.totalMs) : '—' },
@@ -544,10 +546,10 @@ export function CopilotPage() {
               value: cards.length ? `${cardIndex + 1}/${cards.length}` : '—',
             },
           ].map((k) => (
-            <div key={k.label} className="glass rounded-[22px] px-5 py-5">
+            <div key={k.label} className="glass rounded-[18px] px-4 py-4">
               <div className="text-[12px] text-white/35">{k.label}</div>
               <div
-                className={`mt-2 text-[22px] font-medium tracking-tight ${
+                className={`mt-1.5 text-[20px] font-medium tracking-tight ${
                   k.label === 'Session' && sessionOn
                     ? 'text-[#20B8CD]'
                     : 'text-white/90'

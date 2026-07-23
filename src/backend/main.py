@@ -201,7 +201,15 @@ async def health_check(request: Request):
 # ---------------------------------------------------------------------------
 
 from backend.auth import router as license_router  # noqa: E402
+from backend.billing import router as billing_router  # noqa: E402
+from backend.google_oauth import router as oauth_router  # noqa: E402
+from backend.mock_interview import router as mock_router  # noqa: E402
+from backend.password_auth import router as password_router  # noqa: E402
 from backend.proxy import router as proxy_router  # noqa: E402
 
 app.include_router(license_router)
+app.include_router(oauth_router)
+app.include_router(password_router)
+app.include_router(billing_router)
+app.include_router(mock_router)
 app.include_router(proxy_router)

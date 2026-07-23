@@ -1,12 +1,33 @@
 import { Waveform } from '@/components/Waveform'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { PERSONA_LABELS, SAMPLE_QUESTIONS } from '@/lib/demo-data'
+import { PERSONA_LABELS } from '@/lib/demo-data'
 import { uid } from '@/lib/utils'
-import { pipeline } from '@/services/pipeline'
+import {
+  buildMockReport,
+  countFillersLocal,
+  scoreMockAnswer,
+  startMockSession,
+  type MockDifficulty,
+  type MockFocus,
+  type MockPersona,
+  type MockQuestion,
+  type MockReport,
+  type MockScore,
+} from '@/services/mock-interview'
 import { useAppStore } from '@/stores/app-store'
 import type { InterviewerPersona } from '@/types'
-import { Square } from 'lucide-react'
+import {
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Lightbulb,
+  Mic,
+  MicOff,
+  RotateCcw,
+  Sparkles,
+  Square,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 const personas: InterviewerPersona[] = [
@@ -16,6 +37,28 @@ const personas: InterviewerPersona[] = [
   'friendly-recruiter',
 ]
 
+const difficulties: MockDifficulty[] = ['easy', 'medium', 'hard']
+const focuses: { id: MockFocus; label: string }[] = [
+  { id: 'mixed', label: 'Mixed' },
+  { id: 'behavioral', label: 'Behavioral' },
+  { id: 'technical', label: 'Technical' },
+  { id: 'system-design', label: 'System design' },
+]
+
+type Phase = 'setup' | 'live' | 'report'
+
+type Turn = {
+  question: string
+  answer: string
+  scores: MockScore
+  elapsedSec: number
+}
+
+/**
+ * Final Round–style mock interview:
+ * setup → AI questions → your answer → score + follow-up → end report
+ * Bells: difficulty, focus, timer, live fillers, coach model answer, export notes
+ */
 export function PracticePage() {
   const {
     practicePersona,
@@ -27,212 +70,872 @@ export function PracticePage() {
     levels,
     setLevels,
     addSession,
-    pushTranscript,
-    setAnswer,
-    transcript,
-    answer,
+    settings,
     memories,
-    clearTranscript,
   } = useAppStore()
 
-  const [elapsed, setElapsed] = useState(0)
-  const [currentQ, setCurrentQ] = useState(SAMPLE_QUESTIONS[0])
-  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const waveRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const startedAt = useRef<string>('')
+  const [phase, setPhase] = useState<Phase>('setup')
+  const [jobTitle, setJobTitle] = useState(settings.jobContext || 'Software Engineer')
+  const [company, setCompany] = useState('')
+  const [jd, setJd] = useState('')
+  const [difficulty, setDifficulty] = useState<MockDifficulty>('medium')
+  const [focus, setFocus] = useState<MockFocus>('mixed')
+  const [qCount, setQCount] = useState(5)
+  const [timeLimit, setTimeLimit] = useState(90) // seconds per answer
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    pipeline.setMemories(memories)
-  }, [memories])
+  const [sessionId, setSessionId] = useState('')
+  const [questions, setQuestions] = useState<MockQuestion[]>([])
+  const [qIndex, setQIndex] = useState(0)
+  const [tips, setTips] = useState<string[]>([])
+  const [source, setSource] = useState('')
+
+  const [answerText, setAnswerText] = useState('')
+  const [listeningMic, setListeningMic] = useState(false)
+  const [answerElapsed, setAnswerElapsed] = useState(0)
+  const [sessionElapsed, setSessionElapsed] = useState(0)
+  const [lastScore, setLastScore] = useState<MockScore | null>(null)
+  const [turns, setTurns] = useState<Turn[]>([])
+  const [report, setReport] = useState<MockReport | null>(null)
+  const [showModel, setShowModel] = useState(true)
+  const [followUpMode, setFollowUpMode] = useState(false)
+
+  // Browser speech recognition (Chrome) — typed loosely for portability
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null)
+  const answerTick = useRef<ReturnType<typeof setInterval> | null>(null)
+  const sessionTick = useRef<ReturnType<typeof setInterval> | null>(null)
+  const waveRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const startedAt = useRef('')
+  const turnsRef = useRef<Turn[]>([])
+
+  const currentQ = questions[qIndex] ?? null
+  const localFillers = countFillersLocal(answerText)
+  const timeLeft = Math.max(0, timeLimit - answerElapsed)
 
   useEffect(() => {
     return () => {
-      if (tickRef.current) clearInterval(tickRef.current)
-      if (waveRef.current) clearInterval(waveRef.current)
-      pipeline.stop()
+      stopTimers()
+      stopMic()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const start = async () => {
-    clearTranscript()
-    setAnswer(null)
-    setPracticeActive(true)
-    startedAt.current = new Date().toISOString()
-    setElapsed(0)
-    setLiveFeedback({ confidence: 70, fillerWords: 0, starCoverage: 55, technicalDepth: 65 })
-
-    let seconds = 0
-    const persona = practicePersona
-    tickRef.current = setInterval(() => {
-      seconds += 1
-      setElapsed(seconds)
-      setLiveFeedback({
-        confidence: Math.min(98, 68 + Math.random() * 25),
-        fillerWords: Math.floor(seconds / 18 + Math.random() * 2),
-        starCoverage: Math.min(98, 50 + seconds * 0.6 + Math.random() * 8),
-        technicalDepth:
-          persona === 'behavioral-hr' ? 45 + Math.random() * 20 : 70 + Math.random() * 25,
-      })
-    }, 1000)
-
-    waveRef.current = setInterval(() => {
-      setLevels(Array.from({ length: 32 }, () => 0.12 + Math.random() * 0.75))
-    }, 90)
-
-    const q = SAMPLE_QUESTIONS[Math.floor(Math.random() * SAMPLE_QUESTIONS.length)]
-    setCurrentQ(q)
-    await pipeline.injectQuestion(q, {
-      onTranscript: pushTranscript,
-      onAnswerDelta: setAnswer,
-      onAnswerDone: setAnswer,
-    })
-  }
-
-  const nextQuestion = async () => {
-    const q = SAMPLE_QUESTIONS[Math.floor(Math.random() * SAMPLE_QUESTIONS.length)]
-    setCurrentQ(q)
-    await pipeline.injectQuestion(q, {
-      onTranscript: pushTranscript,
-      onAnswerDelta: setAnswer,
-      onAnswerDone: setAnswer,
-    })
-  }
-
-  const stop = () => {
-    setPracticeActive(false)
-    pipeline.stop()
-    if (tickRef.current) clearInterval(tickRef.current)
+  const stopTimers = () => {
+    if (answerTick.current) clearInterval(answerTick.current)
+    if (sessionTick.current) clearInterval(sessionTick.current)
     if (waveRef.current) clearInterval(waveRef.current)
-    setLevels(Array.from({ length: 32 }, () => 0.08))
-
-    addSession({
-      id: uid('sess'),
-      persona: practicePersona,
-      startedAt: startedAt.current || new Date().toISOString(),
-      endedAt: new Date().toISOString(),
-      questions: Math.max(1, transcript.filter((t) => t.final).length),
-      fillerWords: liveFeedback.fillerWords,
-      starCoverage: Math.round(liveFeedback.starCoverage),
-      confidence: Math.round(liveFeedback.confidence),
-      technicalDepth: Math.round(liveFeedback.technicalDepth),
-      notes: [
-        liveFeedback.starCoverage > 80 ? 'Strong STAR structure' : 'Expand Result metrics',
-        liveFeedback.fillerWords > 10 ? 'Reduce filler words' : 'Clean delivery',
-      ],
-    })
+    answerTick.current = null
+    sessionTick.current = null
+    waveRef.current = null
   }
 
-  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0')
-  const ss = String(elapsed % 60).padStart(2, '0')
+  const stopMic = () => {
+    try {
+      recognitionRef.current?.stop()
+    } catch {
+      /* ignore */
+    }
+    recognitionRef.current = null
+    setListeningMic(false)
+  }
 
-  return (
-    <div className="grid gap-10 xl:grid-cols-12 xl:gap-12">
-      <div className="flex flex-col gap-8 xl:col-span-7">
+  const startWave = () => {
+    waveRef.current = setInterval(() => {
+      setLevels(Array.from({ length: 32 }, () => 0.1 + Math.random() * 0.8))
+    }, 90)
+  }
+
+  const startAnswerTimer = () => {
+    setAnswerElapsed(0)
+    if (answerTick.current) clearInterval(answerTick.current)
+    answerTick.current = setInterval(() => {
+      setAnswerElapsed((s) => s + 1)
+    }, 1000)
+  }
+
+  const startSession = async () => {
+    setBusy(true)
+    setError(null)
+    setReport(null)
+    setTurns([])
+    setLastScore(null)
+    setFollowUpMode(false)
+    try {
+      const resumeBits = memories
+        .slice(0, 4)
+        .map((m) => `${m.situation} → ${m.result}`)
+        .join('\n')
+      const res = await startMockSession({
+        job_title: jobTitle.trim() || 'Software Engineer',
+        job_description: jd,
+        persona: practicePersona as MockPersona,
+        difficulty,
+        focus,
+        question_count: qCount,
+        resume_snippets: resumeBits,
+        company,
+      })
+      setSessionId(res.session_id)
+      setQuestions(res.questions)
+      setTips(res.tips)
+      setSource(res.source)
+      setQIndex(0)
+      setAnswerText('')
+      turnsRef.current = []
+      setTurns([])
+      setPhase('live')
+      setPracticeActive(true)
+      startedAt.current = new Date().toISOString()
+      setSessionElapsed(0)
+      sessionTick.current = setInterval(() => {
+        setSessionElapsed((s) => s + 1)
+      }, 1000)
+      startWave()
+      startAnswerTimer()
+      setLiveFeedback({
+        confidence: 70,
+        fillerWords: 0,
+        starCoverage: 55,
+        technicalDepth: 60,
+      })
+    } catch (e) {
+      setError((e as Error).message || 'Could not start mock session')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const toggleMic = () => {
+    const w = window as unknown as {
+      SpeechRecognition?: new () => {
+        continuous: boolean
+        interimResults: boolean
+        lang: string
+        start: () => void
+        stop: () => void
+        onresult: ((ev: {
+          resultIndex: number
+          results: ArrayLike<ArrayLike<{ transcript: string }>>
+        }) => void) | null
+        onerror: (() => void) | null
+        onend: (() => void) | null
+      }
+      webkitSpeechRecognition?: new () => {
+        continuous: boolean
+        interimResults: boolean
+        lang: string
+        start: () => void
+        stop: () => void
+        onresult: ((ev: {
+          resultIndex: number
+          results: ArrayLike<ArrayLike<{ transcript: string }>>
+        }) => void) | null
+        onerror: (() => void) | null
+        onend: (() => void) | null
+      }
+    }
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition
+    if (!SR) {
+      setError('Speech recognition not supported in this browser — type your answer instead.')
+      return
+    }
+    if (listeningMic) {
+      stopMic()
+      return
+    }
+    const rec = new SR()
+    rec.continuous = true
+    rec.interimResults = true
+    rec.lang = 'en-US'
+    // Keep committed finals separate from interim so words don't duplicate
+    let finals = answerText.trim()
+    rec.onresult = (ev) => {
+      let interim = ''
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const piece = ev.results[i][0].transcript
+        const isFinal = Boolean((ev.results[i] as { isFinal?: boolean }).isFinal)
+        if (isFinal) {
+          finals = `${finals} ${piece}`.trim()
+        } else {
+          interim += piece
+        }
+      }
+      setAnswerText(`${finals}${interim ? ` ${interim}` : ''}`.trim())
+    }
+    rec.onerror = () => {
+      setListeningMic(false)
+    }
+    rec.onend = () => {
+      setListeningMic(false)
+    }
+    recognitionRef.current = rec
+    rec.start()
+    setListeningMic(true)
+  }
+
+  const submitAnswer = async () => {
+    if (!currentQ || !answerText.trim() || busy) return
+    stopMic()
+    setBusy(true)
+    setError(null)
+    try {
+      const scores = await scoreMockAnswer({
+        session_id: sessionId,
+        question: currentQ.text,
+        answer: answerText.trim(),
+        persona: practicePersona as MockPersona,
+        difficulty,
+        job_title: jobTitle,
+        job_description: jd,
+        elapsed_sec: answerElapsed,
+      })
+      setLastScore(scores)
+      setLiveFeedback({
+        confidence: scores.confidence,
+        fillerWords: scores.filler_count,
+        starCoverage: scores.star_coverage,
+        technicalDepth: scores.technical_depth,
+      })
+      const turn: Turn = {
+        question: currentQ.text,
+        answer: answerText.trim(),
+        scores,
+        elapsedSec: answerElapsed,
+      }
+      turnsRef.current = [...turnsRef.current, turn]
+      setTurns(turnsRef.current)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const goNext = () => {
+    setLastScore(null)
+    setAnswerText('')
+    setFollowUpMode(false)
+    if (qIndex + 1 >= questions.length) {
+      void finishSession()
+      return
+    }
+    setQIndex((i) => i + 1)
+    startAnswerTimer()
+  }
+
+  const askFollowUp = () => {
+    if (!lastScore?.follow_up) return
+    setFollowUpMode(true)
+    setAnswerText('')
+    setQuestions((prev) => {
+      const next = [...prev]
+      const fu: MockQuestion = {
+        id: `fu_${Date.now()}`,
+        text: lastScore.follow_up!,
+        category: 'follow-up',
+        hint: 'Dig deeper — shorter answer OK.',
+      }
+      next.splice(qIndex + 1, 0, fu)
+      return next
+    })
+    setLastScore(null)
+    setQIndex((i) => i + 1)
+    startAnswerTimer()
+  }
+
+  const finishSession = async () => {
+    setBusy(true)
+    stopMic()
+    stopTimers()
+    setLevels(Array.from({ length: 32 }, () => 0.08))
+    setPracticeActive(false)
+    try {
+      // Use ref so the last scored answer is included (state may lag one tick)
+      const allTurns = turnsRef.current
+      const rep = await buildMockReport({
+        session_id: sessionId,
+        job_title: jobTitle,
+        persona: practicePersona as MockPersona,
+        difficulty,
+        turns: allTurns.map((t) => ({
+          question: t.question,
+          answer: t.answer,
+          scores: t.scores,
+        })),
+      })
+      setReport(rep)
+      setPhase('report')
+      addSession({
+        id: uid('sess'),
+        persona: practicePersona,
+        startedAt: startedAt.current || new Date().toISOString(),
+        endedAt: new Date().toISOString(),
+        questions: allTurns.length,
+        fillerWords: rep.filler_count,
+        starCoverage: rep.star_coverage,
+        confidence: rep.confidence,
+        technicalDepth: rep.technical_depth,
+        notes: rep.top_improvements.slice(0, 3),
+        overall: rep.overall,
+        grade: rep.grade,
+        jobTitle,
+        difficulty,
+        focus,
+        communication: rep.communication,
+        summary: rep.summary,
+        practicePlan: rep.practice_plan,
+      })
+    } catch (e) {
+      // Keep a local debrief so a report API blip doesn't wipe the session
+      const allTurns = turnsRef.current
+      const av = (key: keyof MockScore) => {
+        if (!allTurns.length) return 0
+        return Math.round(
+          allTurns.reduce((a, t) => a + Number(t.scores[key] || 0), 0) / allTurns.length,
+        )
+      }
+      const overall = av('overall')
+      const grade =
+        overall >= 90 ? 'A' : overall >= 80 ? 'B' : overall >= 70 ? 'C' : overall >= 60 ? 'D' : 'F'
+      const local: MockReport = {
+        overall,
+        star_coverage: av('star_coverage'),
+        technical_depth: av('technical_depth'),
+        communication: av('communication'),
+        confidence: av('confidence'),
+        filler_count: allTurns.reduce((a, t) => a + t.scores.filler_count, 0),
+        grade,
+        summary: `Completed ${allTurns.length} answers (local debrief — report API failed: ${(e as Error).message}).`,
+        top_strengths: allTurns.flatMap((t) => t.scores.strengths).slice(0, 4),
+        top_improvements: allTurns.flatMap((t) => t.scores.improvements).slice(0, 4),
+        practice_plan: ['Re-run this persona one difficulty higher', 'Practice STAR with one metric'],
+        highlight_quotes: [],
+        source: 'offline-local',
+      }
+      setReport(local)
+      setPhase('report')
+      setError(null)
+      addSession({
+        id: uid('sess'),
+        persona: practicePersona,
+        startedAt: startedAt.current || new Date().toISOString(),
+        endedAt: new Date().toISOString(),
+        questions: allTurns.length,
+        fillerWords: local.filler_count,
+        starCoverage: local.star_coverage,
+        confidence: local.confidence,
+        technicalDepth: local.technical_depth,
+        notes: local.top_improvements.slice(0, 3),
+        overall: local.overall,
+        grade: local.grade,
+        jobTitle,
+        difficulty,
+        focus,
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const resetAll = () => {
+    stopMic()
+    stopTimers()
+    setPracticeActive(false)
+    setPhase('setup')
+    setQuestions([])
+    setTurns([])
+    setLastScore(null)
+    setReport(null)
+    setAnswerText('')
+    setError(null)
+    setLevels(Array.from({ length: 32 }, () => 0.08))
+  }
+
+  const exportReport = () => {
+    if (!report) return
+    const body = [
+      `InterviewPulse Mock Report — ${jobTitle}`,
+      `Grade: ${report.grade} (${report.overall}/100)`,
+      `Persona: ${PERSONA_LABELS[practicePersona]} · ${difficulty} · ${focus}`,
+      '',
+      report.summary,
+      '',
+      'Strengths:',
+      ...report.top_strengths.map((s) => `• ${s}`),
+      '',
+      'Improve:',
+      ...report.top_improvements.map((s) => `• ${s}`),
+      '',
+      'Practice plan:',
+      ...report.practice_plan.map((s, i) => `${i + 1}. ${s}`),
+      '',
+      `Fillers: ${report.filler_count} · STAR ${report.star_coverage}% · Depth ${report.technical_depth}%`,
+    ].join('\n')
+    void navigator.clipboard.writeText(body)
+  }
+
+  const mm = String(Math.floor(sessionElapsed / 60)).padStart(2, '0')
+  const ss = String(sessionElapsed % 60).padStart(2, '0')
+
+  // --- SETUP ---
+  if (phase === 'setup') {
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <section className="glass rounded-[28px] p-8 md:p-10">
-          <div className="mb-8 flex items-start justify-between gap-4">
+          <div className="mb-2 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[#20B8CD]" strokeWidth={1.75} />
+            <h2 className="text-[17px] font-medium tracking-tight text-white/95">
+              AI Mock Interview
+            </h2>
+          </div>
+          <p className="mb-8 text-[13px] leading-relaxed text-white/40">
+            Final Round–style practice: role-specific questions, timed answers, live scoring,
+            follow-ups, and a full debrief report.
+          </p>
+
+          {error && (
+            <div className="mb-5 rounded-[14px] border border-[#E85D5D]/40 bg-[#E85D5D]/10 px-4 py-3 text-[13px] text-[#E85D5D]">
+              {error}
+            </div>
+          )}
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="sm:col-span-2">
+              <span className="label-quiet">Target role</span>
+              <input
+                className="field"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder="e.g. Senior Backend Engineer"
+              />
+            </label>
+            <label>
+              <span className="label-quiet">Company (optional)</span>
+              <input
+                className="field"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="e.g. Stripe"
+              />
+            </label>
+            <label>
+              <span className="label-quiet">Questions</span>
+              <select
+                className="field"
+                value={qCount}
+                onChange={(e) => setQCount(Number(e.target.value))}
+              >
+                {[3, 5, 7, 10].map((n) => (
+                  <option key={n} value={n}>
+                    {n} questions
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="sm:col-span-2">
+              <span className="label-quiet">Job description (optional — better questions)</span>
+              <textarea
+                className="field min-h-[100px] resize-y"
+                value={jd}
+                onChange={(e) => setJd(e.target.value)}
+                placeholder="Paste JD bullets for tailored questions…"
+              />
+            </label>
+          </div>
+
+          <div className="mt-6">
+            <span className="label-quiet">Interviewer persona</span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {personas.map((p) => (
+                <Button
+                  key={p}
+                  size="sm"
+                  variant={practicePersona === p ? 'default' : 'secondary'}
+                  onClick={() => setPracticePersona(p)}
+                >
+                  {PERSONA_LABELS[p]}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div>
+              <span className="label-quiet">Difficulty</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {difficulties.map((d) => (
+                  <Button
+                    key={d}
+                    size="sm"
+                    variant={difficulty === d ? 'default' : 'secondary'}
+                    onClick={() => setDifficulty(d)}
+                  >
+                    {d}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span className="label-quiet">Focus</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {focuses.map((f) => (
+                  <Button
+                    key={f.id}
+                    size="sm"
+                    variant={focus === f.id ? 'default' : 'secondary'}
+                    onClick={() => setFocus(f.id)}
+                  >
+                    {f.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <div className="mb-2 flex justify-between text-[12px] text-white/40">
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" /> Answer time limit
+              </span>
+              <span>{timeLimit}s</span>
+            </div>
+            <input
+              type="range"
+              min={45}
+              max={180}
+              step={15}
+              value={timeLimit}
+              onChange={(e) => setTimeLimit(Number(e.target.value))}
+              className="w-full accent-[#20B8CD]"
+            />
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button size="lg" disabled={busy} onClick={() => void startSession()}>
+              {busy ? 'Building questions…' : 'Start mock interview'}
+            </Button>
+          </div>
+        </section>
+
+        <section className="glass rounded-[28px] p-8 md:p-10">
+          <h3 className="mb-4 text-[15px] font-medium text-white/90">What you get</h3>
+          <ul className="grid gap-3 text-[13px] text-white/50 sm:grid-cols-2">
+            {[
+              'Role-specific AI questions (JD-aware)',
+              'Timed answers + live filler count',
+              'STAR / depth / communication scores',
+              'Smart follow-up questions',
+              'Model answer bullets after each Q',
+              'End report with practice plan',
+              'Mic dictation (Chrome) or type',
+              'Offline coach if API key missing',
+            ].map((t) => (
+              <li key={t} className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#20B8CD]" />
+                {t}
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    )
+  }
+
+  // --- REPORT ---
+  if (phase === 'report' && report) {
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col gap-8">
+        <section className="glass rounded-[28px] p-8 md:p-10">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
               <h2 className="text-[17px] font-medium tracking-tight text-white/95">
-                Mock interview
+                Session debrief
               </h2>
-              <p className="mt-1 text-[13px] text-white/40">Pick a persona and practice</p>
+              <p className="mt-1 text-[13px] text-white/40">
+                {jobTitle} · {PERSONA_LABELS[practicePersona]} · {difficulty}
+              </p>
             </div>
-            <Badge tone={practiceActive ? 'emerald' : 'default'}>{mm}:{ss}</Badge>
+            <div className="text-right">
+              <div className="text-[40px] font-medium tracking-tight text-[#20B8CD]">
+                {report.grade}
+              </div>
+              <div className="text-[13px] text-white/45">{report.overall}/100</div>
+            </div>
           </div>
 
-          <div className="mb-8 flex flex-wrap gap-2">
-            {personas.map((p) => (
-              <Button
-                key={p}
-                size="sm"
-                variant={practicePersona === p ? 'default' : 'secondary'}
-                onClick={() => setPracticePersona(p)}
-                disabled={practiceActive}
-              >
-                {PERSONA_LABELS[p]}
-              </Button>
-            ))}
+          <p className="mb-8 text-[15px] leading-relaxed text-white/75">{report.summary}</p>
+
+          <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <MiniStat label="STAR" value={`${report.star_coverage}%`} />
+            <MiniStat label="Depth" value={`${report.technical_depth}%`} />
+            <MiniStat label="Comm" value={`${report.communication}%`} />
+            <MiniStat label="Fillers" value={String(report.filler_count)} warn />
           </div>
 
-          <div className="mb-8 rounded-[24px] glass-inset px-7 py-8">
-            <p className="mb-3 text-[12px] font-light text-white/35">
-              {PERSONA_LABELS[practicePersona]}
-            </p>
-            <p className="text-[20px] font-light leading-snug tracking-tight text-white/95 md:text-[22px]">
-              {currentQ}
-            </p>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <h3 className="mb-3 text-[13px] font-medium text-white/80">Strengths</h3>
+              <ul className="space-y-2 text-[13px] text-white/55">
+                {report.top_strengths.map((s) => (
+                  <li key={s} className="rounded-[14px] glass-inset px-4 py-3">
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="mb-3 text-[13px] font-medium text-white/80">Improve</h3>
+              <ul className="space-y-2 text-[13px] text-white/55">
+                {report.top_improvements.map((s) => (
+                  <li key={s} className="rounded-[14px] glass-inset px-4 py-3">
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <h3 className="mb-3 text-[13px] font-medium text-white/80">Practice plan</h3>
+            <ol className="list-decimal space-y-2 pl-5 text-[13px] text-white/55">
+              {report.practice_plan.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ol>
+          </div>
+
+          {report.highlight_quotes.length > 0 && (
             <div className="mt-8">
-              <Waveform levels={levels} active={practiceActive} className="h-14" />
+              <h3 className="mb-3 text-[13px] font-medium text-white/80">Highlights</h3>
+              {report.highlight_quotes.map((q) => (
+                <blockquote
+                  key={q}
+                  className="mb-2 border-l-2 border-[#20B8CD]/40 pl-4 text-[13px] italic text-white/50"
+                >
+                  {q}
+                </blockquote>
+              ))}
             </div>
+          )}
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button size="lg" onClick={resetAll}>
+              <RotateCcw className="h-4 w-4" /> New mock
+            </Button>
+            <Button size="lg" variant="secondary" onClick={exportReport}>
+              Copy report
+            </Button>
+          </div>
+          <p className="mt-4 text-[11px] text-white/30">Coach source: {report.source}</p>
+        </section>
+      </div>
+    )
+  }
+
+  // --- LIVE ---
+  return (
+    <div className="grid gap-8 xl:grid-cols-12 xl:gap-10">
+      <div className="flex flex-col gap-6 xl:col-span-7">
+        <section className="glass rounded-[28px] p-7 md:p-9">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-[17px] font-medium tracking-tight text-white/95">
+                {followUpMode ? 'Follow-up' : 'Live mock'}
+              </h2>
+              <p className="mt-1 text-[12px] text-white/40">
+                Q {Math.min(qIndex + 1, questions.length)}/{questions.length} · {jobTitle} ·{' '}
+                {source || '…'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge tone={timeLeft <= 15 ? 'amber' : 'indigo'}>
+                <Clock className="mr-1 h-3 w-3" />
+                {timeLeft}s
+              </Badge>
+              <Badge tone={practiceActive ? 'emerald' : 'default'}>
+                {mm}:{ss}
+              </Badge>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mb-4 rounded-[14px] border border-[#E85D5D]/40 bg-[#E85D5D]/10 px-4 py-3 text-[13px] text-[#E85D5D]">
+              {error}
+            </div>
+          )}
+
+          <div className="mb-5 rounded-[22px] glass-inset px-6 py-6">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <p className="text-[12px] text-white/35">{PERSONA_LABELS[practicePersona]}</p>
+              {currentQ?.category && (
+                <Badge tone="default">{currentQ.category}</Badge>
+              )}
+            </div>
+            <p className="text-[19px] font-light leading-snug tracking-tight text-white/95 md:text-[21px]">
+              {currentQ?.text}
+            </p>
+            {currentQ?.hint && (
+              <p className="mt-3 flex items-start gap-2 text-[12px] text-white/40">
+                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#E8C547]" />
+                {currentQ.hint}
+              </p>
+            )}
+            <div className="mt-6">
+              <Waveform levels={levels} active={practiceActive} className="h-12" />
+            </div>
+          </div>
+
+          <label className="mb-3 block">
+            <span className="label-quiet">Your answer (speak or type)</span>
+            <textarea
+              className="field min-h-[140px] resize-y text-[15px] leading-relaxed"
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              placeholder="Answer out loud or type here…"
+              disabled={!!lastScore}
+            />
+          </label>
+          <div className="mb-5 flex flex-wrap items-center gap-3 text-[12px] text-white/40">
+            <span>Words: {answerText.trim() ? answerText.trim().split(/\s+/).length : 0}</span>
+            <span className={localFillers > 3 ? 'text-[#E8C547]' : ''}>
+              Live fillers ≈ {localFillers}
+            </span>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            {!practiceActive ? (
-              <Button size="lg" onClick={() => void start()}>
-                Start session
-              </Button>
+            {!lastScore ? (
+              <>
+                <Button
+                  size="lg"
+                  variant={listeningMic ? 'danger' : 'secondary'}
+                  onClick={toggleMic}
+                  disabled={busy}
+                >
+                  {listeningMic ? (
+                    <>
+                      <MicOff className="h-4 w-4" /> Stop mic
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="h-4 w-4" /> Dictate
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="lg"
+                  disabled={busy || !answerText.trim()}
+                  onClick={() => void submitAnswer()}
+                >
+                  {busy ? 'Scoring…' : 'Submit answer'}
+                </Button>
+                <Button size="lg" variant="ghost" onClick={() => void finishSession()}>
+                  <Square className="h-4 w-4" /> End early
+                </Button>
+              </>
             ) : (
               <>
-                <Button size="lg" variant="secondary" onClick={() => void nextQuestion()}>
-                  Next question
-                </Button>
-                <Button size="lg" variant="danger" onClick={stop}>
-                  <Square className="h-4 w-4" strokeWidth={1.75} /> End
+                {lastScore.follow_up && (
+                  <Button size="lg" variant="secondary" onClick={askFollowUp}>
+                    Answer follow-up
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button size="lg" onClick={goNext}>
+                  {qIndex + 1 >= questions.length ? 'Finish & report' : 'Next question'}
                 </Button>
               </>
             )}
           </div>
         </section>
 
-        <section className="glass rounded-[28px] p-8 md:p-10">
-          <h2 className="mb-6 text-[17px] font-medium tracking-tight text-white/95">
-            Coach notes
-          </h2>
-          {answer ? (
-            <ul className="space-y-3">
-              {answer.bullets.map((b, i) => (
+        {lastScore && showModel && (
+          <section className="glass rounded-[28px] p-7 md:p-9">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-[16px] font-medium text-white/95">Model answer sketch</h2>
+              <button
+                type="button"
+                className="text-[12px] text-white/40 hover:text-white/70"
+                onClick={() => setShowModel(false)}
+              >
+                Hide
+              </button>
+            </div>
+            <ul className="space-y-2">
+              {lastScore.model_answer_bullets.map((b) => (
                 <li
-                  key={i}
-                  className="rounded-[18px] glass-inset px-5 py-4 text-[15px] leading-relaxed text-white/88"
+                  key={b}
+                  className="rounded-[16px] glass-inset px-4 py-3 text-[14px] leading-relaxed text-white/80"
                 >
                   {b}
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="py-8 text-center text-[14px] text-white/35">
-              Start a session for live coaching.
-            </p>
-          )}
-        </section>
+            <p className="mt-4 text-[12px] text-white/40">{lastScore.coach_note}</p>
+          </section>
+        )}
       </div>
 
-      <div className="flex flex-col gap-8 xl:col-span-5">
-        <section className="glass rounded-[28px] p-8 md:p-10">
-          <h2 className="text-[17px] font-medium tracking-tight text-white/95">
-            Feedback
-          </h2>
-          <p className="mt-1 mb-8 text-[13px] text-white/40">Live session meters</p>
+      <div className="flex flex-col gap-6 xl:col-span-5">
+        <section className="glass rounded-[28px] p-7 md:p-9">
+          <h2 className="text-[16px] font-medium text-white/95">Live scores</h2>
+          <p className="mt-1 mb-6 text-[12px] text-white/40">
+            {lastScore ? `Overall ${lastScore.overall}/100` : 'Submit to score this answer'}
+          </p>
           <Meter label="Confidence" value={liveFeedback.confidence} color="#20B8CD" />
           <Meter label="STAR coverage" value={liveFeedback.starCoverage} color="#20B8CD" />
           <Meter label="Technical depth" value={liveFeedback.technicalDepth} color="#5DD5E3" />
-          <div className="mt-6 rounded-[20px] glass-inset px-5 py-5">
-            <div className="text-[12px] text-white/35">Filler words</div>
-            <div className="mt-1 text-[32px] font-medium tracking-tight text-[#E8C547]">
-              {liveFeedback.fillerWords}
+          {lastScore && (
+            <Meter label="Communication" value={lastScore.communication} color="#8A8A88" />
+          )}
+          <div className="mt-5 rounded-[18px] glass-inset px-5 py-4">
+            <div className="text-[12px] text-white/35">Filler words (scored)</div>
+            <div className="mt-1 text-[28px] font-medium tracking-tight text-[#E8C547]">
+              {lastScore?.filler_count ?? liveFeedback.fillerWords}
             </div>
           </div>
         </section>
 
-        <section className="glass rounded-[28px] p-8 md:p-10">
-          <h2 className="mb-6 text-[17px] font-medium tracking-tight text-white/95">
-            Tips
-          </h2>
-          <ul className="space-y-4 text-[14px] leading-relaxed text-white/55">
-            <li>Open with Situation in one breath</li>
-            <li>Quantify Result with a clear metric</li>
-            <li>Pause instead of filler words</li>
-            <li>Mirror language from the job description</li>
+        {lastScore && (
+          <section className="glass rounded-[28px] p-7 md:p-9">
+            <h2 className="mb-4 text-[16px] font-medium text-white/95">Coach notes</h2>
+            <div className="mb-4">
+              <p className="mb-2 text-[11px] uppercase tracking-tight text-white/35">Strengths</p>
+              <ul className="space-y-2 text-[13px] text-white/70">
+                {lastScore.strengths.map((s) => (
+                  <li key={s}>• {s}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="mb-2 text-[11px] uppercase tracking-tight text-white/35">Improve</p>
+              <ul className="space-y-2 text-[13px] text-white/70">
+                {lastScore.improvements.map((s) => (
+                  <li key={s}>• {s}</li>
+                ))}
+              </ul>
+            </div>
+            {lastScore.follow_up && (
+              <p className="mt-4 rounded-[14px] border border-[#20B8CD]/25 bg-[#20B8CD]/10 px-4 py-3 text-[12px] text-[#5DD5E3]">
+                Follow-up ready: {lastScore.follow_up}
+              </p>
+            )}
+          </section>
+        )}
+
+        <section className="glass rounded-[28px] p-7 md:p-9">
+          <h2 className="mb-3 text-[16px] font-medium text-white/95">Session tips</h2>
+          <ul className="space-y-2 text-[13px] text-white/50">
+            {(tips.length ? tips : ['Stay concise', 'Use metrics', 'Pause instead of fillers']).map(
+              (t) => (
+                <li key={t}>• {t}</li>
+              ),
+            )}
           </ul>
+          <p className="mt-4 text-[11px] text-white/30">
+            Completed turns: {turns.length}
+          </p>
         </section>
       </div>
     </div>
@@ -249,7 +952,7 @@ function Meter({
   color: string
 }) {
   return (
-    <div className="mb-5">
+    <div className="mb-4">
       <div className="mb-2 flex justify-between text-[12px] text-white/40">
         <span>{label}</span>
         <span>{Math.round(value)}%</span>
@@ -259,6 +962,29 @@ function Meter({
           className="h-full rounded-full transition-all duration-500"
           style={{ width: `${Math.min(100, value)}%`, background: color }}
         />
+      </div>
+    </div>
+  )
+}
+
+function MiniStat({
+  label,
+  value,
+  warn,
+}: {
+  label: string
+  value: string
+  warn?: boolean
+}) {
+  return (
+    <div className="rounded-[16px] glass-inset px-4 py-3">
+      <div className="text-[11px] text-white/35">{label}</div>
+      <div
+        className={`mt-1 text-[20px] font-medium tracking-tight ${
+          warn ? 'text-[#E8C547]' : 'text-white/90'
+        }`}
+      >
+        {value}
       </div>
     </div>
   )

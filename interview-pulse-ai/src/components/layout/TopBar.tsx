@@ -14,7 +14,7 @@ export function TopBar() {
   const titles: Record<string, string> = {
     copilot: 'Copilot',
     knowledge: 'Knowledge',
-    practice: 'Practice',
+    practice: 'Mock interview',
     analytics: 'Analytics',
     settings: 'Settings',
   }

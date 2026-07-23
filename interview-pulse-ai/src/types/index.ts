@@ -105,6 +105,15 @@ export interface PracticeSession {
   confidence: number
   technicalDepth: number
   notes: string[]
+  /** Mock interview extras */
+  overall?: number
+  grade?: string
+  jobTitle?: string
+  difficulty?: string
+  focus?: string
+  communication?: number
+  summary?: string
+  practicePlan?: string[]
 }
 
 export interface AnalyticsPoint {

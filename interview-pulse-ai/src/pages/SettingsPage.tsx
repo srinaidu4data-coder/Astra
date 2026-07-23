@@ -1,13 +1,30 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { clamp } from '@/lib/utils'
+import {
+  googleLoginUrl,
+  logout,
+  openBillingPortal,
+  resendWelcomeEmail,
+  startCheckout,
+  syncBilling,
+} from '@/services/auth'
 import { useAppStore } from '@/stores/app-store'
+import { useState } from 'react'
 
 export function SettingsPage() {
   const settings = useAppStore((s) => s.settings)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const stealth = useAppStore((s) => s.stealth)
   const updateStealth = useAppStore((s) => s.updateStealth)
+  const user = useAppStore((s) => s.user)
+  const authConfig = useAppStore((s) => s.authConfig)
+  const clearAuth = useAppStore((s) => s.clearAuth)
+  const refreshAuth = useAppStore((s) => s.refreshAuth)
+  const setAuthFromUser = useAppStore((s) => s.setAuthFromUser)
+  const [billingBusy, setBillingBusy] = useState(false)
+  const [billingErr, setBillingErr] = useState<string | null>(null)
+  const [billingMsg, setBillingMsg] = useState<string | null>(null)
 
   const applyOpacity = async (opacity: number) => {
     updateStealth({ opacity })
@@ -26,6 +43,189 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
+      <section className="glass rounded-[28px] p-8 md:p-10">
+        <h2 className="text-[17px] font-medium tracking-tight text-white/95">
+          Account & billing
+        </h2>
+        <p className="mt-1 mb-6 text-[13px] leading-relaxed text-white/40">
+          Google sign-in first, then monthly Stripe. No public email/password signup.
+        </p>
+
+        {user ? (
+          <div className="mb-5 flex items-center gap-4">
+            {user.picture_url ? (
+              <img
+                src={user.picture_url}
+                alt=""
+                className="h-12 w-12 rounded-full ring-1 ring-white/10"
+              />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-[14px] text-white/70">
+                {(user.name || user.email).slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="truncate text-[15px] text-white/90">
+                {user.name || user.email}
+              </div>
+              <div className="truncate text-[12px] text-white/40">{user.email}</div>
+            </div>
+            <Badge tone={user.subscription_active ? 'emerald' : 'amber'}>
+              {user.subscription_active ? 'Subscribed' : user.subscription_status}
+            </Badge>
+          </div>
+        ) : (
+          <p className="mb-5 text-[13px] text-white/45">
+            {authConfig?.google_configured
+              ? 'Not signed in.'
+              : 'Google OAuth not configured — app is open for local use.'}
+          </p>
+        )}
+
+        {billingErr && (
+          <div className="mb-4 rounded-[14px] border border-[#E85D5D]/40 bg-[#E85D5D]/10 px-4 py-3 text-[13px] text-[#E85D5D]">
+            {billingErr}
+          </div>
+        )}
+        {billingMsg && (
+          <div className="mb-4 rounded-[14px] border border-[#20B8CD]/30 bg-[#20B8CD]/10 px-4 py-3 text-[13px] text-[#5DD5E3]">
+            {billingMsg}
+          </div>
+        )}
+
+        {user?.last_email_error && (
+          <div className="mb-4 rounded-[14px] border border-[#E8C547]/40 bg-[#E8C547]/10 px-4 py-3 text-[12px] text-[#E8C547]">
+            Gmail send issue: {user.last_email_error}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-3">
+          {!user && authConfig?.google_configured && (
+            <Button onClick={() => { window.location.href = googleLoginUrl() }}>
+              Sign in with Google
+            </Button>
+          )}
+          {user && !user.subscription_active && authConfig?.stripe_configured && (
+            <Button
+              disabled={billingBusy}
+              onClick={() => {
+                setBillingBusy(true)
+                setBillingErr(null)
+                void startCheckout()
+                  .then((url) => {
+                    window.location.href = url
+                  })
+                  .catch((e) => {
+                    setBillingErr((e as Error).message)
+                    setBillingBusy(false)
+                  })
+              }}
+            >
+              Subscribe monthly
+            </Button>
+          )}
+          {user && (
+            <>
+              <Button
+                variant="secondary"
+                disabled={billingBusy}
+                onClick={() => {
+                  setBillingBusy(true)
+                  setBillingErr(null)
+                  setBillingMsg(null)
+                  void syncBilling()
+                    .then((data) => {
+                      setAuthFromUser(data.user)
+                      setBillingMsg(
+                        `Synced from Stripe (${data.source}): ${data.user.subscription_status}` +
+                          (data.user.access_revoked_reason
+                            ? ` · ${data.user.access_revoked_reason}`
+                            : ''),
+                      )
+                    })
+                    .catch((e) => setBillingErr((e as Error).message))
+                    .finally(() => setBillingBusy(false))
+                }}
+              >
+                Sync billing
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={billingBusy}
+                onClick={() => {
+                  setBillingBusy(true)
+                  setBillingErr(null)
+                  void openBillingPortal()
+                    .then((url) => {
+                      window.location.href = url
+                    })
+                    .catch((e) => {
+                      setBillingErr((e as Error).message)
+                      setBillingBusy(false)
+                    })
+                }}
+              >
+                Manage billing / refunds
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={billingBusy}
+                onClick={() => {
+                  setBillingBusy(true)
+                  setBillingErr(null)
+                  setBillingMsg(null)
+                  void resendWelcomeEmail()
+                    .then((r) => {
+                      setBillingMsg(
+                        r.welcome_email_sent
+                          ? 'Welcome email sent.'
+                          : `Welcome email failed: ${r.last_email_error || 'unknown'}`,
+                      )
+                      void refreshAuth()
+                    })
+                    .catch((e) => setBillingErr((e as Error).message))
+                    .finally(() => setBillingBusy(false))
+                }}
+              >
+                Resend welcome email
+              </Button>
+              <Button variant="ghost" onClick={() => void refreshAuth()}>
+                Refresh status
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  logout()
+                  clearAuth()
+                }}
+              >
+                Sign out
+              </Button>
+            </>
+          )}
+        </div>
+
+        {authConfig?.diagnostics && (
+          <div className="mt-6 space-y-1 rounded-[14px] glass-inset px-4 py-3 text-[11px] leading-relaxed text-white/35">
+            <div>Wiring diagnostics (no secrets)</div>
+            <div>Google: {authConfig.google_configured ? 'ok' : 'missing client id/secret'}</div>
+            <div>
+              Gmail SMTP:{' '}
+              {authConfig.smtp_configured
+                ? 'configured'
+                : 'missing SMTP_USER / SMTP_PASSWORD (use App Password)'}
+            </div>
+            <div>
+              Stripe: {authConfig.stripe_configured ? 'ok' : 'missing secret key or price id'}
+              {authConfig.diagnostics.stripe_webhook_secret_set
+                ? ' · webhook secret set'
+                : ' · webhook secret missing (local ok, prod required)'}
+            </div>
+            <div>Redirect URI: {authConfig.diagnostics.google_redirect_uri}</div>
+          </div>
+        )}
+      </section>
+
       <section className="glass rounded-[28px] p-8 md:p-10">
         <h2 className="text-[17px] font-medium tracking-tight text-white/95">
           Intelligence

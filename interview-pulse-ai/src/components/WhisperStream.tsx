@@ -45,17 +45,18 @@ export function WhisperStream({
   return (
     <div
       className={cn(
-        'glass flex h-full min-h-[420px] flex-col rounded-[28px] p-8 md:p-10',
-        compact && 'min-h-0 p-6',
+        // Tall reading surface: fill parent and keep a large floor so long answers stay readable
+        'glass flex h-full min-h-[min(78vh,900px)] flex-col rounded-[28px] p-7 md:p-9',
+        compact && 'min-h-0 p-5',
       )}
     >
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-5 flex shrink-0 items-start justify-between gap-4">
         <div>
           <h2 className="text-[17px] font-medium tracking-tight text-white/95">
             Your answer
           </h2>
           <p className="mt-1 text-[13px] text-white/40">
-            Switch format to rewrite · Next only when you&apos;re ready
+            Full context below · switch format to rewrite · Next when ready
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -73,7 +74,7 @@ export function WhisperStream({
         </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-5 flex shrink-0 flex-wrap gap-2">
         {modes.map((m) => (
           <Button
             key={m.id}
@@ -88,12 +89,12 @@ export function WhisperStream({
         ))}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-6 overflow-auto pr-1">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-2 scrollbar-thin">
         {!card && (
-          <div className="flex h-full min-h-[220px] items-center justify-center rounded-[22px] glass-inset px-8 py-16 text-center">
-            <p className="max-w-sm text-[15px] leading-relaxed text-white/40">
-              Type a question and press Answer, or run Interview file. Answers appear here
-              when ready.
+          <div className="flex h-full min-h-[320px] items-center justify-center rounded-[22px] glass-inset px-8 py-20 text-center">
+            <p className="max-w-md text-[15px] leading-relaxed text-white/40">
+              Type a question and press Answer, or run Interview file. Full answers appear
+              here — scroll if they run long.
             </p>
           </div>
         )}
@@ -104,18 +105,18 @@ export function WhisperStream({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="space-y-6"
+            className="space-y-5 pb-2"
           >
             <div className="rounded-[22px] glass-inset px-6 py-5">
               <p className="mb-2 text-xs font-medium uppercase tracking-tight text-white/35">
                 Question
               </p>
-              <p className="text-[17px] font-light leading-snug tracking-tight text-white/92">
+              <p className="text-[18px] font-light leading-snug tracking-tight text-white/92">
                 {card.question}
               </p>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium uppercase tracking-tight text-white/35">
                   Speak this
@@ -131,7 +132,7 @@ export function WhisperStream({
 
               {/* STAR blocks when available */}
               {answer?.mode === 'star' && answer.star && (answer.star.situation || answer.star.action) ? (
-                <div className="grid gap-3">
+                <div className="grid gap-3.5">
                   {(
                     [
                       ['Situation', answer.star.situation],
@@ -143,10 +144,10 @@ export function WhisperStream({
                     .filter(([, t]) => t)
                     .map(([label, t]) => (
                       <div key={label} className="rounded-[18px] glass-inset px-5 py-4">
-                        <div className="mb-1 text-xs font-medium uppercase tracking-tight text-white/35">
+                        <div className="mb-1.5 text-xs font-medium uppercase tracking-tight text-white/35">
                           {label}
                         </div>
-                        <p className="text-[16px] leading-[1.7] text-white/90">{t}</p>
+                        <p className="text-[17px] leading-[1.75] text-white/90">{t}</p>
                       </div>
                     ))}
                 </div>
@@ -154,7 +155,7 @@ export function WhisperStream({
                 bullets.map((b, i) => (
                   <div
                     key={`${card.id}-b-${i}`}
-                    className="rounded-[18px] glass-inset px-5 py-4 text-[16px] leading-[1.7] tracking-[-0.01em] text-white/90"
+                    className="rounded-[18px] glass-inset px-5 py-4 text-[17px] leading-[1.75] tracking-[-0.01em] text-white/90"
                   >
                     {b}
                   </div>
@@ -162,7 +163,7 @@ export function WhisperStream({
               )}
 
               {answer?.codeSnippet ? (
-                <pre className="overflow-auto rounded-[18px] glass-inset p-5 text-[13px] leading-relaxed text-[#5DD5E3]/95">
+                <pre className="max-h-[40vh] overflow-auto rounded-[18px] glass-inset p-5 text-[13px] leading-relaxed text-[#5DD5E3]/95">
                   <code>{answer.codeSnippet}</code>
                 </pre>
               ) : null}
@@ -172,7 +173,7 @@ export function WhisperStream({
       </div>
 
       {total > 0 && (
-        <div className="mt-8 flex items-center justify-between gap-3 border-t border-white/[0.06] pt-6">
+        <div className="mt-6 flex shrink-0 items-center justify-between gap-3 border-t border-white/[0.06] pt-5">
           <Button
             variant="secondary"
             size="sm"

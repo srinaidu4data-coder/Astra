@@ -71,9 +71,10 @@ export function AnalyticsPage() {
           <table className="w-full min-w-[680px] text-left">
             <thead className="text-[12px] text-white/35">
               <tr>
-                <th className="pb-4 font-light">Persona</th>
+                <th className="pb-4 font-light">Role / persona</th>
+                <th className="pb-4 font-light">Grade</th>
                 <th className="pb-4 font-light">Qs</th>
-                <th className="pb-4 font-light">Confidence</th>
+                <th className="pb-4 font-light">Overall</th>
                 <th className="pb-4 font-light">STAR</th>
                 <th className="pb-4 font-light">Depth</th>
                 <th className="pb-4 font-light">Fillers</th>
@@ -83,9 +84,18 @@ export function AnalyticsPage() {
             <tbody>
               {sessions.map((s) => (
                 <tr key={s.id} className="border-t border-white/[0.06] text-[14px] text-white/80">
-                  <td className="py-4 pr-4">{PERSONA_LABELS[s.persona]}</td>
+                  <td className="py-4 pr-4">
+                    <div>{s.jobTitle || PERSONA_LABELS[s.persona]}</div>
+                    <div className="text-[11px] text-white/35">
+                      {PERSONA_LABELS[s.persona]}
+                      {s.difficulty ? ` · ${s.difficulty}` : ''}
+                    </div>
+                  </td>
+                  <td className="py-4 pr-4 text-[#20B8CD]">{s.grade ?? '—'}</td>
                   <td className="py-4 pr-4 text-white/50">{s.questions}</td>
-                  <td className="py-4 pr-4 text-[#5DD5E3]">{s.confidence}%</td>
+                  <td className="py-4 pr-4 text-[#5DD5E3]">
+                    {s.overall != null ? `${s.overall}%` : `${s.confidence}%`}
+                  </td>
                   <td className="py-4 pr-4 text-[#20B8CD]">{s.starCoverage}%</td>
                   <td className="py-4 pr-4">{s.technicalDepth}%</td>
                   <td className="py-4 pr-4 text-[#E8C547]">{s.fillerWords}</td>

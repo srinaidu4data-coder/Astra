@@ -89,6 +89,29 @@ Rules:
 """
 
 app = FastAPI(title="InterviewPulse Copilot API", version="1.0.0")
+
+# Auth (Google) + Stripe billing share this process so the UI hits one origin.
+# Mock interview is core product — mount even if auth/billing deps fail
+try:
+    from backend.mock_interview import router as mock_router  # noqa: E402
+
+    app.include_router(mock_router)
+except Exception as _mock_err:  # pragma: no cover
+    print(f"[mock] router not loaded: {_mock_err}")
+
+try:
+    from backend.database import create_db_and_tables  # noqa: E402
+    from backend.billing import router as billing_router  # noqa: E402
+    from backend.google_oauth import router as oauth_router  # noqa: E402
+    from backend.password_auth import router as password_router  # noqa: E402
+
+    create_db_and_tables()
+    app.include_router(oauth_router)
+    app.include_router(password_router)
+    app.include_router(billing_router)
+except Exception as _auth_import_err:  # pragma: no cover - optional until deps installed
+    print(f"[auth] Google/Stripe/password routers not loaded: {_auth_import_err}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

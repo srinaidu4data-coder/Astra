@@ -568,9 +568,9 @@ class AstraWindow(QMainWindow):
         # Spacious premium layout: hide clutter, vertical Best Answer stack
         self.question_panel.hide()
         try:
-            # Vertical dual-pane: Best Answer dominates
+            # Vertical dual-pane: Best Answer dominates (room for long answers)
             self.answer_splitter.setOrientation(Qt.Orientation.Vertical)
-            self.answer_splitter.setSizes([620, 140])
+            self.answer_splitter.setSizes([780, 160])
         except Exception:
             pass
         if self.centralWidget() and self.centralWidget().layout():
@@ -624,15 +624,15 @@ class AstraWindow(QMainWindow):
             f"border: 1px solid {T.BORDER}; border-radius: 14px; padding: 16px 18px; }}"
         )
 
-        # Best Answer hero
+        # Best Answer hero — large reading surface so long answers stay scannable
         self.script_box.setPlaceholderText(
             "Best Answer streams here live — no button click needed.\n\n"
             "Start Session, then let the interviewer speak."
         )
         self.script_box.setStyleSheet(T.best_answer_body_ss())
-        self.script_box.setMinimumHeight(280)
+        self.script_box.setMinimumHeight(420)
         self.bullet_box.setPlaceholderText("• Key points appear here")
-        self.bullet_box.setMaximumHeight(140)
+        self.bullet_box.setMaximumHeight(160)
         self.bullet_box.setStyleSheet(
             f"QTextEdit {{ background: {T.BG_CARD}; color: {T.TEXT_MUTED}; "
             f"border: 1px solid {T.BORDER}; border-radius: 14px; padding: 14px; "

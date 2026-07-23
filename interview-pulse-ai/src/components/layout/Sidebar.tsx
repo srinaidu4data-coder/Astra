@@ -12,7 +12,7 @@ import {
 const items: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
   { id: 'copilot', label: 'Copilot', icon: Mic2 },
   { id: 'knowledge', label: 'Knowledge', icon: BookOpen },
-  { id: 'practice', label: 'Practice', icon: BrainCircuit },
+  { id: 'practice', label: 'Mock', icon: BrainCircuit },
   { id: 'analytics', label: 'Analytics', icon: Activity },
   { id: 'settings', label: 'Settings', icon: Settings2 },
 ]
