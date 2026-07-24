@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PERSONA_LABELS } from '@/lib/demo-data'
 import { uid } from '@/lib/utils'
+import { MicDictation } from '@/services/dictation'
 import {
   buildMockReport,
   countFillersLocal,
@@ -93,6 +94,7 @@ export function PracticePage() {
 
   const [answerText, setAnswerText] = useState('')
   const [listeningMic, setListeningMic] = useState(false)
+  const [dictateStatus, setDictateStatus] = useState<string | null>(null)
   const [answerElapsed, setAnswerElapsed] = useState(0)
   const [sessionElapsed, setSessionElapsed] = useState(0)
   const [lastScore, setLastScore] = useState<MockScore | null>(null)
@@ -101,14 +103,18 @@ export function PracticePage() {
   const [showModel, setShowModel] = useState(true)
   const [followUpMode, setFollowUpMode] = useState(false)
 
-  // Browser speech recognition (Chrome) — typed loosely for portability
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null)
+  const dictationRef = useRef<MicDictation | null>(null)
+  const answerTextRef = useRef('')
   const answerTick = useRef<ReturnType<typeof setInterval> | null>(null)
   const sessionTick = useRef<ReturnType<typeof setInterval> | null>(null)
   const waveRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startedAt = useRef('')
   const turnsRef = useRef<Turn[]>([])
+
+  // Keep a live ref so mic callbacks always append to the latest box text
+  useEffect(() => {
+    answerTextRef.current = answerText
+  }, [answerText])
 
   const currentQ = questions[qIndex] ?? null
   const localFillers = countFillersLocal(answerText)
@@ -132,13 +138,13 @@ export function PracticePage() {
   }
 
   const stopMic = () => {
-    try {
-      recognitionRef.current?.stop()
-    } catch {
-      /* ignore */
-    }
-    recognitionRef.current = null
+    const d = dictationRef.current
+    dictationRef.current = null
     setListeningMic(false)
+    setDictateStatus(null)
+    if (d) {
+      void d.stop()
+    }
   }
 
   const startWave = () => {
@@ -208,71 +214,53 @@ export function PracticePage() {
   }
 
   const toggleMic = () => {
-    const w = window as unknown as {
-      SpeechRecognition?: new () => {
-        continuous: boolean
-        interimResults: boolean
-        lang: string
-        start: () => void
-        stop: () => void
-        onresult: ((ev: {
-          resultIndex: number
-          results: ArrayLike<ArrayLike<{ transcript: string }>>
-        }) => void) | null
-        onerror: (() => void) | null
-        onend: (() => void) | null
-      }
-      webkitSpeechRecognition?: new () => {
-        continuous: boolean
-        interimResults: boolean
-        lang: string
-        start: () => void
-        stop: () => void
-        onresult: ((ev: {
-          resultIndex: number
-          results: ArrayLike<ArrayLike<{ transcript: string }>>
-        }) => void) | null
-        onerror: (() => void) | null
-        onend: (() => void) | null
-      }
-    }
-    const SR = w.SpeechRecognition || w.webkitSpeechRecognition
-    if (!SR) {
-      setError('Speech recognition not supported in this browser — type your answer instead.')
-      return
-    }
-    if (listeningMic) {
+    if (listeningMic || dictationRef.current?.active) {
       stopMic()
+      // Restore fake practice wave if session still running
+      if (practiceActive && !waveRef.current) startWave()
       return
     }
-    const rec = new SR()
-    rec.continuous = true
-    rec.interimResults = true
-    rec.lang = 'en-US'
-    // Keep committed finals separate from interim so words don't duplicate
-    let finals = answerText.trim()
-    rec.onresult = (ev) => {
-      let interim = ''
-      for (let i = ev.resultIndex; i < ev.results.length; i++) {
-        const piece = ev.results[i][0].transcript
-        const isFinal = Boolean((ev.results[i] as { isFinal?: boolean }).isFinal)
-        if (isFinal) {
-          finals = `${finals} ${piece}`.trim()
-        } else {
-          interim += piece
-        }
-      }
-      setAnswerText(`${finals}${interim ? ` ${interim}` : ''}`.trim())
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError('Microphone not available in this browser — type your answer instead.')
+      return
     }
-    rec.onerror = () => {
-      setListeningMic(false)
-    }
-    rec.onend = () => {
-      setListeningMic(false)
-    }
-    recognitionRef.current = rec
-    rec.start()
+
+    setError(null)
     setListeningMic(true)
+    setDictateStatus('Starting mic…')
+
+    // Prefer real mic levels over the fake practice waveform
+    if (waveRef.current) {
+      clearInterval(waveRef.current)
+      waveRef.current = null
+    }
+
+    const dictation = new MicDictation()
+    dictationRef.current = dictation
+
+    void dictation
+      .start({
+        onText: (piece) => {
+          const prev = answerTextRef.current.trim()
+          const next = prev ? `${prev} ${piece}` : piece
+          answerTextRef.current = next
+          setAnswerText(next)
+        },
+        onLevels: (lv) => setLevels(lv),
+        onStatus: (msg) => setDictateStatus(msg),
+        onError: (msg) => {
+          setError(msg)
+          setDictateStatus(null)
+        },
+      })
+      .catch((e) => {
+        setListeningMic(false)
+        setDictateStatus(null)
+        dictationRef.current = null
+        setError((e as Error).message || 'Could not start dictation')
+        if (practiceActive && !waveRef.current) startWave()
+      })
   }
 
   const submitAnswer = async () => {
@@ -793,7 +781,11 @@ export function PracticePage() {
               className="field min-h-[140px] resize-y text-[15px] leading-relaxed"
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
-              placeholder="Answer out loud or type here…"
+              placeholder={
+                listeningMic
+                  ? 'Listening… keep talking, words appear after short pauses'
+                  : 'Answer out loud or type here…'
+              }
               disabled={!!lastScore}
             />
           </label>
@@ -802,6 +794,9 @@ export function PracticePage() {
             <span className={localFillers > 3 ? 'text-[#E8C547]' : ''}>
               Live fillers ≈ {localFillers}
             </span>
+            {listeningMic && dictateStatus && (
+              <span className="text-[#20B8CD]">{dictateStatus}</span>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3">

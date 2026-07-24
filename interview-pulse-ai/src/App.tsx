@@ -109,23 +109,21 @@ function GatedApp() {
     )
   }
 
-  // Login / paywall temporarily OFF so you can test the copilot freely.
-  // Flip to true when you want Google/email + Stripe gates again.
-  const AUTH_GATE_ENABLED = false
+  // Controlled by backend src/.env:
+  //   AUTH_REQUIRED=true + Google keys → force sign-in (production: jobinterviewcracker.com)
+  //   AUTH_REQUIRED=false or AUTH_DEV_BYPASS=true → open app (local testing)
+  const mustAuth = Boolean(authConfig?.auth_required) && !authConfig?.dev_bypass
+  const signedIn = Boolean(user)
+  const subscribed =
+    Boolean(user?.subscription_active) || Boolean(authConfig?.dev_bypass)
 
-  if (AUTH_GATE_ENABLED) {
-    const mustAuth = Boolean(authConfig?.auth_required) && !authConfig?.dev_bypass
-    const signedIn = Boolean(user)
-    const subscribed =
-      Boolean(user?.subscription_active) || Boolean(authConfig?.dev_bypass)
+  if (mustAuth && !signedIn) {
+    return <AuthPage mode="login" />
+  }
 
-    if (mustAuth && !signedIn) {
-      return <AuthPage mode="login" />
-    }
-
-    if (mustAuth && signedIn && authConfig?.stripe_configured && !subscribed) {
-      return <PaywallPage user={user!} />
-    }
+  // Paywall only when Stripe is configured; Google login alone is enough until then
+  if (mustAuth && signedIn && authConfig?.stripe_configured && !subscribed) {
+    return <PaywallPage user={user!} />
   }
 
   return <DashboardShell />

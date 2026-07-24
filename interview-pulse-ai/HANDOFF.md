@@ -78,13 +78,38 @@ Bells: mic dictation (Chrome), live filler estimate, copy report, Analytics sess
 
 **Order:** Google sign-in → welcome email (Gmail SMTP) → Stripe monthly → app unlock.
 
+### Which Google integration?
+
+| Approach | Use here? |
+|----------|-----------|
+| Next.js Auth.js / NextAuth | **No** — not a Next app |
+| Passport / Express | **No** — backend is FastAPI |
+| django-allauth / Authlib | **No** — not Django/Flask; OAuth is hand-rolled |
+| Google Identity Services (GIS / gsi/client ID token) | **No** — not the current flow |
+| **FastAPI server-side OAuth code exchange** | **Yes — already implemented** |
+
+Implementation: `../src/backend/google_oauth.py`  
+UI: `src/services/auth.ts` → `googleLoginUrl()` → `GET /v1/auth/google`
+
 ### Wired flow (fixed)
-1. Google OAuth **or** email/password register/login  
-2. **Forgot password:** `POST /v1/auth/forgot-password` → Gmail SMTP reset link → `#/auth/reset?token=…` → `POST /v1/auth/reset-password`  
-3. Callback creates user, **retries welcome email** if SMTP failed last time  
-4. Checkout success URL includes `{CHECKOUT_SESSION_ID}` → `POST /v1/billing/confirm-session`  
-5. **Refunds:** revoke access + email  
-6. UI polls subscription every 60s so refunds lock the app  
+1. **Continue with Google** → browser hits API `/v1/auth/google` → Google consent  
+2. Google redirects to **`/v1/auth/google/callback`** (backend exchanges `code`, creates user, issues **JWT**)  
+3. Backend redirects to `FRONTEND_URL/#/auth?token=…` (or error query)  
+4. Email/password register/login is also available when `EMAIL_PASSWORD_AUTH_ENABLED=true`  
+5. **Forgot password:** `POST /v1/auth/forgot-password` → Gmail SMTP reset link → `#/auth/reset?token=…` → `POST /v1/auth/reset-password`  
+6. Welcome email retries if SMTP failed last time  
+7. Checkout success URL includes `{CHECKOUT_SESSION_ID}` → `POST /v1/billing/confirm-session`  
+8. **Refunds:** revoke access + email; UI polls subscription every 60s  
+
+### Google Cloud Console checklist
+**Production domain: jobinterviewcracker.com** — full guide: `docs/GOOGLE_SIGNIN_JOBINTERVIEWCRACKER.md`
+
+1. Create **OAuth 2.0 Client ID** type **Web application**  
+2. **Local** JS origins: `http://localhost:5173` · Redirect: `http://127.0.0.1:8787/v1/auth/google/callback`  
+3. **Production** JS origins: `https://jobinterviewcracker.com` · Redirect: `https://api.jobinterviewcracker.com/v1/auth/google/callback`  
+4. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `JWT_SECRET`, `FRONTEND_URL` in server `src/.env`  
+5. Production template: `src/.env.production.example` · UI build: `interview-pulse-ai/.env.production.example`  
+6. Restart API · UI gate follows backend `AUTH_REQUIRED` (no hardcode) — use `AUTH_REQUIRED=true` + `AUTH_DEV_BYPASS=false` live
 
 ### Routes
 - Auth: `/v1/auth/config|google|google/callback|me|resend-welcome|dev-bypass`  
@@ -102,7 +127,7 @@ Without `GOOGLE_CLIENT_ID`, the app stays open for local interview work.
 
 ## Next wiring (production)
 
-1. Paste Google OAuth + Gmail SMTP app password + Stripe keys into `src/.env`  
+1. Paste Google OAuth + Gmail SMTP app password + Stripe keys into `src/.env` (see checklist above)  
 2. Stripe CLI: `stripe listen --forward-to localhost:8787/v1/billing/webhook`  
 3. Deepgram Nova-2 WebSocket in place of demo STT  
 4. Native WASAPI loopback (system audio) in Electron  

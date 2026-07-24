@@ -258,9 +258,20 @@ export function AuthPage({
                 </Button>
                 {!config?.google_configured && (
                   <p className="text-[12px] leading-relaxed text-[#E8C547]">
-                    Google OAuth not configured yet — use email/password below, or add{' '}
-                    <code className="text-[11px]">GOOGLE_CLIENT_ID</code> in{' '}
-                    <code className="text-[11px]">src/.env</code>.
+                    Google sign-in is not configured on the server yet. Set{' '}
+                    <code className="text-[11px]">GOOGLE_CLIENT_ID</code> +{' '}
+                    <code className="text-[11px]">GOOGLE_CLIENT_SECRET</code> in{' '}
+                    <code className="text-[11px]">src/.env</code>, and register the redirect URI
+                    in Google Cloud (local:{' '}
+                    <code className="text-[11px]">
+                      http://127.0.0.1:8787/v1/auth/google/callback
+                    </code>
+                    ; production:{' '}
+                    <code className="text-[11px]">
+                      https://api.jobinterviewcracker.com/v1/auth/google/callback
+                    </code>
+                    ). Restart the API after saving. See{' '}
+                    <code className="text-[11px]">docs/GOOGLE_SIGNIN_JOBINTERVIEWCRACKER.md</code>.
                   </p>
                 )}
                 {emailAuth && (

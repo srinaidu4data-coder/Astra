@@ -1,0 +1,30 @@
+# Optional: Render.com Blueprint
+# https://dashboard.render.com → New → Blueprint
+
+services:
+  - type: web
+    name: jobinterviewcracker-api
+    runtime: docker
+    dockerfilePath: ./deploy/Dockerfile.api
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: COPILOT_API_HOST
+        value: 0.0.0.0
+      - key: COPILOT_API_PORT
+        value: 8787
+      - key: AUTH_REQUIRED
+        value: "true"
+      - key: AUTH_DEV_BYPASS
+        value: "false"
+      - key: FRONTEND_URL
+        value: https://jobinterviewcracker.com
+      - key: PUBLIC_API_URL
+        value: https://api.jobinterviewcracker.com
+      - key: GOOGLE_REDIRECT_URI
+        value: https://api.jobinterviewcracker.com/v1/auth/google/callback
+      - key: DATABASE_URL
+        value: sqlite:////data/db/astra_backend.db
+      # Set secrets in Render dashboard:
+      # OPENAI_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET

@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Generator, Optional
 
 import numpy as np
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -340,6 +340,84 @@ def warm():
     t0 = time.perf_counter()
     get_whisper_model()
     return {"ok": True, "load_ms": round((time.perf_counter() - t0) * 1000)}
+
+
+def _wav_bytes_to_int16_16k(raw: bytes) -> np.ndarray:
+    """Decode a PCM WAV (or bare int16 PCM) into mono int16 @ 16 kHz."""
+    import io
+    import wave
+
+    if len(raw) < 12:
+        raise HTTPException(400, "audio too short")
+
+    # Prefer stdlib wave for RIFF/WAV
+    if raw[:4] == b"RIFF" and raw[8:12] == b"WAVE":
+        try:
+            with wave.open(io.BytesIO(raw), "rb") as wf:
+                nch = wf.getnchannels()
+                sw = wf.getsampwidth()
+                rate = wf.getframerate()
+                frames = wf.readframes(wf.getnframes())
+            if sw != 2:
+                raise HTTPException(400, f"only 16-bit PCM supported (got {sw * 8}-bit)")
+            audio = np.frombuffer(frames, dtype=np.int16)
+            if nch > 1:
+                audio = audio.reshape(-1, nch).mean(axis=1).astype(np.int16)
+            if rate != SAMPLE_RATE and len(audio) > 0:
+                duration = len(audio) / float(rate)
+                target = max(1, int(duration * SAMPLE_RATE))
+                x_old = np.linspace(0, 1, num=len(audio), endpoint=False)
+                x_new = np.linspace(0, 1, num=target, endpoint=False)
+                audio = np.interp(x_new, x_old, audio.astype(np.float32)).astype(np.int16)
+            return audio
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(400, f"invalid wav: {e}") from e
+
+    # Fallback: little-endian int16 PCM already at 16 kHz
+    if len(raw) % 2 != 0:
+        raw = raw[:-1]
+    return np.frombuffer(raw, dtype=np.int16)
+
+
+@app.post("/api/transcribe")
+async def transcribe_route(
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+):
+    """Mic → Whisper. Used by Practice Dictate (reliable path)."""
+    t0 = time.perf_counter()
+    if file is not None:
+        raw = await file.read()
+    else:
+        raw = await request.body()
+    if not raw or len(raw) < 44:
+        raise HTTPException(400, "empty audio")
+
+    try:
+        audio = _wav_bytes_to_int16_16k(raw)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(400, f"could not decode audio: {e}") from e
+
+    if len(audio) < SAMPLE_RATE // 4:  # < 250ms
+        return {"ok": True, "text": "", "latency_ms": 0, "samples": int(len(audio))}
+
+    try:
+        text = transcribe_audio(audio)
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(500, f"transcription failed: {e}") from e
+
+    return {
+        "ok": True,
+        "text": (text or "").strip(),
+        "latency_ms": round((time.perf_counter() - t0) * 1000),
+        "samples": int(len(audio)),
+        "duration_sec": round(len(audio) / SAMPLE_RATE, 2),
+    }
 
 
 @app.post("/api/answer")
@@ -744,8 +822,13 @@ if __name__ == "__main__":
 
         load_dotenv(env_path)
 
-    port = int(os.environ.get("COPILOT_API_PORT", "8787"))
-    print(f"InterviewPulse Copilot API → http://127.0.0.1:{port}")
-    print(f"  Live WS: ws://127.0.0.1:{port}/ws/interview")
+    # Railway/Render set PORT; local uses 8787
+    port = int(os.environ.get("PORT") or os.environ.get("COPILOT_API_PORT") or "8787")
+    # 127.0.0.1 = local only; 0.0.0.0 = production (Docker / Railway / Render)
+    host = os.environ.get("COPILOT_API_HOST", "127.0.0.1")
+    if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RENDER"):
+        host = os.environ.get("COPILOT_API_HOST", "0.0.0.0")
+    print(f"InterviewPulse Copilot API → http://{host}:{port}")
+    print(f"  Live WS: ws://{host}:{port}/ws/interview")
     print(f"Default audio: {DEFAULT_AUDIO if DEFAULT_AUDIO.exists() else DEFAULT_AUDIO_MP3}")
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
+    uvicorn.run(app, host=host, port=port, log_level="info")
