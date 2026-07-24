@@ -388,7 +388,11 @@ class LinuxAudioCapture(AudioCapture):
 
 
 # Windows implementation: windows_capture.py (Stereo Mix via sounddevice)
-from windows_capture import WindowsAudioCapture  # noqa: E402
+# On Linux (Railway/Docker) skip — cloud API only needs Whisper on uploaded/WS audio.
+if sys.platform == "win32":
+    from windows_capture import WindowsAudioCapture  # noqa: E402
+else:
+    WindowsAudioCapture = None  # type: ignore[misc, assignment]
 
 
 # Module-level functions for device listing (platform-specific)

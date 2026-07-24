@@ -19,12 +19,13 @@ from audio_capture import AudioCapture, Int16RingBuffer, MAX_BUFFER_SECONDS
 
 try:
     import sounddevice as sd
-except ImportError:
+except Exception:
+    # ImportError, or OSError when PortAudio is missing (Linux cloud images)
     sd = None
 
 try:
     import pyaudiowpatch as pyaudio
-except ImportError:
+except Exception:
     pyaudio = None
 
 
