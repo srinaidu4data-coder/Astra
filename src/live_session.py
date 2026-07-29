@@ -17,7 +17,7 @@ from typing import Any, Optional
 
 import numpy as np
 
-from audio_capture import get_audio_capture
+from audio_capture import BrowserAudioCapture, get_audio_capture
 from config import (
     AUTO_TRANSCRIBE_MAX_SECONDS,
     MAX_UTTERANCE_SECONDS,
@@ -45,6 +45,7 @@ class LiveInterviewSession:
         self._process_lock = threading.Lock()
         self._processing = False
         self._capture = None
+        self._source = "system"  # system | browser
 
         self.job_context = "AI/ML Engineer"
         self.tone = "confident"
@@ -62,7 +63,24 @@ class LiveInterviewSession:
     def running(self) -> bool:
         return self._thread is not None and self._thread.is_alive()
 
-    def start(self, *, job_context: str = "", tone: str = "confident", mode: str = "star") -> None:
+    @property
+    def source(self) -> str:
+        return self._source
+
+    def start(
+        self,
+        *,
+        job_context: str = "",
+        tone: str = "confident",
+        mode: str = "star",
+        source: str = "system",
+    ) -> None:
+        src = (source or "system").strip().lower()
+        if src in ("mic", "browser-mic", "client"):
+            src = "browser"
+        if src not in ("system", "browser"):
+            src = "system"
+
         if self.running:
             self.job_context = job_context or self.job_context
             self.tone = tone or self.tone
@@ -73,6 +91,7 @@ class LiveInterviewSession:
         self.job_context = job_context or "AI/ML Engineer"
         self.tone = tone or "confident"
         self.mode = mode or "star"
+        self._source = src
         self._stop.clear()
         self._noise_floor = 0.01
         self._level_ema = 0.0
@@ -82,6 +101,16 @@ class LiveInterviewSession:
 
         self._thread = threading.Thread(target=self._run, name="live-interview", daemon=True)
         self._thread.start()
+
+    def push_audio(self, pcm16: bytes) -> None:
+        """Feed browser mic PCM (int16 LE mono) into the active session."""
+        cap = self._capture
+        if cap is None or not isinstance(cap, BrowserAudioCapture):
+            return
+        try:
+            cap.push_pcm16(pcm16)
+        except Exception:
+            pass
 
     def stop(self) -> None:
         self._stop.set()
@@ -111,30 +140,55 @@ class LiveInterviewSession:
 
     def _run(self) -> None:
         try:
-            self._emit("status", {"message": "Opening system audio (Stereo Mix / loopback)…"})
             # Warm Whisper early so first question is faster
             try:
                 get_whisper_model()
             except Exception as e:
                 self._emit("error", {"message": f"Whisper load failed: {e}"})
 
-            self._capture = get_audio_capture()
-            self._capture.start_capture()
-            device = getattr(self._capture, "device", "unknown")
+            if self._source == "browser":
+                self._emit("status", {"message": "Waiting for browser microphone audio…"})
+                try:
+                    from config import AUDIO_SAMPLE_RATE, AUDIO_CHANNELS
+
+                    self._capture = BrowserAudioCapture(
+                        sample_rate=AUDIO_SAMPLE_RATE,
+                        channels=AUDIO_CHANNELS,
+                    )
+                except Exception:
+                    self._capture = BrowserAudioCapture()
+                self._capture.start_capture()
+                device = "browser-mic"
+                status_msg = (
+                    "Live session ON · browser mic · allow microphone access, "
+                    "then speak or play interview audio near the mic"
+                )
+            else:
+                self._emit(
+                    "status",
+                    {"message": "Opening system audio (Stereo Mix / loopback)…"},
+                )
+                self._capture = get_audio_capture()
+                self._capture.start_capture()
+                device = getattr(self._capture, "device", "unknown")
+                status_msg = f"Live session ON · {device} · speak (or play interview audio)"
+
             self._emit(
                 "listening",
                 {
                     "active": True,
                     "device": device,
                     "message": f"Listening on {device}",
+                    "source": self._source,
                 },
             )
             self._emit(
                 "status",
                 {
-                    "message": f"Live session ON · {device} · speak (or play interview audio)",
+                    "message": status_msg,
                     "listening": True,
                     "device": device,
+                    "source": self._source,
                 },
             )
 

@@ -1,8 +1,8 @@
 /** Google auth + Stripe billing client (copilot API on :8787). */
 
-const API_BASE =
-  (import.meta.env.VITE_COPILOT_API_URL as string | undefined)?.replace(/\/$/, '') ||
-  'http://127.0.0.1:8787'
+import { resolveCopilotHttpBase } from '@/lib/api-base'
+
+const API_BASE = resolveCopilotHttpBase()
 
 const TOKEN_KEY = 'astra_auth_token'
 

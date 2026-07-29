@@ -1,9 +1,7 @@
 import type { AnswerMode, SuggestedAnswer } from '@/types'
+import { preferBrowserMic, resolveCopilotWsUrl } from '@/lib/api-base'
 import { normalizeAnswer } from './real-api'
 import { uid } from '@/lib/utils'
-
-const WS_URL =
-  import.meta.env.VITE_COPILOT_WS ?? 'ws://127.0.0.1:8787/ws/interview'
 
 export type LiveEvent =
   | { type: 'status'; message?: string; listening?: boolean; device?: string }
@@ -39,9 +37,38 @@ export type LiveHandlers = {
   onConnection?: (state: 'open' | 'closed' | 'error') => void
 }
 
+function downsample(input: Float32Array, fromRate: number, toRate: number): Float32Array {
+  if (fromRate === toRate) return input
+  const ratio = fromRate / toRate
+  const outLen = Math.max(1, Math.floor(input.length / ratio))
+  const out = new Float32Array(outLen)
+  for (let i = 0; i < outLen; i++) {
+    const start = Math.floor(i * ratio)
+    const end = Math.min(input.length, Math.floor((i + 1) * ratio))
+    let sum = 0
+    let n = 0
+    for (let j = start; j < end; j++) {
+      sum += input[j]!
+      n++
+    }
+    out[i] = n > 0 ? sum / n : input[start] ?? 0
+  }
+  return out
+}
+
+function floatTo16BitPCM(float32: Float32Array): Int16Array {
+  const out = new Int16Array(float32.length)
+  for (let i = 0; i < float32.length; i++) {
+    const s = Math.max(-1, Math.min(1, float32[i] ?? 0))
+    out[i] = s < 0 ? Math.round(s * 0x8000) : Math.round(s * 0x7fff)
+  }
+  return out
+}
+
 /**
  * WebSocket client for continuous live interview backend.
- * Start once → stays connected and listening until stop().
+ * On web/cloud: streams browser microphone PCM to the API.
+ * Local Windows can still request system (Stereo Mix) capture.
  */
 export class LiveInterviewClient {
   private ws: WebSocket | null = null
@@ -55,7 +82,15 @@ export class LiveInterviewClient {
     jobContext?: string
     tone?: string
     mode?: AnswerMode
+    source?: 'browser' | 'system'
   } | null = null
+
+  // Browser mic streaming
+  private mediaStream: MediaStream | null = null
+  private audioCtx: AudioContext | null = null
+  private processor: ScriptProcessorNode | null = null
+  private mediaSource: MediaStreamAudioSourceNode | null = null
+  private micActive = false
 
   connect(handlers: LiveHandlers) {
     this.handlers = handlers
@@ -72,7 +107,8 @@ export class LiveInterviewClient {
       this.reconnectTimer = null
     }
     try {
-      const ws = new WebSocket(WS_URL)
+      const wsUrl = resolveCopilotWsUrl()
+      const ws = new WebSocket(wsUrl)
       this.ws = ws
 
       ws.onopen = () => {
@@ -81,17 +117,7 @@ export class LiveInterviewClient {
         this.handlers.onStatus?.('Backend connected')
         // Resume live session after reconnect if we were listening
         if (this.wasListening && this.lastStartOpts) {
-          try {
-            this.send({
-              type: 'start',
-              job_context: this.lastStartOpts.jobContext ?? 'AI/ML Engineer',
-              tone: this.lastStartOpts.tone ?? 'confident',
-              mode: this.lastStartOpts.mode ?? this.mode,
-            })
-            this.handlers.onStatus?.('Reconnected — live session resumed')
-          } catch {
-            // ignore
-          }
+          void this.resumeAfterReconnect()
         }
       }
       ws.onclose = () => {
@@ -120,13 +146,32 @@ export class LiveInterviewClient {
     }
   }
 
+  private async resumeAfterReconnect() {
+    if (!this.lastStartOpts) return
+    try {
+      this.send({
+        type: 'start',
+        job_context: this.lastStartOpts.jobContext ?? 'AI/ML Engineer',
+        tone: this.lastStartOpts.tone ?? 'confident',
+        mode: this.lastStartOpts.mode ?? this.mode,
+        source: this.lastStartOpts.source ?? 'browser',
+      })
+      if ((this.lastStartOpts.source ?? 'browser') === 'browser' && !this.micActive) {
+        await this.startBrowserMic()
+      }
+      this.handlers.onStatus?.('Reconnected — live session resumed')
+    } catch {
+      // ignore
+    }
+  }
+
   private scheduleReconnect() {
     if (this.intentionalClose) return
     if (this.reconnectTimer) return
     this.reconnectAttempt += 1
     const delay = Math.min(8000, 800 * this.reconnectAttempt)
     this.handlers.onStatus?.(
-      `Backend offline — retry in ${Math.round(delay / 1000)}s (start: python copilot_api.py)`,
+      `Backend offline — retry in ${Math.round(delay / 1000)}s`,
     )
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
@@ -218,6 +263,14 @@ export class LiveInterviewClient {
     this.ws.send(JSON.stringify(obj))
   }
 
+  private sendPcm(int16: Int16Array) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || int16.length === 0) return
+    // Copy into a standalone ArrayBuffer (avoid SharedArrayBuffer typing issues)
+    const buf = new ArrayBuffer(int16.byteLength)
+    new Int16Array(buf).set(int16)
+    this.ws.send(buf)
+  }
+
   async ensureOpen(timeoutMs = 4000) {
     const isOpen = () => this.ws != null && this.ws.readyState === 1 // OPEN
     if (isOpen()) return
@@ -229,29 +282,136 @@ export class LiveInterviewClient {
       await new Promise((r) => setTimeout(r, 50))
     }
     if (!isOpen()) {
-      throw new Error('Backend WebSocket not open — is copilot_api.py running?')
+      throw new Error(
+        `Backend WebSocket not open (${resolveCopilotWsUrl()}). Is the API running?`,
+      )
     }
+  }
+
+  private async startBrowserMic() {
+    if (this.micActive) return
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Browser microphone not available (use HTTPS or localhost)')
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        channelCount: 1,
+      },
+      video: false,
+    })
+    this.mediaStream = stream
+
+    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    const ctx = new Ctx()
+    this.audioCtx = ctx
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
+    }
+
+    const source = ctx.createMediaStreamSource(stream)
+    this.mediaSource = source
+    // ScriptProcessor is deprecated but widely supported for PCM tap without worklet deploy
+    const processor = ctx.createScriptProcessor(4096, 1, 1)
+    this.processor = processor
+    const inputRate = ctx.sampleRate
+    const targetRate = 16000
+
+    processor.onaudioprocess = (ev) => {
+      if (!this.micActive) return
+      const input = ev.inputBuffer.getChannelData(0)
+      const copy = new Float32Array(input.length)
+      copy.set(input)
+      const down = downsample(copy, inputRate, targetRate)
+      const pcm = floatTo16BitPCM(down)
+      this.sendPcm(pcm)
+
+      // Local waveform feedback while waiting for server levels
+      let sum = 0
+      for (let i = 0; i < copy.length; i++) sum += copy[i]! * copy[i]!
+      const rms = Math.sqrt(sum / Math.max(1, copy.length))
+      this.handlers.onLevel?.(Math.min(1, rms * 4), 'hearing')
+    }
+
+    source.connect(processor)
+    // Keep graph alive without audible monitor (avoid feedback)
+    const mute = ctx.createGain()
+    mute.gain.value = 0
+    processor.connect(mute)
+    mute.connect(ctx.destination)
+    this.micActive = true
+  }
+
+  private stopBrowserMic() {
+    this.micActive = false
+    try {
+      this.processor?.disconnect()
+    } catch {
+      /* ignore */
+    }
+    try {
+      this.mediaSource?.disconnect()
+    } catch {
+      /* ignore */
+    }
+    try {
+      this.mediaStream?.getTracks().forEach((t) => t.stop())
+    } catch {
+      /* ignore */
+    }
+    try {
+      void this.audioCtx?.close()
+    } catch {
+      /* ignore */
+    }
+    this.processor = null
+    this.mediaSource = null
+    this.mediaStream = null
+    this.audioCtx = null
   }
 
   async start(opts: {
     jobContext?: string
     tone?: string
     mode?: AnswerMode
+    source?: 'browser' | 'system'
   }) {
     await this.ensureOpen()
     this.mode = opts.mode ?? 'star'
-    this.lastStartOpts = { ...opts, mode: this.mode }
+    const source = opts.source ?? (preferBrowserMic() ? 'browser' : 'system')
+    this.lastStartOpts = { ...opts, mode: this.mode, source }
     this.wasListening = true
-    this.send({
-      type: 'start',
-      job_context: opts.jobContext ?? 'AI/ML Engineer',
-      tone: opts.tone ?? 'confident',
-      mode: this.mode,
-    })
+
+    if (source === 'browser') {
+      // Open mic first so permission UX is immediate; then start server session
+      await this.startBrowserMic()
+      this.send({
+        type: 'start',
+        job_context: opts.jobContext ?? 'AI/ML Engineer',
+        tone: opts.tone ?? 'confident',
+        mode: this.mode,
+        source: 'browser',
+      })
+      this.handlers.onStatus?.(
+        'Listening via browser mic — play interviewer audio aloud or speak questions',
+        true,
+      )
+    } else {
+      this.send({
+        type: 'start',
+        job_context: opts.jobContext ?? 'AI/ML Engineer',
+        tone: opts.tone ?? 'confident',
+        mode: this.mode,
+        source: 'system',
+      })
+    }
   }
 
   stop() {
     this.wasListening = false
+    this.stopBrowserMic()
     try {
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.send({ type: 'stop' })
@@ -275,6 +435,7 @@ export class LiveInterviewClient {
   disconnect() {
     this.intentionalClose = true
     this.wasListening = false
+    this.stopBrowserMic()
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null

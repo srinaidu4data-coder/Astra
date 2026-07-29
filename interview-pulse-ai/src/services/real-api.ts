@@ -1,7 +1,8 @@
 import type { AnswerMode, PipelineMetrics, SuggestedAnswer, TranscriptLine } from '@/types'
+import { resolveCopilotHttpBase } from '@/lib/api-base'
 import { uid } from '@/lib/utils'
 
-const API_BASE = import.meta.env.VITE_COPILOT_API ?? 'http://127.0.0.1:8787'
+const API_BASE = resolveCopilotHttpBase()
 
 export interface RealPipelineCallbacks {
   onStatus?: (message: string) => void
@@ -18,11 +19,26 @@ export async function checkCopilotHealth(): Promise<{
   ok: boolean
   openai_key?: boolean
   default_audio_wav?: string | null
+  whisper_model_ready?: boolean
 }> {
   try {
-    const res = await fetch(`${API_BASE}/api/health`, { signal: AbortSignal.timeout(3000) })
+    const res = await fetch(`${API_BASE}/api/health`, {
+      signal: AbortSignal.timeout(8000),
+      mode: 'cors',
+    })
     if (!res.ok) return { ok: false }
-    return await res.json()
+    const data = (await res.json()) as {
+      ok?: boolean
+      openai_key?: boolean
+      default_audio_wav?: string | null
+      whisper_model_ready?: boolean
+    }
+    return {
+      ok: Boolean(data.ok),
+      openai_key: data.openai_key,
+      default_audio_wav: data.default_audio_wav,
+      whisper_model_ready: data.whisper_model_ready,
+    }
   } catch {
     return { ok: false }
   }

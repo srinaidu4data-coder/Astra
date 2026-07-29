@@ -1,8 +1,8 @@
 /** Mock interview API client (copilot API :8787). */
 
-const API_BASE =
-  (import.meta.env.VITE_COPILOT_API_URL as string | undefined)?.replace(/\/$/, '') ||
-  'http://127.0.0.1:8787'
+import { resolveCopilotHttpBase } from '@/lib/api-base'
+
+const API_BASE = resolveCopilotHttpBase()
 
 export type MockPersona =
   | 'strict-tech-lead'

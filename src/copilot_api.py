@@ -689,20 +689,25 @@ from live_session import LiveInterviewSession  # noqa: E402
 @app.websocket("/ws/interview")
 async def ws_interview(websocket: WebSocket):
     """
-    Protocol (JSON text frames):
+    Protocol:
 
-    Client → server:
-      {"type":"start","job_context":"...","tone":"confident","mode":"star"}
+    Client → server (JSON text):
+      {"type":"start","job_context":"...","tone":"confident","mode":"star","source":"browser"|"system"}
       {"type":"stop"}
       {"type":"set_mode","mode":"shorter"}
       {"type":"set_context","job_context":"...","tone":"..."}
       {"type":"ping"}
+      {"type":"audio","pcm_b64":"..."}  # optional base64 int16 LE mono PCM
+
+    Client → server (binary):
+      raw int16 little-endian mono PCM chunks (browser mic)
 
     Server → client:
       {"type":"status"|"listening"|"level"|"transcript"|"question"|"chatter"|"answer"|"error"|"pong", ...}
     """
     await websocket.accept()
     import asyncio
+    import base64
 
     loop = asyncio.get_event_loop()
     out_q: asyncio.Queue = asyncio.Queue(maxsize=256)
@@ -732,6 +737,11 @@ async def ws_interview(websocket: WebSocket):
 
     writer_task = asyncio.create_task(writer())
 
+    def _feed_pcm(raw: bytes) -> None:
+        sess = session_holder.get("session")
+        if sess is not None and raw:
+            sess.push_audio(raw)
+
     try:
         await websocket.send_json(
             {
@@ -741,7 +751,20 @@ async def ws_interview(websocket: WebSocket):
             }
         )
         while True:
-            raw = await websocket.receive_text()
+            message = await websocket.receive()
+            if message.get("type") == "websocket.disconnect":
+                break
+
+            # Browser mic: binary PCM frames
+            data_bytes = message.get("bytes")
+            if data_bytes is not None:
+                _feed_pcm(data_bytes)
+                continue
+
+            raw = message.get("text")
+            if raw is None:
+                continue
+
             try:
                 msg = json.loads(raw)
             except json.JSONDecodeError:
@@ -753,15 +776,34 @@ async def ws_interview(websocket: WebSocket):
                 await websocket.send_json({"type": "pong"})
                 continue
 
+            if mtype == "audio":
+                # JSON-wrapped base64 PCM (fallback path)
+                b64 = msg.get("pcm_b64") or msg.get("data") or ""
+                try:
+                    _feed_pcm(base64.b64decode(b64))
+                except Exception:
+                    pass
+                continue
+
             if mtype == "start":
                 sess: LiveInterviewSession | None = session_holder.get("session")
                 if sess is None or not sess.running:
                     sess = LiveInterviewSession(emit)
                     session_holder["session"] = sess
+                # Default browser for cloud (no Stereo Mix); clients may override.
+                source = (msg.get("source") or "").strip().lower()
+                if not source:
+                    source = "browser" if (
+                        os.environ.get("RAILWAY_ENVIRONMENT")
+                        or os.environ.get("RENDER")
+                        or os.environ.get("COPILOT_FORCE_BROWSER_MIC", "").lower()
+                        in ("1", "true", "yes")
+                    ) else "system"
                 sess.start(
                     job_context=msg.get("job_context") or "AI/ML Engineer",
                     tone=msg.get("tone") or "confident",
                     mode=msg.get("mode") or "star",
+                    source=source,
                 )
                 continue
 

@@ -3,9 +3,9 @@
  * More reliable than browser SpeechRecognition (which often never fires onresult).
  */
 
-const API_BASE =
-  (import.meta.env.VITE_COPILOT_API as string | undefined)?.replace(/\/$/, '') ||
-  'http://127.0.0.1:8787'
+import { resolveCopilotHttpBase } from '@/lib/api-base'
+
+const API_BASE = resolveCopilotHttpBase()
 
 const TARGET_RATE = 16000
 /** Send a clip about this often while speaking */

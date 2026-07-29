@@ -507,6 +507,74 @@ def get_default_monitor() -> str | None:
     return monitors[0].name
 
 
+class BrowserAudioCapture(AudioCapture):
+    """
+    Capture fed by the browser (mic PCM over WebSocket).
+
+    Used for cloud/web deploys where server-side Stereo Mix / parec is unavailable.
+    Client sends little-endian int16 mono PCM (typically 16 kHz).
+    """
+
+    def __init__(self, sample_rate: int = 16000, channels: int = 1):
+        self._sample_rate = int(sample_rate) or 16000
+        self._channels = int(channels) or 1
+        self._ring = Int16RingBuffer(self._sample_rate * MAX_BUFFER_SECONDS)
+        self._capturing = False
+        self._level = 0.0
+        self._raw_level = 0.0
+        self._device_name = "browser-mic"
+
+    @property
+    def device(self) -> str:
+        return self._device_name
+
+    def start_capture(self) -> None:
+        self._ring.clear()
+        self._level = 0.0
+        self._raw_level = 0.0
+        self._capturing = True
+
+    def stop_capture(self) -> np.ndarray:
+        self._capturing = False
+        samples = self._ring.get_all_samples()
+        self._ring.clear()
+        return samples
+
+    def push_pcm16(self, data: bytes) -> None:
+        """Append raw little-endian int16 mono PCM from the browser."""
+        if not self._capturing or not data:
+            return
+        if len(data) % 2:
+            data = data[:-1]
+        if not data:
+            return
+        samples = np.frombuffer(data, dtype=np.int16)
+        if self._channels > 1 and len(samples) >= self._channels:
+            # unexpected multi-channel — take first channel only
+            usable = (len(samples) // self._channels) * self._channels
+            samples = samples[:usable].reshape(-1, self._channels)[:, 0].astype(np.int16)
+        self._ring.extend_samples(samples)
+        # RMS level 0..1 for VAD / waveform
+        if len(samples):
+            rms = float(np.sqrt(np.mean(samples.astype(np.float32) ** 2)))
+            lvl = min(1.0, rms / 8000.0)
+            self._raw_level = lvl
+            self._level = (0.6 * self._level) + (0.4 * lvl)
+
+    def get_last_n_seconds(self, n: int) -> np.ndarray:
+        n = max(0, int(n))
+        return self._ring.get_last_n_samples(int(n * self._sample_rate))
+
+    def get_audio_level(self) -> float:
+        return float(self._level)
+
+    def get_vad_level(self) -> float:
+        return float(self._raw_level or self._level)
+
+    def list_devices(self) -> list[dict]:
+        return [{"name": self._device_name, "status": "browser"}]
+
+
 def get_audio_capture(device: str = None) -> AudioCapture:
     """
     Factory function to get platform-appropriate AudioCapture instance.

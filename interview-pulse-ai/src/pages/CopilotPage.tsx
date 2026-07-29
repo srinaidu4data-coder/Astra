@@ -14,7 +14,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 /**
  * Real interview UX:
  * - One big Listen button stays ON for the whole interview
- * - Backend captures system audio (Stereo Mix), VAD end-of-turn
+ * - Web/cloud: browser mic streams PCM → API Whisper + answers
+ * - Local Windows: can use system Stereo Mix when source=system
  * - Filters chatter, answers only interviewer questions
  * - Answers queue; you step with Next when ready
  */
@@ -190,21 +191,33 @@ export function CopilotPage() {
         pushStatus('Answer ready — still listening')
       },
       onError: (msg) => {
+        // Session/audio errors are not the same as "API offline"
         pushStatus(`Error: ${msg}`)
-        setApiOk(false)
+        if (/not connected|websocket not open|backend connection closed|failed to fetch/i.test(msg)) {
+          setApiOk(false)
+        }
       },
     })
 
     // Probe HTTP health + WS (poll so buttons re-enable when API starts)
     const ping = () => {
       void checkCopilotHealth().then((h) => {
-        const ok = Boolean(h.ok && h.openai_key)
-        setApiOk(ok)
-        if (!ok) pushStatus('Backend offline — run: python copilot_api.py')
+        // Online = API reachable. openai_key is optional soft warning.
+        if (h.ok) {
+          setApiOk(true)
+          if (h.openai_key === false) {
+            pushStatus('API online — set OPENAI_API_KEY on the server for AI answers')
+          }
+        } else if (!liveInterview.connected) {
+          setApiOk(false)
+        }
       })
-      void liveInterview.ensureOpen().then(() => setApiOk(true)).catch(() => {
-        /* health poll handles message */
-      })
+      void liveInterview
+        .ensureOpen()
+        .then(() => setApiOk(true))
+        .catch(() => {
+          /* health poll handles message */
+        })
     }
     ping()
     const id = window.setInterval(ping, 5000)
@@ -230,7 +243,7 @@ export function CopilotPage() {
     }
 
     try {
-      pushStatus('Starting continuous listen…')
+      pushStatus('Starting interview — allow microphone if prompted…')
       await liveInterview.start({
         jobContext: settings.jobContext || activeJobTitle,
         tone: settings.tone,
@@ -239,15 +252,21 @@ export function CopilotPage() {
       setSessionOn(true)
       setListening(true)
       setApiOk(true)
-      pushStatus('Listening for interviewer questions (session stays ON)')
+      setDevice('browser-mic')
+      pushStatus('Listening (browser mic) — session stays ON')
     } catch (e) {
       const msg = (e as Error).message || 'Could not start'
       pushStatus(`Could not start: ${msg}`)
       setSessionOn(false)
       setListening(false)
-      setApiOk(false)
+      const offline = /not connected|websocket|failed to fetch|network/i.test(msg)
+      if (offline) setApiOk(false)
       window.alert(
-        `Cannot start interview.\n\n${msg}\n\nStart the backend first:\n  cd src\n  venv\\Scripts\\python.exe copilot_api.py`,
+        `Cannot start interview.\n\n${msg}\n\n` +
+          `Tips:\n` +
+          `• Allow microphone access in the browser\n` +
+          `• On this website the API should be api.jobinterviewcracker.com\n` +
+          `• Local only: cd src && python copilot_api.py`,
       )
     }
   }
@@ -448,15 +467,16 @@ export function CopilotPage() {
           <div className="mb-8 space-y-2 rounded-[18px] glass-inset px-5 py-4 text-[13px] leading-relaxed text-white/45">
             <p className="font-light text-white/75">How this works</p>
             <ol className="list-decimal space-y-1.5 pl-4">
-              <li>Press <strong className="text-white/70">Start interview</strong> — it stays on</li>
-              <li>Play the interviewer (Zoom / browser / speakers on this PC)</li>
-              <li>Backend listens via Stereo Mix, ignores small talk</li>
+              <li>Press <strong className="text-white/70">Start interview</strong> — allow mic if asked</li>
+              <li>Play the interviewer on speakers (or speak the question)</li>
+              <li>Browser mic streams audio to the API; chatter is filtered</li>
               <li>When a real question ends, an answer appears here</li>
             </ol>
             {!apiOk && (
               <p className="mt-2 text-[#E8C547]">
-                Backend offline. In a terminal:{" "}
-                <code className="text-[12px]">cd src && python copilot_api.py</code>
+                Backend offline. Production uses{' '}
+                <code className="text-[12px]">api.jobinterviewcracker.com</code>
+                . Local: <code className="text-[12px]">cd src && python copilot_api.py</code>
               </p>
             )}
           </div>
