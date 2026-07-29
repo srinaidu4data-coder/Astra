@@ -1,18 +1,21 @@
+import { DesktopOption } from '@/components/DesktopOption'
 import { Button } from '@/components/ui/button'
 import {
+  completeTokenLogin,
   devBypassLogin,
   fetchAuthConfig,
   googleLoginUrl,
   loginWithEmail,
+  parseAuthHashParams,
   registerWithEmail,
   requestPasswordReset,
   resetPasswordWithToken,
-  setToken,
+  stripAuthTokenFromUrl,
   type AuthConfig,
 } from '@/services/auth'
 import { useAppStore } from '@/stores/app-store'
 import { Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 type View = 'login' | 'register' | 'forgot' | 'reset' | 'callback'
@@ -29,7 +32,8 @@ export function AuthPage({
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const setAuth = useAppStore((s) => s.setAuth)
-  const refreshAuth = useAppStore((s) => s.refreshAuth)
+  const bootstrapAuth = useAppStore((s) => s.bootstrapAuth)
+  const loginOnce = useRef(false)
 
   const initialView: View =
     mode === 'callback'
@@ -45,6 +49,9 @@ export function AuthPage({
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [busy, setBusy] = useState(mode === 'callback')
+  const [status, setStatus] = useState(
+    mode === 'callback' ? 'Completing Google sign-in…' : '',
+  )
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -60,43 +67,82 @@ export function AuthPage({
   useEffect(() => {
     if (mode === 'reset') {
       setView('reset')
-      const t = params.get('token')
+      const t = params.get('token') || parseAuthHashParams().token
       if (t) setResetToken(t)
     }
     if (mode === 'forgot') setView('forgot')
   }, [mode, params])
 
-  // Google OAuth callback
+  // Backend fail() redirects to #/auth?error=… (login route) — surface it
   useEffect(() => {
-    if (mode !== 'callback') return
-
-    const token = params.get('token')
-    const err = params.get('error')
+    if (mode === 'callback' || mode === 'reset') return
+    const err = params.get('error') || parseAuthHashParams().error
     if (err) {
       setError(err.replace(/_/g, ' '))
       setBusy(false)
       setView('login')
-      return
     }
-    if (!token) {
-      setError('Missing session token from Google.')
+  }, [mode, params])
+
+  // Google OAuth success → #/auth/callback?token=…
+  // Also accept token on #/auth?token=… if backend path drifts
+  useEffect(() => {
+    if (loginOnce.current) return
+    if (mode !== 'callback' && mode !== 'login') return
+
+    const fromHash = parseAuthHashParams()
+    const token = params.get('token') || fromHash.token
+    const err = params.get('error') || fromHash.error
+
+    // Normal login page (no OAuth return) — do nothing
+    if (mode === 'login' && !token && !err) return
+
+    if (err) {
+      loginOnce.current = true
+      setError(err.replace(/_/g, ' '))
       setBusy(false)
       setView('login')
+      setStatus('')
+      stripAuthTokenFromUrl()
       return
     }
 
-    setToken(token)
+    if (!token) {
+      if (mode === 'callback') {
+        loginOnce.current = true
+        setError('Missing session token from Google. Try Continue with Google again.')
+        setBusy(false)
+        setView('login')
+        setStatus('')
+      }
+      return
+    }
+
+    loginOnce.current = true
+    setBusy(true)
+    setView('callback')
+    setStatus('Saving session…')
+    setError(null)
+
     void (async () => {
       try {
-        await refreshAuth()
+        setStatus('Verifying with API…')
+        const user = await completeTokenLogin(token)
+        setAuth({ user, token })
+        stripAuthTokenFromUrl()
+        setStatus('Signed in — opening app…')
+        await bootstrapAuth()
         navigate('/', { replace: true })
       } catch (e) {
+        stripAuthTokenFromUrl()
         setError((e as Error).message || 'Could not complete sign-in')
         setBusy(false)
         setView('login')
+        setStatus('')
+        loginOnce.current = false
       }
     })()
-  }, [mode, params, navigate, refreshAuth])
+  }, [mode, params, navigate, setAuth, bootstrapAuth])
 
   const onGoogle = () => {
     setBusy(true)
@@ -239,9 +285,27 @@ export function AuthPage({
         )}
 
         {busy && view === 'callback' ? (
-          <div className="flex items-center justify-center gap-2 py-8 text-[14px] text-white/50">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Completing sign-in…
+          <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-[#20B8CD]" />
+            <p className="text-[15px] font-medium text-white/90">
+              {status || 'Completing sign-in…'}
+            </p>
+            <p className="max-w-xs text-[13px] leading-relaxed text-white/45">
+              Google succeeded. Finishing session with the API — this should only take a moment.
+            </p>
+            <button
+              type="button"
+              className="mt-2 text-[13px] text-[#20B8CD] underline-offset-2 hover:underline"
+              onClick={() => {
+                loginOnce.current = false
+                setBusy(false)
+                setView('login')
+                setStatus('')
+                navigate('/auth', { replace: true })
+              }}
+            >
+              Stuck? Back to sign-in
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -531,7 +595,10 @@ export function AuthPage({
           </div>
         )}
 
-        <p className="mt-8 text-center text-[11px] text-white/30">
+        <div className="mt-6 flex justify-center">
+          <DesktopOption variant="link" />
+        </div>
+        <p className="mt-4 text-center text-[11px] text-white/30">
           By continuing you agree to use the product for personal interview prep.
         </p>
       </div>

@@ -126,6 +126,7 @@ export const useAppStore = create<AppState>()(
       refreshAuth: async () => {
         const me = await fetchMe()
         if (!me) {
+          setToken(null)
           set({ user: null, authToken: null })
           return
         }
@@ -135,24 +136,30 @@ export const useAppStore = create<AppState>()(
         })
       },
       bootstrapAuth: async () => {
-        const config = await fetchAuthConfig()
-        set({ authConfig: config })
-        if (getToken()) {
-          try {
-            const me = await fetchMe()
-            if (me) {
-              set({
-                user: { ...me.user, subscription_active: me.subscription_active },
-                authToken: getToken(),
-              })
-            } else {
-              set({ user: null, authToken: null })
+        try {
+          const config = await fetchAuthConfig()
+          set({ authConfig: config })
+          if (getToken()) {
+            try {
+              const me = await fetchMe()
+              if (me) {
+                set({
+                  user: { ...me.user, subscription_active: me.subscription_active },
+                  authToken: getToken(),
+                })
+              } else {
+                setToken(null)
+                set({ user: null, authToken: null })
+              }
+            } catch {
+              set({ user: null })
             }
-          } catch {
-            set({ user: null })
           }
+        } catch {
+          /* keep defaults */
+        } finally {
+          set({ authReady: true })
         }
-        set({ authReady: true })
       },
 
       settings: {

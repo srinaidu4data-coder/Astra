@@ -112,18 +112,89 @@ export function googleLoginUrl(): string {
   return `${API_BASE}/v1/auth/google`
 }
 
-export async function fetchMe(): Promise<{ user: AuthUser; subscription_active: boolean } | null> {
-  const token = getToken()
+export async function fetchMe(
+  explicitToken?: string | null,
+): Promise<{ user: AuthUser; subscription_active: boolean } | null> {
+  const token = explicitToken || getToken()
   if (!token) return null
-  const res = await fetch(`${API_BASE}/v1/auth/me`, {
-    headers: { ...authHeaders() },
-  })
+  const ctrl = new AbortController()
+  const timer = window.setTimeout(() => ctrl.abort(), 15_000)
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE}/v1/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: ctrl.signal,
+    })
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') {
+      throw new Error('Auth API timed out. Check api.jobinterviewcracker.com is up.')
+    }
+    throw e
+  } finally {
+    window.clearTimeout(timer)
+  }
   if (res.status === 401) {
     setToken(null)
     return null
   }
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
+}
+
+/**
+ * Finish Google (or magic-link) sign-in from a JWT in the URL.
+ * Returns the user on success; throws on failure.
+ */
+export async function completeTokenLogin(token: string): Promise<AuthUser> {
+  const clean = token.trim()
+  if (!clean || clean.length < 20) {
+    throw new Error('Invalid session token from Google.')
+  }
+  setToken(clean)
+  const me = await fetchMe(clean)
+  if (!me?.user) {
+    setToken(null)
+    throw new Error('Session token was rejected. Please sign in again.')
+  }
+  return { ...me.user, subscription_active: me.subscription_active }
+}
+
+/** Read token/error from hash query: #/auth/callback?token=… */
+export function parseAuthHashParams(): { token: string | null; error: string | null } {
+  if (typeof window === 'undefined') return { token: null, error: null }
+  try {
+    const hash = window.location.hash || ''
+    // #/auth/callback?token=...&error=...
+    const qIndex = hash.indexOf('?')
+    if (qIndex < 0) return { token: null, error: null }
+    const sp = new URLSearchParams(hash.slice(qIndex + 1))
+    return {
+      token: sp.get('token'),
+      error: sp.get('error'),
+    }
+  } catch {
+    return { token: null, error: null }
+  }
+}
+
+/** Remove token from the address bar without a full reload. */
+export function stripAuthTokenFromUrl() {
+  if (typeof window === 'undefined') return
+  try {
+    const hash = window.location.hash || ''
+    const qIndex = hash.indexOf('?')
+    if (qIndex < 0) return
+    const path = hash.slice(0, qIndex) // #/auth/callback
+    const sp = new URLSearchParams(hash.slice(qIndex + 1))
+    if (!sp.has('token') && !sp.has('error')) return
+    sp.delete('token')
+    sp.delete('error')
+    const rest = sp.toString()
+    const next = rest ? `${path}?${rest}` : path
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${next}`)
+  } catch {
+    /* ignore */
+  }
 }
 
 export async function devBypassLogin(): Promise<{ token: string; user: AuthUser }> {
