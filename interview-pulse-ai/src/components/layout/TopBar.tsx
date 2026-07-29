@@ -22,10 +22,28 @@ export function TopBar() {
   const hasDesktop = typeof window !== 'undefined' && !!window.interviewPulse
 
   const toggleStealth = async () => {
+    if (!window.interviewPulse) {
+      window.alert(
+        'Stealth hide-from-screen-share only works in the desktop app.\n\n' +
+          'In Chrome/Edge (jobinterviewcracker.com), the browser cannot hide a tab from Zoom/Meet.\n\n' +
+          'To use real Stealth:\n' +
+          '  1. On your PC: cd interview-pulse-ai\n' +
+          '  2. npm run dev:electron\n' +
+          '  or use the Python desktop copilot (src\\run.bat) which has Stealth ON by default.\n\n' +
+          'The button will still toggle the setting for when you open Electron.',
+      )
+    }
     const next = !stealth.contentProtection
     updateStealth({ contentProtection: next })
     if (window.interviewPulse) {
-      await window.interviewPulse.setContentProtection(next)
+      try {
+        const res = await window.interviewPulse.setContentProtection(next)
+        if (res && res.ok === false) {
+          window.alert('Stealth API failed — try updating Windows or restarting the desktop app.')
+        }
+      } catch {
+        window.alert('Could not apply stealth to the window.')
+      }
     }
   }
 
@@ -69,17 +87,29 @@ export function TopBar() {
         )}
 
         <Button
-          variant={stealth.contentProtection ? 'success' : 'secondary'}
+          variant={
+            hasDesktop && stealth.contentProtection
+              ? 'success'
+              : hasDesktop
+                ? 'secondary'
+                : 'secondary'
+          }
           size="sm"
           onClick={() => void toggleStealth()}
           title={
             hasDesktop
-              ? 'Hide window from screen share'
-              : 'Toggles setting (full hide needs Electron)'
+              ? stealth.contentProtection
+                ? 'Hidden from most screen shares (Electron content protection)'
+                : 'Click to hide this window from screen share'
+              : 'Browser: UI only — real hide needs Electron desktop app'
           }
         >
           <Shield className="h-3.5 w-3.5" strokeWidth={1.75} />
-          Stealth {stealth.contentProtection ? 'ON' : 'OFF'}
+          {hasDesktop
+            ? `Stealth ${stealth.contentProtection ? 'ON' : 'OFF'}`
+            : stealth.contentProtection
+              ? 'Stealth (web only)'
+              : 'Stealth OFF'}
         </Button>
 
         <Button

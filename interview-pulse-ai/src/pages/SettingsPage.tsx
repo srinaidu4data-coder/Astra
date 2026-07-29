@@ -304,9 +304,19 @@ export function SettingsPage() {
         <h2 className="text-[17px] font-medium tracking-tight text-white/95">
           Stealth
         </h2>
-        <p className="mt-1 mb-8 text-[13px] text-white/40">
-          Overlay stays hidden from most screen shares. Hotkey {stealth.hotkey}.
+        <p className="mt-1 mb-8 text-[13px] leading-relaxed text-white/40">
+          Hide the app from Zoom/Meet/Teams screen share. This only applies in the{' '}
+          <strong className="text-white/60">Electron desktop app</strong> (
+          <code className="text-[12px]">npm run dev:electron</code>
+          ) or the Python copilot — not in the website browser tab. Overlay hotkey:{' '}
+          {stealth.hotkey || 'Ctrl+Shift+S'}.
         </p>
+        {typeof window !== 'undefined' && !window.interviewPulse && (
+          <p className="mb-6 rounded-[14px] border border-[#E8C547]/35 bg-[#E8C547]/10 px-4 py-3 text-[13px] text-[#E8C547]">
+            You are in the browser. Stealth toggles will not hide this tab from a screen share.
+            Run the desktop app for real content protection.
+          </p>
+        )}
 
         <div className="space-y-6">
           <ToggleRow
