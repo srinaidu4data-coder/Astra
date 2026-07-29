@@ -188,13 +188,33 @@ export const useAppStore = create<AppState>()(
 
       documents: [],
       addDocument: (d) =>
-        set((s) => ({ documents: [d, ...s.documents].slice(0, 40) })),
+        set((s) => ({ documents: [d, ...s.documents].slice(0, 80) })),
       removeDocument: (id) =>
-        set((s) => ({ documents: s.documents.filter((d) => d.id !== id) })),
+        set((s) => {
+          const doomed = s.documents.find((d) => d.id === id)
+          const docs = s.documents.filter((d) => d.id !== id)
+          const memories = doomed
+            ? s.memories.filter((m) => m.sourceFile !== doomed.name)
+            : s.memories
+          return {
+            documents: docs,
+            // If nothing left from user uploads, restore demo memories
+            memories:
+              docs.filter((d) => d.type !== 'job').length === 0
+                ? DEMO_MEMORIES
+                : memories.length
+                  ? memories
+                  : DEMO_MEMORIES,
+          }
+        }),
       memories: DEMO_MEMORIES,
       setMemories: (memories) => set({ memories }),
       addMemories: (m) =>
-        set((s) => ({ memories: [...m, ...s.memories].slice(0, 80) })),
+        set((s) => {
+          // Drop demo memories (no sourceFile) once the user uploads real docs
+          const keep = s.memories.filter((x) => Boolean(x.sourceFile))
+          return { memories: [...m, ...keep].slice(0, 200) }
+        }),
       jobMatch: null,
       setJobMatch: (jobMatch) => set({ jobMatch }),
       activeJobTitle: 'Staff Frontend / AI Copilot Engineer',

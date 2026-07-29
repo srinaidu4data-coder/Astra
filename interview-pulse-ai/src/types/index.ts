@@ -29,10 +29,16 @@ export interface StarMemory {
   score?: number
 }
 
+export type KnowledgeDocType =
+  | 'resume'
+  | 'job'
+  | 'notes'
+  | 'reference' // subject PDFs, study guides, cheatsheets, project docs
+
 export interface ResumeDocument {
   id: string
   name: string
-  type: 'resume' | 'job' | 'notes'
+  type: KnowledgeDocType
   text: string
   uploadedAt: string
   sizeBytes: number
