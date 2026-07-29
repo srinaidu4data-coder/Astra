@@ -1,3 +1,4 @@
+import { DesktopOption } from '@/components/DesktopOption'
 import { Button } from '@/components/ui/button'
 import { formatMs } from '@/lib/utils'
 import { useAppStore } from '@/stores/app-store'
@@ -85,6 +86,9 @@ export function TopBar() {
             </span>
           </div>
         )}
+
+        {/* Web only: download / open desktop app */}
+        {!hasDesktop && <DesktopOption variant="compact" />}
 
         <Button
           variant={

@@ -1,3 +1,4 @@
+import { DesktopOption } from '@/components/DesktopOption'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { clamp } from '@/lib/utils'
@@ -48,7 +49,7 @@ export function SettingsPage() {
           Account & billing
         </h2>
         <p className="mt-1 mb-6 text-[13px] leading-relaxed text-white/40">
-          Google sign-in first, then monthly Stripe. No public email/password signup.
+          Sign in with Google or email. Subscribe with Stripe when billing is enabled.
         </p>
 
         {user ? (
@@ -312,10 +313,13 @@ export function SettingsPage() {
           {stealth.hotkey || 'Ctrl+Shift+S'}.
         </p>
         {typeof window !== 'undefined' && !window.interviewPulse && (
-          <p className="mb-6 rounded-[14px] border border-[#E8C547]/35 bg-[#E8C547]/10 px-4 py-3 text-[13px] text-[#E8C547]">
-            You are in the browser. Stealth toggles will not hide this tab from a screen share.
-            Run the desktop app for real content protection.
-          </p>
+          <div className="mb-6 space-y-3">
+            <p className="rounded-[14px] border border-[#E8C547]/35 bg-[#E8C547]/10 px-4 py-3 text-[13px] text-[#E8C547]">
+              You are in the browser. Stealth toggles will not hide this tab from a screen share.
+              Use the desktop app for real content protection.
+            </p>
+            <DesktopOption variant="card" />
+          </div>
         )}
 
         <div className="space-y-6">
