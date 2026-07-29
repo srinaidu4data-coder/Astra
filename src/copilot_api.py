@@ -790,15 +790,28 @@ async def ws_interview(websocket: WebSocket):
                 if sess is None or not sess.running:
                     sess = LiveInterviewSession(emit)
                     session_holder["session"] = sess
-                # Default browser for cloud (no Stereo Mix); clients may override.
+                # Default browser mic on Linux/cloud (no Stereo Mix / parec).
+                # Windows local can still pass source=system for loopback capture.
                 source = (msg.get("source") or "").strip().lower()
                 if not source:
-                    source = "browser" if (
+                    force_browser = os.environ.get(
+                        "COPILOT_FORCE_BROWSER_MIC", ""
+                    ).lower() in ("1", "true", "yes")
+                    force_system = os.environ.get(
+                        "COPILOT_FORCE_SYSTEM_AUDIO", ""
+                    ).lower() in ("1", "true", "yes")
+                    on_cloud = bool(
                         os.environ.get("RAILWAY_ENVIRONMENT")
+                        or os.environ.get("RAILWAY_PROJECT_ID")
                         or os.environ.get("RENDER")
-                        or os.environ.get("COPILOT_FORCE_BROWSER_MIC", "").lower()
-                        in ("1", "true", "yes")
-                    ) else "system"
+                        or os.environ.get("PORT")  # container platforms set PORT
+                    )
+                    if force_system:
+                        source = "system"
+                    elif force_browser or on_cloud or sys.platform != "win32":
+                        source = "browser"
+                    else:
+                        source = "system"
                 sess.start(
                     job_context=msg.get("job_context") or "AI/ML Engineer",
                     tone=msg.get("tone") or "confident",
