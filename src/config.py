@@ -355,22 +355,26 @@ CONTEXT_RELEVANCE_THRESHOLD = 0.3  # Below this, consider context not relevant
 MIN_CONTEXT_RELEVANCE = 0.2  # Filter out chunks below this threshold
 
 # Auto-Answer Mode Configuration
-# Silence is pure dead time before STT — keep short for live interviews
-# Peak-boosted meter — Stereo Mix is often very quiet; keep threshold low
-SILENCE_THRESHOLD = 0.002       # Floor absolute silence (legacy / fallback)
-SILENCE_DURATION = 0.65         # Seconds of relative silence to end an utterance
-MIN_SPEECH_DURATION = 0.7       # Ignore very short blips
+# End-of-utterance must wait through natural pauses mid-question
+# (browser mic + noise suppression creates brief dips between words)
+# Peak-boosted meter — Stereo Mix / quiet mics need a low floor
+SILENCE_THRESHOLD = 0.0015      # Floor absolute silence (legacy / fallback)
+SILENCE_DURATION = 1.85         # Seconds of relative silence to end an utterance
+MIN_SPEECH_DURATION = 1.35      # Ignore 1–2 word blips; wait for a real phrase
 # If speech never "ends" (noisy room / continuous audio), force process after this
-MAX_UTTERANCE_SECONDS = 14.0
+MAX_UTTERANCE_SECONDS = 22.0
 # Adaptive VAD: speech if level > noise_floor * factor + offset
-VAD_NOISE_FACTOR = 2.8
-VAD_NOISE_OFFSET = 0.012
-VAD_SILENCE_FACTOR = 1.6        # back under noise*factor for silence
+VAD_NOISE_FACTOR = 2.4
+VAD_NOISE_OFFSET = 0.010
+VAD_SILENCE_FACTOR = 1.25       # Stay "in speech" through quieter mid-sentence dips
+# Extra hangover for browser-mic path (cloud / getUserMedia)
+BROWSER_SILENCE_DURATION = 2.15
+BROWSER_MIN_SPEECH_DURATION = 1.6
 CLASSIFICATION_CONFIDENCE = 0.55  # slightly looser for live auto path
-MIN_WORDS_FOR_CLASSIFICATION = 3  # Skip LLM if fewer words than this
+MIN_WORDS_FOR_CLASSIFICATION = 4  # Skip LLM if fewer words than this
 # Audio window for Whisper (seconds); actual window uses speech duration when known
-AUTO_TRANSCRIBE_MAX_SECONDS = 14
-MANUAL_TRANSCRIBE_MAX_SECONDS = 14
+AUTO_TRANSCRIBE_MAX_SECONDS = 24
+MANUAL_TRANSCRIBE_MAX_SECONDS = 24
 
 
 def get_default_monitor() -> str | None:

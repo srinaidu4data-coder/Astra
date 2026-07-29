@@ -20,6 +20,8 @@ import numpy as np
 from audio_capture import BrowserAudioCapture, get_audio_capture
 from config import (
     AUTO_TRANSCRIBE_MAX_SECONDS,
+    BROWSER_MIN_SPEECH_DURATION,
+    BROWSER_SILENCE_DURATION,
     MAX_UTTERANCE_SECONDS,
     MIN_SPEECH_DURATION,
     SILENCE_DURATION,
@@ -208,11 +210,22 @@ class LiveInterviewSession:
             self._capture = None
             self._emit("listening", {"active": False})
 
+    def _silence_needed(self) -> float:
+        """How long quiet before we treat the question as finished."""
+        if self._source == "browser":
+            return float(BROWSER_SILENCE_DURATION)
+        return float(SILENCE_DURATION)
+
+    def _min_speech_needed(self) -> float:
+        if self._source == "browser":
+            return float(BROWSER_MIN_SPEECH_DURATION)
+        return float(MIN_SPEECH_DURATION)
+
     def _vad_level(self) -> float:
         cap = self._capture
         if cap is None:
             return 0.0
-        # Prefer pre-gain raw level when available (windows_capture)
+        # Prefer pre-gain raw level when available (windows_capture / browser)
         try:
             if hasattr(cap, "get_vad_level"):
                 return float(cap.get_vad_level())
@@ -235,23 +248,40 @@ class LiveInterviewSession:
         vad_level = self._vad_level()
         now = time.time()
 
-        self._level_ema = (0.65 * self._level_ema) + (0.35 * vad_level)
+        # Heavier smoothing for browser mic (AGC/noise-suppression dips between words)
+        alpha = 0.45 if self._source == "browser" else 0.35
+        self._level_ema = ((1.0 - alpha) * self._level_ema) + (alpha * vad_level)
+        level_for_vad = max(vad_level, self._level_ema * 0.85)
+
         if self._speech_start is None:
             self._noise_floor = min(
-                0.06,
-                max(0.001, (0.94 * self._noise_floor) + (0.06 * self._level_ema)),
+                0.08,
+                max(0.001, (0.95 * self._noise_floor) + (0.05 * self._level_ema)),
             )
 
         speech_on = self._noise_floor * VAD_NOISE_FACTOR + VAD_NOISE_OFFSET
+        # Once speaking, drop out only on real quiet (not mid-phrase dips)
         speech_off = max(
             SILENCE_THRESHOLD,
-            self._noise_floor * VAD_SILENCE_FACTOR + (VAD_NOISE_OFFSET * 0.35),
+            self._noise_floor * VAD_SILENCE_FACTOR + (VAD_NOISE_OFFSET * 0.2),
         )
+        if self._source == "browser":
+            speech_off = max(SILENCE_THRESHOLD * 0.5, speech_off * 0.75)
 
         if self._speech_start is None:
-            is_speech = vad_level >= speech_on
+            is_speech = level_for_vad >= speech_on
         else:
-            is_speech = vad_level >= speech_off
+            is_speech = level_for_vad >= speech_off
+
+        silence_needed = self._silence_needed()
+        min_speech = self._min_speech_needed()
+        # Longer hangover after we've already heard a substantial chunk
+        if self._speech_start is not None:
+            so_far = now - self._speech_start
+            if so_far >= 2.5:
+                silence_needed = max(silence_needed, silence_needed + 0.35)
+            if so_far >= 5.0:
+                silence_needed = max(silence_needed, silence_needed + 0.25)
 
         state = "listening"
         if is_speech:
@@ -273,17 +303,18 @@ class LiveInterviewSession:
                 else:
                     silence_s = now - self._silence_start
                     speech_s = self._silence_start - self._speech_start
-                    if silence_s >= SILENCE_DURATION:
-                        if speech_s >= MIN_SPEECH_DURATION:
+                    if silence_s >= silence_needed:
+                        if speech_s >= min_speech:
                             self._last_speech_s = speech_s
                             self._trigger_process()
+                        # Too short → discard blip, keep listening
                         self._speech_start = None
                         self._silence_start = None
 
         self._emit(
             "level",
             {
-                "level": vad_level,
+                "level": level_for_vad,
                 "state": state,
                 "noise_floor": self._noise_floor,
             },
@@ -342,6 +373,18 @@ class LiveInterviewSession:
                 self._emit("status", {"message": "Couldn't make out words — still listening"})
                 return
 
+            words = [w for w in text.strip().split() if w]
+            # Incomplete mid-sentence cutoffs (1–3 words) → keep listening
+            if len(words) < 4 and not text.strip().endswith("?"):
+                self._emit(
+                    "status",
+                    {
+                        "message": f"Fragment only ({len(words)} words) — still listening for full question",
+                        "listening": True,
+                    },
+                )
+                return
+
             self._emit(
                 "transcript",
                 {
@@ -354,7 +397,7 @@ class LiveInterviewSession:
 
             from answer_engine import generate_answer, looks_like_question, to_bullets
 
-            classification = classify_utterance(text, min_words=3)
+            classification = classify_utterance(text, min_words=4)
             question = classification.get("cleaned_question") or text
             is_q = bool(classification.get("is_interview_question", False))
             conf = float(classification.get("confidence", 0.0) or 0.0)

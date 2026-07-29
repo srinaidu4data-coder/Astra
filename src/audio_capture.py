@@ -554,12 +554,17 @@ class BrowserAudioCapture(AudioCapture):
             usable = (len(samples) // self._channels) * self._channels
             samples = samples[:usable].reshape(-1, self._channels)[:, 0].astype(np.int16)
         self._ring.extend_samples(samples)
-        # RMS level 0..1 for VAD / waveform
+        # Peak + RMS over recent audio (stable VAD; less flicker between words)
         if len(samples):
-            rms = float(np.sqrt(np.mean(samples.astype(np.float32) ** 2)))
-            lvl = min(1.0, rms / 8000.0)
-            self._raw_level = lvl
-            self._level = (0.6 * self._level) + (0.4 * lvl)
+            window = self._ring.get_last_n_samples(int(self._sample_rate * 0.25))
+            if len(window) == 0:
+                window = samples
+            f = window.astype(np.float32)
+            peak = float(np.max(np.abs(f))) / 32768.0
+            rms = float(np.sqrt(np.mean(f ** 2))) / 32768.0
+            lvl = min(1.0, max(peak * 1.6, rms * 3.5))
+            self._raw_level = (0.55 * self._raw_level) + (0.45 * lvl)
+            self._level = (0.7 * self._level) + (0.3 * lvl)
 
     def get_last_n_seconds(self, n: int) -> np.ndarray:
         n = max(0, int(n))
@@ -569,7 +574,8 @@ class BrowserAudioCapture(AudioCapture):
         return float(self._level)
 
     def get_vad_level(self) -> float:
-        return float(self._raw_level or self._level)
+        # Prefer smoothed peak/RMS so brief mid-word dips don't end the turn
+        return float(max(self._raw_level, self._level * 0.9))
 
     def list_devices(self) -> list[dict]:
         return [{"name": self._device_name, "status": "browser"}]
