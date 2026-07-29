@@ -88,6 +88,15 @@ class StartResponse(BaseModel):
     job_title: str
     tips: list[str]
     source: str  # openai | offline
+    # Conversational audio mock — spoken scripts for TTS / SpeechSynthesis
+    intro_script: str = ""
+    closing_script: str = ""
+    audio_mode: bool = True
+
+
+class TtsRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=4000)
+    persona: Persona = "strict-tech-lead"
 
 
 class ScoreRequest(BaseModel):
@@ -180,6 +189,113 @@ def _chat_json(system: str, user: str, model: str = "gpt-4o-mini") -> dict | Non
         return None
 
 
+INTRO_SCRIPTS = {
+    "strict-tech-lead": (
+        "Thanks for joining today. I'll be running a technical interview for the {role} role"
+        "{company}. I'll ask a few questions — take your time, think out loud, and give concrete "
+        "examples. Ready? Let's start."
+    ),
+    "behavioral-hr": (
+        "Hi, thank you for making time. This will feel like a real behavioral interview for "
+        "the {role} role{company}. I'll ask about past situations — use specific stories. "
+        "Whenever you're ready, we'll begin."
+    ),
+    "system-design": (
+        "Welcome. This is a system design style interview for {role}{company}. "
+        "I'll pose a problem, then dig into tradeoffs, scale, and failure modes. "
+        "Talk through your assumptions. Let's get into the first problem."
+    ),
+    "friendly-recruiter": (
+        "Hey, great to meet you! This is a friendly screen for the {role} role{company}. "
+        "Just be yourself — I'll ask a few questions about your background and fit. "
+        "Shall we jump in?"
+    ),
+}
+
+CLOSING_SCRIPTS = {
+    "strict-tech-lead": (
+        "That's all the questions I have. Thanks for walking through your thinking. "
+        "I'll leave you with the debrief scores and coach notes now."
+    ),
+    "behavioral-hr": (
+        "We've covered everything on my list. Thank you for the thoughtful stories — "
+        "here's your debrief and practice plan."
+    ),
+    "system-design": (
+        "We'll stop there. Good discussion on the architecture. "
+        "Check the debrief for strengths and what to tighten next time."
+    ),
+    "friendly-recruiter": (
+        "That's the end of our chat — you did great making time for this. "
+        "I've got a short debrief and tips ready for you."
+    ),
+}
+
+BRIDGES = {
+    "strict-tech-lead": [
+        "Okay.",
+        "Understood.",
+        "Alright, next one.",
+        "Let's keep going.",
+        "Interesting. Moving on.",
+    ],
+    "behavioral-hr": [
+        "Thank you for sharing that.",
+        "I appreciate the detail.",
+        "That helps. Next question.",
+        "Great context. Let's continue.",
+        "Okay, shifting gears a bit.",
+    ],
+    "system-design": [
+        "Got it.",
+        "Fair. Next problem.",
+        "Okay, new scenario.",
+        "Let's dig into another area.",
+        "Alright, follow-on topic.",
+    ],
+    "friendly-recruiter": [
+        "Awesome, thanks!",
+        "Love that. Next up…",
+        "Cool. One more for you.",
+        "Nice. Let's keep rolling.",
+        "Okay, another one…",
+    ],
+}
+
+
+def _company_clause(company: str) -> str:
+    c = (company or "").strip()
+    return f" at {c}" if c else ""
+
+
+def _intro_script(req: StartRequest) -> str:
+    tmpl = INTRO_SCRIPTS.get(req.persona) or INTRO_SCRIPTS["strict-tech-lead"]
+    return tmpl.format(role=req.job_title or "this role", company=_company_clause(req.company))
+
+
+def _closing_script(req: StartRequest) -> str:
+    return CLOSING_SCRIPTS.get(req.persona) or CLOSING_SCRIPTS["strict-tech-lead"]
+
+
+def _enrich_spoken(questions: list[dict[str, Any]], persona: str) -> list[dict[str, Any]]:
+    """Add conversational spoken_text / bridge for each question."""
+    bridges = BRIDGES.get(persona) or BRIDGES["strict-tech-lead"]
+    out: list[dict[str, Any]] = []
+    for i, q in enumerate(questions):
+        text = str(q.get("text") or "").strip()
+        bridge = "" if i == 0 else bridges[i % len(bridges)]
+        if i == 0:
+            spoken = f"First question. {text}"
+        else:
+            spoken = f"{bridge} {text}"
+        item = dict(q)
+        item["text"] = text
+        item["spoken_text"] = str(q.get("spoken_text") or spoken).strip()
+        item["bridge"] = bridge
+        out.append(item)
+    return out
+
+
 def _offline_questions(req: StartRequest) -> list[dict[str, Any]]:
     focus = req.focus
     pool = list(BANK.get(focus) or BANK["mixed"])
@@ -191,7 +307,6 @@ def _offline_questions(req: StartRequest) -> list[dict[str, Any]]:
         ]
     if req.difficulty == "hard":
         pool = pool[::-1]  # prefer harder bank order
-    n = min(req.question_count, len(pool))
     # cycle if needed
     qs = []
     for i in range(req.question_count):
@@ -204,7 +319,7 @@ def _offline_questions(req: StartRequest) -> list[dict[str, Any]]:
                 "hint": "Use STAR and one metric." if "time" in q.lower() or "tell me" in q.lower() else "Be specific about tradeoffs.",
             }
         )
-    return qs[: req.question_count]
+    return _enrich_spoken(qs[: req.question_count], req.persona)
 
 
 def _count_fillers(text: str) -> int:
@@ -320,10 +435,16 @@ def start_mock(req: StartRequest) -> StartResponse:
 
     data = _chat_json(
         system=(
-            "You are an expert interview designer. Return JSON with key questions: "
-            "array of {id, text, category, hint}. Categories: behavioral|technical|system-design. "
-            f"Create exactly {req.question_count} realistic questions. "
-            f"Difficulty={req.difficulty}. Persona={req.persona}."
+            "You design realistic spoken interview questions for an audio mock interview. "
+            "Return JSON with key questions: array of "
+            "{id, text, spoken_text, category, hint}. "
+            "text = clean question for the UI. "
+            "spoken_text = how the interviewer says it aloud (natural, conversational, 1–3 sentences; "
+            "may include a short bridge like 'Okay, thanks.' before the question for Q2+). "
+            "Categories: behavioral|technical|system-design. "
+            f"Create exactly {req.question_count} questions. "
+            f"Difficulty={req.difficulty}. Persona={req.persona} — match their tone. "
+            "Sound like a real interviewer, not a quiz sheet."
         ),
         user=(
             f"Job title: {req.job_title}\nCompany: {req.company}\n"
@@ -338,13 +459,21 @@ def start_mock(req: StartRequest) -> StartResponse:
         for i, q in enumerate(data["questions"][: req.question_count]):
             if isinstance(q, str):
                 questions.append(
-                    {"id": f"q_{i+1}", "text": q, "category": req.focus, "hint": "Be specific."}
+                    {
+                        "id": f"q_{i+1}",
+                        "text": q,
+                        "spoken_text": q,
+                        "category": req.focus,
+                        "hint": "Be specific.",
+                    }
                 )
             elif isinstance(q, dict):
+                text = q.get("text") or q.get("question") or "Tell me about yourself."
                 questions.append(
                     {
                         "id": q.get("id") or f"q_{i+1}",
-                        "text": q.get("text") or q.get("question") or "Tell me about yourself.",
+                        "text": text,
+                        "spoken_text": q.get("spoken_text") or text,
                         "category": q.get("category") or req.focus,
                         "hint": q.get("hint") or "Use concrete examples.",
                     }
@@ -354,6 +483,7 @@ def start_mock(req: StartRequest) -> StartResponse:
             # pad offline
             extra = _offline_questions(req)
             questions.extend(extra[len(questions) : req.question_count])
+        questions = _enrich_spoken(questions, req.persona)
     else:
         questions = _offline_questions(req)
 
@@ -366,7 +496,55 @@ def start_mock(req: StartRequest) -> StartResponse:
         job_title=req.job_title,
         tips=tips,
         source=source,
+        intro_script=_intro_script(req),
+        closing_script=_closing_script(req),
+        audio_mode=True,
     )
+
+
+@router.post("/tts")
+def mock_tts(req: TtsRequest):
+    """
+    Speak interviewer lines (OpenAI TTS when key present).
+    Returns audio/mpeg. Client falls back to browser SpeechSynthesis on 503.
+    """
+    from fastapi.responses import Response
+
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(400, detail="text required")
+
+    # Persona → voice mapping (OpenAI tts-1 voices)
+    voice_map = {
+        "strict-tech-lead": "onyx",
+        "behavioral-hr": "nova",
+        "system-design": "echo",
+        "friendly-recruiter": "shimmer",
+    }
+    voice = voice_map.get(req.persona, "onyx")
+
+    client = _openai_client()
+    if client is None:
+        raise HTTPException(
+            503,
+            detail="TTS unavailable — set OPENAI_API_KEY or use browser speech",
+        )
+    try:
+        speech = client.audio.speech.create(
+            model="tts-1",
+            voice=voice,
+            input=text[:4000],
+            response_format="mp3",
+        )
+        audio_bytes = speech.content if hasattr(speech, "content") else bytes(speech.read())
+        return Response(
+            content=audio_bytes,
+            media_type="audio/mpeg",
+            headers={"Cache-Control": "no-store"},
+        )
+    except Exception as e:
+        logger.exception("mock TTS failed")
+        raise HTTPException(502, detail=f"TTS failed: {e}") from e
 
 
 @router.post("/score", response_model=ScoreResponse)

@@ -16,8 +16,11 @@ export type MockFocus = 'mixed' | 'behavioral' | 'technical' | 'system-design'
 export type MockQuestion = {
   id: string
   text: string
+  /** How the interviewer says it aloud (bridge + question) */
+  spoken_text?: string
   category: string
   hint?: string
+  bridge?: string
 }
 
 export type MockStartResult = {
@@ -29,6 +32,9 @@ export type MockStartResult = {
   job_title: string
   tips: string[]
   source: string
+  intro_script?: string
+  closing_script?: string
+  audio_mode?: boolean
 }
 
 export type MockScore = {
@@ -139,4 +145,10 @@ export function countFillersLocal(text: string): number {
   const re =
     /\b(um+|uh+|like|you know|sort of|kind of|basically|actually|literally|right\?|i mean)\b/gi
   return (text.match(re) || []).length
+}
+
+/** Prefer spoken_text for TTS; fall back to display text. */
+export function spokenQuestionLine(q: MockQuestion | null | undefined): string {
+  if (!q) return ''
+  return (q.spoken_text || q.text || '').trim()
 }

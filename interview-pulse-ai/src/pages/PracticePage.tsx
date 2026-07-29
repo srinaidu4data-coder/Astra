@@ -5,9 +5,14 @@ import { PERSONA_LABELS } from '@/lib/demo-data'
 import { uid } from '@/lib/utils'
 import { MicDictation } from '@/services/dictation'
 import {
+  speakInterviewer,
+  stopInterviewerSpeech,
+} from '@/services/interviewer-voice'
+import {
   buildMockReport,
   countFillersLocal,
   scoreMockAnswer,
+  spokenQuestionLine,
   startMockSession,
   type MockDifficulty,
   type MockFocus,
@@ -55,10 +60,11 @@ type Turn = {
   elapsedSec: number
 }
 
+type TurnPhase = 'intro' | 'asking' | 'answering' | 'feedback'
+
 /**
- * Final Round–style mock interview:
- * setup → AI questions → your answer → score + follow-up → end report
- * Bells: difficulty, focus, timer, live fillers, coach model answer, export notes
+ * Audio mock interview — conversational spoken interviewer:
+ * intro → spoken question → your mic answer → score → spoken next / follow-up → debrief
  */
 export function PracticePage() {
   const {
@@ -102,6 +108,11 @@ export function PracticePage() {
   const [report, setReport] = useState<MockReport | null>(null)
   const [showModel, setShowModel] = useState(true)
   const [followUpMode, setFollowUpMode] = useState(false)
+  const [turnPhase, setTurnPhase] = useState<TurnPhase>('intro')
+  const [interviewerLine, setInterviewerLine] = useState('')
+  const [introScript, setIntroScript] = useState('')
+  const [closingScript, setClosingScript] = useState('')
+  const [voiceHint, setVoiceHint] = useState<string | null>(null)
 
   const dictationRef = useRef<MicDictation | null>(null)
   const answerTextRef = useRef('')
@@ -110,6 +121,7 @@ export function PracticePage() {
   const waveRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startedAt = useRef('')
   const turnsRef = useRef<Turn[]>([])
+  const speakGen = useRef(0)
 
   // Keep a live ref so mic callbacks always append to the latest box text
   useEffect(() => {
@@ -119,9 +131,12 @@ export function PracticePage() {
   const currentQ = questions[qIndex] ?? null
   const localFillers = countFillersLocal(answerText)
   const timeLeft = Math.max(0, timeLimit - answerElapsed)
+  const interviewerTalking = turnPhase === 'intro' || turnPhase === 'asking'
 
   useEffect(() => {
     return () => {
+      speakGen.current += 1
+      stopInterviewerSpeech()
       stopTimers()
       stopMic()
     }
@@ -161,84 +176,21 @@ export function PracticePage() {
     }, 1000)
   }
 
-  const startSession = async () => {
-    setBusy(true)
-    setError(null)
-    setReport(null)
-    setTurns([])
-    setLastScore(null)
-    setFollowUpMode(false)
-    try {
-      const resumeBits = memories
-        .slice(0, 4)
-        .map((m) => `${m.situation} → ${m.result}`)
-        .join('\n')
-      const res = await startMockSession({
-        job_title: jobTitle.trim() || 'Software Engineer',
-        job_description: jd,
-        persona: practicePersona as MockPersona,
-        difficulty,
-        focus,
-        question_count: qCount,
-        resume_snippets: resumeBits,
-        company,
-      })
-      setSessionId(res.session_id)
-      setQuestions(res.questions)
-      setTips(res.tips)
-      setSource(res.source)
-      setQIndex(0)
-      setAnswerText('')
-      turnsRef.current = []
-      setTurns([])
-      setPhase('live')
-      setPracticeActive(true)
-      startedAt.current = new Date().toISOString()
-      setSessionElapsed(0)
-      sessionTick.current = setInterval(() => {
-        setSessionElapsed((s) => s + 1)
-      }, 1000)
-      startWave()
-      startAnswerTimer()
-      setLiveFeedback({
-        confidence: 70,
-        fillerWords: 0,
-        starCoverage: 55,
-        technicalDepth: 60,
-      })
-    } catch (e) {
-      setError((e as Error).message || 'Could not start mock session')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const toggleMic = () => {
-    if (listeningMic || dictationRef.current?.active) {
-      stopMic()
-      // Restore fake practice wave if session still running
-      if (practiceActive && !waveRef.current) startWave()
-      return
-    }
-
+  const beginMicDictation = () => {
+    if (listeningMic || dictationRef.current?.active) return
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError('Microphone not available in this browser — type your answer instead.')
+      setDictateStatus('Type your answer — mic not available')
       return
     }
-
     setError(null)
     setListeningMic(true)
-    setDictateStatus('Starting mic…')
-
-    // Prefer real mic levels over the fake practice waveform
+    setDictateStatus('Your turn — listening…')
     if (waveRef.current) {
       clearInterval(waveRef.current)
       waveRef.current = null
     }
-
     const dictation = new MicDictation()
     dictationRef.current = dictation
-
     void dictation
       .start({
         onText: (piece) => {
@@ -263,11 +215,133 @@ export function PracticePage() {
       })
   }
 
+  /** Speak a line as the interviewer; auto-open mic when asking a question. */
+  const deliverInterviewer = async (
+    line: string,
+    phase: TurnPhase,
+    opts?: { openMicAfter?: boolean },
+  ) => {
+    const gen = ++speakGen.current
+    stopMic()
+    stopInterviewerSpeech()
+    setInterviewerLine(line)
+    setTurnPhase(phase)
+    setVoiceHint(phase === 'asking' || phase === 'intro' ? 'Interviewer speaking…' : null)
+    startWave()
+    await speakInterviewer(line, {
+      persona: practicePersona as MockPersona,
+      onStart: () => {
+        if (gen !== speakGen.current) return
+        setVoiceHint('Interviewer speaking…')
+      },
+      onEnd: () => {
+        if (gen !== speakGen.current) return
+        setVoiceHint(null)
+      },
+      onError: (msg) => {
+        if (gen !== speakGen.current) return
+        setVoiceHint(msg)
+      },
+    })
+    if (gen !== speakGen.current) return
+    if (opts?.openMicAfter) {
+      setTurnPhase('answering')
+      setVoiceHint('Your turn — answer out loud')
+      startAnswerTimer()
+      beginMicDictation()
+    }
+  }
+
+  const startSession = async () => {
+    setBusy(true)
+    setError(null)
+    setReport(null)
+    setTurns([])
+    setLastScore(null)
+    setFollowUpMode(false)
+    setTurnPhase('intro')
+    setInterviewerLine('')
+    try {
+      const resumeBits = memories
+        .slice(0, 4)
+        .map((m) => `${m.situation} → ${m.result}`)
+        .join('\n')
+      const res = await startMockSession({
+        job_title: jobTitle.trim() || 'Software Engineer',
+        job_description: jd,
+        persona: practicePersona as MockPersona,
+        difficulty,
+        focus,
+        question_count: qCount,
+        resume_snippets: resumeBits,
+        company,
+      })
+      setSessionId(res.session_id)
+      setQuestions(res.questions)
+      setTips(res.tips)
+      setSource(res.source)
+      setIntroScript(res.intro_script || '')
+      setClosingScript(res.closing_script || '')
+      setQIndex(0)
+      setAnswerText('')
+      turnsRef.current = []
+      setTurns([])
+      setPhase('live')
+      setPracticeActive(true)
+      startedAt.current = new Date().toISOString()
+      setSessionElapsed(0)
+      sessionTick.current = setInterval(() => {
+        setSessionElapsed((s) => s + 1)
+      }, 1000)
+      setLiveFeedback({
+        confidence: 70,
+        fillerWords: 0,
+        starCoverage: 55,
+        technicalDepth: 60,
+      })
+      setBusy(false)
+
+      const intro =
+        res.intro_script ||
+        `Thanks for joining. This is a mock interview for ${jobTitle || 'this role'}. Let's begin.`
+      const first = res.questions[0]
+      const firstLine = spokenQuestionLine(first) || first?.text || ''
+
+      // Intro, then first question, then open mic
+      await deliverInterviewer(intro, 'intro')
+      if (firstLine) {
+        await deliverInterviewer(firstLine, 'asking', { openMicAfter: true })
+      } else {
+        setTurnPhase('answering')
+        startAnswerTimer()
+        beginMicDictation()
+      }
+    } catch (e) {
+      setError((e as Error).message || 'Could not start mock session')
+      setBusy(false)
+    }
+  }
+
+  const toggleMic = () => {
+    if (listeningMic || dictationRef.current?.active) {
+      stopMic()
+      if (practiceActive && !waveRef.current) startWave()
+      return
+    }
+    if (interviewerTalking) {
+      setError('Wait for the interviewer to finish, then your mic will open.')
+      return
+    }
+    beginMicDictation()
+  }
+
   const submitAnswer = async () => {
     if (!currentQ || !answerText.trim() || busy) return
     stopMic()
+    stopInterviewerSpeech()
     setBusy(true)
     setError(null)
+    setTurnPhase('feedback')
     try {
       const scores = await scoreMockAnswer({
         session_id: sessionId,
@@ -294,6 +368,13 @@ export function PracticePage() {
       }
       turnsRef.current = [...turnsRef.current, turn]
       setTurns(turnsRef.current)
+
+      // Brief spoken acknowledgment (conversational, not a full debrief)
+      const ack =
+        scores.overall >= 80
+          ? 'Thanks — solid answer. Take a look at the coach notes when you are ready to continue.'
+          : 'Thanks. I have a few notes for you on the side — continue when you are ready.'
+      void speakInterviewer(ack, { persona: practicePersona as MockPersona })
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -302,6 +383,7 @@ export function PracticePage() {
   }
 
   const goNext = () => {
+    stopInterviewerSpeech()
     setLastScore(null)
     setAnswerText('')
     setFollowUpMode(false)
@@ -309,36 +391,52 @@ export function PracticePage() {
       void finishSession()
       return
     }
-    setQIndex((i) => i + 1)
-    startAnswerTimer()
+    const nextIndex = qIndex + 1
+    setQIndex(nextIndex)
+    const nextQ = questions[nextIndex]
+    const line = spokenQuestionLine(nextQ) || nextQ?.text || ''
+    void deliverInterviewer(line, 'asking', { openMicAfter: true })
   }
 
   const askFollowUp = () => {
     if (!lastScore?.follow_up) return
+    stopInterviewerSpeech()
+    const fuText = lastScore.follow_up
     setFollowUpMode(true)
     setAnswerText('')
+    setLastScore(null)
+    const fu: MockQuestion = {
+      id: `fu_${Date.now()}`,
+      text: fuText,
+      spoken_text: `Quick follow-up. ${fuText}`,
+      category: 'follow-up',
+      hint: 'Dig deeper — shorter answer OK.',
+    }
     setQuestions((prev) => {
       const next = [...prev]
-      const fu: MockQuestion = {
-        id: `fu_${Date.now()}`,
-        text: lastScore.follow_up!,
-        category: 'follow-up',
-        hint: 'Dig deeper — shorter answer OK.',
-      }
       next.splice(qIndex + 1, 0, fu)
       return next
     })
-    setLastScore(null)
     setQIndex((i) => i + 1)
-    startAnswerTimer()
+    void deliverInterviewer(fu.spoken_text!, 'asking', { openMicAfter: true })
   }
 
   const finishSession = async () => {
     setBusy(true)
+    speakGen.current += 1
     stopMic()
+    stopInterviewerSpeech()
     stopTimers()
     setLevels(Array.from({ length: 32 }, () => 0.08))
     setPracticeActive(false)
+    const close =
+      closingScript ||
+      'That wraps up our mock interview. Here is your debrief.'
+    try {
+      await speakInterviewer(close, { persona: practicePersona as MockPersona })
+    } catch {
+      /* ignore */
+    }
     try {
       // Use ref so the last scored answer is included (state may lag one tick)
       const allTurns = turnsRef.current
@@ -428,6 +526,8 @@ export function PracticePage() {
   }
 
   const resetAll = () => {
+    speakGen.current += 1
+    stopInterviewerSpeech()
     stopMic()
     stopTimers()
     setPracticeActive(false)
@@ -438,7 +538,20 @@ export function PracticePage() {
     setReport(null)
     setAnswerText('')
     setError(null)
+    setTurnPhase('intro')
+    setInterviewerLine('')
+    setVoiceHint(null)
     setLevels(Array.from({ length: 32 }, () => 0.08))
+  }
+
+  const skipInterviewerSpeech = () => {
+    stopInterviewerSpeech()
+    if (turnPhase === 'intro' || turnPhase === 'asking') {
+      setTurnPhase('answering')
+      setVoiceHint('Your turn — answer out loud')
+      startAnswerTimer()
+      beginMicDictation()
+    }
   }
 
   const exportReport = () => {
@@ -479,8 +592,8 @@ export function PracticePage() {
             </h2>
           </div>
           <p className="mb-8 text-[13px] leading-relaxed text-white/40">
-            Final Round–style practice: role-specific questions, timed answers, live scoring,
-            follow-ups, and a full debrief report.
+            Audio mock interview: the interviewer speaks questions out loud (conversational style),
+            you answer with your mic, then get scores, follow-ups, and a debrief.
           </p>
 
           {error && (
@@ -611,14 +724,14 @@ export function PracticePage() {
           <h3 className="mb-4 text-[15px] font-medium text-white/90">What you get</h3>
           <ul className="grid gap-3 text-[13px] text-white/50 sm:grid-cols-2">
             {[
-              'Role-specific AI questions (JD-aware)',
+              'Spoken interviewer intro + questions',
+              'Conversational bridges between questions',
+              'Auto mic after each question',
               'Timed answers + live filler count',
               'STAR / depth / communication scores',
-              'Smart follow-up questions',
+              'Spoken follow-ups like a real panel',
               'Model answer bullets after each Q',
               'End report with practice plan',
-              'Mic dictation (Chrome) or type',
-              'Offline coach if API key missing',
             ].map((t) => (
               <li key={t} className="flex gap-2">
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#20B8CD]" />
@@ -730,15 +843,38 @@ export function PracticePage() {
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-[17px] font-medium tracking-tight text-white/95">
-                {followUpMode ? 'Follow-up' : 'Live mock'}
+                {followUpMode
+                  ? 'Follow-up'
+                  : turnPhase === 'intro'
+                    ? 'Interview opening'
+                    : 'Live mock interview'}
               </h2>
               <p className="mt-1 text-[12px] text-white/40">
-                Q {Math.min(qIndex + 1, questions.length)}/{questions.length} · {jobTitle} ·{' '}
-                {source || '…'}
+                Q {Math.min(qIndex + 1, Math.max(1, questions.length))}/{questions.length} ·{' '}
+                {jobTitle} · audio · {source || '…'}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge tone={timeLeft <= 15 ? 'amber' : 'indigo'}>
+              <Badge
+                tone={
+                  interviewerTalking
+                    ? 'indigo'
+                    : turnPhase === 'answering'
+                      ? 'emerald'
+                      : timeLeft <= 15
+                        ? 'amber'
+                        : 'default'
+                }
+              >
+                {interviewerTalking
+                  ? 'Interviewer'
+                  : turnPhase === 'answering'
+                    ? 'Your turn'
+                    : turnPhase === 'feedback'
+                      ? 'Feedback'
+                      : 'Idle'}
+              </Badge>
+              <Badge tone={timeLeft <= 15 && turnPhase === 'answering' ? 'amber' : 'indigo'}>
                 <Clock className="mr-1 h-3 w-3" />
                 {timeLeft}s
               </Badge>
@@ -754,6 +890,30 @@ export function PracticePage() {
             </div>
           )}
 
+          {(voiceHint || interviewerLine) && (
+            <div
+              className={`mb-4 rounded-[14px] border px-4 py-3 text-[13px] ${
+                interviewerTalking
+                  ? 'border-[#20B8CD]/35 bg-[#20B8CD]/10 text-[#5DD5E3]'
+                  : 'border-white/10 bg-white/[0.03] text-white/55'
+              }`}
+            >
+              {voiceHint && <p className="mb-1 text-[11px] uppercase tracking-wide opacity-80">{voiceHint}</p>}
+              {interviewerLine && (
+                <p className="leading-relaxed text-white/85">“{interviewerLine}”</p>
+              )}
+              {interviewerTalking && (
+                <button
+                  type="button"
+                  className="mt-2 text-[12px] text-[#20B8CD] underline-offset-2 hover:underline"
+                  onClick={skipInterviewerSpeech}
+                >
+                  Skip speech → my turn
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="mb-5 rounded-[22px] glass-inset px-6 py-6">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <p className="text-[12px] text-white/35">{PERSONA_LABELS[practicePersona]}</p>
@@ -762,31 +922,37 @@ export function PracticePage() {
               )}
             </div>
             <p className="text-[19px] font-light leading-snug tracking-tight text-white/95 md:text-[21px]">
-              {currentQ?.text}
+              {currentQ?.text || (turnPhase === 'intro' ? 'Listen to the interviewer…' : '…')}
             </p>
-            {currentQ?.hint && (
+            {currentQ?.hint && turnPhase === 'answering' && (
               <p className="mt-3 flex items-start gap-2 text-[12px] text-white/40">
                 <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#E8C547]" />
                 {currentQ.hint}
               </p>
             )}
             <div className="mt-6">
-              <Waveform levels={levels} active={practiceActive} className="h-12" />
+              <Waveform
+                levels={levels}
+                active={practiceActive || interviewerTalking || listeningMic}
+                className="h-12"
+              />
             </div>
           </div>
 
           <label className="mb-3 block">
-            <span className="label-quiet">Your answer (speak or type)</span>
+            <span className="label-quiet">Your answer (speak — mic opens after each question)</span>
             <textarea
               className="field min-h-[140px] resize-y text-[15px] leading-relaxed"
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
               placeholder={
-                listeningMic
-                  ? 'Listening… keep talking, words appear after short pauses'
-                  : 'Answer out loud or type here…'
+                interviewerTalking
+                  ? 'Interviewer is speaking… your mic opens next'
+                  : listeningMic
+                    ? 'Listening… keep talking, words appear after short pauses'
+                    : 'Answer out loud or type here…'
               }
-              disabled={!!lastScore}
+              disabled={!!lastScore || interviewerTalking}
             />
           </label>
           <div className="mb-5 flex flex-wrap items-center gap-3 text-[12px] text-white/40">
@@ -806,7 +972,7 @@ export function PracticePage() {
                   size="lg"
                   variant={listeningMic ? 'danger' : 'secondary'}
                   onClick={toggleMic}
-                  disabled={busy}
+                  disabled={busy || interviewerTalking}
                 >
                   {listeningMic ? (
                     <>
@@ -814,13 +980,13 @@ export function PracticePage() {
                     </>
                   ) : (
                     <>
-                      <Mic className="h-4 w-4" /> Dictate
+                      <Mic className="h-4 w-4" /> Start mic
                     </>
                   )}
                 </Button>
                 <Button
                   size="lg"
-                  disabled={busy || !answerText.trim()}
+                  disabled={busy || !answerText.trim() || interviewerTalking}
                   onClick={() => void submitAnswer()}
                 >
                   {busy ? 'Scoring…' : 'Submit answer'}
@@ -833,7 +999,7 @@ export function PracticePage() {
               <>
                 {lastScore.follow_up && (
                   <Button size="lg" variant="secondary" onClick={askFollowUp}>
-                    Answer follow-up
+                    Hear follow-up
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 )}
