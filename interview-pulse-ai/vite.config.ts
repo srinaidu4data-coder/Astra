@@ -10,7 +10,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  base: './',
+  // '/' for Cloudflare Pages website; './' only for Electron file:// builds
+  base: process.env.VITE_ELECTRON === '1' ? './' : '/',
   server: {
     port: 5173,
     strictPort: true,
