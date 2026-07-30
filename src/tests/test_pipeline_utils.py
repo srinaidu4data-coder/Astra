@@ -161,8 +161,11 @@ class TestHeuristicClassify:
 
 class TestFriendlyError:
     def test_license(self):
-        assert "license" in friendly_error("License key not configured").lower() or \
-               "Activate" in friendly_error("License key not configured")
+        # Licensing is deprecated (LICENSE_ENABLED is False); a license-shaped
+        # error now points the user at API-key config instead of activation.
+        msg = friendly_error("License key not configured").lower()
+        assert "openai_api_key" in msg
+        assert "not configured" in msg
 
     def test_wasapi(self):
         msg = friendly_error("No WASAPI loopback device found")

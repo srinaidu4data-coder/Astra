@@ -148,7 +148,7 @@ export function CopilotPage() {
         })
         pushStatus(`Heard: ${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`)
       },
-      onQuestion: (text) => {
+      onQuestion: () => {
         pushStatus(`Question detected → writing answer…`)
         setPhase('processing')
       },

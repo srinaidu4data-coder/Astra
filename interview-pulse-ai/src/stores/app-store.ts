@@ -99,7 +99,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       route: 'copilot',
       setRoute: (route) => set({ route }),
 

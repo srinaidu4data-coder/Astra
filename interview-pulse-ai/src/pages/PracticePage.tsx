@@ -110,7 +110,7 @@ export function PracticePage() {
   const [followUpMode, setFollowUpMode] = useState(false)
   const [turnPhase, setTurnPhase] = useState<TurnPhase>('intro')
   const [interviewerLine, setInterviewerLine] = useState('')
-  const [introScript, setIntroScript] = useState('')
+  const [, setIntroScript] = useState('')
   const [closingScript, setClosingScript] = useState('')
   const [voiceHint, setVoiceHint] = useState<string | null>(null)
 

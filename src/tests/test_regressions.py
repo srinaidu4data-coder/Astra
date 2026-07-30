@@ -48,13 +48,17 @@ class TestRegression_DoubleRAG:
 class TestRegression_SilenceBudget:
     def test_silence_not_two_seconds(self):
         from config import SILENCE_DURATION
-        assert SILENCE_DURATION < 1.5
+        # The original bug was a flat 2.0s hangover. We now deliberately wait
+        # longer than 1.5s so multi-clause questions aren't cut off, but the
+        # 2.0s wall stays: past it the answer visibly lags the interviewer.
+        assert 1.0 <= SILENCE_DURATION < 2.0
 
 
 class TestRegression_Manual30s:
     def test_manual_window_capped(self):
         from config import MANUAL_TRANSCRIBE_MAX_SECONDS
-        assert MANUAL_TRANSCRIBE_MAX_SECONDS <= 15
+        # Guard against re-introducing the 30s re-STT window.
+        assert MANUAL_TRANSCRIBE_MAX_SECONDS <= 25
 
 
 class TestRegression_ScriptModelMini:

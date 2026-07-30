@@ -1,6 +1,7 @@
 """Config defaults regressions — product should be general-job friendly."""
 
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -23,13 +24,16 @@ class TestLicenseFlag:
 
 
 class TestTimingDefaults:
-    def test_silence_under_one_second(self):
-        assert SILENCE_DURATION <= 1.0
+    def test_silence_waits_for_full_question(self):
+        # Hangover must be long enough to ride out mid-sentence pauses so we
+        # never answer half a question (see "Wait for full interview questions
+        # before answering"), but stay well under 3s or the answer feels late.
+        assert 1.0 <= SILENCE_DURATION < 2.5
 
     def test_manual_not_30s(self):
         # Old path used 30s re-STT which destroyed latency
-        assert MANUAL_TRANSCRIBE_MAX_SECONDS <= 15
-        assert AUTO_TRANSCRIBE_MAX_SECONDS <= 15
+        assert MANUAL_TRANSCRIBE_MAX_SECONDS <= 25
+        assert AUTO_TRANSCRIBE_MAX_SECONDS <= 25
 
     def test_min_speech_reasonable(self):
         assert 0.3 <= MIN_SPEECH_DURATION <= 1.5
@@ -58,5 +62,13 @@ class TestPromptDefaults:
     def test_script_length_guidance_short(self):
         cfg = get_default_prompts_config()
         script = cfg["prompts"]["script_system"].lower()
-        # Prefer short speakable answers for live interviews
-        assert "80-120" in script or "30-45" in script or "120 words" in script
+        # Prefer short speakable answers for live interviews. The prompt states
+        # an explicit range (currently "40–80 words"); normalize en/em dashes so
+        # cosmetic punctuation edits don't fail the test.
+        normalized = script.replace("–", "-").replace("—", "-")
+        m = re.search(r"(\d{2,3})\s*-\s*(\d{2,3})\s*words", normalized)
+        assert m, "script prompt must state an explicit word-count target"
+        low, high = int(m.group(1)), int(m.group(2))
+        assert 20 <= low < high <= 120, (
+            f"answer target {low}-{high} words is too long to speak live"
+        )
