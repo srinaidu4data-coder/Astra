@@ -258,9 +258,16 @@ def health():
 
 @app.post("/api/warm")
 def warm():
-    """Preload Whisper + open a tiny OpenAI completion so first real answer is fast."""
+    """Preload Whisper, seed answer cache, warm OpenAI connection."""
     t0 = time.perf_counter()
     get_whisper_model()
+    seeded = 0
+    try:
+        from fast_answer import warm_cache_seed
+
+        seeded = warm_cache_seed()
+    except Exception:
+        seeded = 0
     openai_ms = None
     try:
         from rag import _get_openai_client
@@ -287,6 +294,7 @@ def warm():
         "ok": True,
         "load_ms": round((time.perf_counter() - t0) * 1000),
         "openai_warm_ms": openai_ms,
+        "cache_seeded": seeded,
     }
 
 
@@ -405,6 +413,7 @@ def answer(req: AnswerRequest, request: Request):
     t0 = time.perf_counter()
     # Fast path: skip classify LLM for typed questions (saves 0.5–2s)
     from answer_engine import ANSWER_PROFILE, looks_like_question
+    from fast_answer import cache_lookup, instant_answer
 
     q = req.question.strip()
     if ANSWER_PROFILE in ("quality", "full"):
@@ -418,22 +427,62 @@ def answer(req: AnswerRequest, request: Request):
             "reason": "fast_path_skip_classify",
         }
     u_primary, u_fallback = _user_model_prefs(request)
-    text = generate_answer(
-        q,
-        job_context=req.job_context,
-        tone=req.tone,
-        mode=req.mode,
-        answer_model=req.answer_model,
-        fallback_model=req.fallback_model,
-        user_answer_model=u_primary,
-        user_fallback_model=u_fallback,
-    )
+
+    source = "llm"
+    first_paint_ms = None
+    # Instant cache/template for sub-ms paint when profile is ultra/live
+    if ANSWER_PROFILE not in ("quality", "full"):
+        hit = cache_lookup(q, mode=req.mode or "star", job_context=req.job_context)
+        if hit:
+            text, source = hit[0], hit[1]
+            first_paint_ms = round((time.perf_counter() - t0) * 1000, 2)
+        else:
+            # Template immediately available; still try LLM upgrade
+            draft, src, ms = instant_answer(
+                q, job_context=req.job_context, mode=req.mode or "star"
+            )
+            first_paint_ms = round(ms, 2)
+            try:
+                text = generate_answer(
+                    q,
+                    job_context=req.job_context,
+                    tone=req.tone,
+                    mode=req.mode,
+                    answer_model=req.answer_model,
+                    fallback_model=req.fallback_model,
+                    user_answer_model=u_primary,
+                    user_fallback_model=u_fallback,
+                )
+                source = "llm" if text else src
+                if not text:
+                    text = draft
+                    source = src
+            except Exception:
+                text = draft
+                source = src
+    else:
+        text = generate_answer(
+            q,
+            job_context=req.job_context,
+            tone=req.tone,
+            mode=req.mode,
+            answer_model=req.answer_model,
+            fallback_model=req.fallback_model,
+            user_answer_model=u_primary,
+            user_fallback_model=u_fallback,
+        )
+
+    full_ms = round((time.perf_counter() - t0) * 1000)
     return {
         "question": req.question,
         "classification": cls,
         "answer": text,
         "bullets": _to_bullets(text, req.mode),
-        "latency_ms": round((time.perf_counter() - t0) * 1000),
+        # Latency tile: first paint (cache/template) when available
+        "latency_ms": first_paint_ms if first_paint_ms is not None else full_ms,
+        "first_paint_ms": first_paint_ms,
+        "full_ms": full_ms,
+        "source": source,
         "model_profile": ANSWER_PROFILE,
     }
 

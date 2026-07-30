@@ -79,7 +79,12 @@ def _get_openai_client() -> OpenAI:
         cache_key = ("direct", api_key[:8], base_url or "default")
         with _openai_lock:
             if _openai_client is None or _openai_client_key != cache_key:
-                kwargs = {"api_key": api_key, "timeout": 45.0, "max_retries": 1}
+                # Low retries + tight timeout: fail fast, cascade to template
+                kwargs = {
+                    "api_key": api_key,
+                    "timeout": float(os.environ.get("OPENAI_TIMEOUT", "12") or "12"),
+                    "max_retries": 0,
+                }
                 if base_url:
                     kwargs["base_url"] = base_url
                 _openai_client = OpenAI(**kwargs)

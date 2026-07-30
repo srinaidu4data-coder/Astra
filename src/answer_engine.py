@@ -421,21 +421,21 @@ def _system_for_mode(mode: str) -> str:
 
 
 def _max_tokens_for_mode(mode: str) -> int:
-    # ultra: short completions so the model can finish under ~1s on nano/mini
+    # ultra: tiny completions for sub-second TTFT on nano/mini
     if ANSWER_PROFILE in ("ultra", "fast"):
         return {
-            "shorter": 90,
-            "technical": 150,
-            "code": 180,
-            "star": 140,
-        }.get(mode, 140)
+            "shorter": 70,
+            "technical": 110,
+            "code": 130,
+            "star": 100,
+        }.get(mode, 100)
     if ANSWER_PROFILE == "live":
         return {
-            "shorter": 160,
-            "technical": 280,
-            "code": 320,
-            "star": 260,
-        }.get(mode, 260)
+            "shorter": 120,
+            "technical": 200,
+            "code": 220,
+            "star": 180,
+        }.get(mode, 180)
     if ANSWER_PROFILE == "balanced":
         return {
             "shorter": 340,
@@ -582,7 +582,10 @@ def _complete_answer(
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
-    timeout = 12.0 if _is_fast_profile() else 75.0
+    # Fast path: one model, short timeout — do not cascade-wait 4 models
+    timeout = 6.0 if _is_fast_profile() else 75.0
+    if _is_fast_profile():
+        models_try = [model, fallback_model or FAST_FALLBACK_MODEL]
     for m in models_try:
         if not m or m in seen:
             continue
@@ -600,19 +603,7 @@ def _complete_answer(
             return (resp.choices[0].message.content or "").strip()
         except Exception as e:
             last_err = e
-            # One lightweight retry without temperature (reasoning / API quirks)
-            try:
-                resp = client.chat.completions.create(
-                    model=m,
-                    messages=messages,
-                    stream=False,
-                    max_tokens=max_tokens,
-                    timeout=timeout,
-                )
-                return (resp.choices[0].message.content or "").strip()
-            except Exception as e2:
-                last_err = e2
-                continue
+            continue
     if last_err:
         raise last_err
     return ""
@@ -632,30 +623,83 @@ def generate_answer(
     """
     Interview answer generation.
 
-    Default profile is *live* (low latency): local strategy heuristic, one model
-    call, no quality-regen round-trip. Set ASTRA_ANSWER_PROFILE=quality for the
-    slower multi-pass pipeline.
+    Fast profiles (ultra/live):
+      cache → template/LLM cascade via fast_answer (sub-ms first paint when cached)
+    Quality profile: multi-pass strategy + optional regen.
     """
     mode = (mode or "star").strip().lower()
     if mode not in ("star", "shorter", "technical", "code"):
         mode = "star"
 
-    # Fast profiles force nano/mini unless admin explicitly set a user model
-    # (or request overrides). Slow reasoning models never meet <1s.
+    # ---- Ultra/live: research cascade (cache + template + optional nano) ----
+    if _is_fast_profile():
+        from fast_answer import cache_lookup, cache_store, instant_answer
+
+        hit = cache_lookup(question, mode=mode, job_context=job_context)
+        if hit:
+            return hit[0]
+
+        # Prefer single-shot nano; fall back to instant template if LLM fails/slow
+        am = answer_model
+        fm = fallback_model
+        uam = user_answer_model
+        ufm = user_fallback_model
+        if _prefer_fast_models():
+            if not (uam or am):
+                am = FAST_ANSWER_MODEL
+            if not (ufm or fm):
+                fm = FAST_FALLBACK_MODEL
+            if _is_reasoning_model(str(uam or am or "")) and not os.environ.get(
+                "ASTRA_ALLOW_SLOW_LIVE", ""
+            ).strip():
+                am = FAST_ANSWER_MODEL
+                uam = None
+
+        primary, fallback = resolve_answer_models(
+            answer_model=am,
+            fallback_model=fm,
+            user_answer_model=uam,
+            user_fallback_model=ufm,
+        )
+        if _prefer_fast_models() and _is_reasoning_model(primary):
+            primary, fallback = FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL
+
+        strategy = _fallback_strategy(question, job_context)
+        system = _system_for_mode(mode)
+        user = _build_user_prompt(
+            question,
+            job_context=job_context,
+            tone=tone,
+            mode=mode,
+            strategy=strategy,
+            context_chunks=[],
+            strict_regen=False,
+        )
+        try:
+            answer = _complete_answer(
+                system=system,
+                user=user,
+                model=primary,
+                fallback_model=fallback,
+                max_tokens=_max_tokens_for_mode(mode),
+                temperature=0.3,
+            )
+        except Exception:
+            answer = ""
+        if not (answer or "").strip():
+            answer, _, _ = instant_answer(
+                question, job_context=job_context, mode=mode
+            )
+        answer = (answer or "").strip()
+        if answer:
+            cache_store(question, answer, mode=mode, job_context=job_context)
+        return answer
+
+    # ---- Quality / balanced path ----
     am = answer_model
     fm = fallback_model
     uam = user_answer_model
     ufm = user_fallback_model
-    if _prefer_fast_models():
-        if not (uam or am):
-            am = FAST_ANSWER_MODEL
-        if not (ufm or fm):
-            fm = FAST_FALLBACK_MODEL
-        # Remap known-slow models when assigned for live interviews
-        slow = _is_reasoning_model(str(uam or am or ""))
-        if slow and not os.environ.get("ASTRA_ALLOW_SLOW_LIVE", "").strip():
-            am = FAST_ANSWER_MODEL
-            uam = None
 
     primary, fallback = resolve_answer_models(
         answer_model=am,
@@ -663,10 +707,7 @@ def generate_answer(
         user_answer_model=uam,
         user_fallback_model=ufm,
     )
-    if _prefer_fast_models() and _is_reasoning_model(primary):
-        primary, fallback = FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL
 
-    # RAG context (skipped on live/ultra — embedding + chroma adds latency)
     chunks: list = []
     if _use_rag():
         try:
@@ -674,7 +715,6 @@ def generate_answer(
         except Exception:
             chunks = []
 
-    # Strategy: local heuristic by default (saves a full LLM round-trip ~1–3s)
     if _use_strategy_llm():
         strategy = analyze_question_strategy(question, job_context=job_context)
     else:
@@ -697,14 +737,11 @@ def generate_answer(
         model=primary,
         fallback_model=fallback,
         max_tokens=_max_tokens_for_mode(mode),
-        temperature=0.35 if _is_fast_profile() else 0.42,
+        temperature=0.42,
     )
 
-    # Second generation only on quality/balanced profiles when the first is thin.
-    # This was often doubling latency (~5s → ~10s) in live interviews.
     if _use_quality_regen() and answer:
         quality = score_answer_quality(answer, strategy, mode=mode)
-        # Only regenerate when clearly failing (not borderline)
         regen_floor = 40 if ANSWER_PROFILE == "balanced" else 55
         if quality["score"] < regen_floor:
             user2 = _build_user_prompt(
