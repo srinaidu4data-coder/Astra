@@ -14,4 +14,9 @@ contextBridge.exposeInMainWorld('interviewPulse', {
     ipcRenderer.on('overlay:toggle-click-through', handler)
     return () => ipcRenderer.removeListener('overlay:toggle-click-through', handler)
   },
+  onDeepLink: (cb) => {
+    const handler = (_e, url) => cb(url)
+    ipcRenderer.on('app:deep-link', handler)
+    return () => ipcRenderer.removeListener('app:deep-link', handler)
+  },
 })

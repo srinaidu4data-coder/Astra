@@ -427,14 +427,6 @@ class LiveInterviewSession:
                 return
 
             self._emit(
-                "question",
-                {
-                    "text": question,
-                    "raw": text,
-                    "classification": classification,
-                },
-            )
-            self._emit(
                 "status",
                 {
                     "message": f"Writing answer ({self.mode})…",

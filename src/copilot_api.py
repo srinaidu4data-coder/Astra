@@ -703,7 +703,7 @@ async def ws_interview(websocket: WebSocket):
       raw int16 little-endian mono PCM chunks (browser mic)
 
     Server → client:
-      {"type":"status"|"listening"|"level"|"transcript"|"question"|"chatter"|"answer"|"error"|"pong", ...}
+      {"type":"status"|"listening"|"level"|"transcript"|"answer_pending"|"chatter"|"answer"|"error"|"pong", ...}
     """
     await websocket.accept()
     import asyncio

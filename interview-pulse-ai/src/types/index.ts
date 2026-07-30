@@ -158,6 +158,7 @@ declare global {
       setClickThrough: (enabled: boolean) => Promise<{ ok: boolean }>
       setAlwaysOnTop: (enabled: boolean) => Promise<{ ok: boolean }>
       onToggleClickThrough: (cb: () => void) => () => void
+      onDeepLink: (cb: (url: string) => void) => () => void
     }
   }
 }

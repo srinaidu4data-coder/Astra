@@ -8,7 +8,6 @@ export type LiveEvent =
   | { type: 'listening'; active: boolean; device?: string; message?: string }
   | { type: 'level'; level: number; state?: string; noise_floor?: number }
   | { type: 'transcript'; text: string; stt_ms?: number; final?: boolean }
-  | { type: 'question'; text: string; raw?: string }
   | { type: 'chatter'; text: string; reason?: string }
   | {
       type: 'answer'
@@ -29,7 +28,6 @@ export type LiveHandlers = {
   onListening?: (active: boolean, device?: string) => void
   onLevel?: (level: number, state?: string) => void
   onTranscript?: (text: string) => void
-  onQuestion?: (text: string) => void
   onChatter?: (text: string, reason?: string) => void
   onAnswerPending?: (question: string) => void
   onAnswer?: (answer: SuggestedAnswer) => void
@@ -204,9 +202,6 @@ export class LiveInterviewClient {
         break
       case 'transcript':
         this.handlers.onTranscript?.(String((data as { text?: string }).text ?? ''))
-        break
-      case 'question':
-        this.handlers.onQuestion?.(String((data as { text?: string }).text ?? ''))
         break
       case 'answer_pending':
         this.handlers.onAnswerPending?.(

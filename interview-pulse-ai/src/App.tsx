@@ -129,7 +129,27 @@ function GatedApp() {
   return <DashboardShell />
 }
 
+/** Desktop only: interviewpulse://open[/path][?query] focuses the window (main.cjs)
+ *  and, if it carries a path/query beyond bare "open", routes the SPA there. */
+function useDeepLinkRouting() {
+  useEffect(() => {
+    return window.interviewPulse?.onDeepLink((url) => {
+      try {
+        const parsed = new URL(url)
+        const rest = `${parsed.host}${parsed.pathname}`.replace(/^open\/?/, '')
+        if (rest || parsed.search) {
+          window.location.hash = `#/${rest}${parsed.search}`
+        }
+      } catch {
+        // Malformed deep link — window is already focused, nothing else to do
+      }
+    })
+  }, [])
+}
+
 export default function App() {
+  useDeepLinkRouting()
+
   return (
     <HashRouter>
       <Routes>
