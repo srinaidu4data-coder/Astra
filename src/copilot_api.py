@@ -34,59 +34,17 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from answer_engine import (  # noqa: E402
+    generate_answer,
+    iter_answer_tokens,
+    to_bullets,
+)
 from config import get_openai_api_key  # noqa: E402
 from rag import (  # noqa: E402
-    SCRIPT_MODEL,
-    _get_openai_client,
     classify_utterance,
     search_context,
 )
 from transcriber import get_whisper_model, transcribe_audio  # noqa: E402
-
-# Calm, speakable STAR answers — not a wall of text
-SPEAKABLE_STAR_SYSTEM = """You are an interview teleprompter. Write a short answer the candidate can read aloud slowly.
-
-Format EXACTLY with these four labels (one short sentence each):
-Situation: ...
-Task: ...
-Action: ...
-Result: ...
-
-Rules:
-- Total under 85 words
-- First person, natural speech
-- No bullet symbols, no markdown, no preamble
-- Prefer concrete detail over buzzwords
-- Result must include a number or clear outcome when possible
-"""
-
-SPEAKABLE_SHORTER_SYSTEM = """You are an interview teleprompter. Give a brief speakable answer.
-
-Rules:
-- Exactly 3 short lines the candidate can say aloud
-- Each line under 18 words
-- No STAR labels, no markdown, no preamble
-- First person, confident, plain language
-"""
-
-SPEAKABLE_TECHNICAL_SYSTEM = """You are an interview teleprompter for technical depth.
-
-Rules:
-- 4 short lines the candidate can speak
-- Cover: approach, key mechanism, tradeoff, how you'd validate
-- No STAR labels unless natural
-- Prefer precise terms over fluff
-- Under 100 words total
-"""
-
-SPEAKABLE_CODE_SYSTEM = """You are an interview teleprompter for coding questions.
-
-Rules:
-- Start with 2 short spoken sentences (approach)
-- Then a small code sketch in a fenced block (```language ... ```)
-- Keep code under 18 lines
-- End with one spoken line on complexity/tradeoff
-"""
 
 app = FastAPI(title="InterviewPulse Copilot API", version="1.0.0")
 
@@ -262,63 +220,13 @@ def _stream_answer_text(
     tone: str,
     mode: str,
 ) -> Generator[str, None, None]:
-    chunks: list[dict] = []
-    try:
-        chunks = search_context(question) or []
-    except Exception as e:
-        print(f"[rag] search failed: {e}")
-
-    mode = (mode or "star").strip().lower()
-    client = _get_openai_client()
-    ctx = ""
-    if chunks:
-        bits = [c.get("text", "")[:280] for c in chunks[:3] if c.get("text")]
-        if bits:
-            ctx = "Use this candidate context when relevant:\n" + "\n".join(bits)
-
-    job = f"Role focus: {job_context}" if job_context else ""
-    tone_note = f"Tone: {tone}." if tone else ""
-
-    if mode == "shorter":
-        system = SPEAKABLE_SHORTER_SYSTEM
-        instruct = "Write the 3 short speakable lines now."
-        max_tokens = 140
-    elif mode == "technical":
-        system = SPEAKABLE_TECHNICAL_SYSTEM
-        instruct = "Write the technical speakable answer now."
-        max_tokens = 220
-    elif mode == "code":
-        system = SPEAKABLE_CODE_SYSTEM
-        instruct = "Write the spoken approach + code sketch now."
-        max_tokens = 320
-    else:
-        mode = "star"
-        system = SPEAKABLE_STAR_SYSTEM
-        instruct = "Write the four-line Situation/Task/Action/Result answer now."
-        max_tokens = 220
-
-    user = f"""{job}
-{tone_note}
-{ctx}
-
-Interview question:
-{question}
-
-{instruct}"""
-
-    stream = client.chat.completions.create(
-        model=SCRIPT_MODEL,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        stream=True,
-        temperature=0.55,
-        max_tokens=max_tokens,
+    """Stream depth-first interview answers (strategy-aware prompts)."""
+    yield from iter_answer_tokens(
+        question,
+        job_context=job_context,
+        tone=tone,
+        mode=mode,
     )
-    for chunk in stream:
-        if chunk.choices and chunk.choices[0].delta.content:
-            yield chunk.choices[0].delta.content
 
 
 @app.get("/api/health")
@@ -429,15 +337,14 @@ def answer(req: AnswerRequest):
 
     t0 = time.perf_counter()
     cls = classify_utterance(req.question)
-    parts: list[str] = []
-    for tok in _stream_answer_text(
-        cls.get("cleaned_question") or req.question,
+    q = cls.get("cleaned_question") or req.question
+    # Blocking path uses full quality pipeline (strategy + depth gate + regen)
+    text = generate_answer(
+        q,
         job_context=req.job_context,
         tone=req.tone,
         mode=req.mode,
-    ):
-        parts.append(tok)
-    text = "".join(parts).strip()
+    )
     return {
         "question": req.question,
         "classification": cls,
@@ -629,53 +536,8 @@ def run_test_audio(req: FileRunRequest):
 
 
 def _to_bullets(text: str, mode: str) -> list[str]:
-    text = (text or "").strip()
-    if not text:
-        return []
-
-    mode = (mode or "star").strip().lower()
-
-    # Strip fenced code for bullet list; code shown separately on client
-    prose = re.sub(r"```[\s\S]*?```", "", text).strip() if mode == "code" else text
-
-    labeled: list[str] = []
-    for raw in prose.splitlines():
-        line = raw.strip(" -•\t")
-        if not line:
-            continue
-        low = line.lower()
-        if mode == "star":
-            mapped = False
-            for key, prefix in (
-                ("situation:", "Situation — "),
-                ("task:", "Task — "),
-                ("action:", "Action — "),
-                ("result:", "Result — "),
-            ):
-                if low.startswith(key):
-                    rest = line.split(":", 1)[1].strip()
-                    labeled.append(prefix + rest)
-                    mapped = True
-                    break
-            if not mapped:
-                labeled.append(line)
-        else:
-            labeled.append(line)
-
-    if len(labeled) >= 2:
-        return labeled[:8]
-
-    parts = [p.strip() for p in prose.replace("\n", " ").split(". ") if p.strip()]
-    if mode == "star" and len(parts) >= 4:
-        labels = ["Situation — ", "Task — ", "Action — ", "Result — "]
-        out = []
-        for i, p in enumerate(parts[:4]):
-            s = p if p.endswith(".") else p + "."
-            out.append(labels[i] + s)
-        return out
-    if parts:
-        return parts[:6]
-    return [text]
+    """UI bullets from rich multi-section answers (see answer_engine.to_bullets)."""
+    return to_bullets(text, mode)
 
 
 # ---------------------------------------------------------------------------
