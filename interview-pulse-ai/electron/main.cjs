@@ -238,8 +238,30 @@ function createMainWindow() {
   })
 }
 
+function makeOverlayInteractive() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return
+  try {
+    // Click-through makes the window ignore all mouse input (can't drag/move).
+    overlayWindow.setIgnoreMouseEvents(false)
+    overlayWindow.setMovable(true)
+    overlayWindow.setResizable(true)
+    overlayWindow.setAlwaysOnTop(true, 'screen-saver')
+  } catch {
+    /* ignore */
+  }
+}
+
 function createOverlayWindow() {
   if (overlayWindow && !overlayWindow.isDestroyed()) {
+    // Re-show: always restore interactivity so user can drag again
+    makeOverlayInteractive()
+    // If saved bounds put it off-screen, snap back
+    try {
+      const b = clampOverlayBounds(overlayWindow.getBounds())
+      overlayWindow.setBounds(b, false)
+    } catch {
+      /* ignore */
+    }
     overlayWindow.show()
     overlayWindow.focus()
     return
@@ -266,6 +288,8 @@ function createOverlayWindow() {
     skipTaskbar: true,
     hasShadow: true,
     thickFrame: true,
+    // Must stay true — false + transparent often breaks -webkit-app-region drag on Windows
+    movable: true,
     backgroundColor: '#00000000',
     show: false,
     webPreferences: {
@@ -289,14 +313,15 @@ function createOverlayWindow() {
     : `file://${path.join(__dirname, '../dist/index.html')}#/overlay`
 
   overlayWindow.loadURL(url)
-  overlayWindow.setAlwaysOnTop(true, 'screen-saver')
-  // Movable + resizable without a native frame
-  overlayWindow.setMovable(true)
-  overlayWindow.setResizable(true)
+  makeOverlayInteractive()
   applyContentProtection(overlayWindow, true)
 
   overlayWindow.once('ready-to-show', () => {
-    if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.show()
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      makeOverlayInteractive()
+      overlayWindow.show()
+      overlayWindow.focus()
+    }
   })
 
   overlayWindow.on('resize', scheduleSaveOverlayBounds)
@@ -356,9 +381,58 @@ function registerIpc() {
 
   ipcMain.handle('overlay:set-click-through', (_e, enabled) => {
     if (overlayWindow && !overlayWindow.isDestroyed()) {
-      overlayWindow.setIgnoreMouseEvents(enabled, { forward: true })
+      if (enabled) {
+        // Pass-through: clicks go to apps below (cannot drag while this is on)
+        overlayWindow.setIgnoreMouseEvents(true, { forward: true })
+      } else {
+        overlayWindow.setIgnoreMouseEvents(false)
+        overlayWindow.setMovable(true)
+      }
     }
-    return { ok: true }
+    return { ok: true, clickThrough: Boolean(enabled) }
+  })
+
+  /** Move overlay by delta (renderer-driven drag — reliable on transparent Windows). */
+  ipcMain.handle('overlay:move-by', (_e, delta) => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return { ok: false }
+    if (overlayWindow.isMaximized() || overlayWindow.isFullScreen()) {
+      return { ok: false, reason: 'maximized' }
+    }
+    // Ensure we can receive / apply moves
+    try {
+      overlayWindow.setIgnoreMouseEvents(false)
+    } catch {
+      /* ignore */
+    }
+    const cur = overlayWindow.getBounds()
+    const next = clampOverlayBounds({
+      x: cur.x + (Number(delta?.x) || 0),
+      y: cur.y + (Number(delta?.y) || 0),
+      width: cur.width,
+      height: cur.height,
+    })
+    overlayWindow.setBounds(next, false)
+    overlayRestoredBounds = next
+    scheduleSaveOverlayBounds()
+    return { ok: true, ...next }
+  })
+
+  ipcMain.handle('overlay:reset-position', () => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return { ok: false }
+    const next = clampOverlayBounds(defaultOverlayBounds())
+    try {
+      overlayWindow.setIgnoreMouseEvents(false)
+      if (overlayWindow.isMaximized()) overlayWindow.unmaximize()
+      if (overlayWindow.isFullScreen()) overlayWindow.setFullScreen(false)
+    } catch {
+      /* ignore */
+    }
+    overlayWindow.setBounds(next, true)
+    overlayRestoredBounds = next
+    saveOverlayBounds(next)
+    overlayWindow.show()
+    overlayWindow.focus()
+    return { ok: true, ...next }
   })
 
   ipcMain.handle('overlay:set-always-on-top', (_e, enabled) => {

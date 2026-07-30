@@ -51,6 +51,8 @@ export function OverlayPage() {
   const [maximized, setMaximized] = useState(false)
   const [activePreset, setActivePreset] = useState<OverlaySizePreset | null>('medium')
   const resizingRef = useRef(false)
+  const movingRef = useRef(false)
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null)
   const resizeStartRef = useRef<{
     x: number
     y: number
@@ -80,9 +82,12 @@ export function OverlayPage() {
 
   useEffect(() => {
     document.body.style.background = 'transparent'
+    // Opening the overlay always restores mouse interaction so drag/move works.
+    // Click-through can be re-enabled via the eye button after you're positioned.
+    updateStealth({ clickThrough: false })
+    void window.interviewPulse?.setClickThrough(false)
     void window.interviewPulse?.setOverlayOpacity(stealth.opacity)
     void window.interviewPulse?.setContentProtection(stealth.contentProtection)
-    void window.interviewPulse?.setClickThrough(stealth.clickThrough)
     void refreshBounds()
 
     const unsub = window.interviewPulse?.onToggleClickThrough?.(() => {
@@ -92,7 +97,6 @@ export function OverlayPage() {
     })
 
     const onResize = () => {
-      // Window resized via OS edge drag — clear preset highlight, update label
       setActivePreset(null)
       void refreshBounds()
     }
@@ -103,13 +107,16 @@ export function OverlayPage() {
       window.removeEventListener('resize', onResize)
       document.body.style.background = ''
     }
-  }, [
-    stealth.opacity,
-    stealth.contentProtection,
-    stealth.clickThrough,
-    updateStealth,
-    refreshBounds,
-  ])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on mount
+  }, [])
+
+  useEffect(() => {
+    void window.interviewPulse?.setOverlayOpacity(stealth.opacity)
+  }, [stealth.opacity])
+
+  useEffect(() => {
+    void window.interviewPulse?.setContentProtection(stealth.contentProtection)
+  }, [stealth.contentProtection])
 
   useEffect(() => {
     setCardIndex(0)
@@ -135,8 +142,54 @@ export function OverlayPage() {
     }
   }
 
+  const resetPosition = async () => {
+    updateStealth({ clickThrough: false })
+    void window.interviewPulse?.setClickThrough(false)
+    const res = await window.interviewPulse?.resetOverlayPosition?.()
+    if (res?.width != null) {
+      setSizeLabel(`${res.width}×${res.height}`)
+      setMaximized(false)
+      setActivePreset('medium')
+    }
+  }
+
+  // --- Move (manual pointer drag — works when -webkit-app-region fails on Win) ---
+  const onMovePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
+    if (stealth.clickThrough) return
+    // Don't start move from buttons
+    const t = e.target as HTMLElement
+    if (t.closest('button, input, select, a')) return
+    e.preventDefault()
+    movingRef.current = true
+    lastPointerRef.current = { x: e.screenX, y: e.screenY }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const onMovePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!movingRef.current || !lastPointerRef.current) return
+    const dx = e.screenX - lastPointerRef.current.x
+    const dy = e.screenY - lastPointerRef.current.y
+    lastPointerRef.current = { x: e.screenX, y: e.screenY }
+    if (dx === 0 && dy === 0) return
+    void window.interviewPulse?.moveOverlayBy?.({ x: dx, y: dy })
+  }
+
+  const onMovePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!movingRef.current) return
+    movingRef.current = false
+    lastPointerRef.current = null
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+    void refreshBounds()
+  }
+
+  // --- Resize handle ---
   const onResizePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!window.interviewPulse?.resizeOverlayBy) return
+    if (!window.interviewPulse?.setOverlayBounds) return
     e.preventDefault()
     e.stopPropagation()
     resizingRef.current = true
@@ -154,7 +207,6 @@ export function OverlayPage() {
     const start = resizeStartRef.current
     const dw = e.screenX - start.x
     const dh = e.screenY - start.y
-    // Absolute size from start — avoids compound drift
     void window.interviewPulse?.setOverlayBounds?.({
       width: Math.round(start.w + dw),
       height: Math.round(start.h + dh),
@@ -176,16 +228,33 @@ export function OverlayPage() {
 
   return (
     <div className="relative flex h-screen flex-col bg-transparent p-2.5 text-white sm:p-3">
-      {/* Title bar — drag to move; double-click maximize */}
+      {stealth.clickThrough && (
+        <div
+          className="mb-2 rounded-[14px] border border-[#E8C547]/40 bg-[#E8C547]/15 px-3 py-2 text-[11px] text-[#E8C547]"
+          style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
+        >
+          Click-through is ON — mouse passes through this window. Press the{' '}
+          <strong>eye</strong> icon (or Ctrl+Shift+C) to interact and drag again.
+        </div>
+      )}
+
+      {/* Title bar — primary move surface */}
       <div
-        className="glass mb-2 flex shrink-0 items-center justify-between rounded-[16px] px-2.5 py-2 sm:mb-3 sm:rounded-[18px] sm:px-3 sm:py-2.5"
-        style={{ WebkitAppRegion: 'drag' } as CSSProperties}
+        className={cn(
+          'glass mb-2 flex shrink-0 cursor-grab items-center justify-between rounded-[16px] px-2.5 py-2 active:cursor-grabbing sm:mb-3 sm:rounded-[18px] sm:px-3 sm:py-2.5',
+          stealth.clickThrough && 'opacity-60',
+        )}
+        style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
+        onPointerDown={onMovePointerDown}
+        onPointerMove={onMovePointerMove}
+        onPointerUp={onMovePointerUp}
+        onPointerCancel={onMovePointerUp}
         onDoubleClick={() => void toggleMaximize()}
-        title="Drag to move · double-click to expand/restore"
+        title="Drag this bar to move the overlay · double-click to expand"
       >
         <div className="flex min-w-0 items-center gap-2 text-[12px] text-white/55">
-          <GripHorizontal className="h-4 w-4 shrink-0 text-white/30" strokeWidth={1.5} />
-          <span className="truncate">Answer</span>
+          <GripHorizontal className="h-4 w-4 shrink-0 text-[#5DD5E3]" strokeWidth={1.5} />
+          <span className="truncate font-medium text-white/70">Drag to move</span>
           <Badge tone={listening ? 'emerald' : 'default'}>
             {listening ? 'live' : 'idle'}
           </Badge>
@@ -198,11 +267,20 @@ export function OverlayPage() {
         <div
           className="flex shrink-0 items-center gap-0.5"
           style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
+          onPointerDown={(e) => e.stopPropagation()}
         >
           <Button
             size="icon"
             variant="ghost"
-            title={chromeCollapsed ? 'Show controls' : 'Hide controls (more answer space)'}
+            title="Reset position (if stuck)"
+            onClick={() => void resetPosition()}
+          >
+            <span className="text-[10px] font-semibold text-white/50">⌂</span>
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            title={chromeCollapsed ? 'Show controls' : 'Hide controls'}
             onClick={() => setChromeCollapsed((v) => !v)}
           >
             {chromeCollapsed ? (
@@ -226,7 +304,11 @@ export function OverlayPage() {
           <Button
             size="icon"
             variant="ghost"
-            title="Click-through"
+            title={
+              stealth.clickThrough
+                ? 'Click-through ON — click to interact again'
+                : 'Click-through OFF — click so mouse passes through'
+            }
             onClick={() => {
               const next = !stealth.clickThrough
               updateStealth({ clickThrough: next })
@@ -234,7 +316,7 @@ export function OverlayPage() {
             }}
           >
             {stealth.clickThrough ? (
-              <EyeOff className="h-4 w-4" strokeWidth={1.5} />
+              <EyeOff className="h-4 w-4 text-[#E8C547]" strokeWidth={1.5} />
             ) : (
               <Eye className="h-4 w-4" strokeWidth={1.5} />
             )}
@@ -249,7 +331,6 @@ export function OverlayPage() {
         </div>
       </div>
 
-      {/* Size presets + opacity — collapsible to free vertical space */}
       {!chromeCollapsed && (
         <div
           className="mb-2 flex shrink-0 flex-col gap-2 sm:mb-3"
@@ -296,7 +377,6 @@ export function OverlayPage() {
         </div>
       )}
 
-      {/* Answer body grows with window */}
       <div className="min-h-0 flex-1 overflow-hidden rounded-[20px] sm:rounded-[24px]">
         <WhisperStream
           compact
@@ -309,7 +389,6 @@ export function OverlayPage() {
         />
       </div>
 
-      {/* Bottom-right drag handle — pull to expand freely */}
       <div
         className="absolute bottom-1 right-1 z-20 flex h-7 w-7 cursor-nwse-resize items-end justify-end p-1"
         style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}

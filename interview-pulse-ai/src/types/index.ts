@@ -184,6 +184,11 @@ declare global {
         width?: number
         height?: number
       }) => Promise<OverlayBounds>
+      moveOverlayBy?: (delta: {
+        x?: number
+        y?: number
+      }) => Promise<OverlayBounds>
+      resetOverlayPosition?: () => Promise<OverlayBounds>
       setOverlayPreset?: (
         preset: OverlaySizePreset,
       ) => Promise<OverlayBounds & { preset?: string }>

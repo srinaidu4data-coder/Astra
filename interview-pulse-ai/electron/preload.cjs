@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('interviewPulse', {
   getOverlayBounds: () => ipcRenderer.invoke('overlay:get-bounds'),
   setOverlayBounds: (bounds) => ipcRenderer.invoke('overlay:set-bounds', bounds),
   resizeOverlayBy: (delta) => ipcRenderer.invoke('overlay:resize-by', delta),
+  moveOverlayBy: (delta) => ipcRenderer.invoke('overlay:move-by', delta),
+  resetOverlayPosition: () => ipcRenderer.invoke('overlay:reset-position'),
   setOverlayPreset: (preset) => ipcRenderer.invoke('overlay:set-preset', preset),
   toggleOverlayMaximize: () => ipcRenderer.invoke('overlay:toggle-maximize'),
   onToggleClickThrough: (cb) => {
