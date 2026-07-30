@@ -403,6 +403,45 @@ def _build_user_prompt(
     return "\n\n".join(p for p in parts if p)
 
 
+def _is_reasoning_model(model: str) -> bool:
+    """o-series / pro / Sol-style models often reject temperature or max_tokens."""
+    m = (model or "").strip().lower()
+    if not m:
+        return False
+    return (
+        m.startswith("o1")
+        or m.startswith("o3")
+        or m.startswith("o4")
+        or m.endswith("-pro")
+        or m in ("gpt-5.6-sol", "gpt-5-pro")
+        or m.endswith("-sol")
+    )
+
+
+def _chat_create_kwargs(
+    *,
+    model: str,
+    messages: list[dict[str, str]],
+    max_tokens: int,
+    temperature: float,
+    stream: bool,
+    timeout: float = 75.0,
+) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "stream": stream,
+        "timeout": timeout,
+    }
+    if _is_reasoning_model(model):
+        # Prefer modern token param; omit temperature (often unsupported)
+        kwargs["max_completion_tokens"] = max_tokens
+    else:
+        kwargs["temperature"] = temperature
+        kwargs["max_tokens"] = max_tokens
+    return kwargs
+
+
 def _complete_answer(
     *,
     system: str,
@@ -417,26 +456,38 @@ def _complete_answer(
     models_try = [model, fallback_model or FALLBACK_MODEL, SCRIPT_MODEL, "gpt-4o-mini"]
     seen: set[str] = set()
     last_err: Exception | None = None
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
     for m in models_try:
         if not m or m in seen:
             continue
         seen.add(m)
-        try:
-            resp = client.chat.completions.create(
+        # Try preferred kwargs, then a plain max_tokens retry for API quirks
+        attempts = [
+            _chat_create_kwargs(
                 model=m,
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
-                stream=False,
-                temperature=temperature,
+                messages=messages,
                 max_tokens=max_tokens,
-                timeout=75.0,
-            )
-            return (resp.choices[0].message.content or "").strip()
-        except Exception as e:
-            last_err = e
-            continue
+                temperature=temperature,
+                stream=False,
+            ),
+            {
+                "model": m,
+                "messages": messages,
+                "stream": False,
+                "max_tokens": max_tokens,
+                "timeout": 75.0,
+            },
+        ]
+        for kwargs in attempts:
+            try:
+                resp = client.chat.completions.create(**kwargs)
+                return (resp.choices[0].message.content or "").strip()
+            except Exception as e:
+                last_err = e
+                continue
     if last_err:
         raise last_err
     return ""
@@ -582,24 +633,38 @@ def iter_answer_tokens(
     models_try = [primary, fallback, SCRIPT_MODEL, "gpt-4o-mini"]
     stream = None
     last_err: Exception | None = None
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+    max_tok = _max_tokens_for_mode(mode)
     for model in models_try:
         if not model:
             continue
-        try:
-            stream = client.chat.completions.create(
+        attempts = [
+            _chat_create_kwargs(
                 model=model,
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
-                stream=True,
+                messages=messages,
+                max_tokens=max_tok,
                 temperature=0.42,
-                max_tokens=_max_tokens_for_mode(mode),
-            )
+                stream=True,
+            ),
+            {
+                "model": model,
+                "messages": messages,
+                "stream": True,
+                "max_tokens": max_tok,
+            },
+        ]
+        for kwargs in attempts:
+            try:
+                stream = client.chat.completions.create(**kwargs)
+                break
+            except Exception as e:
+                last_err = e
+                continue
+        if stream is not None:
             break
-        except Exception as e:
-            last_err = e
-            continue
     if stream is None:
         if last_err:
             raise last_err

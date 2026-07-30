@@ -72,19 +72,31 @@ export function AdminPage() {
     void load(query)
   }, [load, query])
 
-  const primaryOptions = useMemo(() => {
-    return [
-      { id: '', label: `Default (${defaultPrimary})` },
-      ...models.map((m) => ({ id: m.id, label: m.label })),
-    ]
-  }, [models, defaultPrimary])
+  const modelsByGroup = useMemo(() => {
+    const order: string[] = []
+    const map = new Map<string, ModelOption[]>()
+    for (const m of models) {
+      const g = m.group || 'Other'
+      if (!map.has(g)) {
+        map.set(g, [])
+        order.push(g)
+      }
+      map.get(g)!.push(m)
+    }
+    return order.map((g) => ({ group: g, models: map.get(g)! }))
+  }, [models])
 
-  const fallbackOptions = useMemo(() => {
-    return [
-      { id: '', label: `Default (${defaultFallback})` },
-      ...models.map((m) => ({ id: m.id, label: m.label })),
-    ]
-  }, [models, defaultFallback])
+  const selectGroups = useMemo(
+    () =>
+      modelsByGroup.map(({ group, models: ms }) => ({
+        group,
+        options: ms.map((m) => ({
+          id: m.id,
+          label: m.label,
+        })),
+      })),
+    [modelsByGroup],
+  )
 
   const saveUser = async (userId: number) => {
     const d = drafts[userId]
@@ -154,10 +166,12 @@ export function AdminPage() {
               </h2>
             </div>
             <p className="max-w-xl text-[13px] leading-relaxed text-white/40">
-              Assign a primary and fallback LLM per user. Global defaults are{' '}
+              Assign a primary and fallback LLM per user from the full OpenAI
+              catalog ({models.length} models). Global defaults are{' '}
               <span className="text-white/70">{defaultPrimary}</span> with fallback{' '}
               <span className="text-white/70">{defaultFallback}</span>. Empty =
-              use default.
+              use default. If a model is not enabled on your OpenAI account, the
+              engine automatically falls back.
             </p>
           </div>
           <Button
@@ -175,16 +189,34 @@ export function AdminPage() {
           </Button>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          {models.map((m) => (
-            <Badge
-              key={m.id}
-              tone={m.is_default ? 'emerald' : m.is_fallback_default ? 'amber' : 'default'}
-            >
-              {m.id}
-              {m.is_default ? ' · default' : ''}
-              {m.is_fallback_default ? ' · fallback' : ''}
-            </Badge>
+        <div className="mt-5 max-h-56 space-y-3 overflow-y-auto overscroll-contain pr-1 scrollbar-thin">
+          {modelsByGroup.map(({ group, models: ms }) => (
+            <div key={group}>
+              <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-white/30">
+                {group}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {ms.map((m) => (
+                  <Badge
+                    key={m.id}
+                    tone={
+                      m.is_default
+                        ? 'emerald'
+                        : m.is_fallback_default
+                          ? 'amber'
+                          : m.is_reasoning
+                            ? 'indigo'
+                            : 'default'
+                    }
+                    title={m.note || m.label}
+                  >
+                    {m.id}
+                    {m.is_default ? ' · default' : ''}
+                    {m.is_fallback_default ? ' · fallback' : ''}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
 
@@ -293,12 +325,19 @@ export function AdminPage() {
                             [u.id]: { ...d, answer_model: e.target.value },
                           }))
                         }
-                        className="h-10 rounded-xl border border-white/[0.08] bg-[#141414] px-3 text-[13px] text-white/90 outline-none focus:border-[#20B8CD]/40"
+                        className="h-10 max-w-full rounded-xl border border-white/[0.08] bg-[#141414] px-3 text-[13px] text-white/90 outline-none focus:border-[#20B8CD]/40"
                       >
-                        {primaryOptions.map((o) => (
-                          <option key={o.id || 'default-p'} value={o.id}>
-                            {o.label}
-                          </option>
+                        <option value="">
+                          Default ({defaultPrimary})
+                        </option>
+                        {selectGroups.map(({ group, options }) => (
+                          <optgroup key={`p-${group}`} label={group}>
+                            {options.map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </optgroup>
                         ))}
                       </select>
                     </label>
@@ -315,12 +354,19 @@ export function AdminPage() {
                             [u.id]: { ...d, fallback_model: e.target.value },
                           }))
                         }
-                        className="h-10 rounded-xl border border-white/[0.08] bg-[#141414] px-3 text-[13px] text-white/90 outline-none focus:border-[#20B8CD]/40"
+                        className="h-10 max-w-full rounded-xl border border-white/[0.08] bg-[#141414] px-3 text-[13px] text-white/90 outline-none focus:border-[#20B8CD]/40"
                       >
-                        {fallbackOptions.map((o) => (
-                          <option key={o.id || 'default-f'} value={o.id}>
-                            {o.label}
-                          </option>
+                        <option value="">
+                          Default ({defaultFallback})
+                        </option>
+                        {selectGroups.map(({ group, options }) => (
+                          <optgroup key={`f-${group}`} label={group}>
+                            {options.map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </optgroup>
                         ))}
                       </select>
                     </label>

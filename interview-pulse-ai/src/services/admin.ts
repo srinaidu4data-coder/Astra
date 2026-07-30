@@ -8,8 +8,11 @@ const API_BASE = resolveCopilotHttpBase()
 export type ModelOption = {
   id: string
   label: string
+  group?: string
+  note?: string
   is_default?: boolean
   is_fallback_default?: boolean
+  is_reasoning?: boolean
 }
 
 export type AdminUsersResponse = {
