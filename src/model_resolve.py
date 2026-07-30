@@ -6,7 +6,8 @@ import os
 from typing import Optional, Tuple
 
 # Defaults when backend settings are unavailable (e.g. pure local path)
-_DEFAULT_PRIMARY = "gpt-4o"
+# nano/mini for sub-1s live interviews
+_DEFAULT_PRIMARY = "gpt-4.1-nano"
 _DEFAULT_FALLBACK = "gpt-4o-mini"
 
 

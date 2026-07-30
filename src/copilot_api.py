@@ -258,9 +258,36 @@ def health():
 
 @app.post("/api/warm")
 def warm():
+    """Preload Whisper + open a tiny OpenAI completion so first real answer is fast."""
     t0 = time.perf_counter()
     get_whisper_model()
-    return {"ok": True, "load_ms": round((time.perf_counter() - t0) * 1000)}
+    openai_ms = None
+    try:
+        from rag import _get_openai_client
+        from answer_engine import FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL
+
+        client = _get_openai_client()
+        t1 = time.perf_counter()
+        for mid in (FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL, "gpt-4o-mini"):
+            try:
+                client.chat.completions.create(
+                    model=mid,
+                    messages=[{"role": "user", "content": "ok"}],
+                    max_tokens=1,
+                    temperature=0,
+                    timeout=8.0,
+                )
+                break
+            except Exception:
+                continue
+        openai_ms = round((time.perf_counter() - t1) * 1000)
+    except Exception:
+        openai_ms = None
+    return {
+        "ok": True,
+        "load_ms": round((time.perf_counter() - t0) * 1000),
+        "openai_warm_ms": openai_ms,
+    }
 
 
 def _wav_bytes_to_int16_16k(raw: bytes) -> np.ndarray:
@@ -376,10 +403,21 @@ def answer(req: AnswerRequest, request: Request):
         raise HTTPException(500, "OPENAI_API_KEY missing")
 
     t0 = time.perf_counter()
-    cls = classify_utterance(req.question)
-    q = cls.get("cleaned_question") or req.question
+    # Fast path: skip classify LLM for typed questions (saves 0.5–2s)
+    from answer_engine import ANSWER_PROFILE, looks_like_question
+
+    q = req.question.strip()
+    if ANSWER_PROFILE in ("quality", "full"):
+        cls = classify_utterance(req.question)
+        q = cls.get("cleaned_question") or req.question
+    else:
+        cls = {
+            "is_interview_question": True,
+            "confidence": 0.9 if looks_like_question(q) else 0.6,
+            "cleaned_question": q,
+            "reason": "fast_path_skip_classify",
+        }
     u_primary, u_fallback = _user_model_prefs(request)
-    # Blocking path uses full quality pipeline (strategy + depth gate + regen)
     text = generate_answer(
         q,
         job_context=req.job_context,
@@ -396,6 +434,7 @@ def answer(req: AnswerRequest, request: Request):
         "answer": text,
         "bullets": _to_bullets(text, req.mode),
         "latency_ms": round((time.perf_counter() - t0) * 1000),
+        "model_profile": ANSWER_PROFILE,
     }
 
 

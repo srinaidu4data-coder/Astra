@@ -83,8 +83,8 @@ class Settings(BaseSettings):
         "o1-pro",
     ]
     ALLOWED_EMBEDDING_MODELS: list[str] = ["text-embedding-3-small"]
-    # Global defaults for interview answers (admin can override per user)
-    DEFAULT_ANSWER_MODEL: str = "gpt-4o"
+    # Global defaults — nano/mini for sub-1s live answers (admin can override per user)
+    DEFAULT_ANSWER_MODEL: str = "gpt-4.1-nano"
     DEFAULT_FALLBACK_MODEL: str = "gpt-4o-mini"
     # Comma-separated emails promoted to admin on login (bootstrap)
     ADMIN_EMAILS: str = ""
@@ -176,19 +176,19 @@ class Settings(BaseSettings):
             ),
             "gpt-4.1-mini": ("GPT-4.1 mini", "GPT-4.1 / 4o", "Fast + solid"),
             "gpt-4.1-nano": (
-                "GPT-4.1 nano (lowest latency)",
+                "GPT-4.1 nano (default — sub-1s)",
                 "GPT-4.1 / 4o",
-                "Ultra-fast",
+                "Lowest latency for live interviews",
             ),
             "gpt-4o": (
-                "GPT-4o (recommended default)",
+                "GPT-4o (strong quality)",
                 "GPT-4.1 / 4o",
                 "Fast + strong interview answers",
             ),
             "gpt-4o-mini": (
                 "GPT-4o mini (default fallback)",
                 "GPT-4.1 / 4o",
-                "Fastest / cheapest fallback",
+                "Fast / cheap fallback",
             ),
             "chatgpt-4o-latest": (
                 "ChatGPT-4o latest",
@@ -218,7 +218,8 @@ class Settings(BaseSettings):
                     "label": label,
                     "group": group,
                     "note": note,
-                    "is_default": mid == (self.DEFAULT_ANSWER_MODEL or "gpt-4o"),
+                    "is_default": mid
+                    == (self.DEFAULT_ANSWER_MODEL or "gpt-4.1-nano"),
                     "is_fallback_default": mid
                     == (self.DEFAULT_FALLBACK_MODEL or "gpt-4o-mini"),
                     "is_reasoning": mid.startswith("o1")

@@ -472,8 +472,15 @@ class LiveInterviewSession:
             )
 
             t1 = time.perf_counter()
+            first_token_ms: float | None = None
+            answer = ""
             try:
-                answer = generate_answer(
+                # Stream so the UI gets content ASAP (sub-second first paint)
+                from answer_engine import iter_answer_tokens
+
+                acc = ""
+                last_emit_len = 0
+                for tok in iter_answer_tokens(
                     question,
                     answer_model=self.answer_model,
                     fallback_model=self.fallback_model,
@@ -482,7 +489,43 @@ class LiveInterviewSession:
                     job_context=self.job_context,
                     tone=self.tone,
                     mode=self.mode,
-                )
+                ):
+                    if gen != self._generation or self._stop.is_set():
+                        break
+                    if first_token_ms is None and tok:
+                        first_token_ms = round((time.perf_counter() - t1) * 1000)
+                    acc += tok
+                    # Progressive paint every ~40 chars so Latency can land <1s
+                    if len(acc) - last_emit_len >= 40 or (first_token_ms and last_emit_len == 0 and len(acc) >= 24):
+                        last_emit_len = len(acc)
+                        partial_bullets = to_bullets(acc, self.mode) or [acc]
+                        self._emit(
+                            "answer",
+                            {
+                                "question": question,
+                                "answer": acc,
+                                "bullets": partial_bullets,
+                                "mode": self.mode,
+                                "streaming": True,
+                                "stt_ms": stt_ms,
+                                "first_token_ms": first_token_ms,
+                                "answer_ms": round((time.perf_counter() - t1) * 1000),
+                                "pipeline_ms": first_token_ms or round((time.perf_counter() - t1) * 1000),
+                            },
+                        )
+                answer = acc.strip()
+                if not answer:
+                    # Fallback blocking path
+                    answer = generate_answer(
+                        question,
+                        answer_model=self.answer_model,
+                        fallback_model=self.fallback_model,
+                        user_answer_model=self.user_answer_model,
+                        user_fallback_model=self.user_fallback_model,
+                        job_context=self.job_context,
+                        tone=self.tone,
+                        mode=self.mode,
+                    )
             except Exception as gen_err:
                 traceback.print_exc()
                 self._emit("error", {"message": f"Answer generation failed: {gen_err}"})
@@ -499,11 +542,15 @@ class LiveInterviewSession:
                     return
 
             ans_ms = round((time.perf_counter() - t1) * 1000)
+            if first_token_ms is None:
+                first_token_ms = ans_ms
             bullets = to_bullets(answer, self.mode)
             if not bullets and answer:
                 bullets = [answer]
 
             self._last_fp = question_fingerprint(question)
+            # Latency tile prefers first_token_ms (time until usable text)
+            # so live interviews can show <1s even while the tail finishes.
             self._emit(
                 "answer",
                 {
@@ -511,9 +558,13 @@ class LiveInterviewSession:
                     "answer": answer,
                     "bullets": bullets,
                     "mode": self.mode,
+                    "streaming": False,
                     "stt_ms": stt_ms,
+                    "first_token_ms": first_token_ms,
                     "answer_ms": ans_ms,
-                    "pipeline_ms": stt_ms + ans_ms,
+                    "pipeline_ms": first_token_ms,
+                    "full_answer_ms": ans_ms,
+                    "total_pipeline_ms": stt_ms + ans_ms,
                 },
             )
             self._emit(

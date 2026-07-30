@@ -244,6 +244,9 @@ export class LiveInterviewClient {
           bullets?: string[]
           mode?: string
           pipeline_ms?: number
+          first_token_ms?: number
+          answer_ms?: number
+          streaming?: boolean
         }
         const mode = (a.mode as AnswerMode) || this.mode
         const text = a.answer ?? ''
@@ -253,14 +256,18 @@ export class LiveInterviewClient {
             : text
               ? text.split(/\n+/).map((l) => l.trim()).filter(Boolean)
               : ['(empty answer from model)']
+        // Prefer first-token latency for the Latency tile (sub-1s target)
+        const latency =
+          a.first_token_ms ?? a.pipeline_ms ?? a.answer_ms
         const ans = normalizeAnswer({
           id: uid('ans'),
           mode,
           text,
           bullets,
-          latencyMs: a.pipeline_ms,
+          latencyMs: latency,
           question: a.question,
         })
+        ans.streaming = Boolean(a.streaming)
         // Guarantee UI has something to render
         if (!ans.bullets.length && text) ans.bullets = [text]
         this.handlers.onAnswer?.(ans)

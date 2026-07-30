@@ -45,6 +45,20 @@ export async function checkCopilotHealth(): Promise<{
   }
 }
 
+/** Preload Whisper + OpenAI so first live answer can hit sub-1s. */
+export async function warmCopilotApi(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/warm`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(20_000),
+      mode: 'cors',
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
 /**
  * Reliable one-shot answer (JSON, not SSE).
  * Use this for typed questions + format switches so we never drop the final event.

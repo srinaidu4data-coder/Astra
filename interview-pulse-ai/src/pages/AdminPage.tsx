@@ -10,7 +10,7 @@ import { useAppStore } from '@/stores/app-store'
 import { Loader2, RefreshCw, Search, Shield, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-const DEFAULT_PRIMARY = 'gpt-4o'
+const DEFAULT_PRIMARY = 'gpt-4.1-nano'
 const DEFAULT_FALLBACK = 'gpt-4o-mini'
 
 function modelLabel(id: string | null | undefined, models: ModelOption[]): string {

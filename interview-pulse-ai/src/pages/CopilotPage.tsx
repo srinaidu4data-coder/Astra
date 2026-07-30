@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { formatMs } from '@/lib/utils'
 import { liveInterview } from '@/services/live-interview'
 import { pipeline } from '@/services/pipeline'
-import { checkCopilotHealth, fetchAnswer } from '@/services/real-api'
+import { checkCopilotHealth, fetchAnswer, warmCopilotApi } from '@/services/real-api'
 import { useAppStore } from '@/stores/app-store'
 import type { AnswerMode, QACard } from '@/types'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -179,7 +179,8 @@ export function CopilotPage() {
           setMetrics({
             vadMs: 0,
             sttMs: 0,
-            firstTokenMs: Math.round(ans.latencyMs * 0.3),
+            firstTokenMs: ans.latencyMs,
+            // Latency tile = time-to-first-usable answer (target <1s)
             totalMs: ans.latencyMs,
             lastUpdated: Date.now(),
           })
@@ -195,6 +196,9 @@ export function CopilotPage() {
         }
       },
     })
+
+    // Warm OpenAI + Whisper so the first answer is not cold-start slow
+    void warmCopilotApi()
 
     // Probe HTTP health + WS (poll so buttons re-enable when API starts)
     const ping = () => {

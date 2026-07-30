@@ -35,11 +35,18 @@ FALLBACK_MODEL = (
 )
 STRATEGY_MODEL = os.environ.get("ASTRA_STRATEGY_MODEL", "").strip() or CLASSIFICATION_MODEL or "gpt-4o-mini"
 
-# live = low latency (default for interviews)
-# balanced = light quality gate, no strategy LLM
-# quality = full strategy LLM + regen (slower, ~8–15s)
+# Sub-1s target: default to the fastest solid Chat Completions models.
+# Admin can still assign slower models; ultra/live remaps when unset.
+FAST_ANSWER_MODEL = (
+    os.environ.get("ASTRA_FAST_MODEL", "").strip() or "gpt-4.1-nano"
+)
+FAST_FALLBACK_MODEL = (
+    os.environ.get("ASTRA_FAST_FALLBACK", "").strip() or "gpt-4o-mini"
+)
+
+# ultra = sub-1s target (default) | live | balanced | quality
 ANSWER_PROFILE = (
-    os.environ.get("ASTRA_ANSWER_PROFILE", "").strip().lower() or "live"
+    os.environ.get("ASTRA_ANSWER_PROFILE", "").strip().lower() or "ultra"
 )
 # Explicit overrides (1/0) beat profile when set
 _FORCE_STRATEGY_LLM = os.environ.get("ASTRA_STRATEGY_LLM", "").strip().lower()
@@ -70,8 +77,39 @@ def _use_quality_regen() -> bool:
 def _use_rag() -> bool:
     if _FORCE_RAG:
         return _env_flag(_FORCE_RAG, True)
-    # live skips RAG unless docs are clearly needed — embedding call costs ~200–800ms
+    # live/ultra skips RAG — embedding call costs ~200–800ms
     return ANSWER_PROFILE in ("quality", "full", "balanced")
+
+
+def _is_fast_profile() -> bool:
+    return ANSWER_PROFILE in ("ultra", "live", "fast")
+
+
+def _prefer_fast_models() -> bool:
+    """When True, unset user models resolve to nano/mini for sub-1s."""
+    return _is_fast_profile()
+
+
+# Compact prompts for ultra/live — less prefill = faster first token
+FAST_STAR_SYSTEM = (
+    "Senior interview coach. Speakable first-person answer. Labels required:\n"
+    "Hook: / Situation: / Task: / Action: / Result: / Close:\n"
+    "Rules: 80-120 words, 1 metric, precise jargon, no fluff, no markdown."
+)
+FAST_TECH_SYSTEM = (
+    "Staff engineer interview coach. Speakable answer. Labels:\n"
+    "Hook: / Approach: / Mechanism: / Tradeoff: / Close:\n"
+    "Rules: 70-110 words, technical, 1 tradeoff, no fluff."
+)
+FAST_SHORTER_SYSTEM = (
+    "Interview coach. Exactly 4 short speakable lines:\n"
+    "1) Thesis 2) Mechanism 3) Metric/tradeoff 4) Close.\n"
+    "Max 60 words. Dense, first person."
+)
+FAST_CODE_SYSTEM = (
+    "Coding interview coach. Labels: Approach: then Code: (8-15 lines) then Tradeoff:.\n"
+    "Keep under 90 words outside code. First person."
+)
 
 # ---------------------------------------------------------------------------
 # System prompts — depth + jargon by mode
@@ -365,6 +403,14 @@ def score_answer_quality(text: str, strategy: dict[str, Any], *, mode: str) -> d
 
 
 def _system_for_mode(mode: str) -> str:
+    if _is_fast_profile():
+        if mode == "shorter":
+            return FAST_SHORTER_SYSTEM
+        if mode == "technical":
+            return FAST_TECH_SYSTEM
+        if mode == "code":
+            return FAST_CODE_SYSTEM
+        return FAST_STAR_SYSTEM
     if mode == "shorter":
         return RICH_SHORTER_SYSTEM
     if mode == "technical":
@@ -375,14 +421,21 @@ def _system_for_mode(mode: str) -> str:
 
 
 def _max_tokens_for_mode(mode: str) -> int:
-    # Live profile: shorter outputs finish faster while staying speakable.
-    if ANSWER_PROFILE in ("live", "fast"):
+    # ultra: short completions so the model can finish under ~1s on nano/mini
+    if ANSWER_PROFILE in ("ultra", "fast"):
         return {
-            "shorter": 280,
-            "technical": 620,
-            "code": 700,
-            "star": 650,
-        }.get(mode, 600)
+            "shorter": 90,
+            "technical": 150,
+            "code": 180,
+            "star": 140,
+        }.get(mode, 140)
+    if ANSWER_PROFILE == "live":
+        return {
+            "shorter": 160,
+            "technical": 280,
+            "code": 320,
+            "star": 260,
+        }.get(mode, 260)
     if ANSWER_PROFILE == "balanced":
         return {
             "shorter": 340,
@@ -408,6 +461,22 @@ def _build_user_prompt(
     context_chunks: list,
     strict_regen: bool = False,
 ) -> str:
+    q = (question or "").strip()
+    job = (job_context or "Senior professional").strip()
+
+    # Ultra/live: minimal prompt → less prefill latency
+    if _is_fast_profile() and not strict_regen:
+        tags = strategy.get("domain_tags") or []
+        tag_s = ", ".join(str(t) for t in tags[:4] if t)
+        parts = [
+            f"Role: {job[:80]}",
+            f"Q: {q[:400]}",
+        ]
+        if tag_s:
+            parts.append(f"Topics: {tag_s}")
+        parts.append("Answer now.")
+        return "\n".join(parts)
+
     ctx = ""
     if context_chunks:
         bits = [c.get("text", "")[:450] for c in context_chunks[:4] if c.get("text")]
@@ -444,11 +513,11 @@ def _build_user_prompt(
     }.get(mode, "Write the full interview-grade answer now.")
 
     parts = [
-        f"ROLE / JOB CONTEXT: {job_context or 'Senior professional'}",
+        f"ROLE / JOB CONTEXT: {job}",
         f"DELIVERY TONE: {tone_line}",
         "ANSWER STRATEGY (follow this — this defines the RIGHT answer):\n" + strat_blob,
         ctx,
-        "INTERVIEW QUESTION:\n" + (question or "").strip(),
+        "INTERVIEW QUESTION:\n" + q,
         instruct,
     ]
     if strict_regen:
@@ -513,33 +582,36 @@ def _complete_answer(
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
+    timeout = 12.0 if _is_fast_profile() else 75.0
     for m in models_try:
         if not m or m in seen:
             continue
         seen.add(m)
-        # Try preferred kwargs, then a plain max_tokens retry for API quirks
-        attempts = [
-            _chat_create_kwargs(
-                model=m,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                stream=False,
-            ),
-            {
-                "model": m,
-                "messages": messages,
-                "stream": False,
-                "max_tokens": max_tokens,
-                "timeout": 75.0,
-            },
-        ]
-        for kwargs in attempts:
+        kwargs = _chat_create_kwargs(
+            model=m,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            stream=False,
+            timeout=timeout,
+        )
+        try:
+            resp = client.chat.completions.create(**kwargs)
+            return (resp.choices[0].message.content or "").strip()
+        except Exception as e:
+            last_err = e
+            # One lightweight retry without temperature (reasoning / API quirks)
             try:
-                resp = client.chat.completions.create(**kwargs)
+                resp = client.chat.completions.create(
+                    model=m,
+                    messages=messages,
+                    stream=False,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                )
                 return (resp.choices[0].message.content or "").strip()
-            except Exception as e:
-                last_err = e
+            except Exception as e2:
+                last_err = e2
                 continue
     if last_err:
         raise last_err
@@ -568,14 +640,33 @@ def generate_answer(
     if mode not in ("star", "shorter", "technical", "code"):
         mode = "star"
 
-    primary, fallback = resolve_answer_models(
-        answer_model=answer_model,
-        fallback_model=fallback_model,
-        user_answer_model=user_answer_model,
-        user_fallback_model=user_fallback_model,
-    )
+    # Fast profiles force nano/mini unless admin explicitly set a user model
+    # (or request overrides). Slow reasoning models never meet <1s.
+    am = answer_model
+    fm = fallback_model
+    uam = user_answer_model
+    ufm = user_fallback_model
+    if _prefer_fast_models():
+        if not (uam or am):
+            am = FAST_ANSWER_MODEL
+        if not (ufm or fm):
+            fm = FAST_FALLBACK_MODEL
+        # Remap known-slow models when assigned for live interviews
+        slow = _is_reasoning_model(str(uam or am or ""))
+        if slow and not os.environ.get("ASTRA_ALLOW_SLOW_LIVE", "").strip():
+            am = FAST_ANSWER_MODEL
+            uam = None
 
-    # RAG context (skipped on live profile — embedding + chroma adds latency)
+    primary, fallback = resolve_answer_models(
+        answer_model=am,
+        fallback_model=fm,
+        user_answer_model=uam,
+        user_fallback_model=ufm,
+    )
+    if _prefer_fast_models() and _is_reasoning_model(primary):
+        primary, fallback = FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL
+
+    # RAG context (skipped on live/ultra — embedding + chroma adds latency)
     chunks: list = []
     if _use_rag():
         try:
@@ -606,7 +697,7 @@ def generate_answer(
         model=primary,
         fallback_model=fallback,
         max_tokens=_max_tokens_for_mode(mode),
-        temperature=0.42,
+        temperature=0.35 if _is_fast_profile() else 0.42,
     )
 
     # Second generation only on quality/balanced profiles when the first is thin.
@@ -669,12 +760,29 @@ def iter_answer_tokens(
         except Exception:
             chunks = []
 
+    am = answer_model
+    fm = fallback_model
+    uam = user_answer_model
+    ufm = user_fallback_model
+    if _prefer_fast_models():
+        if not (uam or am):
+            am = FAST_ANSWER_MODEL
+        if not (ufm or fm):
+            fm = FAST_FALLBACK_MODEL
+        if _is_reasoning_model(str(uam or am or "")) and not os.environ.get(
+            "ASTRA_ALLOW_SLOW_LIVE", ""
+        ).strip():
+            am = FAST_ANSWER_MODEL
+            uam = None
+
     primary, fallback = resolve_answer_models(
-        answer_model=answer_model,
-        fallback_model=fallback_model,
-        user_answer_model=user_answer_model,
-        user_fallback_model=user_fallback_model,
+        answer_model=am,
+        fallback_model=fm,
+        user_answer_model=uam,
+        user_fallback_model=ufm,
     )
+    if _prefer_fast_models() and _is_reasoning_model(primary):
+        primary, fallback = FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL
 
     if _use_strategy_llm():
         strategy = analyze_question_strategy(question, job_context=job_context)
@@ -690,11 +798,11 @@ def iter_answer_tokens(
         context_chunks=chunks,
         strict_regen=False,
     )
-    # Streaming: push depth requirements into the instruct
-    user += (
-        "\n\nSTREAMING QUALITY RULE: Prefer longer, denser technical content over brevity. "
-        "Do not stop early. Complete every section."
-    )
+    if not _is_fast_profile():
+        user += (
+            "\n\nSTREAMING QUALITY RULE: Prefer longer, denser technical content over brevity. "
+            "Do not stop early. Complete every section."
+        )
 
     client = _get_openai_client()
     models_try = [primary, fallback, SCRIPT_MODEL, "gpt-4o-mini"]
@@ -705,33 +813,35 @@ def iter_answer_tokens(
         {"role": "user", "content": user},
     ]
     max_tok = _max_tokens_for_mode(mode)
+    temp = 0.35 if _is_fast_profile() else 0.42
     for model in models_try:
         if not model:
             continue
-        attempts = [
-            _chat_create_kwargs(
-                model=model,
-                messages=messages,
-                max_tokens=max_tok,
-                temperature=0.42,
-                stream=True,
-            ),
-            {
-                "model": model,
-                "messages": messages,
-                "stream": True,
-                "max_tokens": max_tok,
-            },
-        ]
-        for kwargs in attempts:
-            try:
-                stream = client.chat.completions.create(**kwargs)
-                break
-            except Exception as e:
-                last_err = e
-                continue
-        if stream is not None:
+        try:
+            stream = client.chat.completions.create(
+                **_chat_create_kwargs(
+                    model=model,
+                    messages=messages,
+                    max_tokens=max_tok,
+                    temperature=temp,
+                    stream=True,
+                    timeout=12.0 if _is_fast_profile() else 75.0,
+                )
+            )
             break
+        except Exception as e:
+            last_err = e
+            try:
+                stream = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    stream=True,
+                    max_tokens=max_tok,
+                )
+                break
+            except Exception as e2:
+                last_err = e2
+                continue
     if stream is None:
         if last_err:
             raise last_err

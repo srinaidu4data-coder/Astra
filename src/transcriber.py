@@ -67,9 +67,12 @@ def transcribe_audio(audio_array: np.ndarray) -> str:
     segments, _ = model.transcribe(
         audio_float32,
         beam_size=1,
+        best_of=1,
         vad_filter=use_vad,
-        vad_parameters=dict(min_silence_duration_ms=500) if use_vad else None,
+        vad_parameters=dict(min_silence_duration_ms=400) if use_vad else None,
         language="en",
+        condition_on_previous_text=False,
+        without_timestamps=True,
     )
 
     text_parts = [segment.text for segment in segments]

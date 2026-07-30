@@ -118,7 +118,11 @@ def user_public_dict(user: User) -> dict[str, Any]:
     """Safe user payload for the frontend."""
     from backend.config import settings as _settings
 
-    primary = getattr(user, "answer_model", None) or _settings.DEFAULT_ANSWER_MODEL or "gpt-4o"
+    primary = (
+        getattr(user, "answer_model", None)
+        or _settings.DEFAULT_ANSWER_MODEL
+        or "gpt-4.1-nano"
+    )
     fallback = (
         getattr(user, "fallback_model", None)
         or _settings.DEFAULT_FALLBACK_MODEL
