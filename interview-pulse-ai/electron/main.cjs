@@ -220,10 +220,22 @@ function createMainWindow() {
     },
   })
 
+  // Surface load errors (blank window is almost always a bad file:// asset path)
+  mainWindow.webContents.on('did-fail-load', (_e, code, desc, url) => {
+    console.error('[main] did-fail-load', code, desc, url)
+  })
+  mainWindow.webContents.on('render-process-gone', (_e, details) => {
+    console.error('[main] render-process-gone', details)
+  })
+
   if (isDev) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+    // Packaged: electron/main.cjs lives next to dist/ inside app.asar
+    const indexHtml = path.join(__dirname, '..', 'dist', 'index.html')
+    mainWindow.loadFile(indexHtml).catch((err) => {
+      console.error('[main] loadFile failed', indexHtml, err)
+    })
   }
 
   mainWindow.once('ready-to-show', () => {

@@ -15,9 +15,9 @@
     "preview": "vite preview",
     "electron": "electron .",
     "start": "npm run dev:electron",
-    "dist:win": "npm run build && electron-builder --win --x64",
-    "dist:mac": "npm run build && electron-builder --mac",
-    "dist:dir": "npm run build && electron-builder --dir"
+    "dist:win": "npm run build:electron && electron-builder --win --x64",
+    "dist:mac": "npm run build:electron && electron-builder --mac",
+    "dist:dir": "npm run build:electron && electron-builder --dir"
   },
   "build": {
     "appId": "com.interviewpulse.ai",
