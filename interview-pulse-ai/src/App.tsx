@@ -170,10 +170,16 @@ function GatedApp() {
 }
 
 /** Desktop only: interviewpulse://open[/path][?query] focuses the window (main.cjs)
- *  and, if it carries a path/query beyond bare "open", routes the SPA there. */
+ *  and, if it carries a path/query beyond bare "open", routes the SPA there.
+ *  Guard the method itself — older Electron preloads may not expose onDeepLink
+ *  (optional chaining only checks interviewPulse, not whether the method exists). */
 function useDeepLinkRouting() {
   useEffect(() => {
-    return window.interviewPulse?.onDeepLink((url) => {
+    const api = window.interviewPulse
+    if (!api || typeof api.onDeepLink !== 'function') {
+      return
+    }
+    return api.onDeepLink((url) => {
       try {
         const parsed = new URL(url)
         const rest = `${parsed.host}${parsed.pathname}`.replace(/^open\/?/, '')
