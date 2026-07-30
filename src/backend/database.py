@@ -55,6 +55,9 @@ def migrate_schema() -> None:
     _sqlite_add_column_if_missing("users", "password_hash", "TEXT")
     _sqlite_add_column_if_missing("users", "password_reset_token_hash", "TEXT")
     _sqlite_add_column_if_missing("users", "password_reset_expires", "DATETIME")
+    _sqlite_add_column_if_missing("users", "is_admin", "BOOLEAN DEFAULT 0")
+    _sqlite_add_column_if_missing("users", "answer_model", "TEXT")
+    _sqlite_add_column_if_missing("users", "fallback_model", "TEXT")
     _sqlite_add_column_if_missing("license_keys", "user_id", "INTEGER")
 
 

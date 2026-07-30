@@ -18,6 +18,7 @@ export function TopBar() {
     practice: 'Mock interview',
     analytics: 'Analytics',
     settings: 'Settings',
+    admin: 'Admin · models',
   }
 
   const hasDesktop = typeof window !== 'undefined' && !!window.interviewPulse

@@ -13,7 +13,7 @@ from sqlmodel import Session, select
 from backend.config import settings
 from backend.database import get_session
 from backend.email_service import send_password_reset_email, send_welcome_email
-from backend.jwt_auth import create_access_token, user_public_dict
+from backend.jwt_auth import create_access_token, promote_admin_if_listed, user_public_dict
 from backend.models import User
 from backend.passwords import (
     hash_password,
@@ -201,6 +201,7 @@ async def login(
     session.add(user)
     session.commit()
     session.refresh(user)
+    user = promote_admin_if_listed(session, user)
 
     token = create_access_token(user_id=int(user.id), email=user.email)
     return TokenUserResponse(token=token, user=user_public_dict(user))

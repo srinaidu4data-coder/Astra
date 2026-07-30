@@ -34,6 +34,7 @@ export function CopilotPage() {
     setListening,
     setAnswer,
     transcript,
+    user,
   } = useAppStore()
 
   const cardIndexRef = useRef(0)
@@ -244,6 +245,10 @@ export function CopilotPage() {
         jobContext: settings.jobContext || activeJobTitle,
         tone: settings.tone,
         mode: answerMode,
+        // Admin-assigned models (null → server defaults gpt-4o / gpt-4o-mini)
+        userAnswerModel: user?.answer_model ?? user?.effective_answer_model ?? null,
+        userFallbackModel:
+          user?.fallback_model ?? user?.effective_fallback_model ?? null,
       })
       setSessionOn(true)
       setListening(true)

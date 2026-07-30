@@ -18,6 +18,16 @@ export type AuthUser = {
   welcome_email_sent?: boolean
   last_email_error?: string | null
   created_at?: string | null
+  /** Admin console access */
+  is_admin?: boolean
+  /** Assigned primary model (null = global default gpt-4o) */
+  answer_model?: string | null
+  /** Assigned fallback model (null = global default gpt-4o-mini) */
+  fallback_model?: string | null
+  /** Resolved primary after defaults */
+  effective_answer_model?: string
+  /** Resolved fallback after defaults */
+  effective_fallback_model?: string
 }
 
 export type AuthConfig = {

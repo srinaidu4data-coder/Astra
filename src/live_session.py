@@ -52,6 +52,10 @@ class LiveInterviewSession:
         self.job_context = "AI/ML Engineer"
         self.tone = "confident"
         self.mode = "star"
+        self.answer_model: Optional[str] = None
+        self.fallback_model: Optional[str] = None
+        self.user_answer_model: Optional[str] = None
+        self.user_fallback_model: Optional[str] = None
 
         self._noise_floor = 0.01
         self._level_ema = 0.0
@@ -76,6 +80,10 @@ class LiveInterviewSession:
         tone: str = "confident",
         mode: str = "star",
         source: str = "system",
+        answer_model: str | None = None,
+        fallback_model: str | None = None,
+        user_answer_model: str | None = None,
+        user_fallback_model: str | None = None,
     ) -> None:
         src = (source or "system").strip().lower()
         if src in ("mic", "browser-mic", "client"):
@@ -87,12 +95,24 @@ class LiveInterviewSession:
             self.job_context = job_context or self.job_context
             self.tone = tone or self.tone
             self.mode = mode or self.mode
+            if answer_model is not None:
+                self.answer_model = answer_model
+            if fallback_model is not None:
+                self.fallback_model = fallback_model
+            if user_answer_model is not None:
+                self.user_answer_model = user_answer_model
+            if user_fallback_model is not None:
+                self.user_fallback_model = user_fallback_model
             self._emit("status", {"message": "Already listening", "listening": True})
             return
 
         self.job_context = job_context or "AI/ML Engineer"
         self.tone = tone or "confident"
         self.mode = mode or "star"
+        self.answer_model = answer_model
+        self.fallback_model = fallback_model
+        self.user_answer_model = user_answer_model
+        self.user_fallback_model = user_fallback_model
         self._source = src
         self._stop.clear()
         self._noise_floor = 0.01
@@ -444,6 +464,10 @@ class LiveInterviewSession:
             try:
                 answer = generate_answer(
                     question,
+                    answer_model=self.answer_model,
+                    fallback_model=self.fallback_model,
+                    user_answer_model=self.user_answer_model,
+                    user_fallback_model=self.user_fallback_model,
                     job_context=self.job_context,
                     tone=self.tone,
                     mode=self.mode,

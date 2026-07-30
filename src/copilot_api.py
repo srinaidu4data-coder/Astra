@@ -59,6 +59,7 @@ except Exception as _mock_err:  # pragma: no cover
 
 try:
     from backend.database import create_db_and_tables  # noqa: E402
+    from backend.admin import router as admin_router  # noqa: E402
     from backend.billing import router as billing_router  # noqa: E402
     from backend.google_oauth import router as oauth_router  # noqa: E402
     from backend.password_auth import router as password_router  # noqa: E402
@@ -67,8 +68,9 @@ try:
     app.include_router(oauth_router)
     app.include_router(password_router)
     app.include_router(billing_router)
+    app.include_router(admin_router)
 except Exception as _auth_import_err:  # pragma: no cover - optional until deps installed
-    print(f"[auth] Google/Stripe/password routers not loaded: {_auth_import_err}")
+    print(f"[auth] Google/Stripe/password/admin routers not loaded: {_auth_import_err}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -88,6 +90,9 @@ class AnswerRequest(BaseModel):
     job_context: str = "AI/ML Engineer"
     tone: str = "confident"
     mode: str = Field(default="star", description="star | shorter | technical | code")
+    # Optional overrides (validated against ALLOWED_MODELS); else per-user / global defaults
+    answer_model: Optional[str] = None
+    fallback_model: Optional[str] = None
 
 
 class FileRunRequest(BaseModel):
@@ -219,6 +224,10 @@ def _stream_answer_text(
     job_context: str,
     tone: str,
     mode: str,
+    answer_model: Optional[str] = None,
+    fallback_model: Optional[str] = None,
+    user_answer_model: Optional[str] = None,
+    user_fallback_model: Optional[str] = None,
 ) -> Generator[str, None, None]:
     """Stream depth-first interview answers (strategy-aware prompts)."""
     yield from iter_answer_tokens(
@@ -226,6 +235,10 @@ def _stream_answer_text(
         job_context=job_context,
         tone=tone,
         mode=mode,
+        answer_model=answer_model,
+        fallback_model=fallback_model,
+        user_answer_model=user_answer_model,
+        user_fallback_model=user_fallback_model,
     )
 
 
@@ -328,8 +341,35 @@ async def transcribe_route(
     }
 
 
+def _user_model_prefs(request: Request) -> tuple[Optional[str], Optional[str]]:
+    """If Authorization Bearer present, load user's assigned models."""
+    try:
+        auth = request.headers.get("authorization") or request.headers.get("Authorization") or ""
+        if not auth.lower().startswith("bearer "):
+            return None, None
+        token = auth.split(" ", 1)[1].strip()
+        if not token:
+            return None, None
+        from backend.database import engine
+        from backend.jwt_auth import decode_access_token
+        from backend.models import User
+        from sqlmodel import Session
+
+        payload = decode_access_token(token)
+        uid = payload.get("sub")
+        if not uid:
+            return None, None
+        with Session(engine) as session:
+            user = session.get(User, int(uid))
+            if not user:
+                return None, None
+            return getattr(user, "answer_model", None), getattr(user, "fallback_model", None)
+    except Exception:
+        return None, None
+
+
 @app.post("/api/answer")
-def answer(req: AnswerRequest):
+def answer(req: AnswerRequest, request: Request):
     if not req.question.strip():
         raise HTTPException(400, "question required")
     if not get_openai_api_key():
@@ -338,12 +378,17 @@ def answer(req: AnswerRequest):
     t0 = time.perf_counter()
     cls = classify_utterance(req.question)
     q = cls.get("cleaned_question") or req.question
+    u_primary, u_fallback = _user_model_prefs(request)
     # Blocking path uses full quality pipeline (strategy + depth gate + regen)
     text = generate_answer(
         q,
         job_context=req.job_context,
         tone=req.tone,
         mode=req.mode,
+        answer_model=req.answer_model,
+        fallback_model=req.fallback_model,
+        user_answer_model=u_primary,
+        user_fallback_model=u_fallback,
     )
     return {
         "question": req.question,
@@ -355,11 +400,13 @@ def answer(req: AnswerRequest):
 
 
 @app.post("/api/answer/stream")
-def answer_stream(req: AnswerRequest):
+def answer_stream(req: AnswerRequest, request: Request):
     if not req.question.strip():
         raise HTTPException(400, "question required")
     if not get_openai_api_key():
         raise HTTPException(500, "OPENAI_API_KEY missing")
+
+    u_primary, u_fallback = _user_model_prefs(request)
 
     def gen():
         t0 = time.perf_counter()
@@ -374,6 +421,10 @@ def answer_stream(req: AnswerRequest):
                 job_context=req.job_context,
                 tone=req.tone,
                 mode=req.mode,
+                answer_model=req.answer_model,
+                fallback_model=req.fallback_model,
+                user_answer_model=u_primary,
+                user_fallback_model=u_fallback,
             ):
                 acc += tok
                 payload = {
@@ -679,6 +730,10 @@ async def ws_interview(websocket: WebSocket):
                     tone=msg.get("tone") or "confident",
                     mode=msg.get("mode") or "star",
                     source=source,
+                    answer_model=msg.get("answer_model"),
+                    fallback_model=msg.get("fallback_model"),
+                    user_answer_model=msg.get("user_answer_model"),
+                    user_fallback_model=msg.get("user_fallback_model"),
                 )
                 continue
 

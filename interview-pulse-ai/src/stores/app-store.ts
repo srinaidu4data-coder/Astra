@@ -112,11 +112,16 @@ export const useAppStore = create<AppState>()(
         set({ user, authToken: token })
       },
       setAuthFromUser: (user) => {
-        set({
-          user: {
+        set((s) => {
+          const nextUser = {
             ...user,
             subscription_active: Boolean(user.subscription_active),
-          },
+            is_admin: Boolean(user.is_admin),
+          }
+          // Drop admin route if user lost admin access
+          const route =
+            s.route === 'admin' && !nextUser.is_admin ? 'copilot' : s.route
+          return { user: nextUser, route }
         })
       },
       clearAuth: () => {

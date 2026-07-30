@@ -7,6 +7,7 @@ const titles: Record<string, string> = {
   practice: 'Mock interview',
   analytics: 'Analytics',
   settings: 'Settings',
+  admin: 'Admin',
 }
 
 /**

@@ -1,5 +1,6 @@
 import type { AnswerMode, PipelineMetrics, SuggestedAnswer, TranscriptLine } from '@/types'
 import { resolveCopilotHttpBase } from '@/lib/api-base'
+import { authHeaders } from '@/services/auth'
 import { uid } from '@/lib/utils'
 
 const API_BASE = resolveCopilotHttpBase()
@@ -54,18 +55,26 @@ export async function fetchAnswer(
     jobContext?: string
     tone?: string
     mode?: AnswerMode
+    /** Explicit override; otherwise server uses JWT user assignment */
+    answerModel?: string | null
+    fallbackModel?: string | null
   } = {},
   signal?: AbortSignal,
 ): Promise<SuggestedAnswer> {
   const mode = opts.mode ?? 'star'
   const res = await fetch(`${API_BASE}/api/answer`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(),
+    },
     body: JSON.stringify({
       question,
       job_context: opts.jobContext ?? 'AI/ML Engineer',
       tone: opts.tone ?? 'confident',
       mode,
+      ...(opts.answerModel ? { answer_model: opts.answerModel } : {}),
+      ...(opts.fallbackModel ? { fallback_model: opts.fallbackModel } : {}),
     }),
     signal,
   })

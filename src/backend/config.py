@@ -49,8 +49,20 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str = ""
     DATABASE_URL: str = "sqlite:///./astra_backend.db"
-    ALLOWED_MODELS: list[str] = ["gpt-4o", "gpt-4o-mini"]
+    ALLOWED_MODELS: list[str] = [
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-4.1",
+        "gpt-4.1-mini",
+        "gpt-4.1-nano",
+        "o4-mini",
+    ]
     ALLOWED_EMBEDDING_MODELS: list[str] = ["text-embedding-3-small"]
+    # Global defaults for interview answers (admin can override per user)
+    DEFAULT_ANSWER_MODEL: str = "gpt-4o"
+    DEFAULT_FALLBACK_MODEL: str = "gpt-4o-mini"
+    # Comma-separated emails promoted to admin on login (bootstrap)
+    ADMIN_EMAILS: str = ""
     # Interview sessions fire classify + embed + 2 chat streams per question.
     # 20 RPM was starving live interviews (~5 requests/answer → hard 429).
     RATE_LIMIT_COMPLETIONS_RPM: int = 90
@@ -95,6 +107,47 @@ class Settings(BaseSettings):
         "http://localhost:5173/#/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}"
     )
     STRIPE_CANCEL_URL: str = "http://localhost:5173/#/billing?checkout=cancel"
+
+    @property
+    def admin_email_set(self) -> set[str]:
+        raw = self.ADMIN_EMAILS or ""
+        return {e.strip().lower() for e in raw.split(",") if e.strip()}
+
+    @property
+    def catalog_answer_models(self) -> list[dict]:
+        """Models admins can assign (id + labels)."""
+        labels = {
+            "gpt-4o": "GPT-4o (recommended — fast + strong)",
+            "gpt-4o-mini": "GPT-4o mini (fastest / cheapest)",
+            "gpt-4.1": "GPT-4.1 (higher instruction quality)",
+            "gpt-4.1-mini": "GPT-4.1 mini",
+            "gpt-4.1-nano": "GPT-4.1 nano (lowest latency)",
+            "o4-mini": "o4-mini (reasoning — slower)",
+        }
+        out = []
+        for mid in self.ALLOWED_MODELS:
+            out.append(
+                {
+                    "id": mid,
+                    "label": labels.get(mid, mid),
+                    "is_default": mid == (self.DEFAULT_ANSWER_MODEL or "gpt-4o"),
+                    "is_fallback_default": mid
+                    == (self.DEFAULT_FALLBACK_MODEL or "gpt-4o-mini"),
+                }
+            )
+        return out
+
+    def normalize_model_id(self, model: str | None) -> str | None:
+        if not model or not str(model).strip():
+            return None
+        m = str(model).strip()
+        allowed = set(self.ALLOWED_MODELS) | {
+            self.DEFAULT_ANSWER_MODEL,
+            self.DEFAULT_FALLBACK_MODEL,
+        }
+        if m not in allowed:
+            return None
+        return m
 
     @property
     def google_oauth_configured(self) -> bool:

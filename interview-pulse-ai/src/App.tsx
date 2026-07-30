@@ -3,6 +3,7 @@ import { MobileTopBar } from '@/components/layout/MobileTopBar'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 import { MobileWelcome } from '@/components/mobile/MobileWelcome'
+import { AdminPage } from '@/pages/AdminPage'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AuthPage } from '@/pages/AuthPage'
 import { CopilotPage } from '@/pages/CopilotPage'
@@ -30,6 +31,7 @@ function PageBody() {
       {route === 'practice' && <PracticePage />}
       {route === 'analytics' && <AnalyticsPage />}
       {route === 'settings' && <SettingsPage />}
+      {route === 'admin' && <AdminPage />}
     </>
   )
 }

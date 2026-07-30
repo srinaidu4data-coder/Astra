@@ -7,9 +7,11 @@ import {
   BrainCircuit,
   Mic2,
   Settings2,
+  Shield,
 } from 'lucide-react'
+import { useMemo } from 'react'
 
-const items: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
+const baseItems: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
   { id: 'copilot', label: 'Copilot', icon: Mic2 },
   { id: 'knowledge', label: 'Knowledge', icon: BookOpen },
   { id: 'practice', label: 'Mock', icon: BrainCircuit },
@@ -19,11 +21,22 @@ const items: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
 
 /**
  * Phone bottom tab bar — large touch targets + safe-area padding.
+ * Admin tab only for admin users (may crowd the bar on small phones).
  */
 export function MobileNav() {
   const route = useAppStore((s) => s.route)
   const setRoute = useAppStore((s) => s.setRoute)
   const listening = useAppStore((s) => s.listening)
+  const isAdmin = useAppStore((s) => Boolean(s.user?.is_admin))
+
+  const items = useMemo(() => {
+    if (!isAdmin) return baseItems
+    return [
+      ...baseItems.slice(0, 4),
+      { id: 'admin' as NavRoute, label: 'Admin', icon: Shield },
+      baseItems[4]!,
+    ]
+  }, [isAdmin])
 
   return (
     <nav

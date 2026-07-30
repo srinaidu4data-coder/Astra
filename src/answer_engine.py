@@ -19,6 +19,7 @@ import os
 import re
 from typing import Any, Generator, Optional
 
+from model_resolve import resolve_answer_models
 from rag import CLASSIFICATION_MODEL, SCRIPT_MODEL, _get_openai_client, search_context
 
 # Prefer a stronger model for final answers when available (override via env).
@@ -26,6 +27,11 @@ ANSWER_MODEL = (
     os.environ.get("ASTRA_ANSWER_MODEL", "").strip()
     or os.environ.get("OPENAI_ANSWER_MODEL", "").strip()
     or "gpt-4o"
+)
+FALLBACK_MODEL = (
+    os.environ.get("ASTRA_FALLBACK_MODEL", "").strip()
+    or os.environ.get("DEFAULT_FALLBACK_MODEL", "").strip()
+    or "gpt-4o-mini"
 )
 STRATEGY_MODEL = os.environ.get("ASTRA_STRATEGY_MODEL", "").strip() or CLASSIFICATION_MODEL or "gpt-4o-mini"
 
@@ -402,16 +408,19 @@ def _complete_answer(
     system: str,
     user: str,
     model: str,
+    fallback_model: str | None = None,
     max_tokens: int,
     temperature: float = 0.45,
 ) -> str:
     client = _get_openai_client()
-    # Prefer ANSWER_MODEL; fall back to SCRIPT_MODEL if API rejects model name
-    models_try = [model, SCRIPT_MODEL]
+    # Primary → configured fallback → SCRIPT_MODEL mini
+    models_try = [model, fallback_model or FALLBACK_MODEL, SCRIPT_MODEL, "gpt-4o-mini"]
+    seen: set[str] = set()
     last_err: Exception | None = None
     for m in models_try:
-        if not m:
+        if not m or m in seen:
             continue
+        seen.add(m)
         try:
             resp = client.chat.completions.create(
                 model=m,
@@ -439,6 +448,10 @@ def generate_answer(
     job_context: str = "",
     tone: str = "confident",
     mode: str = "star",
+    answer_model: str | None = None,
+    fallback_model: str | None = None,
+    user_answer_model: str | None = None,
+    user_fallback_model: str | None = None,
 ) -> str:
     """
     Quality-first answer generation with strategy + quality gate.
@@ -447,6 +460,13 @@ def generate_answer(
     mode = (mode or "star").strip().lower()
     if mode not in ("star", "shorter", "technical", "code"):
         mode = "star"
+
+    primary, fallback = resolve_answer_models(
+        answer_model=answer_model,
+        fallback_model=fallback_model,
+        user_answer_model=user_answer_model,
+        user_fallback_model=user_fallback_model,
+    )
 
     # RAG context
     chunks: list = []
@@ -470,7 +490,8 @@ def generate_answer(
     answer = _complete_answer(
         system=system,
         user=user,
-        model=ANSWER_MODEL,
+        model=primary,
+        fallback_model=fallback,
         max_tokens=_max_tokens_for_mode(mode),
         temperature=0.42,
     )
@@ -494,7 +515,8 @@ def generate_answer(
         answer2 = _complete_answer(
             system=system,
             user=user2,
-            model=ANSWER_MODEL,
+            model=primary,
+            fallback_model=fallback,
             max_tokens=_max_tokens_for_mode(mode) + 200,
             temperature=0.35,
         )
@@ -511,6 +533,10 @@ def iter_answer_tokens(
     job_context: str = "",
     tone: str = "confident",
     mode: str = "star",
+    answer_model: str | None = None,
+    fallback_model: str | None = None,
+    user_answer_model: str | None = None,
+    user_fallback_model: str | None = None,
 ) -> Generator[str, None, None]:
     """
     Streaming path: still runs strategy first, then streams a depth-first answer.
@@ -527,6 +553,13 @@ def iter_answer_tokens(
         chunks = search_context(question) or []
     except Exception:
         chunks = []
+
+    primary, fallback = resolve_answer_models(
+        answer_model=answer_model,
+        fallback_model=fallback_model,
+        user_answer_model=user_answer_model,
+        user_fallback_model=user_fallback_model,
+    )
 
     strategy = analyze_question_strategy(question, job_context=job_context)
     system = _system_for_mode(mode)
@@ -546,29 +579,31 @@ def iter_answer_tokens(
     )
 
     client = _get_openai_client()
-    model = ANSWER_MODEL
-    try:
-        stream = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            stream=True,
-            temperature=0.42,
-            max_tokens=_max_tokens_for_mode(mode),
-        )
-    except Exception:
-        stream = client.chat.completions.create(
-            model=SCRIPT_MODEL,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            stream=True,
-            temperature=0.42,
-            max_tokens=_max_tokens_for_mode(mode),
-        )
+    models_try = [primary, fallback, SCRIPT_MODEL, "gpt-4o-mini"]
+    stream = None
+    last_err: Exception | None = None
+    for model in models_try:
+        if not model:
+            continue
+        try:
+            stream = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                stream=True,
+                temperature=0.42,
+                max_tokens=_max_tokens_for_mode(mode),
+            )
+            break
+        except Exception as e:
+            last_err = e
+            continue
+    if stream is None:
+        if last_err:
+            raise last_err
+        return
 
     for chunk in stream:
         if chunk.choices and chunk.choices[0].delta.content:

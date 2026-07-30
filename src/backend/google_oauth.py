@@ -26,6 +26,7 @@ from backend.jwt_auth import (
     create_access_token,
     create_oauth_state,
     get_current_user,
+    promote_admin_if_listed,
     user_has_active_subscription,
     user_public_dict,
     verify_oauth_state,
@@ -235,6 +236,7 @@ async def google_login_callback(
     session.add(user)
     session.commit()
     session.refresh(user)
+    user = promote_admin_if_listed(session, user)
 
     # Welcome email: first time OR previous failure (retry)
     try:
@@ -248,8 +250,12 @@ async def google_login_callback(
 
 
 @router.get("/me", response_model=MeResponse)
-async def auth_me(user: User = Depends(get_current_user)) -> MeResponse:
+async def auth_me(
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> MeResponse:
     """Return the signed-in user and subscription flag."""
+    user = promote_admin_if_listed(session, user)
     return MeResponse(
         user=user_public_dict(user),
         subscription_active=user_has_active_subscription(user),

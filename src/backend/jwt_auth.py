@@ -116,6 +116,14 @@ def user_has_active_subscription(user: User) -> bool:
 
 def user_public_dict(user: User) -> dict[str, Any]:
     """Safe user payload for the frontend."""
+    from backend.config import settings as _settings
+
+    primary = getattr(user, "answer_model", None) or _settings.DEFAULT_ANSWER_MODEL or "gpt-4o"
+    fallback = (
+        getattr(user, "fallback_model", None)
+        or _settings.DEFAULT_FALLBACK_MODEL
+        or "gpt-4o-mini"
+    )
     return {
         "id": user.id,
         "email": user.email,
@@ -132,7 +140,27 @@ def user_public_dict(user: User) -> dict[str, Any]:
         "welcome_email_sent": user.welcome_email_sent,
         "last_email_error": user.last_email_error,
         "created_at": user.created_at.isoformat() if user.created_at else None,
+        "is_admin": bool(getattr(user, "is_admin", False)),
+        "answer_model": getattr(user, "answer_model", None),
+        "fallback_model": getattr(user, "fallback_model", None),
+        "effective_answer_model": primary,
+        "effective_fallback_model": fallback,
     }
+
+
+def promote_admin_if_listed(session: Session, user: User) -> User:
+    """If email is in ADMIN_EMAILS, set is_admin=True (bootstrap)."""
+    from backend.config import settings as _settings
+
+    emails = _settings.admin_email_set
+    if not emails:
+        return user
+    if (user.email or "").strip().lower() in emails and not user.is_admin:
+        user.is_admin = True
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+    return user
 
 
 async def get_current_user(
@@ -172,6 +200,21 @@ async def get_current_user(
                 "error": {
                     "code": "user_not_found",
                     "message": "Account not found. Please sign in again.",
+                }
+            },
+        )
+    return user
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    """FastAPI dependency: require authenticated admin user."""
+    if not bool(getattr(user, "is_admin", False)):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": {
+                    "code": "admin_required",
+                    "message": "Admin access required.",
                 }
             },
         )

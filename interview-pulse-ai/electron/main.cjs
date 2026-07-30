@@ -1,10 +1,121 @@
 const { app, BrowserWindow, ipcMain, globalShortcut, screen } = require('electron')
+const fs = require('fs')
 const path = require('path')
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL
 const PROTOCOL = 'interviewpulse'
 let mainWindow = null
 let overlayWindow = null
+/** Last non-maximized bounds so maximize/restore works cleanly */
+let overlayRestoredBounds = null
+let overlayBoundsSaveTimer = null
+
+const OVERLAY_MIN_W = 320
+const OVERLAY_MIN_H = 240
+const OVERLAY_DEFAULT_W = 560
+const OVERLAY_DEFAULT_H = 700
+
+function overlayStatePath() {
+  return path.join(app.getPath('userData'), 'overlay-bounds.json')
+}
+
+function loadOverlayBounds() {
+  try {
+    const raw = fs.readFileSync(overlayStatePath(), 'utf8')
+    const j = JSON.parse(raw)
+    if (
+      j &&
+      typeof j.width === 'number' &&
+      typeof j.height === 'number' &&
+      typeof j.x === 'number' &&
+      typeof j.y === 'number'
+    ) {
+      return j
+    }
+  } catch {
+    /* first run / corrupt */
+  }
+  return null
+}
+
+function saveOverlayBounds(bounds) {
+  try {
+    fs.writeFileSync(overlayStatePath(), JSON.stringify(bounds), 'utf8')
+  } catch (err) {
+    console.warn('save overlay bounds failed:', err)
+  }
+}
+
+function scheduleSaveOverlayBounds() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return
+  if (overlayBoundsSaveTimer) clearTimeout(overlayBoundsSaveTimer)
+  overlayBoundsSaveTimer = setTimeout(() => {
+    overlayBoundsSaveTimer = null
+    if (!overlayWindow || overlayWindow.isDestroyed()) return
+    if (overlayWindow.isMaximized()) return
+    const b = overlayWindow.getBounds()
+    overlayRestoredBounds = b
+    saveOverlayBounds(b)
+  }, 250)
+}
+
+function clampOverlayBounds(bounds) {
+  const display = screen.getDisplayMatching(bounds) || screen.getPrimaryDisplay()
+  const wa = display.workArea
+  const width = Math.min(
+    Math.max(OVERLAY_MIN_W, Math.round(bounds.width || OVERLAY_DEFAULT_W)),
+    wa.width,
+  )
+  const height = Math.min(
+    Math.max(OVERLAY_MIN_H, Math.round(bounds.height || OVERLAY_DEFAULT_H)),
+    wa.height,
+  )
+  let x = Math.round(bounds.x ?? wa.x + wa.width - width - 40)
+  let y = Math.round(bounds.y ?? wa.y + 60)
+  // Keep at least 80px of the window on-screen
+  x = Math.min(Math.max(wa.x - width + 80, x), wa.x + wa.width - 80)
+  y = Math.min(Math.max(wa.y, y), wa.y + wa.height - 80)
+  return { x, y, width, height }
+}
+
+function defaultOverlayBounds() {
+  const display = screen.getPrimaryDisplay()
+  const { width: sw, height: sh, x: sx, y: sy } = display.workArea
+  const width = Math.min(OVERLAY_DEFAULT_W, sw - 40)
+  const height = Math.min(OVERLAY_DEFAULT_H, sh - 80)
+  return {
+    width,
+    height,
+    x: sx + sw - width - 40,
+    y: sy + 60,
+  }
+}
+
+/** Named size presets relative to the display under the overlay (or primary). */
+function overlayPresetBounds(preset, current) {
+  const display =
+    screen.getDisplayMatching(current || defaultOverlayBounds()) ||
+    screen.getPrimaryDisplay()
+  const wa = display.workArea
+  const cx = (current?.x ?? wa.x) + (current?.width ?? OVERLAY_DEFAULT_W) / 2
+  const cy = (current?.y ?? wa.y) + (current?.height ?? OVERLAY_DEFAULT_H) / 2
+
+  const presets = {
+    compact: { width: 380, height: 420 },
+    medium: { width: 560, height: 700 },
+    large: { width: 780, height: 900 },
+    wide: { width: Math.min(1100, wa.width - 40), height: 640 },
+    tall: { width: 520, height: Math.min(wa.height - 40, 1100) },
+    max: { width: wa.width - 24, height: wa.height - 24 },
+  }
+  const size = presets[preset] || presets.medium
+  const width = Math.min(Math.max(OVERLAY_MIN_W, size.width), wa.width)
+  const height = Math.min(Math.max(OVERLAY_MIN_H, size.height), wa.height)
+  // Keep center roughly stable when changing size
+  let x = Math.round(cx - width / 2)
+  let y = Math.round(cy - height / 2)
+  return clampOverlayBounds({ x, y, width, height })
+}
 
 // Allow open-from-web: interviewpulse://open
 if (process.defaultApp) {
@@ -130,24 +241,33 @@ function createMainWindow() {
 function createOverlayWindow() {
   if (overlayWindow && !overlayWindow.isDestroyed()) {
     overlayWindow.show()
+    overlayWindow.focus()
     return
   }
 
-  const display = screen.getPrimaryDisplay()
-  const { width } = display.workAreaSize
+  const saved = loadOverlayBounds()
+  const bounds = clampOverlayBounds(saved || defaultOverlayBounds())
+  overlayRestoredBounds = bounds
 
+  // Transparent + frameless: keep thickFrame so Windows can still drag-resize edges.
   overlayWindow = new BrowserWindow({
-    width: 520,
-    height: 640,
-    x: width - 560,
-    y: 80,
+    ...bounds,
+    minWidth: OVERLAY_MIN_W,
+    minHeight: OVERLAY_MIN_H,
+    maxWidth: undefined,
+    maxHeight: undefined,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     resizable: true,
+    maximizable: true,
+    minimizable: false,
+    fullscreenable: true,
     skipTaskbar: true,
-    hasShadow: false,
+    hasShadow: true,
+    thickFrame: true,
     backgroundColor: '#00000000',
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -156,15 +276,36 @@ function createOverlayWindow() {
     },
   })
 
+  // Allow growing to any work-area size (Electron still enforces min*)
+  try {
+    const wa = screen.getPrimaryDisplay().workAreaSize
+    overlayWindow.setMaximumSize(wa.width, wa.height)
+  } catch {
+    /* ignore */
+  }
+
   const url = isDev
     ? `${process.env.VITE_DEV_SERVER_URL}/#/overlay`
     : `file://${path.join(__dirname, '../dist/index.html')}#/overlay`
 
   overlayWindow.loadURL(url)
   overlayWindow.setAlwaysOnTop(true, 'screen-saver')
+  // Movable + resizable without a native frame
+  overlayWindow.setMovable(true)
+  overlayWindow.setResizable(true)
   applyContentProtection(overlayWindow, true)
 
+  overlayWindow.once('ready-to-show', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.show()
+  })
+
+  overlayWindow.on('resize', scheduleSaveOverlayBounds)
+  overlayWindow.on('move', scheduleSaveOverlayBounds)
   overlayWindow.on('closed', () => {
+    if (overlayBoundsSaveTimer) {
+      clearTimeout(overlayBoundsSaveTimer)
+      overlayBoundsSaveTimer = null
+    }
     overlayWindow = null
   })
 }
@@ -225,6 +366,101 @@ function registerIpc() {
       overlayWindow.setAlwaysOnTop(enabled, 'screen-saver')
     }
     return { ok: true }
+  })
+
+  ipcMain.handle('overlay:get-bounds', () => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return { ok: false }
+    const b = overlayWindow.getBounds()
+    return {
+      ok: true,
+      ...b,
+      maximized: overlayWindow.isMaximized(),
+      isFullScreen: overlayWindow.isFullScreen(),
+    }
+  })
+
+  ipcMain.handle('overlay:set-bounds', (_e, partial) => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return { ok: false }
+    if (overlayWindow.isMaximized()) overlayWindow.unmaximize()
+    if (overlayWindow.isFullScreen()) overlayWindow.setFullScreen(false)
+    const cur = overlayWindow.getBounds()
+    const next = clampOverlayBounds({
+      x: partial?.x ?? cur.x,
+      y: partial?.y ?? cur.y,
+      width: partial?.width ?? cur.width,
+      height: partial?.height ?? cur.height,
+    })
+    overlayWindow.setBounds(next, true)
+    overlayRestoredBounds = next
+    saveOverlayBounds(next)
+    return { ok: true, ...next }
+  })
+
+  ipcMain.handle('overlay:resize-by', (_e, delta) => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return { ok: false }
+    if (overlayWindow.isMaximized()) overlayWindow.unmaximize()
+    const cur = overlayWindow.getBounds()
+    const next = clampOverlayBounds({
+      x: cur.x,
+      y: cur.y,
+      width: cur.width + (Number(delta?.width) || 0),
+      height: cur.height + (Number(delta?.height) || 0),
+    })
+    overlayWindow.setBounds(next, true)
+    overlayRestoredBounds = next
+    scheduleSaveOverlayBounds()
+    return { ok: true, ...next }
+  })
+
+  ipcMain.handle('overlay:set-preset', (_e, preset) => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return { ok: false }
+    if (overlayWindow.isMaximized()) overlayWindow.unmaximize()
+    if (overlayWindow.isFullScreen()) overlayWindow.setFullScreen(false)
+    const cur = overlayWindow.getBounds()
+    if (preset === 'max') {
+      // Fill the work area of the display the overlay is on
+      const display = screen.getDisplayMatching(cur) || screen.getPrimaryDisplay()
+      const wa = display.workArea
+      const next = {
+        x: wa.x + 12,
+        y: wa.y + 12,
+        width: wa.width - 24,
+        height: wa.height - 24,
+      }
+      overlayWindow.setBounds(next, true)
+      overlayRestoredBounds = next
+      saveOverlayBounds(next)
+      return { ok: true, preset, ...next }
+    }
+    const next = overlayPresetBounds(String(preset || 'medium'), cur)
+    overlayWindow.setBounds(next, true)
+    overlayRestoredBounds = next
+    saveOverlayBounds(next)
+    return { ok: true, preset, ...next }
+  })
+
+  ipcMain.handle('overlay:toggle-maximize', () => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return { ok: false }
+    if (overlayWindow.isFullScreen()) {
+      overlayWindow.setFullScreen(false)
+    }
+    if (overlayWindow.isMaximized()) {
+      overlayWindow.unmaximize()
+      if (overlayRestoredBounds) {
+        overlayWindow.setBounds(clampOverlayBounds(overlayRestoredBounds), true)
+      }
+      return { ok: true, maximized: false, ...overlayWindow.getBounds() }
+    }
+    overlayRestoredBounds = overlayWindow.getBounds()
+    // Prefer work-area fill over OS maximize (cleaner with transparent frameless)
+    const display =
+      screen.getDisplayMatching(overlayRestoredBounds) || screen.getPrimaryDisplay()
+    const wa = display.workArea
+    overlayWindow.setBounds(
+      { x: wa.x, y: wa.y, width: wa.width, height: wa.height },
+      true,
+    )
+    return { ok: true, maximized: true, ...overlayWindow.getBounds() }
   })
 
   ipcMain.handle('app:platform', () => process.platform)

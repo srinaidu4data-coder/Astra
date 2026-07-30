@@ -4,6 +4,7 @@ export type NavRoute =
   | 'practice'
   | 'analytics'
   | 'settings'
+  | 'admin'
 
 export type AnswerMode =
   | 'star'
@@ -147,6 +148,24 @@ export interface AppSettings {
   tone: 'professional' | 'casual' | 'confident'
 }
 
+export type OverlaySizePreset =
+  | 'compact'
+  | 'medium'
+  | 'large'
+  | 'wide'
+  | 'tall'
+  | 'max'
+
+export type OverlayBounds = {
+  ok?: boolean
+  x: number
+  y: number
+  width: number
+  height: number
+  maximized?: boolean
+  isFullScreen?: boolean
+}
+
 declare global {
   interface Window {
     interviewPulse?: {
@@ -157,6 +176,18 @@ declare global {
       setOverlayOpacity: (opacity: number) => Promise<{ ok: boolean }>
       setClickThrough: (enabled: boolean) => Promise<{ ok: boolean }>
       setAlwaysOnTop: (enabled: boolean) => Promise<{ ok: boolean }>
+      getOverlayBounds?: () => Promise<OverlayBounds>
+      setOverlayBounds?: (
+        bounds: Partial<Pick<OverlayBounds, 'x' | 'y' | 'width' | 'height'>>,
+      ) => Promise<OverlayBounds>
+      resizeOverlayBy?: (delta: {
+        width?: number
+        height?: number
+      }) => Promise<OverlayBounds>
+      setOverlayPreset?: (
+        preset: OverlaySizePreset,
+      ) => Promise<OverlayBounds & { preset?: string }>
+      toggleOverlayMaximize?: () => Promise<OverlayBounds>
       onToggleClickThrough: (cb: () => void) => () => void
       onDeepLink: (cb: (url: string) => void) => () => void
     }

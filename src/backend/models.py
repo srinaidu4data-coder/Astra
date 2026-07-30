@@ -38,6 +38,13 @@ class User(SQLModel, table=True):
     last_refund_at: Optional[datetime] = None
     last_refund_id: Optional[str] = None
 
+    # Admin + per-user LLM assignment (InterviewPulse answer engine)
+    is_admin: bool = Field(default=False)
+    # Primary model for interview answers (e.g. gpt-4o). Null → global default.
+    answer_model: Optional[str] = Field(default=None)
+    # Fallback if primary fails (e.g. gpt-4o-mini). Null → global fallback default.
+    fallback_model: Optional[str] = Field(default=None)
+
 
 class LicenseKey(SQLModel, table=True):
     """License key record for gating access to the proxy."""

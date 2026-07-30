@@ -81,6 +81,10 @@ export class LiveInterviewClient {
     tone?: string
     mode?: AnswerMode
     source?: 'browser' | 'system'
+    userAnswerModel?: string | null
+    userFallbackModel?: string | null
+    answerModel?: string | null
+    fallbackModel?: string | null
   } | null = null
 
   // Browser mic streaming
@@ -144,6 +148,24 @@ export class LiveInterviewClient {
     }
   }
 
+  private modelPayload(opts: {
+    userAnswerModel?: string | null
+    userFallbackModel?: string | null
+    answerModel?: string | null
+    fallbackModel?: string | null
+  }) {
+    return {
+      ...(opts.userAnswerModel
+        ? { user_answer_model: opts.userAnswerModel }
+        : {}),
+      ...(opts.userFallbackModel
+        ? { user_fallback_model: opts.userFallbackModel }
+        : {}),
+      ...(opts.answerModel ? { answer_model: opts.answerModel } : {}),
+      ...(opts.fallbackModel ? { fallback_model: opts.fallbackModel } : {}),
+    }
+  }
+
   private async resumeAfterReconnect() {
     if (!this.lastStartOpts) return
     try {
@@ -153,6 +175,7 @@ export class LiveInterviewClient {
         tone: this.lastStartOpts.tone ?? 'confident',
         mode: this.lastStartOpts.mode ?? this.mode,
         source: this.lastStartOpts.source ?? 'browser',
+        ...this.modelPayload(this.lastStartOpts),
       })
       if ((this.lastStartOpts.source ?? 'browser') === 'browser' && !this.micActive) {
         await this.startBrowserMic()
@@ -372,12 +395,19 @@ export class LiveInterviewClient {
     tone?: string
     mode?: AnswerMode
     source?: 'browser' | 'system'
+    /** User-assigned primary from admin console */
+    userAnswerModel?: string | null
+    /** User-assigned fallback from admin console */
+    userFallbackModel?: string | null
+    answerModel?: string | null
+    fallbackModel?: string | null
   }) {
     await this.ensureOpen()
     this.mode = opts.mode ?? 'star'
     const source = opts.source ?? (preferBrowserMic() ? 'browser' : 'system')
     this.lastStartOpts = { ...opts, mode: this.mode, source }
     this.wasListening = true
+    const models = this.modelPayload(opts)
 
     if (source === 'browser') {
       // Open mic first so permission UX is immediate; then start server session
@@ -388,6 +418,7 @@ export class LiveInterviewClient {
         tone: opts.tone ?? 'confident',
         mode: this.mode,
         source: 'browser',
+        ...models,
       })
       this.handlers.onStatus?.(
         'Listening via browser mic — play interviewer audio aloud or speak questions',
@@ -400,6 +431,7 @@ export class LiveInterviewClient {
         tone: opts.tone ?? 'confident',
         mode: this.mode,
         source: 'system',
+        ...models,
       })
     }
   }

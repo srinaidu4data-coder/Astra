@@ -23,6 +23,7 @@ export function SettingsPage() {
   const clearAuth = useAppStore((s) => s.clearAuth)
   const refreshAuth = useAppStore((s) => s.refreshAuth)
   const setAuthFromUser = useAppStore((s) => s.setAuthFromUser)
+  const setRoute = useAppStore((s) => s.setRoute)
   const [billingBusy, setBillingBusy] = useState(false)
   const [billingErr, setBillingErr] = useState<string | null>(null)
   const [billingMsg, setBillingMsg] = useState<string | null>(null)
@@ -74,6 +75,7 @@ export function SettingsPage() {
             <Badge tone={user.subscription_active ? 'emerald' : 'amber'}>
               {user.subscription_active ? 'Subscribed' : user.subscription_status}
             </Badge>
+            {user.is_admin ? <Badge tone="indigo">Admin</Badge> : null}
           </div>
         ) : (
           <p className="mb-5 text-[13px] text-white/45">
@@ -81,6 +83,29 @@ export function SettingsPage() {
               ? 'Not signed in.'
               : 'Google OAuth not configured — app is open for local use.'}
           </p>
+        )}
+
+        {user && (
+          <div className="mb-5 rounded-[14px] border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-[12px] text-white/50">
+            Answer model:{' '}
+            <span className="text-white/80">
+              {user.effective_answer_model || user.answer_model || 'gpt-4o'}
+            </span>
+            <span className="mx-1.5 text-white/25">·</span>
+            Fallback:{' '}
+            <span className="text-white/80">
+              {user.effective_fallback_model || user.fallback_model || 'gpt-4o-mini'}
+            </span>
+            {user.is_admin && (
+              <button
+                type="button"
+                className="ml-3 text-[#5DD5E3] hover:underline"
+                onClick={() => setRoute('admin')}
+              >
+                Open admin console
+              </button>
+            )}
+          </div>
         )}
 
         {billingErr && (

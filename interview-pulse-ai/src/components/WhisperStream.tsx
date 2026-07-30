@@ -47,7 +47,8 @@ export function WhisperStream({
       className={cn(
         // Tall reading surface: fill parent and keep a large floor so long answers stay readable
         'glass flex h-full min-h-[min(78vh,900px)] flex-col rounded-[28px] p-7 md:p-9',
-        compact && 'min-h-0 p-5',
+        // Overlay: drop fixed min-height so the window can shrink/grow freely
+        compact && 'min-h-0 rounded-[20px] p-4 sm:rounded-[24px] sm:p-5',
       )}
     >
       <div className="mb-5 flex shrink-0 items-start justify-between gap-4">
