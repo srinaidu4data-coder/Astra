@@ -1,5 +1,8 @@
+import { MobileNav } from '@/components/layout/MobileNav'
+import { MobileTopBar } from '@/components/layout/MobileTopBar'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
+import { MobileWelcome } from '@/components/mobile/MobileWelcome'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AuthPage } from '@/pages/AuthPage'
 import { CopilotPage } from '@/pages/CopilotPage'
@@ -8,6 +11,7 @@ import { OverlayPage } from '@/pages/OverlayPage'
 import { PaywallPage } from '@/pages/PaywallPage'
 import { PracticePage } from '@/pages/PracticePage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { useIsMobile } from '@/lib/mobile'
 import {
   confirmCheckoutSession,
   syncBilling,
@@ -17,8 +21,43 @@ import { Loader2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { HashRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 
-function DashboardShell() {
+function PageBody() {
   const route = useAppStore((s) => s.route)
+  return (
+    <>
+      {route === 'copilot' && <CopilotPage />}
+      {route === 'knowledge' && <KnowledgePage />}
+      {route === 'practice' && <PracticePage />}
+      {route === 'analytics' && <AnalyticsPage />}
+      {route === 'settings' && <SettingsPage />}
+    </>
+  )
+}
+
+/** Phone-optimized shell: bottom tabs, compact header, safe areas. */
+function MobileDashboardShell() {
+  return (
+    <div className="app-mesh mobile-shell flex h-full flex-col">
+      <MobileWelcome />
+      <MobileTopBar />
+      <main
+        className="min-h-0 flex-1 overflow-auto px-3 pt-3"
+        style={{
+          // Room for bottom tab bar + home indicator
+          paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))',
+        }}
+      >
+        <div className="page-shell page-shell-mobile mx-auto max-w-lg pb-4">
+          <PageBody />
+        </div>
+      </main>
+      <MobileNav />
+    </div>
+  )
+}
+
+/** Desktop / tablet shell: sidebar + glass card. */
+function DesktopDashboardShell() {
   const stealth = useAppStore((s) => s.stealth)
 
   useEffect(() => {
@@ -35,17 +74,18 @@ function DashboardShell() {
           </div>
           <main className="min-h-0 flex-1 overflow-auto px-5 py-8 md:px-10 md:py-10">
             <div className="page-shell">
-              {route === 'copilot' && <CopilotPage />}
-              {route === 'knowledge' && <KnowledgePage />}
-              {route === 'practice' && <PracticePage />}
-              {route === 'analytics' && <AnalyticsPage />}
-              {route === 'settings' && <SettingsPage />}
+              <PageBody />
             </div>
           </main>
         </div>
       </div>
     </div>
   )
+}
+
+function DashboardShell() {
+  const isMobile = useIsMobile()
+  return isMobile ? <MobileDashboardShell /> : <DesktopDashboardShell />
 }
 
 /** Gate: Google sign-in → Stripe monthly → app. Handles checkout + refund re-sync. */

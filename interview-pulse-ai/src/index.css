@@ -34,6 +34,8 @@
   body,
   #root {
     height: 100%;
+    /* iOS: avoid rubber-band overscroll flash */
+    overscroll-behavior: none;
   }
 
   body {
@@ -48,6 +50,23 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     background: #0c0c0c;
+    /* Prevent iOS text size adjust after rotation */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Phone: larger tap targets for native controls */
+  @media (max-width: 767px) {
+    body {
+      font-size: 15px;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      font-size: 16px; /* avoids iOS zoom-on-focus */
+    }
   }
 
   h1,
@@ -134,6 +153,21 @@
     width: 100%;
   }
 
+  .page-shell-mobile {
+    max-width: 32rem;
+  }
+
+  .mobile-shell {
+    /* Dynamic viewport height on mobile browsers (address bar show/hide) */
+    min-height: 100dvh;
+    min-height: 100svh;
+  }
+
+  .mobile-nav {
+    /* Keep above iOS home indicator */
+    touch-action: manipulation;
+  }
+
   .field {
     width: 100%;
     border-radius: 10px;
@@ -146,6 +180,25 @@
     letter-spacing: -0.01em;
     line-height: 1.5;
     transition: border-color 0.15s ease;
+  }
+
+  @media (max-width: 767px) {
+    .field {
+      min-height: 48px;
+      padding: 0.875rem 1rem;
+      font-size: 16px;
+      border-radius: 12px;
+    }
+
+    /* Stack dense desktop grids on phone */
+    .glass {
+      border-radius: 1.25rem;
+    }
+
+    .glass.rounded-\[28px\],
+    .glass.rounded-\[32px\] {
+      border-radius: 1.25rem;
+    }
   }
 
   .label-quiet {

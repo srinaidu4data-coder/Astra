@@ -244,8 +244,14 @@ export function AuthPage({
   const emailAuth = config?.email_password_enabled !== false
 
   return (
-    <div className="app-mesh flex min-h-full items-center justify-center p-6">
-      <div className="glass w-full max-w-md rounded-[28px] p-8 md:p-10">
+    <div
+      className="app-mesh flex min-h-full items-center justify-center p-4 sm:p-6"
+      style={{
+        paddingTop: 'max(1rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+      }}
+    >
+      <div className="glass w-full max-w-md rounded-[24px] p-6 sm:rounded-[28px] sm:p-8 md:p-10">
         <div className="mb-8 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-sm border border-[#20B8CD]/30 bg-[#141414]">
             <div className="h-3 w-3 bg-[#20B8CD]" />
