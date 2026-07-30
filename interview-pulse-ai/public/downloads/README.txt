@@ -1,21 +1,37 @@
 InterviewPulse desktop installers
 =================================
 
-Place built installers here so the web app can offer one-click download:
+IMPORTANT
+---------
+Cloudflare Pages cannot host the Windows installer (~100MB+; Pages has a
+per-file size limit). If nothing real is at /downloads/*.exe, the SPA
+fallback serves index.html as "Setup.exe" (~1-2 KB) and Windows reports:
 
-  InterviewPulse-Setup.exe   ← Windows (from: npm run dist:win)
-  InterviewPulse-Mac.dmg     ← macOS   (from: npm run dist:mac)
+  "The file or directory is corrupted and unreadable."
 
-Build steps (from interview-pulse-ai/):
+Production download URL (preferred)
+-----------------------------------
+GitHub Releases asset (used by the web UI by default):
 
+  https://github.com/srinaidu4data-coder/Astra/releases/latest/download/InterviewPulse-Setup.exe
+
+Publish a new build:
+
+  cd interview-pulse-ai
   npm run dist:win
+  gh release create desktop-vX.Y.Z release/InterviewPulse-Setup.exe --title "InterviewPulse Desktop vX.Y.Z" --latest
 
-Copy the installer from release/ into this folder (or into the site's
-published /downloads/ path), then redeploy the web app.
+Optional Cloudflare Pages build env:
 
-Optional production override (build-time env):
+  VITE_DESKTOP_DOWNLOAD_URL=https://github.com/srinaidu4data-coder/Astra/releases/latest/download/InterviewPulse-Setup.exe
 
-  VITE_DESKTOP_DOWNLOAD_URL=https://your-cdn/InterviewPulse-Setup.exe
+Local files in this folder
+--------------------------
+  InterviewPulse-Setup.exe   Windows (from: npm run dist:win -> release/)
+  InterviewPulse-Mac.dmg     macOS   (from: npm run dist:mac)
 
-The web UI "Desktop" button will download that URL and can also try to open
-an already-installed app via interviewpulse://open
+These *.exe / *.dmg files are gitignored on purpose.
+
+Protocol
+--------
+Installed app also opens via: interviewpulse://open

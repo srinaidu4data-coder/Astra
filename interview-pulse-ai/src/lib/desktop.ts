@@ -17,9 +17,14 @@ export function detectDesktopOs(): DesktopOs {
 
 /**
  * Installer / download URL.
- * Prefer VITE_DESKTOP_DOWNLOAD_URL (e.g. GitHub Releases or CDN).
- * Fallback: static file under public/downloads/ served with the web app.
+ *
+ * Prefer VITE_DESKTOP_DOWNLOAD_URL (CDN / GitHub Release).
+ * Default Windows: GitHub Release asset (CF Pages cannot host ~100MB+ EXEs —
+ * SPA fallback used to serve index.html as "Setup.exe" → "file is corrupted").
  */
+const DEFAULT_WIN_INSTALLER =
+  'https://github.com/srinaidu4data-coder/Astra/releases/latest/download/InterviewPulse-Setup.exe'
+
 export function getDesktopDownloadUrl(os: DesktopOs = detectDesktopOs()): string {
   const fromEnv = (import.meta.env.VITE_DESKTOP_DOWNLOAD_URL as string | undefined)?.trim()
   if (fromEnv) return fromEnv
@@ -30,8 +35,59 @@ export function getDesktopDownloadUrl(os: DesktopOs = detectDesktopOs()): string
     return '/downloads/InterviewPulse-Mac.dmg'
   }
 
-  // Default / Windows
-  return '/downloads/InterviewPulse-Setup.exe'
+  // Windows — never rely on CF Pages for the binary (25MB file limit + SPA HTML)
+  return DEFAULT_WIN_INSTALLER
+}
+
+/** Minimum expected installer size (bytes). HTML SPA mistakes are ~1–5 KB. */
+export const MIN_INSTALLER_BYTES = 5_000_000
+
+/**
+ * HEAD/GET probe: real EXE is large binary; corrupted downloads are tiny HTML.
+ */
+export async function probeDesktopInstaller(
+  os: DesktopOs = detectDesktopOs(),
+): Promise<{ ok: boolean; url: string; bytes: number | null; hint?: string }> {
+  const url = getDesktopDownloadUrl(os)
+  try {
+    const res = await fetch(url, { method: 'HEAD', redirect: 'follow' })
+    const lenHeader = res.headers.get('content-length')
+    const type = (res.headers.get('content-type') || '').toLowerCase()
+    const bytes = lenHeader ? Number(lenHeader) : null
+    if (!res.ok) {
+      return {
+        ok: false,
+        url,
+        bytes,
+        hint: `Installer URL returned HTTP ${res.status}.`,
+      }
+    }
+    if (type.includes('text/html')) {
+      return {
+        ok: false,
+        url,
+        bytes,
+        hint: 'URL returned a web page, not an installer (common SPA misconfig).',
+      }
+    }
+    if (bytes != null && bytes < MIN_INSTALLER_BYTES) {
+      return {
+        ok: false,
+        url,
+        bytes,
+        hint: `File is only ${bytes} bytes — expected a ~100MB+ EXE.`,
+      }
+    }
+    return { ok: true, url, bytes }
+  } catch {
+    // CORS may block HEAD from the browser — still allow navigation download
+    return {
+      ok: true,
+      url,
+      bytes: null,
+      hint: 'Could not verify size in-browser; download will open the release URL.',
+    }
+  }
 }
 
 /** Custom protocol registered by the packaged Electron app. */
@@ -55,12 +111,7 @@ export function tryOpenDesktopApp(): void {
 
 export function startDesktopDownload(os: DesktopOs = detectDesktopOs()): void {
   const url = getDesktopDownloadUrl(os)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = ''
-  a.rel = 'noopener'
-  a.target = '_blank'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
+  // Prefer top-level navigation for cross-origin GitHub Releases (a[download]
+  // is ignored cross-origin and some SPA hosts rewrote relative /downloads to HTML).
+  window.location.assign(url)
 }

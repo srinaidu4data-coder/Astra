@@ -3,6 +3,7 @@ import {
   detectDesktopOs,
   getDesktopDownloadUrl,
   isDesktopApp,
+  probeDesktopInstaller,
   startDesktopDownload,
   tryOpenDesktopApp,
   type DesktopOs,
@@ -108,6 +109,7 @@ function DesktopModal({
   onClose: () => void
 }) {
   const downloadUrl = getDesktopDownloadUrl(os)
+  const [probe, setProbe] = useState<string | null>(null)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -116,6 +118,17 @@ function DesktopModal({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  useEffect(() => {
+    void probeDesktopInstaller(os).then((r) => {
+      if (!r.ok && r.hint) setProbe(r.hint)
+      else if (r.bytes != null && r.bytes > 1_000_000) {
+        setProbe(`Ready · ~${Math.round(r.bytes / 1_000_000)} MB installer`)
+      } else {
+        setProbe(null)
+      }
+    })
+  }, [os])
 
   return (
     <div
@@ -163,6 +176,19 @@ function DesktopModal({
           </li>
         </ul>
 
+        {probe && (
+          <p
+            className={cn(
+              'mb-4 rounded-[12px] px-3 py-2 text-[12px] leading-relaxed',
+              probe.startsWith('Ready')
+                ? 'border border-[#20B8CD]/25 bg-[#20B8CD]/10 text-[#5DD5E3]'
+                : 'border border-[#E8C547]/35 bg-[#E8C547]/10 text-[#E8C547]',
+            )}
+          >
+            {probe}
+          </p>
+        )}
+
         <div className="flex flex-col gap-2.5">
           <Button
             onClick={() => {
@@ -184,11 +210,16 @@ function DesktopModal({
         </div>
 
         <p className="mt-4 text-[11px] leading-relaxed text-white/30">
-          Installer:{' '}
-          <span className="break-all text-white/40">{downloadUrl}</span>
-          . If download fails, ask your admin to publish the build under{' '}
-          <code className="text-white/45">/downloads/</code> or set{' '}
-          <code className="text-white/45">VITE_DESKTOP_DOWNLOAD_URL</code>.
+          Installer is hosted on GitHub Releases (~100MB+). Expect a real EXE, not a
+          1–2 KB file. Direct link:{' '}
+          <a
+            href={downloadUrl}
+            className="break-all text-[#5DD5E3] hover:underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {downloadUrl}
+          </a>
         </p>
       </div>
     </div>
