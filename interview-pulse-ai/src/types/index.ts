@@ -5,6 +5,7 @@ export type NavRoute =
   | 'analytics'
   | 'settings'
   | 'admin'
+  | 'jobsearch'
 
 export type AnswerMode =
   | 'star'

@@ -1,11 +1,13 @@
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/app-store'
 import type { NavRoute } from '@/types'
+import { isJobSearchLabHost } from '@/services/jobsearch'
 import {
   Activity,
   BookOpen,
   BrainCircuit,
   Mic2,
+  Radar,
   Settings2,
   Shield,
 } from 'lucide-react'
@@ -24,14 +26,23 @@ export function Sidebar() {
   const setRoute = useAppStore((s) => s.setRoute)
   const listening = useAppStore((s) => s.listening)
   const isAdmin = useAppStore((s) => Boolean(s.user?.is_admin))
+  const jobLab = isJobSearchLabHost()
 
   const items = useMemo(() => {
-    if (!isAdmin) return baseItems
-    return [
-      ...baseItems,
-      { id: 'admin' as NavRoute, label: 'Admin', icon: Shield },
-    ]
-  }, [isAdmin])
+    const list = [...baseItems]
+    // Localhost-only lab entry — never shown on production domains
+    if (jobLab) {
+      list.splice(1, 0, {
+        id: 'jobsearch' as NavRoute,
+        label: 'Job Search AI',
+        icon: Radar,
+      })
+    }
+    if (isAdmin) {
+      list.push({ id: 'admin' as NavRoute, label: 'Admin', icon: Shield })
+    }
+    return list
+  }, [isAdmin, jobLab])
 
   return (
     <aside className="flex h-full w-[88px] shrink-0 flex-col items-center py-8 lg:w-[220px] lg:items-stretch lg:px-5">

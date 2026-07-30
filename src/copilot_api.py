@@ -72,6 +72,14 @@ try:
 except Exception as _auth_import_err:  # pragma: no cover - optional until deps installed
     print(f"[auth] Google/Stripe/password/admin routers not loaded: {_auth_import_err}")
 
+# Job Search AI lab (localhost-gated) — does not touch interview/answer path
+try:
+    from jobsearch.api import router as jobsearch_router  # noqa: E402
+
+    app.include_router(jobsearch_router)
+except Exception as _js_err:  # pragma: no cover
+    print(f"[jobsearch] lab router not loaded: {_js_err}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

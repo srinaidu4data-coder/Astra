@@ -7,6 +7,7 @@ import { AdminPage } from '@/pages/AdminPage'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AuthPage } from '@/pages/AuthPage'
 import { CopilotPage } from '@/pages/CopilotPage'
+import { JobSearchPage } from '@/pages/JobSearchPage'
 import { KnowledgePage } from '@/pages/KnowledgePage'
 import { OverlayPage } from '@/pages/OverlayPage'
 import { PaywallPage } from '@/pages/PaywallPage'
@@ -32,6 +33,7 @@ function PageBody() {
       {route === 'analytics' && <AnalyticsPage />}
       {route === 'settings' && <SettingsPage />}
       {route === 'admin' && <AdminPage />}
+      {route === 'jobsearch' && <JobSearchPage />}
     </>
   )
 }
