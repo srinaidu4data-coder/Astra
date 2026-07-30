@@ -417,11 +417,22 @@ class LiveInterviewSession:
 
             from answer_engine import generate_answer, looks_like_question, to_bullets
 
-            classification = classify_utterance(text, min_words=4)
+            soft_q = looks_like_question(text)
+            # Fast path: skip classify LLM when heuristics already say "question"
+            # (saves ~0.5–2s before answer generation starts).
+            if soft_q:
+                classification = {
+                    "is_interview_question": True,
+                    "confidence": 0.85,
+                    "cleaned_question": text.strip(),
+                    "reason": "heuristic_soft_q",
+                }
+            else:
+                classification = classify_utterance(text, min_words=4)
             question = classification.get("cleaned_question") or text
             is_q = bool(classification.get("is_interview_question", False))
             conf = float(classification.get("confidence", 0.0) or 0.0)
-            soft_q = looks_like_question(text) or looks_like_question(question)
+            soft_q = soft_q or looks_like_question(question)
 
             # LIVE MODE: answer almost everything that could be a question.
             # Only skip high-confidence non-questions that also fail soft cues.

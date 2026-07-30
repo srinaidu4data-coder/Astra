@@ -80,8 +80,13 @@ export function TopBar() {
             <span className="text-white/20">·</span>
             <span
               className={
-                metrics.totalMs < 850 ? 'text-[#20B8CD]' : 'text-[#E8C547]'
+                metrics.totalMs < 3000
+                  ? 'text-[#20B8CD]'
+                  : metrics.totalMs < 6000
+                    ? 'text-[#E8C547]'
+                    : 'text-[#E85D5D]'
               }
+              title="End-to-end answer latency (STT + model)"
             >
               {formatMs(metrics.totalMs)}
             </span>

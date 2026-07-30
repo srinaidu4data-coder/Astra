@@ -35,6 +35,44 @@ FALLBACK_MODEL = (
 )
 STRATEGY_MODEL = os.environ.get("ASTRA_STRATEGY_MODEL", "").strip() or CLASSIFICATION_MODEL or "gpt-4o-mini"
 
+# live = low latency (default for interviews)
+# balanced = light quality gate, no strategy LLM
+# quality = full strategy LLM + regen (slower, ~8–15s)
+ANSWER_PROFILE = (
+    os.environ.get("ASTRA_ANSWER_PROFILE", "").strip().lower() or "live"
+)
+# Explicit overrides (1/0) beat profile when set
+_FORCE_STRATEGY_LLM = os.environ.get("ASTRA_STRATEGY_LLM", "").strip().lower()
+_FORCE_QUALITY_REGEN = os.environ.get("ASTRA_QUALITY_REGEN", "").strip().lower()
+_FORCE_RAG = os.environ.get("ASTRA_USE_RAG", "").strip().lower()
+
+
+def _env_flag(raw: str, default: bool) -> bool:
+    if raw in ("1", "true", "yes", "on"):
+        return True
+    if raw in ("0", "false", "no", "off"):
+        return False
+    return default
+
+
+def _use_strategy_llm() -> bool:
+    if _FORCE_STRATEGY_LLM:
+        return _env_flag(_FORCE_STRATEGY_LLM, False)
+    return ANSWER_PROFILE in ("quality", "full")
+
+
+def _use_quality_regen() -> bool:
+    if _FORCE_QUALITY_REGEN:
+        return _env_flag(_FORCE_QUALITY_REGEN, False)
+    return ANSWER_PROFILE in ("quality", "full", "balanced")
+
+
+def _use_rag() -> bool:
+    if _FORCE_RAG:
+        return _env_flag(_FORCE_RAG, True)
+    # live skips RAG unless docs are clearly needed — embedding call costs ~200–800ms
+    return ANSWER_PROFILE in ("quality", "full", "balanced")
+
 # ---------------------------------------------------------------------------
 # System prompts — depth + jargon by mode
 # ---------------------------------------------------------------------------
@@ -337,6 +375,21 @@ def _system_for_mode(mode: str) -> str:
 
 
 def _max_tokens_for_mode(mode: str) -> int:
+    # Live profile: shorter outputs finish faster while staying speakable.
+    if ANSWER_PROFILE in ("live", "fast"):
+        return {
+            "shorter": 280,
+            "technical": 620,
+            "code": 700,
+            "star": 650,
+        }.get(mode, 600)
+    if ANSWER_PROFILE == "balanced":
+        return {
+            "shorter": 340,
+            "technical": 850,
+            "code": 900,
+            "star": 850,
+        }.get(mode, 800)
     return {
         "shorter": 420,
         "technical": 1100,
@@ -505,8 +558,11 @@ def generate_answer(
     user_fallback_model: str | None = None,
 ) -> str:
     """
-    Quality-first answer generation with strategy + quality gate.
-    Used by live interview WebSocket and any blocking callers.
+    Interview answer generation.
+
+    Default profile is *live* (low latency): local strategy heuristic, one model
+    call, no quality-regen round-trip. Set ASTRA_ANSWER_PROFILE=quality for the
+    slower multi-pass pipeline.
     """
     mode = (mode or "star").strip().lower()
     if mode not in ("star", "shorter", "technical", "code"):
@@ -519,14 +575,20 @@ def generate_answer(
         user_fallback_model=user_fallback_model,
     )
 
-    # RAG context
+    # RAG context (skipped on live profile — embedding + chroma adds latency)
     chunks: list = []
-    try:
-        chunks = search_context(question) or []
-    except Exception:
-        chunks = []
+    if _use_rag():
+        try:
+            chunks = search_context(question) or []
+        except Exception:
+            chunks = []
 
-    strategy = analyze_question_strategy(question, job_context=job_context)
+    # Strategy: local heuristic by default (saves a full LLM round-trip ~1–3s)
+    if _use_strategy_llm():
+        strategy = analyze_question_strategy(question, job_context=job_context)
+    else:
+        strategy = _fallback_strategy(question, job_context)
+
     system = _system_for_mode(mode)
     user = _build_user_prompt(
         question,
@@ -547,33 +609,37 @@ def generate_answer(
         temperature=0.42,
     )
 
-    quality = score_answer_quality(answer, strategy, mode=mode)
-    if not quality["pass"]:
-        # One strict regeneration — "right answer" logic, not "any answer"
-        user2 = _build_user_prompt(
-            question,
-            job_context=job_context,
-            tone=tone,
-            mode=mode,
-            strategy=strategy,
-            context_chunks=chunks,
-            strict_regen=True,
-        )
-        user2 += (
-            "\n\nQUALITY FAILURE REASONS FROM GATE:\n- "
-            + "\n- ".join(quality.get("reasons") or ["insufficient depth"])
-        )
-        answer2 = _complete_answer(
-            system=system,
-            user=user2,
-            model=primary,
-            fallback_model=fallback,
-            max_tokens=_max_tokens_for_mode(mode) + 200,
-            temperature=0.35,
-        )
-        q2 = score_answer_quality(answer2, strategy, mode=mode)
-        if q2["score"] >= quality["score"]:
-            answer = answer2
+    # Second generation only on quality/balanced profiles when the first is thin.
+    # This was often doubling latency (~5s → ~10s) in live interviews.
+    if _use_quality_regen() and answer:
+        quality = score_answer_quality(answer, strategy, mode=mode)
+        # Only regenerate when clearly failing (not borderline)
+        regen_floor = 40 if ANSWER_PROFILE == "balanced" else 55
+        if quality["score"] < regen_floor:
+            user2 = _build_user_prompt(
+                question,
+                job_context=job_context,
+                tone=tone,
+                mode=mode,
+                strategy=strategy,
+                context_chunks=chunks,
+                strict_regen=True,
+            )
+            user2 += (
+                "\n\nQUALITY FAILURE REASONS FROM GATE:\n- "
+                + "\n- ".join(quality.get("reasons") or ["insufficient depth"])
+            )
+            answer2 = _complete_answer(
+                system=system,
+                user=user2,
+                model=primary,
+                fallback_model=fallback,
+                max_tokens=_max_tokens_for_mode(mode) + 120,
+                temperature=0.35,
+            )
+            q2 = score_answer_quality(answer2, strategy, mode=mode)
+            if q2["score"] >= quality["score"]:
+                answer = answer2
 
     return (answer or "").strip()
 
@@ -590,20 +656,18 @@ def iter_answer_tokens(
     user_fallback_model: str | None = None,
 ) -> Generator[str, None, None]:
     """
-    Streaming path: still runs strategy first, then streams a depth-first answer.
-    Quality gate runs on the full text after stream (callers that need gate should
-    use generate_answer instead). For UI streaming we bias the prompt heavily so
-    first-pass quality is high.
+    Streaming path: same profile knobs as generate_answer (live skips strategy LLM).
     """
     mode = (mode or "star").strip().lower()
     if mode not in ("star", "shorter", "technical", "code"):
         mode = "star"
 
     chunks: list = []
-    try:
-        chunks = search_context(question) or []
-    except Exception:
-        chunks = []
+    if _use_rag():
+        try:
+            chunks = search_context(question) or []
+        except Exception:
+            chunks = []
 
     primary, fallback = resolve_answer_models(
         answer_model=answer_model,
@@ -612,7 +676,10 @@ def iter_answer_tokens(
         user_fallback_model=user_fallback_model,
     )
 
-    strategy = analyze_question_strategy(question, job_context=job_context)
+    if _use_strategy_llm():
+        strategy = analyze_question_strategy(question, job_context=job_context)
+    else:
+        strategy = _fallback_strategy(question, job_context)
     system = _system_for_mode(mode)
     user = _build_user_prompt(
         question,
