@@ -1,0 +1,394 @@
+SAP FICO + Vertex Tax — Scenario Interview Bank
+Role focus: SAP FICO (Finance & Controlling) with Vertex tax determination / compliance
+Structure: 20 original scenario questions × 2 laddered follow-ups each = 60 spoken prompts
+Gap between every spoken question: 10 seconds
+Difficulty ladder: Original (solid mid) → Follow-up 1 (harder scenario) → Follow-up 2 (hardest / multi-system)
+
+================================================================================
+Q1 — Month-end close & Vertex tax timing
+================================================================================
+Original:
+A US company runs SAP S/4HANA Finance with Vertex O Series for sales/use tax.
+On the last day of the month, Accounts Payable posts a large vendor invoice for a multi-state service.
+The invoice posts in FI, but tax on the vendor side looks wrong versus Vertex reports.
+Walk me through how you would investigate from an SAP FICO perspective.
+
+Follow-up 1:
+Finance needs to close GL by 6 PM. Vertex batch reconciliation is still running and two company codes
+show tax differences under $500 and one shows $48,000. How do you decide what blocks close,
+what you park, and what you escalate — and how do you document it for audit?
+
+Follow-up 2:
+Internal Audit later finds that the $48,000 gap was caused by a Vertex jurisdiction update
+that was not reflected in SAP tax codes / condition records for one plant. Design the
+end-to-end control (people, process, system) so this cannot recur next close without detection.
+
+================================================================================
+Q2 — Customer invoice tax determination (Vertex outbound)
+================================================================================
+Original:
+Order-to-cash: a sales order ships from a warehouse in Texas to a customer in California
+with mixed taxable and non-taxable line items. Explain how SAP SD/FI and Vertex interact
+to determine tax on the billing document, and what FICO sees in the accounting document.
+
+Follow-up 1:
+The customer is partially exempt and provides a multi-jurisdiction exemption certificate.
+Tax still calculated fully on two lines. How do you troubleshoot certificate setup,
+customer master tax classification, material tax classification, and Vertex exemption mapping?
+
+Follow-up 2:
+Three months later, California audits the company and claims under-collection on those lines.
+Vertex and SAP disagree on historical rates for that ship-from / ship-to combination.
+How do you reconstruct the determination path for a single invoice and prepare a defense package?
+
+================================================================================
+Q3 — AP invoice with Vertex reverse charge / use tax
+================================================================================
+Original:
+A plant in Illinois buys capital equipment from an out-of-state vendor. The vendor does not
+charge sales tax. Explain how SAP FICO and Vertex would handle use tax accrual, and what
+postings you expect in FI (tax accounts, GR/IR, asset or expense).
+
+Follow-up 1:
+The asset is capitalized under a different cost center and profit center than the original PO.
+Use tax still posts to the wrong CO object. How do you correct open and closed postings
+without breaking asset capitalization and depreciation already run?
+
+Follow-up 2:
+Tax wants monthly use-tax self-assessment files from Vertex, but Controllers want the GL
+tax accounts to match Vertex to the cent before filing. Design a reconciliation process
+and the SAP reports / tables / IDocs you would use each month.
+
+================================================================================
+Q4 — New company code go-live with Vertex
+================================================================================
+Original:
+You are the FICO lead adding a new US company code that must go live with Vertex on day one.
+What FICO configuration and master data must be ready before the first invoice posts?
+
+Follow-up 1:
+Cutover weekend: legacy open A/R and A/P are migrated without tax lines, but Vertex
+expects historical transactions for returns. What is your cutover approach for tax continuity?
+
+Follow-up 2:
+Two weeks after go-live, intercompany billings between the new company code and an existing
+one double-tax or zero-tax inconsistently. How do you diagnose intercompany tax determination
+across company codes, plants, and Vertex taxpayer profiles?
+
+================================================================================
+Q5 — Cost center actuals vs tax expense allocation
+================================================================================
+Original:
+Tax expense from Vertex-linked postings is landing on a default cost center, distorting
+P&L by department. Business wants tax to follow the underlying expense cost center.
+How would you approach this in SAP CO / FI with Vertex in the landscape?
+
+Follow-up 1:
+Some postings are pure tax adjustments from Vertex journals with no “underlying” expense.
+Finance wants them allocated by a monthly statistical key figure. How do you design that
+without double-counting tax already on invoices?
+
+Follow-up 2:
+After allocation, profit center reporting still does not match legal entity tax filings.
+How do you explain the gap between management CO reporting and statutory Vertex filings
+to a CFO in under five minutes?
+
+================================================================================
+Q6 — Vertex downtime during billing peak
+================================================================================
+Original:
+Vertex is unreachable during a peak billing run. Describe what should happen in SAP
+(fail-open vs fail-closed), and how FICO should respond operationally.
+
+Follow-up 1:
+Leadership forces billing to proceed with estimated tax to hit revenue recognition.
+Next day Vertex is back. How do you re-rate, reverse, and repost tax cleanly in FI/CO?
+
+Follow-up 2:
+During re-rate, 2% of invoices cannot be reprocessed because of locked customers or
+cleared payments. Design an exception factory and the accounting treatment for residual risk.
+
+================================================================================
+Q7 — Credit memos, returns, and tax
+================================================================================
+Original:
+A customer returns goods two months after the original invoice. Original tax was calculated
+via Vertex. Explain the SAP and Vertex flow for the credit memo and expected FI impact.
+
+Follow-up 1:
+The return is partial, price was adjusted after invoice, and the customer moved states.
+Tax on the credit does not mirror the original invoice. How do you investigate and correct?
+
+Follow-up 2:
+Cash application already cleared the original invoice with a small underpayment written off.
+How do you handle tax-only adjustments after clearing without reopening the full receivable mess?
+
+================================================================================
+Q8 — Tax code design in SAP vs Vertex authority
+================================================================================
+Original:
+Historically the company used many SAP tax codes per state. They are moving determination
+to Vertex and want fewer SAP tax codes. What is your recommended tax code / account key
+design for FI, and why?
+
+Follow-up 1:
+Treasury and statutory reporting still need tax broken out by jurisdiction in the GL.
+Vertex has the detail, SAP GL does not. How do you satisfy both Controllers and Tax?
+
+Follow-up 2:
+External auditors insist on a clear map from Vertex tax name / jurisdiction to SAP GL accounts
+for every material tax type (sales, use, excise if any). Produce the control matrix you would own.
+
+================================================================================
+Q9 — Project system / WBS and Vertex
+================================================================================
+Original:
+A customer project uses PS WBS elements billed on milestones. Some billings are taxable
+services, some are exempt professional services. How should FICO and Vertex be set up
+so project P&L and tax stay aligned?
+
+Follow-up 1:
+Milestone billing was reversed and rebilled after a contract amendment changed taxability.
+CO actuals on the WBS no longer match billing documents. How do you clean this up?
+
+Follow-up 2:
+The project spans three states with remote workers. Vertex nexus rules change mid-project.
+How do you handle mid-stream taxability change for open and future milestones?
+
+================================================================================
+Q10 — Vertex integration architecture (FICO ownership)
+================================================================================
+Original:
+Explain the integration pattern you expect between SAP and Vertex (synchronous call,
+batch, IDoc, API, middleware). As a FICO consultant, what do you own vs what Basis/Tax IT owns?
+
+Follow-up 1:
+A new e-commerce channel posts billing documents through a non-standard interface that
+bypasses normal tax user exits. Invoices hit FI with zero tax. How do you detect and stop this?
+
+Follow-up 2:
+Enterprise architecture wants to replace the current Vertex connector with a custom BTP
+integration in six months. What FICO regression test pack and cutover checklist do you demand?
+
+================================================================================
+Q11 — Foreign currency and tax
+================================================================================
+Original:
+A US company code invoices a Canadian customer in CAD; company code currency is USD.
+Tax must be handled carefully with Vertex. What are the FICO risks and how do you validate postings?
+
+Follow-up 1:
+Exchange rate differences on tax lines appear after payment. Business asks if tax base
+should revalue. What is your recommendation and how do you configure/test it?
+
+Follow-up 2:
+Vertex returns tax in one currency while SAP document currency differs for a rush invoice
+posted by a junior accountant. How do you detect, reverse, and prevent recurrence with controls?
+
+================================================================================
+Q12 — Manual FI journals vs Vertex truth
+================================================================================
+Original:
+Tax team posts a manual JV in SAP to true-up sales tax payable to the Vertex return.
+What controls should exist so manual tax journals do not silently break subledger integrity?
+
+Follow-up 1:
+The JV used a P&L tax expense account instead of a balance-sheet tax payable account.
+Month-end ratios look wrong. How do you find the root cause and correct periods already closed?
+
+Follow-up 2:
+Management wants “no manual tax JVs” within 12 months. Design the automation and
+exception-only workflow to get there, including roles in SAP and Vertex.
+
+================================================================================
+Q13 — Drop-ship and third-party tax scenarios
+================================================================================
+Original:
+Goods ship from a third-party supplier directly to the end customer (drop-ship).
+SAP has a PO and a customer billing. How should tax determination work with Vertex,
+and what FICO postings do you validate?
+
+Follow-up 1:
+The supplier charges tax on their invoice incorrectly, and your customer billing tax
+also looks wrong. How do you untangle AP tax, AR tax, and inventory/COGS impacts?
+
+Follow-up 2:
+Legal says risk of double taxation across two states on the same economic sale.
+How do you model the transaction in SAP/Vertex and what evidence do you keep?
+
+================================================================================
+Q14 — Product taxability change (material master)
+================================================================================
+Original:
+A material’s tax classification changes from taxable to exempt mid-year due to a
+product redesign. What master data and open transaction impacts do you manage in SAP/Vertex?
+
+Follow-up 1:
+Open sales orders still explode old tax after the change. Some deliveries already done.
+What is your wave plan for open orders, billing blocks, and communication to CS and Finance?
+
+Follow-up 2:
+Prior period returns of the “old” product version still need the old tax treatment.
+How do you support dual taxability without corrupting current determination?
+
+================================================================================
+Q15 — Profit center / segment reporting with tax
+================================================================================
+Original:
+The business runs document splitting and profit center accounting. Tax lines sometimes
+do not split the way Controllers expect. How do you analyze a single billing document’s
+tax lines through to FAGLFLEXT / ACDOCA?
+
+Follow-up 1:
+A shared service cost center bears all tax differences, breaking segment EBITDA.
+Propose a sustainable design for tax difference handling under document splitting.
+
+Follow-up 2:
+After S/4 migration, historical tax balances in a reconciliation account do not
+split by profit center. Auditors flag it. What is your remediation strategy?
+
+================================================================================
+Q16 — Vertex returns, filings, and SAP AP/AR subledgers
+================================================================================
+Original:
+Walk me through a monthly sales tax return cycle: what comes from Vertex, what must
+match SAP, and what FICO activities you perform before filing.
+
+Follow-up 1:
+Filing deadline is tomorrow; Vertex return is ready but SAP tax payable is short by $12,400.
+You cannot find the invoices. What is your hour-by-hour plan?
+
+Follow-up 2:
+After filing, Vertex issues a amended return increasing liability. Cash already moved.
+How do you book the amendment, interest/penalty if any, and explain it to FP&A?
+
+================================================================================
+Q17 — Internal order / investment order and tax
+================================================================================
+Original:
+Capex is collected on an investment internal order, then settled to an asset.
+Vendor invoices may include tax or require use tax. How should FICO ensure the
+final asset value and tax treatment are correct with Vertex in play?
+
+Follow-up 1:
+Settlement already ran; tax was wrongly included in APC. Depreciation posted for two periods.
+How do you correct asset values, tax accounts, and prior depreciation?
+
+Follow-up 2:
+Tax authority challenges capitalization of certain soft costs that were taxed differently
+than hard costs. How do you re-class between asset, expense, and tax with full audit trail?
+
+================================================================================
+Q18 — Performance & high-volume billing with tax calls
+================================================================================
+Original:
+Month-end billing of 200k lines is slow; teams blame Vertex calls. As FICO, how do you
+separate true tax integration issues from SD pricing, FI posting, or batch job design?
+
+Follow-up 1:
+Business wants real-time tax on every simulation in VA01 and every invoice.
+Infra says it will not scale. What compromise architecture and controls do you propose?
+
+Follow-up 2:
+A partial outage caused intermittent null tax on 0.3% of invoices that still posted.
+How do you detect silent zero-tax postings and auto-block them going forward?
+
+================================================================================
+Q19 — Cross-border digital services (US nexus complexity)
+================================================================================
+Original:
+The company sells SaaS subscriptions from a US company code to customers in many states.
+There is no physical shipment. How do you think about tax determination with Vertex
+and the FICO data you must get right (ship-to, sold-to, place of supply proxies)?
+
+Follow-up 1:
+Billing is monthly recurring via SD or Convergent Invoicing. Mid-cycle the customer
+billing address changes. How should tax on credits and new charges behave?
+
+Follow-up 2:
+Product counsel reclassifies a SKU from SaaS to “data processing service” with different
+taxability in five states. Build the business change plan across master data, open contracts,
+Vertex mapping, and customer communications.
+
+================================================================================
+Q20 — Stakeholder conflict: Tax vs Controllership vs IT
+================================================================================
+Original:
+Tax wants maximum Vertex automation and minimal SAP tax codes. Controllership wants
+simple GL and fast close. IT wants fewer custom exits. You are the SAP FICO lead.
+How do you drive a decision in a design workshop?
+
+Follow-up 1:
+The workshop ends without agreement, and go-live is in six weeks. What interim operating
+model do you put in place so the company can still invoice legally and close books?
+
+Follow-up 2:
+Post go-live, a severity-1 tax issue hits production. Tax blames SAP config, IT blames
+Vertex content, Controllership blames master data. How do you run the war room and
+what permanent RACI and monitoring do you install afterward?
+
+================================================================================
+FLAT LIST FOR AUDIO / PRACTICE RUNNER (60 prompts, 10s gap after each)
+================================================================================
+1. A US company runs SAP S/4HANA Finance with Vertex O Series for sales and use tax. On month-end, A/P posts a large multi-state vendor invoice that posts in F I but tax looks wrong versus Vertex. Walk me through your FICO investigation.
+2. Finance must close G L by 6 P M. Vertex reconciliation still runs: two company codes are under five hundred dollars off, one is forty-eight thousand off. What blocks close, what do you park, what do you escalate, and how do you document for audit?
+3. Audit finds the forty-eight thousand gap came from a Vertex jurisdiction update not reflected in SAP tax codes for one plant. Design the end-to-end control so this is detected before the next close.
+4. A sales order ships from Texas to California with mixed taxable and non-taxable items. Explain how SAP and Vertex determine tax on the billing document and what FICO sees in the accounting document.
+5. The customer is partially exempt with a multi-jurisdiction certificate, but two lines still tax fully. How do you troubleshoot certificate, customer tax class, material tax class, and Vertex exemption mapping?
+6. California audits under-collection. Vertex and SAP disagree on historical rates for that ship-from ship-to pair. How do you reconstruct determination for one invoice and build a defense package?
+7. Illinois plant buys capital equipment from an out-of-state vendor who charges no sales tax. How do SAP FICO and Vertex handle use tax accrual, and what F I postings do you expect?
+8. The asset capitalizes to a different cost center and profit center than the P O, and use tax hits the wrong C O object. How do you correct open and closed postings without breaking depreciation already run?
+9. Tax wants monthly use-tax self-assessment from Vertex; Controllers want G L tax accounts to match Vertex before filing. Design the monthly reconciliation using SAP reports and Vertex outputs.
+10. You add a new US company code that must go live with Vertex on day one. What FICO configuration and master data must be ready before the first invoice?
+11. Cutover migrates open A/R and A/P without tax lines, but returns may need history. What is your tax continuity cutover approach?
+12. Intercompany billings between the new and old company codes double-tax or zero-tax inconsistently. How do you diagnose tax determination across company codes, plants, and Vertex taxpayer profiles?
+13. Vertex-linked tax expense posts to a default cost center and distorts department P and L. Business wants tax to follow the underlying expense cost center. How do you approach this in F I / C O with Vertex?
+14. Pure tax adjustment journals from Vertex have no underlying expense; Finance wants allocation by statistical key figure. How do you design that without double-counting invoice tax?
+15. After allocation, profit center reports still do not match legal entity Vertex filings. Explain the gap to a C F O in under five minutes.
+16. Vertex is down during peak billing. What should SAP do, fail open or fail closed, and how should FICO respond operationally?
+17. Leadership forces estimated tax billing to hit revenue. Vertex returns next day. How do you re-rate, reverse, and repost tax cleanly?
+18. During re-rate, two percent of invoices cannot reprocess due to locks or cleared payments. Design the exception factory and accounting treatment for residual risk.
+19. A customer returns goods two months later; original tax came from Vertex. Explain the credit memo flow in SAP and Vertex and the F I impact.
+20. The return is partial, price changed, and the customer moved states; credit tax does not mirror the original. How do you investigate and correct?
+21. The original invoice is cleared with a write-off of a small underpayment. How do you post tax-only adjustments after clearing without reopening the receivable mess?
+22. The company moves determination to Vertex and wants fewer SAP tax codes. What tax code and account key design do you recommend for F I, and why?
+23. Controllers still need jurisdiction detail in the G L; Vertex has it, SAP G L does not. How do you satisfy both Controllers and Tax?
+24. Auditors want a map from every Vertex tax type and jurisdiction to SAP G L accounts. What control matrix do you own?
+25. P S W B S milestone billing mixes taxable and exempt services. How should FICO and Vertex keep project P and L and tax aligned?
+26. Milestones were reversed and rebilled after a contract change; W B S actuals no longer match billing. How do you clean this up?
+27. The project spans three states with remote workers and nexus changes mid-project. How do you handle taxability change for open and future milestones?
+28. Explain the SAP to Vertex integration pattern you expect, and what a FICO consultant owns versus Basis and Tax I T.
+29. A non-standard e-commerce interface posts billings that bypass tax exits and hit F I with zero tax. How do you detect and stop this?
+30. Architecture will replace the Vertex connector with custom B T P integration in six months. What FICO regression pack and cutover checklist do you demand?
+31. A US company code invoices a Canadian customer in C A D while company code currency is U S D. What FICO risks exist with Vertex, and how do you validate postings?
+32. Exchange rate differences appear on tax lines after payment. Should tax base revalue? What do you recommend and how do you test it?
+33. Vertex returns tax in one currency while a rush SAP document uses another. How do you detect, reverse, and prevent this with controls?
+34. Tax posts a manual J V to true-up sales tax payable to the Vertex return. What controls protect subledger integrity?
+35. The J V hit P and L tax expense instead of balance sheet tax payable and prior periods are closed. How do you find and correct it?
+36. Management wants no manual tax J Vs within twelve months. Design the automation and exception-only workflow, including SAP and Vertex roles.
+37. Drop-ship: supplier ships to end customer; you have a P O and a customer billing. How should Vertex tax work, and what FICO postings do you validate?
+38. Supplier tax on the A/P invoice is wrong and customer billing tax is also wrong. How do you untangle A/P tax, A/R tax, and C O G S impacts?
+39. Legal fears double taxation across two states on one economic sale. How do you model it in SAP and Vertex, and what evidence do you retain?
+40. A material tax classification changes from taxable to exempt mid-year. What master data and open transaction impacts do you manage?
+41. Open sales orders still use old tax after the change; some deliveries already happened. What is your wave plan for orders, billing blocks, and communication?
+42. Returns of the old product version still need old tax treatment. How do you support dual taxability safely?
+43. With document splitting, tax lines do not split as Controllers expect. How do you trace one billing document’s tax lines into A C D O C A?
+44. A shared service cost center absorbs all tax differences and breaks segment E B I T D A. Propose a sustainable design under document splitting.
+45. After S/4 migration, historical tax balances in a recon account lack profit center split. Auditors flag it. What is your remediation plan?
+46. Walk through a monthly sales tax return cycle: Vertex outputs, SAP match points, and FICO activities before filing.
+47. Filing is tomorrow; Vertex is ready but SAP tax payable is short twelve thousand four hundred dollars and invoices are missing. What is your hour-by-hour plan?
+48. After filing, an amended Vertex return increases liability and cash already moved. How do you book the amendment and explain it to F P and A?
+49. Capex on an investment order settles to an asset; vendor invoices may include tax or need use tax. How do you ensure correct asset value and tax with Vertex?
+50. Settlement ran with tax wrongly in A P C and two depreciation periods posted. How do you correct asset value, tax accounts, and depreciation?
+51. A tax authority challenges soft-cost capitalization taxed differently from hard costs. How do you reclass asset, expense, and tax with full audit trail?
+52. Two hundred thousand billing lines are slow; teams blame Vertex. How do you separate tax integration issues from S D, F I posting, or job design?
+53. Business wants real-time tax on every simulation and invoice; infrastructure says it will not scale. What compromise architecture and controls do you propose?
+54. Intermittent outages caused silent zero-tax on zero point three percent of posted invoices. How do you detect them and auto-block going forward?
+55. SaaS subscriptions bill from a US company code across many states with no physical shipment. What Vertex determination and FICO master data must be right?
+56. Monthly recurring billing continues after a mid-cycle billing address change. How should tax on credits and new charges behave?
+57. Counsel reclassifies a S K U from SaaS to data processing with new taxability in five states. Build the change plan across master data, contracts, Vertex, and customers.
+58. Tax wants max Vertex automation; Controllership wants simple G L and fast close; I T wants fewer exits. As FICO lead, how do you drive the design decision?
+59. No agreement, go-live in six weeks. What interim operating model lets you invoice legally and still close the books?
+60. A severity-one production tax issue hits; teams blame each other. How do you run the war room, and what permanent R A C I and monitoring do you install afterward?
+
+END OF BANK

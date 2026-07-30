@@ -27,6 +27,29 @@ npm run dev          # browser dashboard at http://localhost:5173
 npm run dev:electron # Electron shell + overlay IPC
 ```
 
+## Desktop from the web
+
+The browser UI shows a **Desktop** button (TopBar, Settings → Stealth, sign-in page).
+It opens a small panel to:
+
+1. **Download** the installer (`/downloads/InterviewPulse-Setup.exe` by default)
+2. **Open** the installed app via `interviewpulse://open`
+
+### Ship an installer users can download
+
+```bash
+npm run dist:win          # → release/InterviewPulse-Setup.exe
+# copy into public/downloads/ (or your CDN), then redeploy the site
+copy release\InterviewPulse-Setup.exe public\downloads\
+```
+
+Optional build-time override:
+
+```bash
+# .env or CI
+VITE_DESKTOP_DOWNLOAD_URL=https://jobinterviewcracker.com/downloads/InterviewPulse-Setup.exe
+```
+
 ## Design tokens
 
 | Token | Value |

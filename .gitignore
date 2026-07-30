@@ -30,6 +30,18 @@ v1.2/
 v1.2-extracted/
 astra-mvp/
 
+# Electron packaged installers (host on Releases/CDN, not git)
+interview-pulse-ai/release/
+interview-pulse-ai/public/downloads/*.exe
+interview-pulse-ai/public/downloads/*.dmg
+interview-pulse-ai/public/downloads/*.AppImage
+!interview-pulse-ai/public/downloads/README.txt
+
+# Local debug / screenshots
+interview-pulse-ai/blank-debug*
+screenshots/
+package-lock.json
+
 # Playwright
 .playwright-mcp/
 test-results/
