@@ -22,9 +22,11 @@ from config import LICENSE_ENABLED, SILENCE_THRESHOLD, get_openai_api_key
 
 
 def _require_key():
+    from config import is_usable_openai_api_key
+
     key = get_openai_api_key()
-    if not key:
-        pytest.skip("OPENAI_API_KEY not set")
+    if not key or not is_usable_openai_api_key(key):
+        pytest.skip("OPENAI_API_KEY missing or placeholder (set a real key in src/.env)")
     return key
 
 

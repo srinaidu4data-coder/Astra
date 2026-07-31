@@ -164,13 +164,40 @@ def _load_audio_int16_16k(path: Path) -> np.ndarray:
     return np.frombuffer(seg.raw_data, dtype=np.int16)
 
 
+def _merge_close_segments(
+    segments: list[tuple[int, int]],
+    *,
+    max_gap_sec: float = 2.2,
+    sample_rate: int = SAMPLE_RATE,
+) -> list[tuple[int, int]]:
+    """
+    Merge speech islands separated by short pauses.
+
+    Multi-clause interview questions often have 0.5–2s mid-sentence pauses
+    (TTS and real speakers). Without merging, STT sees fragments and accuracy
+    collapses on long SAP/scenario prompts.
+    """
+    if not segments:
+        return []
+    max_gap = int(max(0.0, max_gap_sec) * sample_rate)
+    merged: list[list[int]] = [[segments[0][0], segments[0][1]]]
+    for start, end in segments[1:]:
+        prev_end = merged[-1][1]
+        if start - prev_end <= max_gap:
+            merged[-1][1] = max(prev_end, end)
+        else:
+            merged.append([start, end])
+    return [(a, b) for a, b in merged]
+
+
 def _segment_by_silence(
     audio: np.ndarray,
     *,
-    silence_ms: int = 900,
+    silence_ms: int = 1400,
     silence_threshold: float = 0.012,
-    min_segment_sec: float = 1.5,
+    min_segment_sec: float = 1.2,
     frame_ms: int = 30,
+    merge_gap_sec: float = 2.2,
 ) -> list[tuple[int, int]]:
     """Return (start_sample, end_sample) speech segments separated by silence."""
     if audio is None or len(audio) == 0:
@@ -183,8 +210,8 @@ def _segment_by_silence(
     f32 = audio.astype(np.float32) / 32768.0
     # boost quiet interview mixes
     peak = float(np.max(np.abs(f32))) + 1e-9
-    if peak < 0.15:
-        f32 = np.clip(f32 * min(25.0, 0.35 / peak), -1.0, 1.0)
+    if peak < 0.22:
+        f32 = np.clip(f32 * min(35.0, 0.5 / peak), -1.0, 1.0)
 
     energies: list[float] = []
     for i in range(0, len(f32), frame):
@@ -219,7 +246,7 @@ def _segment_by_silence(
         if end - seg_start >= min_samples:
             segments.append((seg_start, end))
 
-    return segments
+    return _merge_close_segments(segments, max_gap_sec=merge_gap_sec)
 
 
 def _sse(event: str, data: dict[str, Any]) -> str:
@@ -252,15 +279,35 @@ def _stream_answer_text(
 
 @app.get("/api/health")
 def health():
-    key = bool(get_openai_api_key())
+    from answer_engine import (
+        ANSWER_PROFILE,
+        FAST_ANSWER_MODEL,
+        FAST_FALLBACK_MODEL,
+    )
+    from config import get_llm_provider, get_openai_base_url
+
+    key_ok = bool(get_openai_api_key())
     audio_wav = DEFAULT_AUDIO.exists()
     audio_mp3 = DEFAULT_AUDIO_MP3.exists()
+    provider = get_llm_provider()
     return {
         "ok": True,
-        "openai_key": key,
+        "openai_key": key_ok,
+        "openai_key_configured": key_ok,
+        "openai_ready": key_ok,
+        "llm_provider": provider,
+        "llm_base_url": get_openai_base_url() or "https://api.openai.com/v1",
         "whisper_model_ready": True,
+        "answer_profile": ANSWER_PROFILE,
+        "fast_model": FAST_ANSWER_MODEL,
+        "fast_fallback": FAST_FALLBACK_MODEL,
         "default_audio_wav": str(DEFAULT_AUDIO) if audio_wav else None,
         "default_audio_mp3": str(DEFAULT_AUDIO_MP3) if audio_mp3 else None,
+        "hint": (
+            None
+            if key_ok
+            else "Set GROQ_API_KEY or OPENAI_API_KEY in the process environment."
+        ),
     }
 
 
@@ -283,7 +330,7 @@ def warm():
 
         client = _get_openai_client()
         t1 = time.perf_counter()
-        for mid in (FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL, "gpt-4o-mini"):
+        for mid in (FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL, "gpt-4.1-nano", "gpt-4o-mini"):
             try:
                 client.chat.completions.create(
                     model=mid,
@@ -416,7 +463,10 @@ def answer(req: AnswerRequest, request: Request):
     if not req.question.strip():
         raise HTTPException(400, "question required")
     if not get_openai_api_key():
-        raise HTTPException(500, "OPENAI_API_KEY missing")
+        raise HTTPException(
+            500,
+            "OPENAI_API_KEY missing or placeholder. Set a real key in src/.env",
+        )
 
     t0 = time.perf_counter()
     # Fast path: skip classify LLM for typed questions (saves 0.5–2s)
@@ -461,10 +511,17 @@ def answer(req: AnswerRequest, request: Request):
                     user_answer_model=u_primary,
                     user_fallback_model=u_fallback,
                 )
-                source = "llm" if text else src
-                if not text:
+                last_src = getattr(generate_answer, "last_source", None)
+                if not (text or "").strip():
                     text = draft
                     source = src
+                elif last_src == "llm":
+                    source = "llm"
+                elif last_src in ("template_fallback", "template", "cache"):
+                    source = last_src
+                else:
+                    # Unknown marker: only claim LLM if body differs from template
+                    source = "llm" if text.strip() != draft.strip() else src
             except Exception:
                 text = draft
                 source = src
@@ -479,6 +536,7 @@ def answer(req: AnswerRequest, request: Request):
             user_answer_model=u_primary,
             user_fallback_model=u_fallback,
         )
+        source = getattr(generate_answer, "last_source", None) or "llm"
 
     full_ms = round((time.perf_counter() - t0) * 1000)
     return {
@@ -492,6 +550,7 @@ def answer(req: AnswerRequest, request: Request):
         "full_ms": full_ms,
         "source": source,
         "model_profile": ANSWER_PROFILE,
+        "openai_ready": True,
     }
 
 
@@ -500,7 +559,10 @@ def answer_stream(req: AnswerRequest, request: Request):
     if not req.question.strip():
         raise HTTPException(400, "question required")
     if not get_openai_api_key():
-        raise HTTPException(500, "OPENAI_API_KEY missing")
+        raise HTTPException(
+            500,
+            "OPENAI_API_KEY missing or placeholder. Set a real key in src/.env",
+        )
 
     u_primary, u_fallback = _user_model_prefs(request)
 
@@ -799,28 +861,14 @@ async def ws_interview(websocket: WebSocket):
                 if sess is None or not sess.running:
                     sess = LiveInterviewSession(emit)
                     session_holder["session"] = sess
-                # Default browser mic on Linux/cloud (no Stereo Mix / parec).
-                # Windows local can still pass source=system for loopback capture.
+                # Default: browser mic (reliable). System/Stereo Mix only when
+                # explicitly requested — Windows system default was silent for most users.
                 source = (msg.get("source") or "").strip().lower()
                 if not source:
-                    force_browser = os.environ.get(
-                        "COPILOT_FORCE_BROWSER_MIC", ""
-                    ).lower() in ("1", "true", "yes")
                     force_system = os.environ.get(
                         "COPILOT_FORCE_SYSTEM_AUDIO", ""
                     ).lower() in ("1", "true", "yes")
-                    on_cloud = bool(
-                        os.environ.get("RAILWAY_ENVIRONMENT")
-                        or os.environ.get("RAILWAY_PROJECT_ID")
-                        or os.environ.get("RENDER")
-                        or os.environ.get("PORT")  # container platforms set PORT
-                    )
-                    if force_system:
-                        source = "system"
-                    elif force_browser or on_cloud or sys.platform != "win32":
-                        source = "browser"
-                    else:
-                        source = "system"
+                    source = "system" if force_system else "browser"
                 sess.start(
                     job_context=msg.get("job_context") or "AI/ML Engineer",
                     tone=msg.get("tone") or "confident",

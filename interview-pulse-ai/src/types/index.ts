@@ -196,6 +196,14 @@ declare global {
       toggleOverlayMaximize?: () => Promise<OverlayBounds>
       onToggleClickThrough: (cb: () => void) => () => void
       onDeepLink: (cb: (url: string) => void) => () => void
+      /** Push live answer/levels to other windows (overlay) */
+      publishLiveState?: (state: unknown) => Promise<{ ok: boolean }>
+      /** Last cached live state from main process */
+      requestLiveState?: () => Promise<unknown>
+      /** Ask main window to re-publish current zustand answer */
+      requestLivePublish?: () => Promise<{ ok: boolean; hasState?: boolean }>
+      onLiveState?: (cb: (state: unknown) => void) => () => void
+      onRequestLivePublish?: (cb: () => void) => () => void
     }
   }
 }

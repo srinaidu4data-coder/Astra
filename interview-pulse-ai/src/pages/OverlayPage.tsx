@@ -3,8 +3,9 @@ import { WhisperStream } from '@/components/WhisperStream'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { subscribeLiveSync } from '@/lib/window-sync'
 import { useAppStore } from '@/stores/app-store'
-import type { OverlaySizePreset, QACard } from '@/types'
+import type { AnswerMode, OverlaySizePreset, QACard } from '@/types'
 import {
   Eye,
   EyeOff,
@@ -96,6 +97,26 @@ export function OverlayPage() {
       void window.interviewPulse?.setClickThrough(next)
     })
 
+    // Receive answers from the main copilot window (separate Electron heap).
+    // Use setState (not setAnswer/setLevels) so we don't re-publish and loop.
+    const unsubLive = subscribeLiveSync((payload) => {
+      const patch: {
+        answer?: typeof payload.answer
+        listening?: boolean
+        levels?: number[]
+        answerMode?: AnswerMode
+      } = {}
+      if (payload.answer !== undefined) patch.answer = payload.answer
+      if (typeof payload.listening === 'boolean') patch.listening = payload.listening
+      if (Array.isArray(payload.levels) && payload.levels.length) {
+        patch.levels = payload.levels
+      }
+      if (payload.answerMode) patch.answerMode = payload.answerMode as AnswerMode
+      if (Object.keys(patch).length) {
+        useAppStore.setState(patch)
+      }
+    })
+
     const onResize = () => {
       setActivePreset(null)
       void refreshBounds()
@@ -104,6 +125,7 @@ export function OverlayPage() {
 
     return () => {
       unsub?.()
+      unsubLive()
       window.removeEventListener('resize', onResize)
       document.body.style.background = ''
     }
@@ -385,7 +407,7 @@ export function OverlayPage() {
           onCardIndex={setCardIndex}
           mode={answerMode}
           onMode={setAnswerMode}
-          preparing={false}
+          preparing={Boolean(answer?.streaming)}
         />
       </div>
 

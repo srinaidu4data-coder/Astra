@@ -1,79 +1,64 @@
-# Job Search AI (localhost lab)
+# Job Search (product mode · localhost default)
 
-Isolated candidate module inspired by [MadsLorentzen/ai-job-search](https://github.com/MadsLorentzen/ai-job-search), reimplemented inside InterviewPulse **without** changing copilot, mock interview, billing, or admin production paths.
+Isolated job-search module inside InterviewPulse. **Live boards first.** Practice (synthetic) market is opt-in and labeled.
 
-## Devil’s advocate on ai-job-search
+Enable outside localhost only with `JOBSEARCH_AI_ENABLED=1`.
 
-| Claim / design | Pushback |
-|----------------|----------|
-| “Runs on your machine” | Still depends on Claude Code + Bun + LaTeX + network scrapers — high setup friction for non-engineers. |
-| Danish-first portals | Great for DK; weak default for US/global candidates without `/add-portal`. |
-| LinkedIn guest scrape | Against LinkedIn ToS; brittle HTML; ban risk. freehire is safer. |
-| Drafter–reviewer LaTeX | Quality ceiling high, but slow and template-fragile; PDF/ATS loops burn tokens. |
-| Fit scores as truth | Rubric is subjective; no calibration against hire outcomes in-repo. |
-| Auto-apply fantasies | Framework correctly drafts only — but UX of agentic apply tempts unsafe automation. |
-| Single-user CLI | Not multi-tenant SaaS; no account isolation, rate limits, or audit for a product. |
-| Profile depth required | Cold-start users with thin CVs get generic output — same failure mode as thin prompts. |
-| No live market signal | Rankings ignore velocity (how fast jobs fill), company health, referral graphs. |
-| Security model | “Instruction-level” defenses vs untrusted JD text are soft; need hard sandboxes for agents. |
+## Product principles
 
-**What to steal anyway:** scout→rank→apply staging, critic agent, eligibility gates, outcome tracking, upskill gap heatmap, portal skill contract.
+1. **Honest inventory** — Default results are live postings only (freehire, Remotive, Arbeitnow). No silent seed padding.
+2. **Practice market is opt-in** — Synthetic roles for ranking drills; amber **practice** badge; not auto-tracked as applied.
+3. **Stages, not agent theater** — Deterministic pipeline: expand → harvest → IR rank → review → drafts → next steps. Fit scores are relative similarity, **not** hire probability.
+4. **Filter integrity** — Location / LinkedIn policy are not silently dropped. Soft recovery is limited to work-mode and is returned in `warnings`.
+5. **Server is source of truth** — One filter pass on the API; UI shows run filters from the response.
 
-## What we added (lab)
+## Pipeline
 
-### Single UI button
-Sidebar **Job Search AI** (only when hostname is `localhost` / `127.0.0.1`). One primary action: **Job Search AI**.
+| Stage | What it does |
+|-------|----------------|
+| **expand** | Skill adjacency query expansion (deterministic) |
+| **harvest** | Multi-source boards + optional practice market |
+| **rank** | BM25 / cosine / Jaccard / Bayes / Elo ensemble |
+| **review** | Quality flags (gaps, synthetic, missing URL) |
+| **drafts** | Template outreach (never auto-sent) |
+| **plan** | Upskill gap list |
 
-### RT agents
-| Agent | Role |
-|-------|------|
-| **Scout** | Expand title + skill adjacency facets |
-| **Harvester** | Seed corpus + optional freehire.me |
-| **Scorer** | Multi-algorithm ensemble (below) |
-| **Critic** | Devil’s-advocate flags (stretch roles, seed data, gaps) |
-| **Outreach** | Draft DM/email only — never sends |
-| **Planner** | Greedy set-cover upskill list |
+## API
 
-### Algorithms (math / IR / networks)
-- **BM25** (Robertson) — term relevance  
-- **Cosine TF** (Salton VSM)  
-- **Jaccard** skill coverage  
-- **Bayesian** Beta–Binomial skill posterior  
-- **Degree centrality** on skill co-occurrence graph  
-- **Spectral / diffusion** 1-hop path coverage  
-- **Elo** pairwise ranking smooth  
-- **Diversity bonus** — novel skill clusters (information-style novelty)  
-- **Greedy set cover** (Chvátal) for upskill plan  
+- `GET /api/jobsearch/health` — product version, honesty blurb, freehire probe  
+- `POST /api/jobsearch/run` — body includes `include_seed: false` by default  
 
-## Localhost only
-- Frontend: `isJobSearchLabHost()` hides nav on production domains.  
-- Backend: `/api/jobsearch/*` returns 404 unless client/host is loopback **or** `JOBSEARCH_AI_ENABLED=1`.
+## UI
 
-## How to test
-```bash
-# terminal 1 — API
-cd src
-python copilot_api.py
+`http://127.0.0.1:5173/#/jobsearch`
 
-# terminal 2 — UI
-cd interview-pulse-ai
-npm run dev
+1. Resume (optional)  
+2. Filters (US + non-LinkedIn common preset)  
+3. Search (real server pipeline timings)  
+4. Results — **Live** tab first; practice only if opted in  
+
+## Start
+
+```bat
+START_JOBSEARCH_LAB.bat
 ```
-Open http://localhost:5173 → **Job Search AI** → fill skills → **Job Search AI** button.
 
-## Explicitly not shipped yet (next RT backlog)
-1. Real multi-market portals (US: Greenhouse boards, Remotive, Adzuna API keys).  
-2. Eligibility / visa hard gates (from 04-job-evaluation.md).  
-3. Application tracker + outcomes (CSV / DB).  
-4. Cover letter / CV tailoring (reuse Knowledge docs + optional LLM).  
-5. Interview prep handoff into existing Mock module.  
-6. Company health signals (news, glassdoor-like proxies — licensed data).  
-7. Referral graph / alumni network ranking.  
-8. Human-in-the-loop send (Gmail OAuth) with double confirm.  
-9. Online learning-to-rank calibrated on user outcomes.  
-10. Production feature flag + billing entitlement (after lab sign-off).
+Or:
 
-## Isolation guarantee
-- New package: `src/jobsearch/`  
-- New page/service only; no changes to answer_engine latency path beyond router include.  
-- No production CF path required for lab.
+```text
+cd src && venv\Scripts\python.exe copilot_api.py
+cd interview-pulse-ai && npm.cmd run dev
+```
+
+## Tests
+
+```text
+cd src
+venv\Scripts\python.exe -m jobsearch.test_product
+```
+
+## Limits (honest)
+
+- Public boards miss much of LinkedIn-heavy markets (e.g. SAP FICO US).
+- No auto-apply, no ATS login, tracker is localStorage.
+- Ensemble is uncalibrated IR — use as shortlist aid only.

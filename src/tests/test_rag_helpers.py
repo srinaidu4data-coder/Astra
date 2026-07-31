@@ -1,5 +1,6 @@
 """RAG helper regressions without requiring OpenAI / Chroma network."""
 
+import importlib.util
 import os
 import sys
 from unittest.mock import MagicMock, patch
@@ -8,9 +9,14 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Stub heavy optional deps so tests run without full ML stack
-for _mod in ("chromadb", "openai", "rank_bm25"):
-    sys.modules.setdefault(_mod, MagicMock())
+# Stub optional heavy deps ONLY when not installed.
+# Never replace a real `openai` package — that poisons later e2e tests
+# (MagicMock streams yield empty answers with no exception).
+for _mod in ("chromadb", "rank_bm25"):
+    if importlib.util.find_spec(_mod) is None:
+        sys.modules.setdefault(_mod, MagicMock())
+if importlib.util.find_spec("openai") is None:
+    sys.modules.setdefault("openai", MagicMock())
 
 from pipeline_utils import heuristic_classify
 from rag import (

@@ -37,6 +37,7 @@ export function WhisperStream({
   const canNext = cardIndex < total - 1
   const answer = card?.answer
   const bullets = answer?.bullets?.filter(Boolean) ?? []
+  // Fallback: some paths only set star fields or a single long bullet
   const hasBody =
     bullets.length > 0 ||
     Boolean(answer?.codeSnippet) ||
@@ -94,8 +95,9 @@ export function WhisperStream({
         {!card && (
           <div className="flex h-full min-h-[320px] items-center justify-center rounded-[22px] glass-inset px-8 py-20 text-center">
             <p className="max-w-md text-[15px] leading-relaxed text-white/40">
-              Type a question and press Answer, or run Interview file. Full answers appear
-              here — scroll if they run long.
+              {compact
+                ? 'Waiting for answers from the main InterviewPulse window. Start listening or type a question there — answers stream here live.'
+                : 'Type a question and press Answer, or run Interview file. Full answers appear here — scroll if they run long.'}
             </p>
           </div>
         )}

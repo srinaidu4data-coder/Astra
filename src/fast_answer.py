@@ -448,15 +448,28 @@ def _template_code(pid: str, role: str, q: str) -> str:
 
 
 def cache_lookup(
-    question: str, *, mode: str = "star", job_context: str = ""
+    question: str,
+    *,
+    mode: str = "star",
+    job_context: str = "",
+    allow_approx: bool = True,
 ) -> Optional[tuple[str, str]]:
-    """Return (answer, source) if cache hit."""
+    """Return (answer, source) if cache hit.
+
+    allow_approx=False for live interviews: near-dup cache was reusing answers
+    from earlier questions in the same session (wrong output mid-interview).
+    """
     key = question_key(question, mode, job_context)
     hit = _CACHE.get_exact(key)
     if hit:
         return hit, "exact_cache"
+    if not allow_approx:
+        return None
     sim = _CACHE.get_similar(question, mode)
     if sim:
+        # Extra-strict: require near-identical text for approx hits
+        if sim[1] < 0.95:
+            return None
         return sim[0], f"approx_cache:{sim[2]}"
     return None
 
@@ -508,8 +521,10 @@ def iter_cascade_answer(
     t0 = time.perf_counter()
     mode = (mode or "star").strip().lower() or "star"
 
-    # 1) Cache
-    cached = cache_lookup(question, mode=mode, job_context=job_context)
+    # 1) Exact cache only for live streams (approx caused wrong answers in long interviews)
+    cached = cache_lookup(
+        question, mode=mode, job_context=job_context, allow_approx=False
+    )
     if cached:
         ans, src = cached
         ms = (time.perf_counter() - t0) * 1000
@@ -522,10 +537,16 @@ def iter_cascade_answer(
         }
         return
 
-    # 2) Template first paint (always < few ms)
+    # 2) Do NOT paint fake STAR templates as real answers.
+    # Live UI already shows answer_pending ("Writing…"). Emitting invented metrics
+    # ("30–40% better…") was the main "wrong answers" complaint.
+    # Templates only as last-resort offline fallback when LLM fails entirely.
     draft = ""
     first_paint_ms = 0.0
-    if ENABLE_TEMPLATE_FIRST:
+    use_template_paint = ENABLE_TEMPLATE_FIRST and os.environ.get(
+        "ASTRA_TEMPLATE_PAINT", "0"
+    ).strip().lower() in ("1", "true", "yes", "on")
+    if use_template_paint:
         draft = template_answer(question, job_context=job_context, mode=mode)
         first_paint_ms = (time.perf_counter() - t0) * 1000
         yield draft, {
@@ -536,10 +557,13 @@ def iter_cascade_answer(
             "from_cache": False,
         }
 
-    # 3) LLM refine (optional)
+    # 3) LLM stream (primary product path)
     if not ENABLE_LLM_REFINE or llm_streamer is None:
+        if not draft and ENABLE_TEMPLATE_FIRST:
+            draft = template_answer(question, job_context=job_context, mode=mode)
+            first_paint_ms = (time.perf_counter() - t0) * 1000
         if draft:
-            cache_store(question, draft, mode=mode, job_context=job_context)
+            # Never cache templates as if they were model answers
             yield draft, {
                 "source": "template",
                 "first_paint_ms": round(first_paint_ms, 2),
@@ -563,10 +587,12 @@ def iter_cascade_answer(
         ):
             acc += tok
             # Prefer LLM text once it has enough substance
-            if len(acc.strip()) >= 40:
+            if len(acc.strip()) >= 24:
                 yield acc, {
                     "source": "llm_stream",
-                    "first_paint_ms": round(first_paint_ms or (time.perf_counter() - t0) * 1000, 2),
+                    "first_paint_ms": round(
+                        first_paint_ms or (time.perf_counter() - t0) * 1000, 2
+                    ),
                     "streaming": True,
                     "final": False,
                     "from_cache": False,
@@ -574,12 +600,21 @@ def iter_cascade_answer(
     except Exception:
         acc = ""
 
-    final = (acc or draft or "").strip()
-    if final:
+    final = (acc or "").strip()
+    if not final and ENABLE_TEMPLATE_FIRST:
+        # Offline / API failure only — mark honestly
+        final = template_answer(question, job_context=job_context, mode=mode)
+        src = "template_fallback"
+    else:
+        src = "llm" if acc else "empty"
+
+    if final and src == "llm":
         cache_store(question, final, mode=mode, job_context=job_context)
     yield final, {
-        "source": "llm" if acc else "template",
-        "first_paint_ms": round(first_paint_ms or (time.perf_counter() - t0) * 1000, 2),
+        "source": src,
+        "first_paint_ms": round(
+            first_paint_ms or (time.perf_counter() - t0) * 1000, 2
+        ),
         "streaming": False,
         "final": True,
         "from_cache": False,

@@ -19,7 +19,7 @@ export function TopBar() {
     analytics: 'Analytics',
     settings: 'Settings',
     admin: 'Admin · models',
-    jobsearch: 'Job Search AI · lab',
+    jobsearch: 'Job Search',
   }
 
   const hasDesktop = typeof window !== 'undefined' && !!window.interviewPulse

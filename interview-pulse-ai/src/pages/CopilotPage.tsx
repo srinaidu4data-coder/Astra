@@ -158,18 +158,31 @@ export function CopilotPage() {
         pushStatus(`Filtered (${reason || 'chatter'}): ${text.slice(0, 60)}…`)
       },
       onAnswer: (ans) => {
-        const q = ans.question || 'Interview question'
-        // Replace trailing pending card if present
+        const q = (ans.question || 'Interview question').trim()
+        // Long interviews: match by question text (not only last streaming card),
+        // so Q2 doesn't overwrite Q1 and pending cards stay paired correctly.
         setCards((prev) => {
           const next = [...prev]
-          const last = next[next.length - 1]
           const card: QACard = { id: ans.id, question: q, answer: ans }
-          if (last?.answer?.streaming) {
-            next[next.length - 1] = card
+          const qNorm = q.toLowerCase()
+          let idx = -1
+          for (let i = next.length - 1; i >= 0; i--) {
+            const cq = (next[i]?.question || '').trim().toLowerCase()
+            if (cq && (cq === qNorm || qNorm.includes(cq.slice(0, 40)) || cq.includes(qNorm.slice(0, 40)))) {
+              idx = i
+              break
+            }
+            if (next[i]?.answer?.streaming) {
+              idx = i
+              break
+            }
+          }
+          if (idx >= 0) {
+            next[idx] = card
           } else {
             next.push(card)
+            idx = next.length - 1
           }
-          const idx = next.length - 1
           cardIndexRef.current = idx
           setCardIndex(idx)
           return next
@@ -249,7 +262,9 @@ export function CopilotPage() {
         jobContext: settings.jobContext || activeJobTitle,
         tone: settings.tone,
         mode: answerMode,
-        // Admin-assigned models (null → server defaults gpt-4o / gpt-4o-mini)
+        // Always browser mic unless user opted into Stereo Mix (ip_audio_source=system)
+        source: 'browser',
+        // Admin-assigned models (null → server gpt-4.1-mini / nano)
         userAnswerModel: user?.answer_model ?? user?.effective_answer_model ?? null,
         userFallbackModel:
           user?.fallback_model ?? user?.effective_fallback_model ?? null,
@@ -258,7 +273,7 @@ export function CopilotPage() {
       setListening(true)
       setApiOk(true)
       setDevice('browser-mic')
-      pushStatus('Listening (browser mic) — session stays ON')
+      pushStatus('Listening (browser mic) — speak the interview question clearly')
     } catch (e) {
       const msg = (e as Error).message || 'Could not start'
       pushStatus(`Could not start: ${msg}`)
@@ -341,7 +356,8 @@ export function CopilotPage() {
           setMetrics({
             vadMs: 0,
             sttMs: 0,
-            firstTokenMs: Math.round(ans.latencyMs * 0.25),
+            firstTokenMs: Math.min(ans.latencyMs, 50),
+            // full answer wait time (was incorrectly using first_paint ~1ms)
             totalMs: ans.latencyMs,
             lastUpdated: Date.now(),
           })

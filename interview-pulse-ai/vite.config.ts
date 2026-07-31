@@ -13,8 +13,25 @@ export default defineConfig({
   // '/' for Cloudflare Pages website; './' only for Electron file:// builds
   base: process.env.VITE_ELECTRON === '1' ? './' : '/',
   server: {
+    host: '127.0.0.1',
     port: 5173,
     strictPort: true,
+    // Same-origin proxy so Job Search / auth never "Failed to fetch" on localhost
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8787',
+        changeOrigin: true,
+      },
+      '/v1': {
+        target: 'http://127.0.0.1:8787',
+        changeOrigin: true,
+      },
+      '/ws': {
+        target: 'ws://127.0.0.1:8787',
+        ws: true,
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     outDir: 'dist',

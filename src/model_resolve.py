@@ -6,9 +6,18 @@ import os
 from typing import Optional, Tuple
 
 # Defaults when backend settings are unavailable (e.g. pure local path)
-# nano/mini for sub-1s live interviews
-_DEFAULT_PRIMARY = "gpt-4.1-nano"
-_DEFAULT_FALLBACK = "gpt-4o-mini"
+def _provider_defaults() -> tuple[str, str]:
+    try:
+        from config import get_llm_provider
+
+        if get_llm_provider() == "groq":
+            return "llama-3.3-70b-versatile", "llama-3.1-8b-instant"
+    except Exception:
+        pass
+    return "gpt-4.1-nano", "gpt-4.1-mini"
+
+
+_DEFAULT_PRIMARY, _DEFAULT_FALLBACK = _provider_defaults()
 
 
 def resolve_answer_models(
@@ -23,13 +32,13 @@ def resolve_answer_models(
       1) explicit request answer_model (if allowed)
       2) user.answer_model
       3) env ASTRA_ANSWER_MODEL / DEFAULT_ANSWER_MODEL
-      4) gpt-4o
+      4) gpt-4.1-mini
 
     Fallback:
       1) explicit fallback_model
       2) user.fallback_model
       3) env / DEFAULT_FALLBACK_MODEL
-      4) gpt-4o-mini
+      4) gpt-4.1-nano
     """
     try:
         from backend.config import settings

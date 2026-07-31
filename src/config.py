@@ -88,21 +88,239 @@ def get_license_key() -> str | None:
     return data.get("LICENSE_KEY") or None
 
 
+_PLACEHOLDER_OPENAI_KEYS = frozenset(
+    {
+        "",
+        "sk-...",
+        "sk-xxx",
+        "sk-your-key",
+        "sk-your-key-here",
+        "your-openai-key",
+        "changeme",
+        "change-me",
+        "<your-openai-key>",
+        "OPENAI_API_KEY",
+    }
+)
+
+
+def is_usable_openai_api_key(key: str | None) -> bool:
+    """
+    True for keys usable with OpenAI-compatible chat APIs (OpenAI sk- / Groq gsk_).
+
+    Rejects empty values and common .env placeholders (e.g. sk-...) so health
+    and answer routes do not claim the LLM is ready when it will 401.
+    """
+    if not key:
+        return False
+    k = str(key).strip().strip('"').strip("'")
+    if not k or k in _PLACEHOLDER_OPENAI_KEYS:
+        return False
+    low = k.lower()
+    if "your" in low and "key" in low:
+        return False
+    if low.startswith("sk-...") or low.endswith("..."):
+        return False
+    # Groq keys
+    if low.startswith("gsk_") and len(k) >= 20:
+        return True
+    # OpenAI project/user keys are long; refuse obviously truncated values
+    if low.startswith("sk-") and len(k) < 20:
+        return False
+    if len(k) < 16:
+        return False
+    return True
+
+
+_project_env_loaded = False
+
+
+def _ensure_project_env_loaded() -> None:
+    """
+    Load src/.env into os.environ once (override=False).
+
+    Ensures GROQ_API_KEY / ASTRA_LLM_PROVIDER work when only present in the file
+    (not already exported in the process).
+    """
+    global _project_env_loaded
+    if _project_env_loaded:
+        return
+    _project_env_loaded = True
+    project_env = Path(__file__).resolve().parent / ".env"
+    if not project_env.exists():
+        return
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv(project_env, override=False)
+    except Exception:
+        # Fallback: pull LLM-related keys only
+        try:
+            for line in project_env.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                k, v = k.strip(), v.strip().strip('"').strip("'")
+                if k in (
+                    "GROQ_API_KEY",
+                    "OPENAI_API_KEY",
+                    "ASTRA_LLM_PROVIDER",
+                    "LLM_PROVIDER",
+                    "OPENAI_BASE_URL",
+                    "GROQ_BASE_URL",
+                    "ASTRA_ANSWER_MODEL",
+                    "ASTRA_FALLBACK_MODEL",
+                    "ASTRA_FAST_MODEL",
+                    "ASTRA_FAST_FALLBACK",
+                    "ASTRA_ANSWER_PROFILE",
+                    "DEFAULT_ANSWER_MODEL",
+                    "DEFAULT_FALLBACK_MODEL",
+                ) and k not in os.environ:
+                    os.environ[k] = v
+        except OSError:
+            pass
+
+
+def get_llm_provider() -> str:
+    """openai | groq — from env or inferred from key prefix."""
+    _ensure_project_env_loaded()
+    p = (os.environ.get("ASTRA_LLM_PROVIDER") or os.environ.get("LLM_PROVIDER") or "").strip().lower()
+    if p in ("groq", "openai", "xai", "deepseek"):
+        return p
+    # Infer from process keys only (do not read secrets from disk for inference)
+    for name in ("GROQ_API_KEY", "OPENAI_API_KEY"):
+        raw = (os.environ.get(name) or "").strip()
+        if raw.lower().startswith("gsk_"):
+            return "groq"
+        if raw.lower().startswith("sk-") and is_usable_openai_api_key(raw):
+            return "openai"
+    return "openai"
+
+
+def get_openai_base_url() -> str | None:
+    """OpenAI-compatible base URL. Groq default when provider is groq."""
+    explicit = (os.environ.get("OPENAI_BASE_URL") or os.environ.get("GROQ_BASE_URL") or "").strip()
+    if explicit:
+        return explicit.rstrip("/")
+    if get_llm_provider() == "groq":
+        return "https://api.groq.com/openai/v1"
+    if get_llm_provider() == "xai":
+        return "https://api.x.ai/v1"
+    return None
+
+
+# OpenAI / legacy IDs → Groq chat models (admin still may have gpt-4o assigned)
+_GROQ_MODEL_MAP = {
+    "gpt-4o": "llama-3.3-70b-versatile",
+    "gpt-4o-mini": "llama-3.1-8b-instant",
+    "chatgpt-4o-latest": "llama-3.3-70b-versatile",
+    "gpt-4.1": "llama-3.3-70b-versatile",
+    "gpt-4.1-mini": "llama-3.3-70b-versatile",
+    "gpt-4.1-nano": "llama-3.1-8b-instant",
+    "gpt-4-turbo": "llama-3.3-70b-versatile",
+    "gpt-4": "llama-3.3-70b-versatile",
+    "gpt-5": "llama-3.3-70b-versatile",
+    "gpt-5-mini": "llama-3.3-70b-versatile",
+    "gpt-5-nano": "llama-3.1-8b-instant",
+    "gpt-5.4-mini": "llama-3.3-70b-versatile",
+    "gpt-5.4-nano": "llama-3.1-8b-instant",
+    "o4-mini": "llama-3.3-70b-versatile",
+    "o3-mini": "llama-3.3-70b-versatile",
+    "o3": "llama-3.3-70b-versatile",
+}
+
+
+def remap_model_for_provider(model: str | None) -> str | None:
+    """
+    Map OpenAI model IDs to provider-native IDs.
+
+    Critical for Groq: requesting gpt-4o fails, then the answer path used to
+    wait ~6s per failed model → ~10–12s typed-answer latency.
+    """
+    if not model or not str(model).strip():
+        return model
+    m = str(model).strip()
+    provider = get_llm_provider()
+    if provider == "groq":
+        low = m.lower()
+        if low in _GROQ_MODEL_MAP:
+            return _GROQ_MODEL_MAP[low]
+        # Already a Groq/Llama/Mixtral/Gemma id
+        if any(
+            x in low
+            for x in (
+                "llama",
+                "mixtral",
+                "gemma",
+                "gpt-oss",
+                "deepseek",
+                "qwen",
+            )
+        ):
+            return m
+        # Unknown OpenAI-ish id → safe Groq default
+        if low.startswith("gpt-") or low.startswith("o1") or low.startswith("o3") or low.startswith("o4"):
+            return "llama-3.3-70b-versatile"
+    return m
+
+
+def groq_allowed_models() -> set[str]:
+    return {
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama-3.1-70b-versatile",
+        "llama-3.3-70b-specdec",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it",
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "meta-llama/llama-4-maverick-17b-128e-instruct",
+    }
+
+
 def get_openai_api_key() -> str | None:
     """
-    Resolve OpenAI API key for direct (no-license) mode.
+    Resolve chat LLM API key (OpenAI, Groq, or other OpenAI-compatible).
 
-    Order: process env → user config dir .env → project-local .env next to this file.
+    Order:
+      1) GROQ_API_KEY process env (preferred when using Groq)
+      2) OPENAI_API_KEY process env (skipped when provider=groq and key is not gsk_)
+      3) user config / project .env OPENAI_API_KEY — skipped when ASTRA_LLM_PROVIDER=groq
+         so a leftover OpenAI key in .env does not override an intentional Groq session.
+    Never writes secrets to disk.
     """
+    _ensure_project_env_loaded()
+
+    # 1) Explicit Groq process env
+    groq = (os.environ.get("GROQ_API_KEY") or "").strip()
+    if is_usable_openai_api_key(groq):
+        return groq
+
+    provider = get_llm_provider()
+
+    # 2) Process OPENAI_API_KEY (may be a gsk_ when swapped)
     env_key = os.environ.get("OPENAI_API_KEY", "").strip()
-    if env_key:
-        return env_key
+    if is_usable_openai_api_key(env_key):
+        # Do not send an OpenAI sk- key to Groq when provider is forced to groq
+        if provider == "groq" and not env_key.lower().startswith("gsk_"):
+            pass
+        else:
+            return env_key
+    if env_key and not is_usable_openai_api_key(env_key):
+        os.environ.pop("OPENAI_API_KEY", None)
+
+    # When forcing Groq, do not fall back to OpenAI keys from .env
+    if provider == "groq":
+        return None
 
     data = _read_env_file()
-    if data.get("OPENAI_API_KEY"):
-        return data["OPENAI_API_KEY"]
+    file_key = (data.get("OPENAI_API_KEY") or "").strip().strip('"').strip("'")
+    if is_usable_openai_api_key(file_key):
+        os.environ["OPENAI_API_KEY"] = file_key
+        return file_key
 
-    # Project .env (dev convenience)
     project_env = Path(__file__).resolve().parent / ".env"
     if project_env.exists():
         try:
@@ -113,7 +331,8 @@ def get_openai_api_key() -> str | None:
                 k, v = line.split("=", 1)
                 if k.strip() == "OPENAI_API_KEY":
                     val = v.strip().strip('"').strip("'")
-                    if val:
+                    if is_usable_openai_api_key(val):
+                        os.environ["OPENAI_API_KEY"] = val
                         return val
         except OSError:
             pass
@@ -340,14 +559,31 @@ AUDIO_SAMPLE_RATE = 16000  # Whisper expects 16kHz
 AUDIO_CHANNELS = 1  # Mono
 
 # Whisper Configuration
-WHISPER_MODEL = "tiny.en"
-WHISPER_DEVICE = "cpu"
-WHISPER_COMPUTE_TYPE = "int8"
+# tiny.en is fast but mangles jargon (S/4HANA, Vertex, FICO) and weak on long Qs.
+# base.en is the production default for interview accuracy on CPU; override via env.
+WHISPER_MODEL = (
+    os.environ.get("ASTRA_WHISPER_MODEL")
+    or os.environ.get("WHISPER_MODEL")
+    or "base.en"
+).strip() or "base.en"
+WHISPER_DEVICE = (
+    os.environ.get("ASTRA_WHISPER_DEVICE")
+    or os.environ.get("WHISPER_DEVICE")
+    or "cpu"
+).strip() or "cpu"
+WHISPER_COMPUTE_TYPE = (
+    os.environ.get("ASTRA_WHISPER_COMPUTE")
+    or os.environ.get("WHISPER_COMPUTE_TYPE")
+    or "int8"
+).strip() or "int8"
+# Decode quality: 1 = fastest/greedy, 3–5 = more accurate (small latency cost)
+WHISPER_BEAM_SIZE = max(1, int(os.environ.get("ASTRA_WHISPER_BEAM", "2") or "2"))
 
 # RAG Configuration
 EMBEDDING_MODEL = "text-embedding-3-small"
-LLM_MODEL = "gpt-4o"
-CLASSIFICATION_MODEL = "gpt-4o-mini"  # Fast model for question classification
+# Prefer 4.1 family over 4o: better instruction-following at equal/lower latency
+LLM_MODEL = "gpt-4.1-mini"
+CLASSIFICATION_MODEL = "gpt-4.1-mini"  # Fast model for question classification
 COLLECTION_NAME = "astra_docs"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
@@ -359,22 +595,30 @@ MIN_CONTEXT_RELEVANCE = 0.2  # Filter out chunks below this threshold
 # (browser mic + noise suppression creates brief dips between words)
 # Peak-boosted meter — Stereo Mix / quiet mics need a low floor
 SILENCE_THRESHOLD = 0.0015      # Floor absolute silence (legacy / fallback)
-SILENCE_DURATION = 1.85         # Seconds of relative silence to end an utterance
-MIN_SPEECH_DURATION = 1.35      # Ignore 1–2 word blips; wait for a real phrase
+# End-of-question hangover.
+# Short questions can cut fast; long multi-clause questions need more hangover
+# so mid-sentence pauses don't truncate (was the main "long Q wrong answer" bug).
+SILENCE_DURATION = 1.05         # Seconds of relative silence to end an utterance
+MIN_SPEECH_DURATION = 0.55      # Ignore 1–2 word blips; wait for a real phrase
 # If speech never "ends" (noisy room / continuous audio), force process after this
-MAX_UTTERANCE_SECONDS = 22.0
+MAX_UTTERANCE_SECONDS = 50.0
 # Adaptive VAD: speech if level > noise_floor * factor + offset
-VAD_NOISE_FACTOR = 2.4
-VAD_NOISE_OFFSET = 0.010
-VAD_SILENCE_FACTOR = 1.25       # Stay "in speech" through quieter mid-sentence dips
-# Extra hangover for browser-mic path (cloud / getUserMedia)
-BROWSER_SILENCE_DURATION = 2.15
-BROWSER_MIN_SPEECH_DURATION = 1.6
+# Slightly more sensitive so quiet Stereo Mix / laptop mics still "hear"
+VAD_NOISE_FACTOR = 1.95
+VAD_NOISE_OFFSET = 0.0055
+VAD_SILENCE_FACTOR = 1.08       # Stay "in speech" through quieter mid-sentence dips
+# Browser mic (getUserMedia) — AGC dips need a touch more hangover than system
+BROWSER_SILENCE_DURATION = 1.15
+BROWSER_MIN_SPEECH_DURATION = 0.6
+# Only for SHORT utterances (see live_session) — never on long multi-clause Qs
+BROWSER_FAST_SILENCE_DURATION = 0.65
+# Long questions: extra hangover after already speaking a while
+BROWSER_LONG_SILENCE_DURATION = 1.55
 CLASSIFICATION_CONFIDENCE = 0.55  # slightly looser for live auto path
 MIN_WORDS_FOR_CLASSIFICATION = 4  # Skip LLM if fewer words than this
-# Audio window for Whisper (seconds); actual window uses speech duration when known
-AUTO_TRANSCRIBE_MAX_SECONDS = 24
-MANUAL_TRANSCRIBE_MAX_SECONDS = 24
+# Must fit full multi-clause interview questions (20–40s spoken is common)
+AUTO_TRANSCRIBE_MAX_SECONDS = 40
+MANUAL_TRANSCRIBE_MAX_SECONDS = 40
 
 
 def get_default_monitor() -> str | None:

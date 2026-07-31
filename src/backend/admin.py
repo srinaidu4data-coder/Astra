@@ -48,8 +48,8 @@ async def list_models(admin: User = Depends(require_admin)) -> ModelCatalogRespo
     _ = admin
     return ModelCatalogResponse(
         models=settings.catalog_answer_models,
-        default_answer_model=settings.DEFAULT_ANSWER_MODEL or "gpt-4o",
-        default_fallback_model=settings.DEFAULT_FALLBACK_MODEL or "gpt-4o-mini",
+        default_answer_model=settings.DEFAULT_ANSWER_MODEL or "gpt-4.1-mini",
+        default_fallback_model=settings.DEFAULT_FALLBACK_MODEL or "gpt-4.1-nano",
     )
 
 
@@ -77,8 +77,8 @@ async def list_users(
     return UsersListResponse(
         users=[user_public_dict(u) for u in page],
         total=total,
-        default_answer_model=settings.DEFAULT_ANSWER_MODEL or "gpt-4o",
-        default_fallback_model=settings.DEFAULT_FALLBACK_MODEL or "gpt-4o-mini",
+        default_answer_model=settings.DEFAULT_ANSWER_MODEL or "gpt-4.1-mini",
+        default_fallback_model=settings.DEFAULT_FALLBACK_MODEL or "gpt-4.1-nano",
         models=settings.catalog_answer_models,
     )
 
@@ -154,6 +154,6 @@ async def admin_me(admin: User = Depends(require_admin)) -> dict[str, Any]:
         "ok": True,
         "user": user_public_dict(admin),
         "models": settings.catalog_answer_models,
-        "default_answer_model": settings.DEFAULT_ANSWER_MODEL or "gpt-4o",
-        "default_fallback_model": settings.DEFAULT_FALLBACK_MODEL or "gpt-4o-mini",
+        "default_answer_model": settings.DEFAULT_ANSWER_MODEL or "gpt-4.1-mini",
+        "default_fallback_model": settings.DEFAULT_FALLBACK_MODEL or "gpt-4.1-nano",
     }

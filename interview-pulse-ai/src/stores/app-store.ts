@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { DEMO_ANALYTICS, DEMO_MEMORIES, DEMO_SESSIONS } from '@/lib/demo-data'
+import { publishLiveSync } from '@/lib/window-sync'
 import {
   fetchAuthConfig,
   fetchMe,
@@ -97,6 +98,9 @@ interface AppState {
   analytics: AnalyticsPoint[]
 }
 
+/** throttle for level→overlay bridge */
+let _levelsSyncAt = 0
+
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
@@ -189,9 +193,40 @@ export const useAppStore = create<AppState>()(
         set((s) => ({ stealth: { ...s.stealth, ...p } })),
 
       listening: false,
-      setListening: (listening) => set({ listening }),
+      setListening: (listening) => {
+        set({ listening })
+        // Overlay is a separate Electron window — push listening flag
+        try {
+          const s = useAppStore.getState()
+          publishLiveSync({
+            listening,
+            answer: s.answer,
+            levels: s.levels,
+            answerMode: s.answerMode,
+          })
+        } catch {
+          /* ignore */
+        }
+      },
       levels: Array.from({ length: 24 }, () => 0.08),
-      setLevels: (levels) => set({ levels }),
+      setLevels: (levels) => {
+        set({ levels })
+        // Throttle level bridge (~8/s) so we don't flood IPC with full answer blobs
+        const now = Date.now()
+        if (now - (_levelsSyncAt || 0) < 120) return
+        _levelsSyncAt = now
+        try {
+          const s = useAppStore.getState()
+          publishLiveSync({
+            levels,
+            answer: s.answer,
+            listening: s.listening,
+            answerMode: s.answerMode,
+          })
+        } catch {
+          /* ignore */
+        }
+      },
 
       devices: [],
       setDevices: (devices) => set({ devices }),
@@ -243,12 +278,52 @@ export const useAppStore = create<AppState>()(
           }
           return { transcript: [...s.transcript, line].slice(-40) }
         }),
-      clearTranscript: () => set({ transcript: [], answer: null }),
+      clearTranscript: () => {
+        set({ transcript: [], answer: null })
+        try {
+          const s = useAppStore.getState()
+          publishLiveSync({
+            answer: null,
+            listening: s.listening,
+            levels: s.levels,
+            answerMode: s.answerMode,
+          })
+        } catch {
+          /* ignore */
+        }
+      },
 
       answer: null,
-      setAnswer: (answer) => set({ answer }),
+      setAnswer: (answer) => {
+        set({ answer })
+        // Critical: overlay window has its own React heap — must bridge answers
+        try {
+          const s = useAppStore.getState()
+          publishLiveSync({
+            answer,
+            listening: s.listening,
+            levels: s.levels,
+            answerMode: s.answerMode,
+          })
+        } catch {
+          /* ignore */
+        }
+      },
       answerMode: 'star',
-      setAnswerMode: (answerMode) => set({ answerMode }),
+      setAnswerMode: (answerMode) => {
+        set({ answerMode })
+        try {
+          const s = useAppStore.getState()
+          publishLiveSync({
+            answerMode,
+            answer: s.answer,
+            listening: s.listening,
+            levels: s.levels,
+          })
+        } catch {
+          /* ignore */
+        }
+      },
 
       metrics: null,
       setMetrics: (metrics) => set({ metrics }),

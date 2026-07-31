@@ -128,6 +128,9 @@ if (process.defaultApp) {
   app.setAsDefaultProtocolClient(PROTOCOL)
 }
 
+/** Last live answer/levels snapshot for overlay bootstrap */
+let lastLiveState = null
+
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
@@ -333,6 +336,21 @@ function createOverlayWindow() {
       makeOverlayInteractive()
       overlayWindow.show()
       overlayWindow.focus()
+      // Push last known answer immediately; also ask main window to re-publish
+      if (lastLiveState) {
+        try {
+          overlayWindow.webContents.send('live:state', lastLiveState)
+        } catch {
+          /* ignore */
+        }
+      }
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        try {
+          mainWindow.webContents.send('live:request-publish')
+        } catch {
+          /* ignore */
+        }
+      }
     }
   })
 
@@ -376,7 +394,60 @@ function registerIpc() {
 
   ipcMain.handle('overlay:open', () => {
     createOverlayWindow()
+    // Ask main renderer to re-broadcast current answer for the overlay
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      try {
+        mainWindow.webContents.send('live:request-publish')
+      } catch {
+        /* ignore */
+      }
+    }
+    if (lastLiveState && overlayWindow && !overlayWindow.isDestroyed()) {
+      try {
+        overlayWindow.webContents.send('live:state', lastLiveState)
+      } catch {
+        /* ignore */
+      }
+    }
     return { ok: true }
+  })
+
+  /** Live answer bridge: main window publishes → overlay receives */
+  ipcMain.handle('live:publish', (event, state) => {
+    lastLiveState = state || null
+    const senderId = event.sender.id
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (win.isDestroyed()) continue
+      if (win.webContents.id === senderId) continue
+      try {
+        win.webContents.send('live:state', lastLiveState)
+      } catch {
+        /* ignore */
+      }
+    }
+    return { ok: true }
+  })
+
+  ipcMain.handle('live:request', () => lastLiveState)
+
+  ipcMain.handle('live:request-publish', (event) => {
+    // Overlay asks main window to push latest zustand state
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      try {
+        mainWindow.webContents.send('live:request-publish')
+      } catch {
+        /* ignore */
+      }
+    }
+    // Also return cached state to the requester
+    try {
+      if (lastLiveState) {
+        event.sender.send('live:state', lastLiveState)
+      }
+    } catch {
+      /* ignore */
+    }
+    return { ok: true, hasState: Boolean(lastLiveState) }
   })
 
   ipcMain.handle('overlay:close', () => {

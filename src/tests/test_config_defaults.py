@@ -25,15 +25,13 @@ class TestLicenseFlag:
 
 class TestTimingDefaults:
     def test_silence_waits_for_full_question(self):
-        # Hangover must be long enough to ride out mid-sentence pauses so we
-        # never answer half a question (see "Wait for full interview questions
-        # before answering"), but stay well under 3s or the answer feels late.
-        assert 1.0 <= SILENCE_DURATION < 2.5
+        # Hangover rides short mid-sentence dips but stays snappy for live UX.
+        assert 0.55 <= SILENCE_DURATION < 1.5
 
-    def test_manual_not_30s(self):
-        # Old path used 30s re-STT which destroyed latency
-        assert MANUAL_TRANSCRIBE_MAX_SECONDS <= 25
-        assert AUTO_TRANSCRIBE_MAX_SECONDS <= 25
+    def test_manual_window_allows_long_questions(self):
+        # Must fit multi-clause spoken questions (was 16–25s and cut them off)
+        assert 30 <= MANUAL_TRANSCRIBE_MAX_SECONDS <= 60
+        assert 30 <= AUTO_TRANSCRIBE_MAX_SECONDS <= 60
 
     def test_min_speech_reasonable(self):
         assert 0.3 <= MIN_SPEECH_DURATION <= 1.5

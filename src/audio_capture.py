@@ -513,7 +513,14 @@ class BrowserAudioCapture(AudioCapture):
 
     Used for cloud/web deploys where server-side Stereo Mix / parec is unavailable.
     Client sends little-endian int16 mono PCM (typically 16 kHz).
+
+    Pre-start PCM is buffered so audio arriving before start_capture (common race
+    when the client opens the mic first) is not dropped — that was causing 1-word
+    STT fragments and a broken listen → answer flow.
     """
+
+    # Keep up to ~4s of pre-roll before session start
+    _PREBUF_MAX_SAMPLES = 16000 * 4
 
     def __init__(self, sample_rate: int = 16000, channels: int = 1):
         self._sample_rate = int(sample_rate) or 16000
@@ -523,6 +530,8 @@ class BrowserAudioCapture(AudioCapture):
         self._level = 0.0
         self._raw_level = 0.0
         self._device_name = "browser-mic"
+        self._prebuf = bytearray()
+        self._prebuf_lock = threading.Lock()
 
     @property
     def device(self) -> str:
@@ -532,43 +541,86 @@ class BrowserAudioCapture(AudioCapture):
         self._ring.clear()
         self._level = 0.0
         self._raw_level = 0.0
+        # Flush any PCM that arrived before the session thread was ready
+        with self._prebuf_lock:
+            early = bytes(self._prebuf)
+            self._prebuf.clear()
         self._capturing = True
+        if early:
+            self._ingest_pcm(early)
 
     def stop_capture(self) -> np.ndarray:
         self._capturing = False
+        with self._prebuf_lock:
+            self._prebuf.clear()
         samples = self._ring.get_all_samples()
         self._ring.clear()
         return samples
 
     def push_pcm16(self, data: bytes) -> None:
         """Append raw little-endian int16 mono PCM from the browser."""
-        if not self._capturing or not data:
+        if not data:
             return
         if len(data) % 2:
             data = data[:-1]
         if not data:
             return
+        if not self._capturing:
+            # Session not ready yet — keep a short pre-roll so we don't drop the
+            # first words of the question (browser opens mic before WS "start").
+            with self._prebuf_lock:
+                self._prebuf.extend(data)
+                max_bytes = self._PREBUF_MAX_SAMPLES * 2
+                if len(self._prebuf) > max_bytes:
+                    self._prebuf[:] = self._prebuf[-max_bytes:]
+            return
+        self._ingest_pcm(data)
+
+    def _ingest_pcm(self, data: bytes) -> None:
         samples = np.frombuffer(data, dtype=np.int16)
         if self._channels > 1 and len(samples) >= self._channels:
-            # unexpected multi-channel — take first channel only
             usable = (len(samples) // self._channels) * self._channels
             samples = samples[:usable].reshape(-1, self._channels)[:, 0].astype(np.int16)
         self._ring.extend_samples(samples)
         # Peak + RMS over recent audio (stable VAD; less flicker between words)
         if len(samples):
-            window = self._ring.get_last_n_samples(int(self._sample_rate * 0.25))
+            window = self._ring.get_last_n_samples(int(self._sample_rate * 0.35))
             if len(window) == 0:
                 window = samples
             f = window.astype(np.float32)
             peak = float(np.max(np.abs(f))) / 32768.0
             rms = float(np.sqrt(np.mean(f ** 2))) / 32768.0
             lvl = min(1.0, max(peak * 1.6, rms * 3.5))
-            self._raw_level = (0.55 * self._raw_level) + (0.45 * lvl)
-            self._level = (0.7 * self._level) + (0.3 * lvl)
+            self._raw_level = (0.5 * self._raw_level) + (0.5 * lvl)
+            self._level = (0.65 * self._level) + (0.35 * lvl)
 
-    def get_last_n_seconds(self, n: int) -> np.ndarray:
-        n = max(0, int(n))
-        return self._ring.get_last_n_samples(int(n * self._sample_rate))
+    def get_last_n_seconds(self, n: float) -> np.ndarray:
+        """Return last n seconds (float allowed — int truncation was eating clips)."""
+        try:
+            sec = float(n)
+        except (TypeError, ValueError):
+            sec = 0.0
+        sec = max(0.0, sec)
+        return self._ring.get_last_n_samples(int(sec * self._sample_rate + 0.5))
+
+    def keep_only_last_seconds(self, seconds: float = 1.0) -> None:
+        """
+        Drop older ring audio after a question is processed.
+
+        Critical for long interviews: without this, Q2 STT often re-includes Q1
+        tail and produces wrong/merged transcripts.
+        """
+        try:
+            sec = max(0.0, float(seconds))
+        except (TypeError, ValueError):
+            sec = 1.0
+        recent = self.get_last_n_seconds(sec)
+        self._ring.clear()
+        if recent is not None and len(recent) > 0:
+            self._ring.extend_samples(recent)
+        # Reset levels so next VAD cycle doesn't stick on old peaks
+        self._level *= 0.3
+        self._raw_level *= 0.3
 
     def get_audio_level(self) -> float:
         return float(self._level)

@@ -26,4 +26,18 @@ contextBridge.exposeInMainWorld('interviewPulse', {
     ipcRenderer.on('app:deep-link', handler)
     return () => ipcRenderer.removeListener('app:deep-link', handler)
   },
+  // --- Live answer / levels bridge (main window ↔ overlay) ---
+  publishLiveState: (state) => ipcRenderer.invoke('live:publish', state),
+  requestLiveState: () => ipcRenderer.invoke('live:request'),
+  requestLivePublish: () => ipcRenderer.invoke('live:request-publish'),
+  onLiveState: (cb) => {
+    const handler = (_e, state) => cb(state)
+    ipcRenderer.on('live:state', handler)
+    return () => ipcRenderer.removeListener('live:state', handler)
+  },
+  onRequestLivePublish: (cb) => {
+    const handler = () => cb()
+    ipcRenderer.on('live:request-publish', handler)
+    return () => ipcRenderer.removeListener('live:request-publish', handler)
+  },
 })

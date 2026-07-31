@@ -18,6 +18,7 @@ import {
   confirmCheckoutSession,
   syncBilling,
 } from '@/services/auth'
+import { publishLiveSync } from '@/lib/window-sync'
 import { useAppStore } from '@/stores/app-store'
 import { Loader2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
@@ -25,6 +26,22 @@ import { HashRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 
 function PageBody() {
   const route = useAppStore((s) => s.route)
+  const setRoute = useAppStore((s) => s.setRoute)
+
+  // Deep-link: http://localhost:5173/#/jobsearch
+  useEffect(() => {
+    const applyHash = () => {
+      const raw = (window.location.hash || '').replace(/^#\/?/, '')
+      const path = raw.split('?')[0]?.toLowerCase() || ''
+      if (path === 'jobsearch' || path === 'job-search' || path === 'jobs') {
+        setRoute('jobsearch')
+      }
+    }
+    applyHash()
+    window.addEventListener('hashchange', applyHash)
+    return () => window.removeEventListener('hashchange', applyHash)
+  }, [setRoute])
+
   return (
     <>
       {route === 'copilot' && <CopilotPage />}
@@ -197,8 +214,38 @@ function useDeepLinkRouting() {
   }, [])
 }
 
+/**
+ * Main window only: when the overlay opens it asks us to re-publish the current
+ * answer so the stealth window is not stuck on the empty state.
+ */
+function useLiveOverlayBridge() {
+  useEffect(() => {
+    // Overlay route has its own subscriber; don't dual-publish from there
+    if (window.location.hash.includes('/overlay')) return
+
+    const push = () => {
+      const s = useAppStore.getState()
+      publishLiveSync({
+        answer: s.answer,
+        listening: s.listening,
+        levels: s.levels,
+        answerMode: s.answerMode,
+      })
+    }
+
+    // Seed localStorage / IPC once so a late-opened overlay can read snapshot
+    push()
+
+    const unsub = window.interviewPulse?.onRequestLivePublish?.(push)
+    return () => {
+      unsub?.()
+    }
+  }, [])
+}
+
 export default function App() {
   useDeepLinkRouting()
+  useLiveOverlayBridge()
 
   return (
     <HashRouter>

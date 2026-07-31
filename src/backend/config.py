@@ -52,6 +52,15 @@ class Settings(BaseSettings):
     # Interview answer models admins can assign (Chat Completions–compatible IDs).
     # Availability depends on the OpenAI account; failures fall back to DEFAULT_FALLBACK_MODEL.
     ALLOWED_MODELS: list[str] = [
+        # --- Groq (Llama / OSS) ---
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama-3.1-70b-versatile",
+        "llama-3.3-70b-specdec",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it",
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
         # --- GPT-5.6 frontier (2026) ---
         "gpt-5.6-sol",
         "gpt-5.6-terra",
@@ -83,9 +92,9 @@ class Settings(BaseSettings):
         "o1-pro",
     ]
     ALLOWED_EMBEDDING_MODELS: list[str] = ["text-embedding-3-small"]
-    # Global defaults — nano/mini for sub-1s live answers (admin can override per user)
+    # Global defaults — nano for live speed after STT; mini quality fallback
     DEFAULT_ANSWER_MODEL: str = "gpt-4.1-nano"
-    DEFAULT_FALLBACK_MODEL: str = "gpt-4o-mini"
+    DEFAULT_FALLBACK_MODEL: str = "gpt-4.1-mini"
     # Comma-separated emails promoted to admin on login (bootstrap)
     ADMIN_EMAILS: str = ""
     # Interview sessions fire classify + embed + 2 chat streams per question.
@@ -174,21 +183,25 @@ class Settings(BaseSettings):
                 "GPT-4.1 / 4o",
                 "Strong interviews",
             ),
-            "gpt-4.1-mini": ("GPT-4.1 mini", "GPT-4.1 / 4o", "Fast + solid"),
-            "gpt-4.1-nano": (
-                "GPT-4.1 nano (default — sub-1s)",
+            "gpt-4.1-mini": (
+                "GPT-4.1 mini (default)",
                 "GPT-4.1 / 4o",
-                "Lowest latency for live interviews",
+                "Best live balance: speed + accuracy",
+            ),
+            "gpt-4.1-nano": (
+                "GPT-4.1 nano (fast fallback)",
+                "GPT-4.1 / 4o",
+                "Lowest latency; thinner answers",
             ),
             "gpt-4o": (
-                "GPT-4o (strong quality)",
+                "GPT-4o (legacy)",
                 "GPT-4.1 / 4o",
-                "Fast + strong interview answers",
+                "Prefer gpt-4.1-mini for live interviews",
             ),
             "gpt-4o-mini": (
-                "GPT-4o mini (default fallback)",
+                "GPT-4o mini (legacy fallback)",
                 "GPT-4.1 / 4o",
-                "Fast / cheap fallback",
+                "Prefer gpt-4.1-nano as fallback",
             ),
             "chatgpt-4o-latest": (
                 "ChatGPT-4o latest",
@@ -219,9 +232,9 @@ class Settings(BaseSettings):
                     "group": group,
                     "note": note,
                     "is_default": mid
-                    == (self.DEFAULT_ANSWER_MODEL or "gpt-4.1-nano"),
+                    == (self.DEFAULT_ANSWER_MODEL or "gpt-4.1-mini"),
                     "is_fallback_default": mid
-                    == (self.DEFAULT_FALLBACK_MODEL or "gpt-4o-mini"),
+                    == (self.DEFAULT_FALLBACK_MODEL or "gpt-4.1-nano"),
                     "is_reasoning": mid.startswith("o1")
                     or mid.startswith("o3")
                     or mid.startswith("o4")

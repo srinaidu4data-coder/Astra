@@ -37,10 +37,19 @@ CHROMA_DB_PATH = _resolve_chroma_path()
 
 COLLECTION_NAME = "astra_docs"
 EMBEDDING_MODEL = "text-embedding-3-small"
-CLASSIFICATION_MODEL = "gpt-4o-mini"
-# Live interview path: mini is much faster; quality is still strong for short scripts
-SCRIPT_MODEL = "gpt-4o-mini"
-BULLET_MODEL = "gpt-4o-mini"
+def _script_models() -> tuple[str, str, str]:
+    try:
+        from config import get_llm_provider
+
+        if get_llm_provider() == "groq":
+            m = "llama-3.3-70b-versatile"
+            return m, m, "llama-3.1-8b-instant"
+    except Exception:
+        pass
+    return "gpt-4.1-mini", "gpt-4.1-mini", "gpt-4.1-mini"
+
+
+CLASSIFICATION_MODEL, SCRIPT_MODEL, BULLET_MODEL = _script_models()
 
 # Hybrid search settings
 HYBRID_SEARCH_ENABLED = True  # Toggle hybrid search on/off
@@ -68,15 +77,18 @@ def _get_openai_client() -> OpenAI:
     global _openai_client, _openai_client_key
 
     if not LICENSE_ENABLED:
+        from config import get_openai_base_url, get_llm_provider
+
         api_key = get_openai_api_key()
         if not api_key:
             raise RuntimeError(
-                "OpenAI API key not found. Set OPENAI_API_KEY in the environment "
-                "or in the project .env file."
+                "LLM API key not found. Set GROQ_API_KEY or OPENAI_API_KEY in the "
+                "process environment (prefer not committing secrets to .env)."
             )
-        # Optional override for local proxy without license; default = api.openai.com
-        base_url = os.environ.get("OPENAI_BASE_URL") or None
-        cache_key = ("direct", api_key[:8], base_url or "default")
+        # Groq / xAI / custom: OpenAI-compatible base URL
+        base_url = get_openai_base_url()
+        provider = get_llm_provider()
+        cache_key = ("direct", provider, api_key[:8], base_url or "default")
         with _openai_lock:
             if _openai_client is None or _openai_client_key != cache_key:
                 # Low retries + tight timeout: fail fast, cascade to template

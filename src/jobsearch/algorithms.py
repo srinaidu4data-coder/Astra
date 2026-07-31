@@ -340,6 +340,30 @@ def ensemble_rank(
             + w["diversity_bonus"] * diversity[i]
         )
         job = dict(r["job"])
+        src = str(job.get("source") or "")
+        is_synth = bool(
+            job.get("is_synthetic") or src in ("seed_market", "seed")
+        )
+        # Product rule: live boards dominate; synthetic is practice-only
+        if is_synth:
+            ensemble = ensemble * 0.55
+        else:
+            ensemble = min(1.0, ensemble + 0.12)
+        # Title match boost — profile tokens + skills (title-only signal)
+        title_l = (job.get("title") or "").lower()
+        qbits = [t for t in (profile_text or "").lower().split() if len(t) > 2][:12]
+        skill_bits = [str(s).lower() for s in profile_skills if len(str(s)) > 2][:12]
+        title_hits = sum(1 for t in set(qbits + skill_bits) if t in title_l)
+        if title_hits and not is_synth:
+            ensemble = min(1.0, ensemble + 0.04 * min(title_hits, 4))
+        elif title_hits and is_synth:
+            ensemble = min(1.0, ensemble + 0.005 * min(title_hits, 2))
+        # Penalize weak title overlap even if body matched (defense in depth)
+        if title_hits == 0 and not is_synth:
+            ensemble = ensemble * 0.35
+        job["is_synthetic"] = is_synth
+        job["product_label"] = "practice" if is_synth else "live"
+        job["title_hits"] = title_hits
         job["scores"] = {
             "ensemble": round(100 * ensemble, 1),
             "bm25": round(100 * r["bm25"], 1),
@@ -354,15 +378,18 @@ def ensemble_rank(
         job["skill_hits"] = r["hits"]
         job["skill_required"] = r["required"]
         job["gap_skills"] = r["gap_skills"]
+        # Absolute IR bands — UI should treat as relative ranking aid only
         job["verdict"] = (
             "strong"
-            if ensemble >= 0.72
+            if ensemble >= 0.72 and not is_synth
             else "good"
-            if ensemble >= 0.55
+            if ensemble >= 0.55 and not is_synth
             else "moderate"
             if ensemble >= 0.4
             else "weak"
         )
+        if is_synth:
+            job["verdict"] = "practice"
         scored.append(job)
 
     scored.sort(key=lambda j: j["scores"]["ensemble"], reverse=True)

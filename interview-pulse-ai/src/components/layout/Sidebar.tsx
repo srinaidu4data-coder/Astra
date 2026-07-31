@@ -34,7 +34,7 @@ export function Sidebar() {
     if (jobLab) {
       list.splice(1, 0, {
         id: 'jobsearch' as NavRoute,
-        label: 'Job Search AI',
+        label: 'Job Search',
         icon: Radar,
       })
     }

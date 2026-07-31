@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { isJobSearchLabHost } from '@/services/jobsearch'
 import { useAppStore } from '@/stores/app-store'
 import type { NavRoute } from '@/types'
 import {
@@ -6,6 +7,7 @@ import {
   BookOpen,
   BrainCircuit,
   Mic2,
+  Radar,
   Settings2,
   Shield,
 } from 'lucide-react'
@@ -28,15 +30,27 @@ export function MobileNav() {
   const setRoute = useAppStore((s) => s.setRoute)
   const listening = useAppStore((s) => s.listening)
   const isAdmin = useAppStore((s) => Boolean(s.user?.is_admin))
+  const jobLab = isJobSearchLabHost()
 
   const items = useMemo(() => {
-    if (!isAdmin) return baseItems
-    return [
-      ...baseItems.slice(0, 4),
-      { id: 'admin' as NavRoute, label: 'Admin', icon: Shield },
-      baseItems[4]!,
-    ]
-  }, [isAdmin])
+    let list = [...baseItems]
+    if (jobLab) {
+      list = [
+        list[0]!,
+        { id: 'jobsearch' as NavRoute, label: 'Jobs', icon: Radar },
+        ...list.slice(1, 4),
+        list[4]!,
+      ]
+    }
+    if (isAdmin) {
+      list = [
+        ...list.slice(0, -1),
+        { id: 'admin' as NavRoute, label: 'Admin', icon: Shield },
+        list[list.length - 1]!,
+      ]
+    }
+    return list
+  }, [isAdmin, jobLab])
 
   return (
     <nav

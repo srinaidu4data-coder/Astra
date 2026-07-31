@@ -94,7 +94,9 @@ async function parseError(res: Response): Promise<string> {
 
 export async function fetchAuthConfig(): Promise<AuthConfig> {
   try {
-    const res = await fetch(`${API_BASE}/v1/auth/config`)
+    const res = await fetch(`${API_BASE}/v1/auth/config`, {
+      signal: AbortSignal.timeout(4_000),
+    })
     if (!res.ok) {
       return {
         auth_required: false,
@@ -107,12 +109,13 @@ export async function fetchAuthConfig(): Promise<AuthConfig> {
     }
     return res.json()
   } catch {
+    // Offline / API not started — open local UI without forcing Google gate
     return {
       auth_required: false,
       google_configured: false,
       stripe_configured: false,
       smtp_configured: false,
-      dev_bypass: false,
+      dev_bypass: true,
       frontend_url: window.location.origin,
     }
   }

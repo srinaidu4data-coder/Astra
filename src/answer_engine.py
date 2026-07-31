@@ -22,31 +22,57 @@ from typing import Any, Generator, Optional
 from model_resolve import resolve_answer_models
 from rag import CLASSIFICATION_MODEL, SCRIPT_MODEL, _get_openai_client, search_context
 
-# Prefer a stronger model for final answers when available (override via env).
+def _default_chat_models() -> tuple[str, str, str]:
+    """
+    (primary, fast, fallback) — Groq Llama when ASTRA_LLM_PROVIDER=groq.
+    """
+    try:
+        from config import get_llm_provider
+
+        provider = get_llm_provider()
+    except Exception:
+        provider = (os.environ.get("ASTRA_LLM_PROVIDER") or "").strip().lower()
+    if provider == "groq":
+        # Fast + capable Groq models (OpenAI-compatible IDs)
+        return (
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "llama-3.3-70b-versatile",
+        )
+    return ("gpt-4.1-mini", "gpt-4.1-nano", "gpt-4.1-mini")
+
+
+_DEF_PRIMARY, _DEF_FAST, _DEF_FALLBACK = _default_chat_models()
+
+# Prefer 4.1-mini over 4o; Groq defaults override when provider=groq.
 ANSWER_MODEL = (
     os.environ.get("ASTRA_ANSWER_MODEL", "").strip()
     or os.environ.get("OPENAI_ANSWER_MODEL", "").strip()
-    or "gpt-4o"
+    or _DEF_PRIMARY
 )
 FALLBACK_MODEL = (
     os.environ.get("ASTRA_FALLBACK_MODEL", "").strip()
     or os.environ.get("DEFAULT_FALLBACK_MODEL", "").strip()
-    or "gpt-4o-mini"
+    or _DEF_FALLBACK
 )
-STRATEGY_MODEL = os.environ.get("ASTRA_STRATEGY_MODEL", "").strip() or CLASSIFICATION_MODEL or "gpt-4o-mini"
+STRATEGY_MODEL = (
+    os.environ.get("ASTRA_STRATEGY_MODEL", "").strip()
+    or CLASSIFICATION_MODEL
+    or _DEF_PRIMARY
+)
 
-# Sub-1s target: default to the fastest solid Chat Completions models.
-# Admin can still assign slower models; ultra/live remaps when unset.
+# Live path: fast model first; stronger fallback for quality.
 FAST_ANSWER_MODEL = (
-    os.environ.get("ASTRA_FAST_MODEL", "").strip() or "gpt-4.1-nano"
+    os.environ.get("ASTRA_FAST_MODEL", "").strip() or _DEF_FAST
 )
 FAST_FALLBACK_MODEL = (
-    os.environ.get("ASTRA_FAST_FALLBACK", "").strip() or "gpt-4o-mini"
+    os.environ.get("ASTRA_FAST_FALLBACK", "").strip() or _DEF_FALLBACK
 )
 
-# ultra = sub-1s target (default) | live | balanced | quality
+# ultra = sub-1s target | live (default) | balanced | quality
+# live is the production default: fast first paint + solid LLM refine quality.
 ANSWER_PROFILE = (
-    os.environ.get("ASTRA_ANSWER_PROFILE", "").strip().lower() or "ultra"
+    os.environ.get("ASTRA_ANSWER_PROFILE", "").strip().lower() or "live"
 )
 # Explicit overrides (1/0) beat profile when set
 _FORCE_STRATEGY_LLM = os.environ.get("ASTRA_STRATEGY_LLM", "").strip().lower()
@@ -90,25 +116,72 @@ def _prefer_fast_models() -> bool:
     return _is_fast_profile()
 
 
-# Compact prompts for ultra/live — less prefill = faster first token
+# Compact prompts for ultra/live — still require technical correctness
 FAST_STAR_SYSTEM = (
     "Senior interview coach. Speakable first-person answer. Labels required:\n"
     "Hook: / Situation: / Task: / Action: / Result: / Close:\n"
-    "Rules: 80-120 words, 1 metric, precise jargon, no fluff, no markdown."
+    "Rules: 120-200 words for short Qs; for multi-part/long Qs 200-320 words and "
+    "address EVERY clause (do not skip later parts). Correct domain facts only, "
+    "1 metric if real, precise jargon, no fluff, no markdown, never invent modules. "
+    "Labels start with Hook: not /Hook:."
 )
 FAST_TECH_SYSTEM = (
-    "Staff engineer interview coach. Speakable answer. Labels:\n"
-    "Hook: / Approach: / Mechanism: / Tradeoff: / Close:\n"
-    "Rules: 70-110 words, technical, 1 tradeoff, no fluff."
+    "Staff/principal engineer interview coach. Speakable, FACTUALLY CORRECT answer.\n"
+    "Labels: Hook: / Approach: / Mechanism: / Tradeoff: / Close:\n"
+    "Rules: 140-220 words for short Qs; multi-part/long Qs 220-360 words covering "
+    "each asked bullet (design + controls + metrics + failure modes as requested). "
+    "If SAP: real FICO terms (FI, CO, tax procedure, condition records, New GL, "
+    "document splitting, company code). If ML: real ML terms (loss, gradient, "
+    "bias/variance, precision/recall, attention QKV, NDCG, leakage, p99). "
+    "No invented APIs. No markdown. Labels like Hook: not /Hook:."
 )
+
+def _is_long_or_multipart_question(question: str) -> bool:
+    q = (question or "").strip()
+    if not q:
+        return False
+    words = len(q.split())
+    if words >= 35:
+        return True
+    low = q.lower()
+    # Multi-clause markers
+    if low.count("?") >= 2:
+        return True
+    if low.count(",") >= 3 and words >= 22:
+        return True
+    if any(
+        p in low
+        for p in (
+            "walk me through",
+            "how would you design",
+            "including",
+            "as well as",
+            "and what",
+            "and how",
+            "from ",
+            "through ",
+            "to online",
+            "multi-",
+            "end-to-end",
+            "step by step",
+            "step-by-step",
+        )
+    ) and words >= 20:
+        return True
+    return False
 FAST_SHORTER_SYSTEM = (
     "Interview coach. Exactly 4 short speakable lines:\n"
     "1) Thesis 2) Mechanism 3) Metric/tradeoff 4) Close.\n"
-    "Max 60 words. Dense, first person."
+    "Max 80 words. Dense, first person, factually correct for the domain."
 )
 FAST_CODE_SYSTEM = (
     "Coding interview coach. Labels: Approach: then Code: (8-15 lines) then Tradeoff:.\n"
-    "Keep under 90 words outside code. First person."
+    "Keep under 100 words outside code. First person. Correct complexity claims."
+)
+
+# Prefer stronger model for domain-hard questions (SAP / ML) even in live profile
+TECH_ACCURACY_MODEL = (
+    os.environ.get("ASTRA_TECH_MODEL", "").strip() or _DEF_PRIMARY
 )
 
 # ---------------------------------------------------------------------------
@@ -284,9 +357,269 @@ def analyze_question_strategy(
     return data
 
 
+def _is_sap_domain(text: str, job: str) -> bool:
+    blob = f"{text} {job}".lower()
+    return any(
+        k in blob
+        for k in (
+            "sap",
+            "fico",
+            "fi/co",
+            "s/4",
+            "s4hana",
+            "vertex",
+            "new gl",
+            "document splitting",
+            "condition record",
+            "tax procedure",
+            "controlling area",
+            "company code",
+            "obyc",
+            "fb50",
+            "f-02",
+            "ptp",
+            "p2p",
+            "procure to pay",
+            "procure-to-pay",
+            "purchase order",
+            "goods receipt",
+            "invoice receipt",
+            "miro",
+            "migo",
+            "me21n",
+        )
+    )
+
+
+def _is_ml_domain(text: str, job: str) -> bool:
+    blob = f"{text} {job}".lower()
+    return any(
+        k in blob
+        for k in (
+            "machine learning",
+            "deep learning",
+            "neural",
+            "transformer",
+            "llm",
+            "gradient",
+            "embedding",
+            "inference",
+            "training set",
+            "overfitting",
+            "bias-variance",
+            "bias variance",
+            "precision and recall",
+            "precision vs recall",
+            "attention",
+            "backprop",
+            "pytorch",
+            "tensorflow",
+            "feature store",
+            "mlops",
+            "ai/ml",
+            "ai ml",
+            "ml engineer",
+            "data scientist",
+        )
+    ) or (
+        any(k in job for k in ("ml ", " ml", "ai/", "ai ", "machine learning", "deep learning"))
+        and any(
+            k in text
+            for k in (
+                "model",
+                "train",
+                "loss",
+                "accuracy",
+                "dataset",
+                "feature",
+                "predict",
+                "classif",
+                "regress",
+                "learning rate",
+                "epoch",
+            )
+        )
+    )
+
+
+def _sap_strategy(question: str) -> dict[str, Any]:
+    t = (question or "").lower()
+    # Question-specific must-cover so we don't spray "tax" on every SAP Q
+    if "fi" in t and "co" in t and ("difference" in t or "vs" in t or "versus" in t):
+        must = [
+            "FI = external statutory/legal reporting (company code, BS/P&L)",
+            "CO = internal management accounting (cost centers, profit centers, internal orders)",
+            "Integration: primary postings in FI often create CO documents",
+            "Example objects: G/L accounts vs cost elements / cost centers",
+        ]
+        jargon = [
+            "FI",
+            "CO",
+            "company code",
+            "cost center",
+            "profit center",
+            "primary cost element",
+            "reconciliation",
+        ]
+    elif "tax" in t or "condition" in t or "vertex" in t:
+        must = [
+            "Tax procedure + condition types drive calculation",
+            "Access sequence finds condition records (country/region/tax code/material/customer)",
+            "Tax code on line items; jurisdiction where relevant",
+            "Posting to tax G/L; reconciliation / reporting implications",
+        ]
+        jargon = [
+            "tax procedure",
+            "condition type",
+            "access sequence",
+            "condition record",
+            "tax code",
+            "FTXP",
+            "jurisdiction",
+        ]
+    elif "split" in t or "new gl" in t or "new g/l" in t or "document splitting" in t:
+        must = [
+            "New GL document splitting derives account assignments for zero-balance entities",
+            "Splitting characteristics e.g. profit center / segment",
+            "Active splitting method + item categories / business transaction variants",
+            "Enables segment reporting and balanced financial statements by dimension",
+        ]
+        jargon = [
+            "New GL",
+            "document splitting",
+            "profit center",
+            "segment",
+            "zero-balance",
+            "item category",
+            "passive vs active splitting",
+        ]
+    elif any(
+        k in t
+        for k in (
+            "ptp",
+            "p2p",
+            "procure",
+            "purchase order",
+            "goods receipt",
+            "invoice receipt",
+            "miro",
+            "migo",
+            "accounting entr",
+        )
+    ):
+        must = [
+            "PO creation is logistics (usually no FI posting yet)",
+            "Goods receipt (MIGO): Dr Inventory/GR-IR relevant, Cr GR/IR clearing",
+            "Invoice receipt (MIRO): Dr GR/IR, Cr Vendor; price variance if needed",
+            "Payment: Dr Vendor, Cr Bank; OBYC/account determination links MM-FI",
+        ]
+        jargon = [
+            "procure-to-pay",
+            "purchase order",
+            "goods receipt",
+            "GR/IR",
+            "invoice receipt",
+            "MIRO",
+            "MIGO",
+            "vendor",
+            "OBYC",
+            "BSX",
+            "WRX",
+        ]
+    else:
+        must = [
+            "Name the real SAP objects (company code, cost center, document type, posting keys)",
+            "Describe the posting/document flow, not vague ERP slogans",
+            "Mention integration touchpoint (MM/SD/FI or FI-CO) when relevant",
+            "Call out control/reconciliation or config vs master data",
+        ]
+        jargon = ["SAP FICO", "S/4HANA", "company code", "document type", "posting key", "G/L"]
+    return {
+        "question_type": "domain",
+        "domain_tags": ["sap", "fico"],
+        "must_cover": must,
+        "jargon_bank": jargon,
+        "seniority_bar": "senior",
+        "pitfalls": [
+            "generic software engineering answer with no SAP objects",
+            "confusing FI external reporting with CO internal controlling",
+            "inventing non-existent T-codes or modules",
+            "pasting tax determination into unrelated SAP questions",
+        ],
+        "evidence_style": "walkthrough",
+        "depth_target": "very_high",
+        "accuracy_domain": "sap",
+    }
+
+
+def _ml_strategy(question: str) -> dict[str, Any]:
+    t = (question or "").lower()
+    if "bias" in t and "variance" in t:
+        must = [
+            "Bias = error from wrong assumptions (underfit); variance = sensitivity to training noise (overfit)",
+            "Total error ≈ bias² + variance + irreducible noise",
+            "More complex models lower bias / raise variance; regularization / more data reduce variance",
+            "Validate with train vs val curves or cross-validation",
+        ]
+        jargon = ["bias", "variance", "underfitting", "overfitting", "regularization", "cross-validation"]
+    elif "precision" in t and "recall" in t:
+        must = [
+            "Precision = TP/(TP+FP); recall = TP/(TP+FN)",
+            "High precision → few false alarms; high recall → few misses",
+            "Tradeoff controlled by threshold; F1 when balance needed",
+            "Choose metric from business cost of FP vs FN",
+        ]
+        jargon = ["precision", "recall", "true positive", "false positive", "threshold", "F1"]
+    elif "attention" in t or "transformer" in t:
+        must = [
+            "Q, K, V projections; scores = QK^T / sqrt(d_k); softmax → weights; weighted sum of V",
+            "Self-attention mixes all positions; multi-head captures different relations",
+            "Complexity O(n²) in sequence length; residual + layer norm in blocks",
+        ]
+        jargon = ["query", "key", "value", "scaled dot-product", "softmax", "multi-head attention"]
+    elif "gradient" in t or "learning rate" in t:
+        must = [
+            "Gradient descent updates params opposite the loss gradient",
+            "Learning rate = step size; too high diverges, too low slow/stuck",
+            "Mini-batch SGD / Adam; schedules and gradient clipping in practice",
+        ]
+        jargon = ["loss", "gradient", "learning rate", "SGD", "Adam", "local minimum"]
+    else:
+        must = [
+            "State the ML concept correctly (math or algorithmic definition)",
+            "Give train/serve implication (overfit, latency, data leakage, metrics)",
+            "One real tradeoff",
+            "How you'd validate in production or offline eval",
+        ]
+        jargon = ["training", "validation", "generalization", "feature", "metric", "inference"]
+    return {
+        "question_type": "technical",
+        "domain_tags": ["ml", "ai"],
+        "must_cover": must,
+        "jargon_bank": jargon,
+        "seniority_bar": "senior",
+        "pitfalls": [
+            "buzzwords without definitions",
+            "wrong formulas for precision/recall or attention",
+            "claiming accuracy is always the right metric",
+            "confusing training-time and inference-time concerns",
+        ],
+        "evidence_style": "framework",
+        "depth_target": "very_high",
+        "accuracy_domain": "ml",
+    }
+
+
 def _fallback_strategy(question: str, job_context: str) -> dict[str, Any]:
     t = (question or "").lower()
     job = (job_context or "").lower()
+
+    # Domain packs first — accuracy-critical interviews
+    if _is_sap_domain(t, job):
+        return _sap_strategy(t)
+    if _is_ml_domain(t, job):
+        return _ml_strategy(t)
+
     tags: list[str] = []
     jtype = "other"
     if any(k in t for k in ("design", "architect", "scale", "system", "distributed")):
@@ -295,16 +628,13 @@ def _fallback_strategy(question: str, job_context: str) -> dict[str, Any]:
     elif any(k in t for k in ("code", "implement", "algorithm", "complexity", "leetcode")):
         jtype = "coding"
         tags = ["time complexity", "space complexity", "edge cases"]
-    elif any(k in t for k in ("tell me about a time", "conflict", "leadership", " mentored", "failed")):
+    elif any(k in t for k in ("tell me about a time", "conflict", "leadership", "mentored", "failed")):
         jtype = "behavioral"
         tags = ["ownership", "stakeholder management", "metrics"]
     elif any(k in t for k in ("debug", "outage", "incident", "root cause", "latency spike")):
         jtype = "troubleshooting"
         tags = ["observability", "SLOs", "rollback", "blast radius"]
-    elif any(k in t + job for k in ("sap", "fico", "vertex", "tax", "erp")):
-        jtype = "domain"
-        tags = ["SAP FICO", "tax determination", "reconciliation", "controls"]
-    elif any(k in t for k in ("how", "what is", "explain", "difference", "why")):
+    elif any(k in t for k in ("how", "what is", "explain", "difference", "why", "compare")):
         jtype = "technical"
         tags = ["tradeoffs", "fundamentals", "production"]
 
@@ -319,10 +649,80 @@ def _fallback_strategy(question: str, job_context: str) -> dict[str, Any]:
         ],
         "jargon_bank": tags,
         "seniority_bar": "senior",
-        "pitfalls": ["vague adjectives", "no metrics", "no failure modes"],
+        "pitfalls": ["vague adjectives", "no metrics", "no failure modes", "incorrect technical claims"],
         "evidence_style": "STAR" if jtype == "behavioral" else "tradeoff_analysis",
         "depth_target": "very_high" if jtype in ("system_design", "technical", "domain") else "high",
+        "accuracy_domain": "general",
     }
+
+
+def _needs_accuracy_model(strategy: dict[str, Any], question: str, job_context: str) -> bool:
+    """True for SAP / ML / hard technical — use mini not nano."""
+    dom = (strategy.get("accuracy_domain") or "").lower()
+    if dom in ("sap", "ml"):
+        return True
+    if strategy.get("question_type") in ("technical", "domain", "system_design", "coding"):
+        return True
+    return _is_sap_domain(question, job_context) or _is_ml_domain(question, job_context)
+
+
+def _prefer_mode_for_question(mode: str, strategy: dict[str, Any], question: str) -> str:
+    """Auto-use technical mode for domain/tech Qs when UI still sends star."""
+    mode = (mode or "star").strip().lower()
+    if mode in ("technical", "code", "shorter"):
+        return mode
+    jtype = strategy.get("question_type") or ""
+    if jtype in ("technical", "domain", "system_design", "coding", "troubleshooting"):
+        # Keep STAR for pure behavioral-sounding domain stories
+        q = (question or "").lower()
+        if any(p in q for p in ("tell me about a time", "describe a situation", "conflict")):
+            return "star"
+        return "technical"
+    return mode
+
+
+def _normalize_answer_text(text: str) -> str:
+    """Fix common model label glitches (/Hook:, markdown) for speakable UI."""
+    t = (text or "").strip()
+    if not t:
+        return t
+    # Remove accidental leading slashes on labels: /Hook: -> Hook:
+    t = re.sub(
+        r"(?m)^[ \t]*/+\s*(Hook|Situation|Task|Action|Result|Depth|Close|Approach|Mechanism|Tradeoffs?|Validation)\s*:",
+        r"\1:",
+        t,
+    )
+    t = re.sub(
+        r"[ \t]*/+\s*(Hook|Situation|Task|Action|Result|Approach|Mechanism|Tradeoff)\s*:",
+        r"\1:",
+        t,
+    )
+    # Models sometimes restart labels mid-line: "...taxes.Hook:  Approach:" -> "...taxes. Approach:"
+    t = re.sub(
+        r"([.!?])\s*Hook:\s*(?=(Approach|Situation|Task|Action|Result|Mechanism|Tradeoff|Close)\s*:)",
+        r"\1 ",
+        t,
+        flags=re.I,
+    )
+    t = re.sub(r"\bHook:\s*(?=(Approach|Situation|Mechanism|Tradeoff)\s*:)", "", t, flags=re.I)
+    t = t.replace("**", "").replace("##", "")
+    # Collapse runaway whitespace
+    t = re.sub(r"[ \t]{2,}", " ", t)
+    t = re.sub(r"\n{3,}", "\n\n", t)
+    # Models often append a dangling empty label at the end: "...reporting.Hook:"
+    t = re.sub(
+        r"[\s/]*(Hook|Situation|Task|Action|Result|Depth|Close|Approach|Mechanism|Tradeoffs?|Validation)\s*:\s*$",
+        "",
+        t,
+        flags=re.I,
+    )
+    t = t.strip()
+    # If it still ends mid-label residue, trim to last sentence end
+    if t and t[-1] not in ".!?":
+        m = re.search(r"^(.*[.!?])\s*[^.!?]*$", t, flags=re.S)
+        if m and len(m.group(1).split()) >= 40:
+            t = m.group(1).strip()
+    return t
 
 
 def score_answer_quality(text: str, strategy: dict[str, Any], *, mode: str) -> dict[str, Any]:
@@ -420,29 +820,33 @@ def _system_for_mode(mode: str) -> str:
     return RICH_STAR_SYSTEM
 
 
-def _max_tokens_for_mode(mode: str) -> int:
-    # ultra: tiny completions for sub-second TTFT on nano/mini
+def _max_tokens_for_mode(mode: str, *, question: str = "") -> int:
+    # Enough room to finish technical + multi-part answers
+    long_q = _is_long_or_multipart_question(question)
     if ANSWER_PROFILE in ("ultra", "fast"):
-        return {
-            "shorter": 70,
-            "technical": 110,
-            "code": 130,
-            "star": 100,
-        }.get(mode, 100)
+        base = {
+            "shorter": 100,
+            "technical": 280,
+            "code": 240,
+            "star": 220,
+        }.get(mode, 220)
+        return base + (120 if long_q else 0)
     if ANSWER_PROFILE == "live":
-        return {
-            "shorter": 120,
-            "technical": 200,
-            "code": 220,
-            "star": 180,
-        }.get(mode, 180)
+        base = {
+            "shorter": 160,
+            "technical": 480,
+            "code": 400,
+            "star": 420,
+        }.get(mode, 420)
+        return base + (180 if long_q else 0)  # multi-part needs headroom
     if ANSWER_PROFILE == "balanced":
-        return {
+        base = {
             "shorter": 340,
-            "technical": 850,
+            "technical": 900,
             "code": 900,
-            "star": 850,
-        }.get(mode, 800)
+            "star": 900,
+        }.get(mode, 900)
+        return base + (150 if long_q else 0)
     return {
         "shorter": 420,
         "technical": 1100,
@@ -464,16 +868,44 @@ def _build_user_prompt(
     q = (question or "").strip()
     job = (job_context or "Senior professional").strip()
 
-    # Ultra/live: minimal prompt → less prefill latency
+    # Live/ultra: compact but accuracy-aware (domain packs prevent wrong SAP/ML answers)
     if _is_fast_profile() and not strict_regen:
         tags = strategy.get("domain_tags") or []
-        tag_s = ", ".join(str(t) for t in tags[:4] if t)
+        jargon = strategy.get("jargon_bank") or tags
+        must = strategy.get("must_cover") or []
+        pitfalls = strategy.get("pitfalls") or []
+        tag_s = ", ".join(str(t) for t in tags[:8] if t)
+        jar_s = ", ".join(str(j) for j in jargon[:10] if j)
+        must_s = "; ".join(str(m) for m in must[:6] if m)
+        pit_s = "; ".join(str(p) for p in pitfalls[:4] if p)
+        domain = strategy.get("accuracy_domain") or "general"
+        long_q = _is_long_or_multipart_question(q)
+        # Keep full multi-part questions — truncating to 500 chars caused wrong answers
+        q_budget = 1800 if long_q else 900
         parts = [
-            f"Role: {job[:80]}",
-            f"Q: {q[:400]}",
+            f"Role: {job[:160]}",
+            f"Q: {q[:q_budget]}",
+            f"Domain: {domain}",
         ]
         if tag_s:
             parts.append(f"Topics: {tag_s}")
+        if jar_s:
+            parts.append(f"Use terms correctly: {jar_s}")
+        if must_s:
+            parts.append(f"Must cover: {must_s}")
+        if pit_s:
+            parts.append(f"Avoid: {pit_s}")
+        if long_q:
+            parts.append(
+                "LONG/MULTI-PART QUESTION: Answer every clause in order "
+                "(design, constraints, controls, metrics, failure modes, etc.). "
+                "Do not stop after only the first sub-question. 220-360 words."
+            )
+        parts.append(
+            "Accuracy rules: state correct definitions/mechanisms for this domain; "
+            "do not invent SAP T-codes/modules or ML formulas; finish every labeled section; "
+            "labels exactly like Hook: (never /Hook:)."
+        )
         parts.append("Answer now.")
         return "\n".join(parts)
 
@@ -573,19 +1005,38 @@ def _complete_answer(
     max_tokens: int,
     temperature: float = 0.45,
 ) -> str:
+    from config import get_llm_provider, remap_model_for_provider
+
     client = _get_openai_client()
-    # Primary → configured fallback → SCRIPT_MODEL mini
-    models_try = [model, fallback_model or FALLBACK_MODEL, SCRIPT_MODEL, "gpt-4o-mini"]
+    provider = get_llm_provider()
+
+    def _map(m: str | None) -> str | None:
+        return remap_model_for_provider(m) if m else m
+
+    # Primary → fallback only (no OpenAI ghost models on Groq)
+    models_try = [
+        _map(model),
+        _map(fallback_model or FALLBACK_MODEL),
+        _map(SCRIPT_MODEL),
+        _map(FAST_ANSWER_MODEL),
+        _map(FAST_FALLBACK_MODEL),
+    ]
+    if provider != "groq":
+        models_try.extend(["gpt-4.1-nano", "gpt-4o-mini"])
     seen: set[str] = set()
     last_err: Exception | None = None
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
-    # Fast path: one model, short timeout — do not cascade-wait 4 models
-    timeout = 6.0 if _is_fast_profile() else 75.0
+    # Fail fast on wrong model IDs — was 6s×2 ≈ 12s when admin still had gpt-4o
+    timeout = 8.0 if _is_fast_profile() else 45.0
     if _is_fast_profile():
-        models_try = [model, fallback_model or FAST_FALLBACK_MODEL]
+        models_try = [
+            _map(model),
+            _map(fallback_model or FAST_FALLBACK_MODEL),
+            _map(FAST_ANSWER_MODEL),
+        ]
     for m in models_try:
         if not m or m in seen:
             continue
@@ -603,6 +1054,15 @@ def _complete_answer(
             return (resp.choices[0].message.content or "").strip()
         except Exception as e:
             last_err = e
+            err_s = str(e).lower()
+            # model_not_found / 404 → try next immediately (no long hang)
+            if "model" in err_s and (
+                "not found" in err_s
+                or "does not exist" in err_s
+                or "404" in err_s
+                or "invalid" in err_s
+            ):
+                continue
             continue
     if last_err:
         raise last_err
@@ -631,28 +1091,36 @@ def generate_answer(
     if mode not in ("star", "shorter", "technical", "code"):
         mode = "star"
 
+    strategy = _fallback_strategy(question, job_context)
+    mode = _prefer_mode_for_question(mode, strategy, question)
+
     # ---- Ultra/live: research cascade (cache + template + optional nano) ----
     if _is_fast_profile():
         from fast_answer import cache_lookup, cache_store, instant_answer
 
-        hit = cache_lookup(question, mode=mode, job_context=job_context)
+        # Exact match only — approx cache reuses earlier Q answers mid-interview
+        hit = cache_lookup(
+            question, mode=mode, job_context=job_context, allow_approx=False
+        )
         if hit:
+            generate_answer.last_source = hit[1] if len(hit) > 1 else "cache"  # type: ignore[attr-defined]
             return hit[0]
 
-        # Prefer single-shot nano; fall back to instant template if LLM fails/slow
+        # Nano for speed on soft Qs; mini for SAP/ML/technical correctness
         am = answer_model
         fm = fallback_model
         uam = user_answer_model
         ufm = user_fallback_model
+        accuracy = _needs_accuracy_model(strategy, question, job_context)
         if _prefer_fast_models():
             if not (uam or am):
-                am = FAST_ANSWER_MODEL
+                am = TECH_ACCURACY_MODEL if accuracy else FAST_ANSWER_MODEL
             if not (ufm or fm):
-                fm = FAST_FALLBACK_MODEL
+                fm = FAST_FALLBACK_MODEL if accuracy else FAST_ANSWER_MODEL
             if _is_reasoning_model(str(uam or am or "")) and not os.environ.get(
                 "ASTRA_ALLOW_SLOW_LIVE", ""
             ).strip():
-                am = FAST_ANSWER_MODEL
+                am = TECH_ACCURACY_MODEL if accuracy else FAST_ANSWER_MODEL
                 uam = None
 
         primary, fallback = resolve_answer_models(
@@ -662,9 +1130,25 @@ def generate_answer(
             user_fallback_model=ufm,
         )
         if _prefer_fast_models() and _is_reasoning_model(primary):
-            primary, fallback = FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL
+            primary, fallback = (
+                (TECH_ACCURACY_MODEL, FAST_FALLBACK_MODEL)
+                if accuracy
+                else (FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL)
+            )
+        # Ensure accuracy path prefers mini even if admin left defaults empty
+        if accuracy and primary == FAST_ANSWER_MODEL and (
+            "nano" in primary or "instant" in primary or "8b" in primary.lower()
+        ):
+            primary, fallback = TECH_ACCURACY_MODEL, FAST_FALLBACK_MODEL
+        # Remap gpt-4o etc. → Groq Llama (prevents 10s multi-timeout cascade)
+        try:
+            from config import remap_model_for_provider
 
-        strategy = _fallback_strategy(question, job_context)
+            primary = remap_model_for_provider(primary) or primary
+            fallback = remap_model_for_provider(fallback) or fallback
+        except Exception:
+            pass
+
         system = _system_for_mode(mode)
         user = _build_user_prompt(
             question,
@@ -681,18 +1165,32 @@ def generate_answer(
                 user=user,
                 model=primary,
                 fallback_model=fallback,
-                max_tokens=_max_tokens_for_mode(mode),
-                temperature=0.3,
+                max_tokens=_max_tokens_for_mode(mode, question=question),
+                temperature=0.2 if accuracy else 0.3,
             )
         except Exception:
             answer = ""
-        if not (answer or "").strip():
-            answer, _, _ = instant_answer(
-                question, job_context=job_context, mode=mode
+        answer = _normalize_answer_text(answer)
+        # Domain answers: never substitute generic SWE templates (wrong for SAP/ML)
+        if not answer:
+            allow_template = (
+                not accuracy
+                and os.environ.get("ASTRA_TEMPLATE_ON_LLM_FAIL", "1")
+                .strip()
+                .lower()
+                not in ("0", "false", "no", "off")
             )
-        answer = (answer or "").strip()
-        if answer:
-            cache_store(question, answer, mode=mode, job_context=job_context)
+            if allow_template:
+                answer, _, _ = instant_answer(
+                    question, job_context=job_context, mode=mode
+                )
+                answer = _normalize_answer_text(answer)
+                generate_answer.last_source = "template_fallback"  # type: ignore[attr-defined]
+                return answer
+            generate_answer.last_source = "llm_empty"  # type: ignore[attr-defined]
+            return ""
+        cache_store(question, answer, mode=mode, job_context=job_context)
+        generate_answer.last_source = "llm"  # type: ignore[attr-defined]
         return answer
 
     # ---- Quality / balanced path ----
@@ -731,14 +1229,20 @@ def generate_answer(
         strict_regen=False,
     )
 
+    accuracy = _needs_accuracy_model(strategy, question, job_context)
+    if accuracy and (not am and not uam) and "nano" in (primary or ""):
+        primary, fallback = TECH_ACCURACY_MODEL, FAST_FALLBACK_MODEL
+
     answer = _complete_answer(
         system=system,
         user=user,
         model=primary,
         fallback_model=fallback,
-        max_tokens=_max_tokens_for_mode(mode),
-        temperature=0.42,
+        max_tokens=_max_tokens_for_mode(mode, question=question),
+        temperature=0.25 if accuracy else 0.42,
     )
+    answer = _normalize_answer_text(answer)
+    generate_answer.last_source = "llm" if (answer or "").strip() else "llm_empty"  # type: ignore[attr-defined]
 
     if _use_quality_regen() and answer:
         quality = score_answer_quality(answer, strategy, mode=mode)
@@ -762,9 +1266,10 @@ def generate_answer(
                 user=user2,
                 model=primary,
                 fallback_model=fallback,
-                max_tokens=_max_tokens_for_mode(mode) + 120,
-                temperature=0.35,
+                max_tokens=_max_tokens_for_mode(mode, question=question) + 120,
+                temperature=0.3,
             )
+            answer2 = _normalize_answer_text(answer2)
             q2 = score_answer_quality(answer2, strategy, mode=mode)
             if q2["score"] >= quality["score"]:
                 answer = answer2
@@ -790,6 +1295,13 @@ def iter_answer_tokens(
     if mode not in ("star", "shorter", "technical", "code"):
         mode = "star"
 
+    if _use_strategy_llm():
+        strategy = analyze_question_strategy(question, job_context=job_context)
+    else:
+        strategy = _fallback_strategy(question, job_context)
+    mode = _prefer_mode_for_question(mode, strategy, question)
+    accuracy = _needs_accuracy_model(strategy, question, job_context)
+
     chunks: list = []
     if _use_rag():
         try:
@@ -803,13 +1315,13 @@ def iter_answer_tokens(
     ufm = user_fallback_model
     if _prefer_fast_models():
         if not (uam or am):
-            am = FAST_ANSWER_MODEL
+            am = TECH_ACCURACY_MODEL if accuracy else FAST_ANSWER_MODEL
         if not (ufm or fm):
-            fm = FAST_FALLBACK_MODEL
+            fm = FAST_FALLBACK_MODEL if accuracy else FAST_ANSWER_MODEL
         if _is_reasoning_model(str(uam or am or "")) and not os.environ.get(
             "ASTRA_ALLOW_SLOW_LIVE", ""
         ).strip():
-            am = FAST_ANSWER_MODEL
+            am = TECH_ACCURACY_MODEL if accuracy else FAST_ANSWER_MODEL
             uam = None
 
     primary, fallback = resolve_answer_models(
@@ -819,12 +1331,23 @@ def iter_answer_tokens(
         user_fallback_model=ufm,
     )
     if _prefer_fast_models() and _is_reasoning_model(primary):
-        primary, fallback = FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL
+        primary, fallback = (
+            (TECH_ACCURACY_MODEL, FAST_FALLBACK_MODEL)
+            if accuracy
+            else (FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL)
+        )
+    if accuracy and primary == FAST_ANSWER_MODEL and (
+        "nano" in primary or "instant" in primary or "8b" in primary.lower()
+    ):
+        primary, fallback = TECH_ACCURACY_MODEL, FAST_FALLBACK_MODEL
+    try:
+        from config import remap_model_for_provider
 
-    if _use_strategy_llm():
-        strategy = analyze_question_strategy(question, job_context=job_context)
-    else:
-        strategy = _fallback_strategy(question, job_context)
+        primary = remap_model_for_provider(primary) or primary
+        fallback = remap_model_for_provider(fallback) or fallback
+    except Exception:
+        pass
+
     system = _system_for_mode(mode)
     user = _build_user_prompt(
         question,
@@ -835,22 +1358,22 @@ def iter_answer_tokens(
         context_chunks=chunks,
         strict_regen=False,
     )
-    if not _is_fast_profile():
+    if not _is_fast_profile() or accuracy:
         user += (
-            "\n\nSTREAMING QUALITY RULE: Prefer longer, denser technical content over brevity. "
-            "Do not stop early. Complete every section."
+            "\n\nSTREAMING QUALITY RULE: Prefer correct, dense technical content. "
+            "Do not stop early. Complete every section with accurate domain facts."
         )
 
     client = _get_openai_client()
-    models_try = [primary, fallback, SCRIPT_MODEL, "gpt-4o-mini"]
+    models_try = [primary, fallback, SCRIPT_MODEL, FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL]
     stream = None
     last_err: Exception | None = None
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
-    max_tok = _max_tokens_for_mode(mode)
-    temp = 0.35 if _is_fast_profile() else 0.42
+    max_tok = _max_tokens_for_mode(mode, question=question)
+    temp = 0.2 if accuracy else (0.35 if _is_fast_profile() else 0.42)
     for model in models_try:
         if not model:
             continue

@@ -121,12 +121,12 @@ def user_public_dict(user: User) -> dict[str, Any]:
     primary = (
         getattr(user, "answer_model", None)
         or _settings.DEFAULT_ANSWER_MODEL
-        or "gpt-4.1-nano"
+        or "gpt-4.1-mini"
     )
     fallback = (
         getattr(user, "fallback_model", None)
         or _settings.DEFAULT_FALLBACK_MODEL
-        or "gpt-4o-mini"
+        or "gpt-4.1-nano"
     )
     return {
         "id": user.id,

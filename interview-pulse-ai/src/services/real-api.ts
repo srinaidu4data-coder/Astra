@@ -100,14 +100,25 @@ export async function fetchAnswer(
     answer?: string
     bullets?: string[]
     latency_ms?: number
+    first_paint_ms?: number
+    full_ms?: number
     question?: string
+    source?: string
   }
+  // Prefer full_ms (true wait for answer). latency_ms was first_paint (~1ms)
+  // which made the UI lie about speed while the user still waited for the body.
+  const waitMs =
+    typeof data.full_ms === 'number'
+      ? data.full_ms
+      : typeof data.latency_ms === 'number'
+        ? data.latency_ms
+        : undefined
   return normalizeAnswer({
     id: uid('ans'),
     mode,
     text: data.answer ?? '',
     bullets: data.bullets,
-    latencyMs: data.latency_ms,
+    latencyMs: waitMs,
     question: data.question || question,
   })
 }

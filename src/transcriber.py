@@ -6,12 +6,15 @@ Uses platform-agnostic AudioCapture abstraction and transcribes
 using faster-whisper.
 """
 
+import os
+
 import numpy as np
 from faster_whisper import WhisperModel
 
 from audio_capture import get_audio_capture, AudioCapture
 from config import (
     AUDIO_SAMPLE_RATE,
+    WHISPER_BEAM_SIZE,
     WHISPER_MODEL,
     WHISPER_DEVICE,
     WHISPER_COMPUTE_TYPE,
@@ -36,12 +39,50 @@ def get_whisper_model() -> WhisperModel:
     return _whisper_model
 
 
-def transcribe_audio(audio_array: np.ndarray) -> str:
+def _trim_silence_edges(
+    audio: np.ndarray,
+    *,
+    sample_rate: int = 16000,
+    thr: float = 0.012,
+    pad_ms: int = 120,
+) -> np.ndarray:
     """
-    Transcribe audio from numpy array.
+    Drop leading/trailing near-silence so Whisper processes less audio (faster).
+    Keeps a small pad so the first/last word is not clipped.
+    """
+    if audio is None or len(audio) == 0:
+        return audio
+    abs_a = np.abs(audio)
+    # Frame energy ~10ms
+    frame = max(1, int(sample_rate * 0.01))
+    n = len(abs_a) // frame
+    if n < 3:
+        return audio
+    energy = abs_a[: n * frame].reshape(n, frame).mean(axis=1)
+    speech = np.where(energy >= thr)[0]
+    if speech.size == 0:
+        return audio
+    pad = max(1, int(pad_ms / 10))  # frames
+    start_f = max(0, int(speech[0]) - pad)
+    end_f = min(n, int(speech[-1]) + pad + 1)
+    start = start_f * frame
+    end = min(len(audio), end_f * frame)
+    if end - start < sample_rate * 0.35:
+        return audio
+    return audio[start:end]
+
+
+def transcribe_audio(
+    audio_array: np.ndarray,
+    *,
+    initial_prompt: str | None = None,
+) -> str:
+    """
+    Transcribe audio from numpy array (accuracy-first for live interviews).
 
     Args:
         audio_array: numpy array of 16-bit audio at 16kHz
+        initial_prompt: optional domain vocabulary hint for Whisper
 
     Returns:
         Transcribed text string
@@ -50,33 +91,72 @@ def transcribe_audio(audio_array: np.ndarray) -> str:
         print("Warning: Empty audio buffer - check if audio is playing")
         return ""
 
+    sr = int(AUDIO_SAMPLE_RATE or 16000)
     # Convert int16 to float32 normalized [-1.0, 1.0] for faster-whisper
     audio_float32 = audio_array.astype(np.float32) / 32768.0
 
-    # Stereo Mix / loopback is often very quiet — boost before VAD/STT
+    # Stereo Mix / loopback / browser mic are often quiet — boost before trim/STT
     peak = float(np.max(np.abs(audio_float32))) + 1e-9
-    if peak < 0.15:
-        gain = min(30.0, 0.4 / peak)
+    if peak < 0.22:
+        # Target peak ~0.55 so Whisper "hears" loopback as clearly as file audio
+        target = 0.55
+        gain = min(40.0, target / peak)
         audio_float32 = np.clip(audio_float32 * gain, -1.0, 1.0)
         print(f"[stt] boosted quiet audio peak {peak:.4f} -> gain {gain:.1f}x")
 
-    # Transcribe with optimized settings
+    # Trim silence edges — biggest free speedup (less audio into Whisper)
+    before = len(audio_float32)
+    # Slightly lower thr so soft word onsets (especially after boost) are kept
+    audio_float32 = _trim_silence_edges(audio_float32, sample_rate=sr, thr=0.008)
+    if len(audio_float32) < before:
+        print(f"[stt] trimmed {before / sr:.2f}s -> {len(audio_float32) / sr:.2f}s")
+
+    # Cap only extreme clips — long multi-clause questions need 20–40s
+    max_s = float(os.environ.get("ASTRA_STT_MAX_SECONDS", "45") or "45")
+    max_samples = int(sr * max(12.0, max_s))
+    if len(audio_float32) > max_samples:
+        # Prefer keeping the START of the question (not only the tail)
+        # Tail-only was dropping "In a complex multi-company…" openings
+        audio_float32 = audio_float32[:max_samples]
+
+    # Reject near-silent clips early (common when VAD fires on noise)
+    peak2 = float(np.max(np.abs(audio_float32))) + 1e-9
+    if peak2 < 0.01:
+        print(f"[stt] skip near-silent clip peak={peak2:.4f}")
+        return ""
+
     model = get_whisper_model()
-    # Disable VAD when still quiet after boost — VAD was dropping soft speech
-    use_vad = float(np.max(np.abs(audio_float32))) >= 0.05
+    beam = max(1, int(WHISPER_BEAM_SIZE or 2))
+    # Domain vocabulary reduces "SAPS slash for HANA" style errors
+    prompt = (initial_prompt or os.environ.get("ASTRA_STT_PROMPT") or "").strip()
+    if not prompt:
+        prompt = (
+            "Interview questions about software engineering, AI, machine learning, "
+            "SAP S/4HANA Finance, FICO, Vertex O Series tax, GL, cost centers."
+        )
+
+    # Skip Whisper internal VAD — we already edge-trim; Silero often chops starts.
     segments, _ = model.transcribe(
         audio_float32,
-        beam_size=1,
+        beam_size=beam,
         best_of=1,
-        vad_filter=use_vad,
-        vad_parameters=dict(min_silence_duration_ms=400) if use_vad else None,
+        temperature=0.0,
+        vad_filter=False,
         language="en",
         condition_on_previous_text=False,
         without_timestamps=True,
+        initial_prompt=prompt[:224],
+        # Slightly more tolerant of soft/technical speech than stock defaults
+        compression_ratio_threshold=2.6,
+        log_prob_threshold=-1.2,
+        no_speech_threshold=0.5,
     )
 
     text_parts = [segment.text for segment in segments]
-    return " ".join(text_parts).strip()
+    text = " ".join(text_parts).strip()
+    # Collapse repeated whitespace / Whisper artifacts
+    text = " ".join(text.split())
+    return text
 
 
 class ContinuousTranscriber:
