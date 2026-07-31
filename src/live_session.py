@@ -253,6 +253,18 @@ class LiveInterviewSession:
             except Exception as e:
                 self._emit("error", {"message": f"Whisper load failed: {e}"})
 
+            # Warm the LLM provider's TCP/TLS connection in the background so
+            # question #1 doesn't pay a ~2-3s cold-connection penalty (measured
+            # first_token_ms ~2900ms on Q1 vs ~300ms steady-state otherwise).
+            try:
+                from answer_engine import warm_llm_connection
+
+                threading.Thread(
+                    target=warm_llm_connection, daemon=True, name="llm-warm"
+                ).start()
+            except Exception:
+                pass
+
             while not self._stop.is_set():
                 self._tick_vad()
                 time.sleep(0.05)  # snappier end-of-speech detection

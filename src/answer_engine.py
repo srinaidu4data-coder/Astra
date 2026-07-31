@@ -1054,15 +1054,9 @@ def _complete_answer(
             return (resp.choices[0].message.content or "").strip()
         except Exception as e:
             last_err = e
-            err_s = str(e).lower()
-            # model_not_found / 404 → try next immediately (no long hang)
-            if "model" in err_s and (
-                "not found" in err_s
-                or "does not exist" in err_s
-                or "404" in err_s
-                or "invalid" in err_s
-            ):
-                continue
+            # Visible reason for a fallback — silent failures here previously
+            # surfaced as an unexplained thin template answer mid-interview.
+            print(f"[answer_engine] model={m!r} failed: {type(e).__name__}: {e}")
             continue
     if last_err:
         raise last_err
@@ -1401,6 +1395,7 @@ def iter_answer_tokens(
                 break
             except Exception as e2:
                 last_err = e2
+                print(f"[answer_engine] stream model={model!r} failed: {type(e2).__name__}: {e2}")
                 continue
     if stream is None:
         if last_err:
@@ -1531,6 +1526,32 @@ def re_sub_wrappers(t: str) -> str:
     t = re.sub(r"^(question|q)\s*\d+\s*[,.:\-–]?\s*", "", t)
     t = re.sub(r"^(interviewer|host)\s*[,:]\s*", "", t)
     return t.strip()
+
+
+def warm_llm_connection() -> None:
+    """
+    Fire a trivial completion against the fast model to pre-open the TCP/TLS
+    connection to the LLM provider (Groq/OpenAI) before the first real question.
+
+    Without this, question #1 of every interview pays a ~2-3s cold-connection
+    penalty on top of normal answer latency (measured: first_token_ms ~2900ms
+    on Q1 vs ~300ms steady-state for every later question in the same session).
+    Best-effort only — never raises, never blocks the caller for long.
+    """
+    try:
+        from config import remap_model_for_provider
+
+        client = _get_openai_client()
+        model = remap_model_for_provider(FAST_ANSWER_MODEL) or FAST_ANSWER_MODEL
+        client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": "hi"}],
+            max_tokens=1,
+            temperature=0,
+            timeout=6.0,
+        )
+    except Exception:
+        pass
 
 
 # Back-compat names (if anything imported old constants)

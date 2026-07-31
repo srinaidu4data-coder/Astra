@@ -597,7 +597,11 @@ def iter_cascade_answer(
                     "final": False,
                     "from_cache": False,
                 }
-    except Exception:
+    except Exception as e:
+        # Root cause of a template_fallback answer must be visible somewhere —
+        # this was silently swallowed before, leaving no trace of why a real
+        # question got a generic canned answer mid-interview.
+        print(f"[fast_answer] llm_streamer failed, falling back to template: {type(e).__name__}: {e}")
         acc = ""
 
     final = (acc or "").strip()
