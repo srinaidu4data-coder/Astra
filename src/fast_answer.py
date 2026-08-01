@@ -222,7 +222,8 @@ _PATTERNS: list[tuple[re.Pattern[str], str, float]] = [
     (re.compile(r"\b(trade.?off|pros and cons|compare|difference between|vs\.?)\b", re.I), "tradeoff", 1.0),
     (re.compile(r"\b(strength|weakness|greatest strength|improve)\b", re.I), "self", 0.9),
     (re.compile(r"\b(why (this|our|the) (company|role|team)|why us)\b", re.I), "why_us", 0.9),
-    (re.compile(r"\b(sap|fico|vertex|tax|erp|s/4)\b", re.I), "domain_sap", 1.2),
+    # Domain-specific vendor packs removed (SAP/FICO/Vertex caused wrong-module answers).
+    # Enterprise/product jargon is handled by the LLM + job_context, not forced templates.
     (re.compile(r"\b(ml|model|training|inference|feature|llm|embedding)\b", re.I), "ml", 1.1),
     (re.compile(r"\b(api|microservice|kafka|queue|cache|redis|postgres|sql)\b", re.I), "backend", 1.0),
     (re.compile(r"\b(what is|explain|how does|how would you|how do you)\b", re.I), "explain", 0.8),
@@ -290,7 +291,6 @@ def outline_skeleton(
         "debug": f"I'll walk a hypothesis tree with evidence at each layer.",
         "coding": f"I'll clarify I/O and complexity, then the simplest correct structure.",
         "tradeoff": f"I'll score options on latency, correctness, cost, and operability.",
-        "domain_sap": f"I'll ground this in determination, postings, and controls.",
         "ml": f"I'll cover data, eval, serving, and train/serve skew.",
         "backend": f"I'll cover contracts, idempotency, and backpressure.",
         "explain": f"Mechanism first, then tradeoffs, then how I'd validate.",
@@ -414,14 +414,6 @@ def _template_star(pid: str, role: str, q: str) -> str:
             "I listed axes (latency, consistency, cost, complexity), scored options, ran a short spike, and documented the decision.",
             "We picked the option that protected the user-facing SLO with reversible complexity.",
             "I avoid false dichotomies; sometimes a hybrid with a clear default wins.",
-        ),
-        "domain_sap": (
-            "I ground SAP/tax answers in determination, postings, and controls.",
-            "As a {role} around SAP FICO / Vertex-style tax, the issue was incorrect determination or reconciliation break.",
-            "Success meant correct tax results, auditable postings, and clean reconciliation.",
-            "I traced condition records / tax procedure, validated master data, fixed the determination path, and added recon checks.",
-            "Exception rate dropped and audit samples passed.",
-            "I always separate config root cause from transactional noise.",
         ),
         "ml": (
             "I treat ML systems as data + evaluation + serving, not just a model file.",

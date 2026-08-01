@@ -643,7 +643,7 @@ def get_stt_provider() -> str:
 
 
 # Whisper Configuration
-# tiny.en is fast but mangles jargon (S/4HANA, Vertex, FICO) and weak on long Qs.
+# tiny.en is fast but mangles domain jargon and weak on long questions.
 # base.en is the production default for interview accuracy on CPU; override via env.
 WHISPER_MODEL = (
     os.environ.get("ASTRA_WHISPER_MODEL")

@@ -131,10 +131,10 @@ FAST_TECH_SYSTEM = (
     "Labels: Hook: / Approach: / Mechanism: / Tradeoff: / Close:\n"
     "Rules: 140-220 words for short Qs; multi-part/long Qs 220-360 words covering "
     "each asked bullet (design + controls + metrics + failure modes as requested). "
-    "If SAP: real FICO terms (FI, CO, tax procedure, condition records, New GL, "
-    "document splitting, company code). If ML: real ML terms (loss, gradient, "
-    "bias/variance, precision/recall, attention QKV, NDCG, leakage, p99). "
-    "No invented APIs. No markdown. Labels like Hook: not /Hook:."
+    "Use precise jargon only from the question, job context, and real domain knowledge — "
+    "never invent products, modules, T-codes, APIs, or metrics. "
+    "Stay on the topic asked; do not substitute a different product or module family. "
+    "No markdown. Labels like Hook: not /Hook:."
 )
 
 def _is_long_or_multipart_question(question: str) -> bool:
@@ -180,7 +180,7 @@ FAST_CODE_SYSTEM = (
     "Keep under 100 words outside code. First person. Correct complexity claims."
 )
 
-# Prefer stronger model for domain-hard questions (SAP / ML) even in live profile
+# Prefer stronger model for hard technical questions even in live profile
 TECH_ACCURACY_MODEL = (
     os.environ.get("ASTRA_TECH_MODEL", "").strip() or _DEF_PRIMARY
 )
@@ -358,40 +358,6 @@ def analyze_question_strategy(
     return data
 
 
-def _is_sap_domain(text: str, job: str) -> bool:
-    blob = f"{text} {job}".lower()
-    return any(
-        k in blob
-        for k in (
-            "sap",
-            "fico",
-            "fi/co",
-            "s/4",
-            "s4hana",
-            "vertex",
-            "new gl",
-            "document splitting",
-            "condition record",
-            "tax procedure",
-            "controlling area",
-            "company code",
-            "obyc",
-            "fb50",
-            "f-02",
-            "ptp",
-            "p2p",
-            "procure to pay",
-            "procure-to-pay",
-            "purchase order",
-            "goods receipt",
-            "invoice receipt",
-            "miro",
-            "migo",
-            "me21n",
-        )
-    )
-
-
 def _is_ml_domain(text: str, job: str) -> bool:
     blob = f"{text} {job}".lower()
     return any(
@@ -441,116 +407,6 @@ def _is_ml_domain(text: str, job: str) -> bool:
             )
         )
     )
-
-
-def _sap_strategy(question: str) -> dict[str, Any]:
-    t = (question or "").lower()
-    # Question-specific must-cover so we don't spray "tax" on every SAP Q
-    if "fi" in t and "co" in t and ("difference" in t or "vs" in t or "versus" in t):
-        must = [
-            "FI = external statutory/legal reporting (company code, BS/P&L)",
-            "CO = internal management accounting (cost centers, profit centers, internal orders)",
-            "Integration: primary postings in FI often create CO documents",
-            "Example objects: G/L accounts vs cost elements / cost centers",
-        ]
-        jargon = [
-            "FI",
-            "CO",
-            "company code",
-            "cost center",
-            "profit center",
-            "primary cost element",
-            "reconciliation",
-        ]
-    elif "tax" in t or "condition" in t or "vertex" in t:
-        must = [
-            "Tax procedure + condition types drive calculation",
-            "Access sequence finds condition records (country/region/tax code/material/customer)",
-            "Tax code on line items; jurisdiction where relevant",
-            "Posting to tax G/L; reconciliation / reporting implications",
-        ]
-        jargon = [
-            "tax procedure",
-            "condition type",
-            "access sequence",
-            "condition record",
-            "tax code",
-            "FTXP",
-            "jurisdiction",
-        ]
-    elif "split" in t or "new gl" in t or "new g/l" in t or "document splitting" in t:
-        must = [
-            "New GL document splitting derives account assignments for zero-balance entities",
-            "Splitting characteristics e.g. profit center / segment",
-            "Active splitting method + item categories / business transaction variants",
-            "Enables segment reporting and balanced financial statements by dimension",
-        ]
-        jargon = [
-            "New GL",
-            "document splitting",
-            "profit center",
-            "segment",
-            "zero-balance",
-            "item category",
-            "passive vs active splitting",
-        ]
-    elif any(
-        k in t
-        for k in (
-            "ptp",
-            "p2p",
-            "procure",
-            "purchase order",
-            "goods receipt",
-            "invoice receipt",
-            "miro",
-            "migo",
-            "accounting entr",
-        )
-    ):
-        must = [
-            "PO creation is logistics (usually no FI posting yet)",
-            "Goods receipt (MIGO): Dr Inventory/GR-IR relevant, Cr GR/IR clearing",
-            "Invoice receipt (MIRO): Dr GR/IR, Cr Vendor; price variance if needed",
-            "Payment: Dr Vendor, Cr Bank; OBYC/account determination links MM-FI",
-        ]
-        jargon = [
-            "procure-to-pay",
-            "purchase order",
-            "goods receipt",
-            "GR/IR",
-            "invoice receipt",
-            "MIRO",
-            "MIGO",
-            "vendor",
-            "OBYC",
-            "BSX",
-            "WRX",
-        ]
-    else:
-        must = [
-            "Name the real SAP objects (company code, cost center, document type, posting keys)",
-            "Describe the posting/document flow, not vague ERP slogans",
-            "Mention integration touchpoint (MM/SD/FI or FI-CO) when relevant",
-            "Call out control/reconciliation or config vs master data",
-        ]
-        jargon = ["SAP FICO", "S/4HANA", "company code", "document type", "posting key", "G/L"]
-    return {
-        "question_type": "domain",
-        "domain_tags": ["sap", "fico"],
-        "must_cover": must,
-        "jargon_bank": jargon,
-        "seniority_bar": "senior",
-        "pitfalls": [
-            "generic software engineering answer with no SAP objects",
-            "confusing FI external reporting with CO internal controlling",
-            "inventing non-existent T-codes or modules",
-            "pasting tax determination into unrelated SAP questions",
-        ],
-        "evidence_style": "walkthrough",
-        "depth_target": "very_high",
-        "accuracy_domain": "sap",
-    }
 
 
 def _ml_strategy(question: str) -> dict[str, Any]:
@@ -615,9 +471,7 @@ def _fallback_strategy(question: str, job_context: str) -> dict[str, Any]:
     t = (question or "").lower()
     job = (job_context or "").lower()
 
-    # Domain packs first — accuracy-critical interviews
-    if _is_sap_domain(t, job):
-        return _sap_strategy(t)
+    # Optional ML concept pack only when Q is clearly ML (no product/vendor packs)
     if _is_ml_domain(t, job):
         return _ml_strategy(t)
 
@@ -658,13 +512,13 @@ def _fallback_strategy(question: str, job_context: str) -> dict[str, Any]:
 
 
 def _needs_accuracy_model(strategy: dict[str, Any], question: str, job_context: str) -> bool:
-    """True for SAP / ML / hard technical — use mini not nano."""
+    """True for hard technical / ML — prefer stronger model (not nano)."""
     dom = (strategy.get("accuracy_domain") or "").lower()
-    if dom in ("sap", "ml"):
+    if dom in ("ml", "technical", "domain"):
         return True
     if strategy.get("question_type") in ("technical", "domain", "system_design", "coding"):
         return True
-    return _is_sap_domain(question, job_context) or _is_ml_domain(question, job_context)
+    return _is_ml_domain(question, job_context)
 
 
 def _prefer_mode_for_question(mode: str, strategy: dict[str, Any], question: str) -> str:
@@ -895,7 +749,7 @@ def _build_user_prompt(
     q = (question or "").strip()
     job = (job_context or "Senior professional").strip()
 
-    # Live/ultra: compact but accuracy-aware (domain packs prevent wrong SAP/ML answers)
+    # Live/ultra: compact but accuracy-aware (use strategy + job context only)
     if _is_fast_profile() and not strict_regen:
         tags = strategy.get("domain_tags") or []
         jargon = strategy.get("jargon_bank") or tags
@@ -955,8 +809,10 @@ def _build_user_prompt(
                 "At least 2 quantitative signals if defensible from context."
             )
         parts.append(
-            "Accuracy rules: state correct definitions/mechanisms for this domain; "
-            "do not invent SAP T-codes/modules or ML formulas; finish every labeled section; "
+            "Accuracy rules: answer the question as asked using the Role/job context; "
+            "use correct definitions/mechanisms for THAT topic only — do not substitute a "
+            "different product, module family, or unrelated domain; do not invent APIs, "
+            "module names, or metrics; finish every labeled section; "
             "labels exactly like Hook: (never /Hook:)."
         )
         parts.append("Answer now.")
@@ -1153,7 +1009,7 @@ def generate_answer(
             generate_answer.last_source = hit[1] if len(hit) > 1 else "cache"  # type: ignore[attr-defined]
             return hit[0]
 
-        # Nano for speed on soft Qs; mini for SAP/ML/technical correctness
+        # Nano for speed on soft Qs; mini for hard technical correctness
         am = answer_model
         fm = fallback_model
         uam = user_answer_model
@@ -1218,7 +1074,7 @@ def generate_answer(
         except Exception:
             answer = ""
         answer = _normalize_answer_text(answer)
-        # Domain answers: never substitute generic SWE templates (wrong for SAP/ML)
+        # Domain answers: never substitute generic SWE templates for specialized Qs
         if not answer:
             allow_template = (
                 not accuracy

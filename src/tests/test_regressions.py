@@ -176,20 +176,33 @@ class TestRegression_LongQuestionCapture:
         )
 
 
-class TestRegression_SapMlDomainStrategy:
-    def test_sap_fi_co_must_cover(self):
+class TestRegression_DomainStrategy:
+    def test_no_sap_fico_forced_pack(self):
+        """SAP/FICO hardcoded strategy packs were removed — must not force FICO jargon."""
         from answer_engine import _fallback_strategy
 
         s = _fallback_strategy(
-            "What is the difference between FI and CO in SAP?",
-            "SAP FICO Consultant",
+            "How do you design SAP ATTP serialization for MAH and CMO partners?",
+            "SAP ATTP Techno-Functional Consultant",
         )
-        assert s.get("accuracy_domain") == "sap"
-        blob = " ".join(s.get("must_cover") or []).lower()
-        assert "external" in blob or "statutory" in blob or "fi" in blob
-        assert "cost" in blob or "co" in blob or "internal" in blob
-        # Must not force tax on a pure FI vs CO question
-        assert not any("tax procedure" in str(m).lower() for m in (s.get("must_cover") or []))
+        # Must not inject the old FICO default pack
+        assert s.get("accuracy_domain") != "sap"
+        blob = " ".join(
+            str(x)
+            for x in (
+                *(s.get("must_cover") or []),
+                *(s.get("jargon_bank") or []),
+                *(s.get("domain_tags") or []),
+            )
+        ).lower()
+        assert "fico" not in blob
+        assert "posting key" not in blob
+        assert "tax procedure" not in blob
+        # No private SAP strategy helper
+        import answer_engine as ae
+
+        assert not hasattr(ae, "_sap_strategy")
+        assert not hasattr(ae, "_is_sap_domain")
 
     def test_ml_precision_recall(self):
         from answer_engine import _fallback_strategy
