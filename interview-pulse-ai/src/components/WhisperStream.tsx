@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { AnswerMode, QACard } from '@/types'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { memo } from 'react'
 
 const modes: { id: AnswerMode; label: string; hint: string }[] = [
   { id: 'shorter', label: 'Shorter', hint: '3 tight lines' },
@@ -11,7 +12,7 @@ const modes: { id: AnswerMode; label: string; hint: string }[] = [
   { id: 'code', label: 'Code', hint: 'sketch + speak' },
 ]
 
-export function WhisperStream({
+export const WhisperStream = memo(function WhisperStream({
   cards,
   cardIndex,
   onCardIndex,
@@ -152,6 +153,11 @@ export function WhisperStream({
                       </div>
                     ))}
                 </div>
+              ) : bullets.length <= 1 ? (
+                // Single growing stream block — avoid remounting N bullet cards each token
+                <div className="rounded-[18px] glass-inset px-5 py-4 text-[17px] leading-[1.75] tracking-[-0.01em] text-white/90 whitespace-pre-wrap">
+                  {bullets[0] || answer?.bullets?.join('\n') || ''}
+                </div>
               ) : (
                 bullets.map((b, i) => (
                   <div
@@ -200,4 +206,4 @@ export function WhisperStream({
       )}
     </div>
   )
-}
+})

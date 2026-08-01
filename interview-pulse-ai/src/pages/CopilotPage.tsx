@@ -1,5 +1,5 @@
 import { ApiStatusBadge } from '@/components/ApiStatusBadge'
-import { Waveform } from '@/components/Waveform'
+import { LiveWaveform } from '@/components/LiveWaveform'
 import { WhisperStream } from '@/components/WhisperStream'
 import { Button } from '@/components/ui/button'
 import { formatMs } from '@/lib/utils'
@@ -38,25 +38,25 @@ function gradeColor(grade?: string) {
  * - Answers queue; you step with Next when ready
  */
 export function CopilotPage() {
-  const {
-    levels,
-    setLevels,
-    answerMode,
-    setAnswerMode,
-    metrics,
-    setMetrics,
-    settings,
-    activeJobTitle,
-    clearTranscript,
-    pushTranscript,
-    setListening,
-    setAnswer,
-    transcript,
-    user,
-  } = useAppStore()
+  // Granular selectors — NEVER subscribe to the whole store (levels thrash was
+  // re-rendering the answer panel ~10×/s and looked like constant flicker).
+  const setLevels = useAppStore((s) => s.setLevels)
+  const answerMode = useAppStore((s) => s.answerMode)
+  const setAnswerMode = useAppStore((s) => s.setAnswerMode)
+  const metrics = useAppStore((s) => s.metrics)
+  const setMetrics = useAppStore((s) => s.setMetrics)
+  const settings = useAppStore((s) => s.settings)
+  const activeJobTitle = useAppStore((s) => s.activeJobTitle)
+  const clearTranscript = useAppStore((s) => s.clearTranscript)
+  const pushTranscript = useAppStore((s) => s.pushTranscript)
+  const setListening = useAppStore((s) => s.setListening)
+  const setAnswer = useAppStore((s) => s.setAnswer)
+  const transcript = useAppStore((s) => s.transcript)
+  const user = useAppStore((s) => s.user)
 
   const cardIndexRef = useRef(0)
   const lastLevelAt = useRef(0)
+  const lastLevelValue = useRef(0)
   const lastPartialAt = useRef(0)
   const lastStatusAt = useRef(0)
   const lastStatusMsg = useRef('')
@@ -64,6 +64,8 @@ export function CopilotPage() {
   const [sessionOn, setSessionOn] = useState(false)
   const [device, setDevice] = useState('')
   const [phase, setPhase] = useState('idle')
+  /** Single stable status line (fixed height) — avoids layout jump */
+  const [statusLine, setStatusLine] = useState('')
   const [statusLog, setStatusLog] = useState<string[]>([])
   const [cards, setCards] = useState<QACard[]>([])
   const [cardIndex, setCardIndex] = useState(0)
@@ -76,15 +78,22 @@ export function CopilotPage() {
 
   const pushStatus = useCallback((msg: string) => {
     if (!msg) return
-    // Dedupe identical spam + throttle status list churn (was major flicker source)
     const now = Date.now()
-    if (msg === lastStatusMsg.current && now - lastStatusAt.current < 800) return
-    if (now - lastStatusAt.current < 200 && msg.startsWith('Hearing')) return
+    // "Hearing…" partials: update line only, never log list (was major flicker)
+    if (msg.startsWith('Hearing')) {
+      if (now - lastPartialAt.current < 500) return
+      lastPartialAt.current = now
+      setStatusLine(msg)
+      return
+    }
+    if (msg === lastStatusMsg.current && now - lastStatusAt.current < 1000) return
+    if (now - lastStatusAt.current < 250) return
     lastStatusMsg.current = msg
     lastStatusAt.current = now
+    setStatusLine(msg)
     setStatusLog((prev) => {
       if (prev[0] === msg) return prev
-      return [msg, ...prev].slice(0, 12)
+      return [msg, ...prev].slice(0, 8)
     })
   }, [])
 
@@ -143,7 +152,10 @@ export function CopilotPage() {
   useEffect(() => {
     liveInterview.connect({
       onConnection: (s) => {
-        setApiOk(s === 'open')
+        setApiOk((prev) => {
+          const next = s === 'open'
+          return prev === next ? prev : next
+        })
         if (s === 'open') pushStatus('Backend connected')
         if (s === 'closed') {
           setApiOk(false)
@@ -152,28 +164,36 @@ export function CopilotPage() {
         }
       },
       onStatus: (msg, listening) => {
-        pushStatus(msg)
+        // Skip pure "still listening" spam that only flips listening flags
+        if (msg && !/still listening|already listening/i.test(msg)) {
+          pushStatus(msg)
+        }
         if (typeof listening === 'boolean') {
-          setSessionOn(listening)
+          setSessionOn((prev) => (prev === listening ? prev : listening))
           setListening(listening)
         }
       },
       onListening: (active, dev) => {
-        setSessionOn(active)
+        setSessionOn((prev) => (prev === active ? prev : active))
         setListening(active)
-        if (dev) setDevice(dev)
-        if (!active) setPhase('idle')
+        if (dev) setDevice((d) => (d === dev ? d : dev))
+        if (!active) setPhase((p) => (p === 'idle' ? p : 'idle'))
       },
       onLevel: (level, state) => {
         const now = Date.now()
-        // ~8 fps max for waveform + phase (prevents whole-page thrash)
-        if (now - lastLevelAt.current < 120) return
+        // ~4 fps — enough for activity, not enough to flash the UI
+        if (now - lastLevelAt.current < 220) return
+        // Ignore tiny jitter (noise floor wiggle)
+        if (Math.abs(level - lastLevelValue.current) < 0.012 && now - lastLevelAt.current < 400) {
+          return
+        }
         lastLevelAt.current = now
+        lastLevelValue.current = level
         if (state) setPhase((p) => (p === state ? p : state))
-        // Stable bar shape from level only — no Date.now() wobble (that forced repaints)
-        const bars = Array.from({ length: 24 }, (_, i) => {
-          const wave = 0.12 * Math.sin(i * 0.55 + level * 8)
-          return Math.min(1, Math.max(0.05, level * 2.6 + wave * level))
+        // 16 bars, smooth shape from level only
+        const bars = Array.from({ length: 16 }, (_, i) => {
+          const wave = 0.1 * Math.sin(i * 0.7 + level * 6)
+          return Math.min(1, Math.max(0.05, level * 2.4 + wave * level))
         })
         setLevels(bars)
       },
@@ -189,10 +209,6 @@ export function CopilotPage() {
       },
       onTranscriptPartial: (text) => {
         if (!text?.trim()) return
-        // Deepgram interims fire very often — throttle status text hard
-        const now = Date.now()
-        if (now - lastPartialAt.current < 400) return
-        lastPartialAt.current = now
         pushStatus(`Hearing… ${text.slice(0, 90)}${text.length > 90 ? '…' : ''}`)
         setPhase((p) => (p === 'hearing' ? p : 'hearing'))
       },
@@ -205,15 +221,13 @@ export function CopilotPage() {
         pushStatus(`Filtered (${reason || 'chatter'}): ${text.slice(0, 60)}…`)
       },
       onMetrics: (m) => {
+        // Only final / meaningful metric updates — skip identical totals
         setMetrics(m)
       },
       onAnswer: (ans) => {
         const q = (ans.question || 'Interview question').trim()
-        // Long interviews: match by question text (not only last streaming card),
-        // so Q2 doesn't overwrite Q1 and pending cards stay paired correctly.
         setCards((prev) => {
           const next = [...prev]
-          // Prefer stable ans.id (job_*) so we update in place without remount
           let idx = next.findIndex((c) => c.id === ans.id)
           const qNorm = q.toLowerCase()
           if (idx < 0) {
@@ -240,10 +254,14 @@ export function CopilotPage() {
             answer: { ...ans, id: idx >= 0 ? next[idx]!.id : ans.id },
           }
           if (idx >= 0) {
-            // Skip no-op updates (same text) to avoid flicker
             const prevText = next[idx]?.answer?.bullets?.join('\n') || ''
             const nextText = card.answer.bullets?.join('\n') || ''
-            if (
+            // Streaming: require meaningful growth to avoid token-by-token flash
+            if (ans.streaming) {
+              if (nextText.length - prevText.length < 24 && prevText.length > 0) {
+                return prev
+              }
+            } else if (
               prevText === nextText &&
               next[idx]?.answer?.streaming === card.answer.streaming
             ) {
@@ -260,8 +278,15 @@ export function CopilotPage() {
           }
           return next
         })
-        setAnswer(ans)
-        // Metrics only on final answer (streaming metrics caused top-bar thrash)
+        // Overlay answer: only on final or first paint of stream (not every chunk)
+        if (!ans.streaming) {
+          setAnswer(ans)
+        } else {
+          const bullets = ans.bullets?.join('\n') || ''
+          if (bullets.length < 80 || bullets.length % 120 < 30) {
+            setAnswer(ans)
+          }
+        }
         if (!ans.streaming && ans.latencyMs != null) {
           setMetrics({
             vadMs: 0,
@@ -280,7 +305,6 @@ export function CopilotPage() {
         }
       },
       onError: (msg) => {
-        // Session/audio errors are not the same as "API offline"
         pushStatus(`Error: ${msg}`)
         if (/not connected|websocket not open|backend connection closed|failed to fetch/i.test(msg)) {
           setApiOk(false)
@@ -288,31 +312,26 @@ export function CopilotPage() {
       },
     })
 
-    // Warm OpenAI + Whisper so the first answer is not cold-start slow
     void warmCopilotApi()
 
-    // Probe HTTP health + WS (poll so buttons re-enable when API starts)
+    // Probe HTTP health + WS less often (10s) — badge also polls
     const ping = () => {
       void checkCopilotHealth().then((h) => {
-        // Online = API reachable. openai_key is optional soft warning.
         if (h.ok) {
-          setApiOk(true)
-          if (h.openai_key === false) {
-            pushStatus('API online — set OPENAI_API_KEY on the server for AI answers')
-          }
+          setApiOk((prev) => (prev === true ? prev : true))
         } else if (!liveInterview.connected) {
-          setApiOk(false)
+          setApiOk((prev) => (prev === false ? prev : false))
         }
       })
       void liveInterview
         .ensureOpen()
-        .then(() => setApiOk(true))
+        .then(() => setApiOk((prev) => (prev ? prev : true)))
         .catch(() => {
           /* health poll handles message */
         })
     }
     ping()
-    const id = window.setInterval(ping, 5000)
+    const id = window.setInterval(ping, 12000)
 
     return () => {
       window.clearInterval(id)
@@ -329,7 +348,7 @@ export function CopilotPage() {
       setSessionOn(false)
       setListening(false)
       setPhase('idle')
-      setLevels(Array.from({ length: 32 }, () => 0.08))
+      setLevels(Array.from({ length: 16 }, () => 0.08))
       pushStatus('Interview session stopped')
       return
     }
@@ -574,15 +593,16 @@ export function CopilotPage() {
           </div>
 
           <div className="mb-8 rounded-[22px] glass-inset px-6 py-8">
-            <Waveform levels={levels} active={sessionOn} className="h-16 w-full" />
+            {/* Isolated levels subscriber — does not re-render answer panel */}
+            <LiveWaveform active={sessionOn} className="h-16 w-full" />
           </div>
 
-          {/* Status: no color thrash — fixed chrome, text-only updates */}
-          {statusLog[0] && (
-            <div className="mb-4 rounded-sm border border-white/10 bg-white/[0.03] px-4 py-3 text-[12px] tracking-normal text-white/55">
-              {statusLog[0]}
-            </div>
-          )}
+          {/* Fixed-height status strip — no mount/unmount layout jump */}
+          <div className="mb-4 min-h-[2.75rem] rounded-sm border border-white/10 bg-white/[0.03] px-4 py-3 text-[12px] tracking-normal text-white/55">
+            <span className="line-clamp-2">
+              {statusLine || (sessionOn ? 'Listening…' : 'Ready')}
+            </span>
+          </div>
 
           <div className="mb-6 flex flex-wrap gap-3">
             <Button
@@ -615,7 +635,8 @@ export function CopilotPage() {
                 updateCardIndex(0)
                 setAnswer(null)
                 setStatusLog([])
-                setLevels(Array.from({ length: 32 }, () => 0.08))
+                setStatusLine('')
+                setLevels(Array.from({ length: 16 }, () => 0.08))
                 setPhase('idle')
               }}
             >

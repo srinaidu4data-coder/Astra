@@ -212,34 +212,34 @@ export const useAppStore = create<AppState>()(
 
       listening: false,
       setListening: (listening) => {
+        // Skip no-op — was re-publishing overlay state every status tick
+        if (useAppStore.getState().listening === listening) return
         set({ listening })
-        // Overlay is a separate Electron window — push listening flag
         try {
-          const s = useAppStore.getState()
           publishLiveSync({
             listening,
-            answer: s.answer,
-            levels: s.levels,
-            answerMode: s.answerMode,
+            levels: useAppStore.getState().levels,
+            answerMode: useAppStore.getState().answerMode,
           })
         } catch {
           /* ignore */
         }
       },
-      levels: Array.from({ length: 24 }, () => 0.08),
+      levels: Array.from({ length: 16 }, () => 0.08),
       setLevels: (levels) => {
-        set({ levels })
-        // Throttle level bridge (~8/s) so we don't flood IPC with full answer blobs
+        // Idle/reset bars (all near floor) always apply so Stop doesn't stick mid-wave
+        const isIdle = levels.every((v) => v <= 0.12)
         const now = Date.now()
-        if (now - (_levelsSyncAt || 0) < 120) return
+        // Throttle live activity writes (~4/s) — waveform is isolated via selector
+        if (!isIdle && now - (_levelsSyncAt || 0) < 220) return
         _levelsSyncAt = now
+        set({ levels })
         try {
-          const s = useAppStore.getState()
+          // Levels only — do NOT re-serialize the full answer to localStorage
           publishLiveSync({
             levels,
-            answer: s.answer,
-            listening: s.listening,
-            answerMode: s.answerMode,
+            listening: useAppStore.getState().listening,
+            answerMode: useAppStore.getState().answerMode,
           })
         } catch {
           /* ignore */

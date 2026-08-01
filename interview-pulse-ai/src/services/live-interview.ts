@@ -235,9 +235,9 @@ export class LiveInterviewClient {
         }
         break
       case 'level': {
-        // Cap level events ~10/s — backend can fire ~20/s and was thrashing React
+        // Cap level events ~4/s — higher rates re-painted the whole copilot UI
         const now = Date.now()
-        if (now - this._lastLevelUiAt < 100) break
+        if (now - this._lastLevelUiAt < 220) break
         this._lastLevelUiAt = now
         this.handlers.onLevel?.(
           Number((data as { level?: number }).level ?? 0),
@@ -324,10 +324,13 @@ export class LiveInterviewClient {
         ans.streaming = Boolean(a.streaming)
         // Guarantee UI has something to render
         if (!ans.bullets.length && text) ans.bullets = [text]
-        // Throttle intermediate stream paints (~8/s) — finals always pass
+        // Throttle intermediate stream paints (~3/s) — finals always pass
         if (a.streaming) {
           const now = Date.now()
-          if (now - this._lastStreamUiAt < 120 && text.length - this._lastStreamLen < 40) {
+          if (
+            now - this._lastStreamUiAt < 280 &&
+            text.length - this._lastStreamLen < 48
+          ) {
             return
           }
           this._lastStreamUiAt = now
