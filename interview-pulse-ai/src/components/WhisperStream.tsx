@@ -1,27 +1,14 @@
-/**
- * SpeakCanvas v0 — speech scaffold, not a document.
- *
- * Sprint 0 (validated):
- * - Ready rails empty / preparing skeleton
- * - Demoted question (one muted line)
- * - Typography: max-w-[66ch], speak line-height
- * - Sparse impact highlights (cap 8)
- * - Action-weighted STAR
- * - Metric chips from answer.metrics
- * - No new AnswerMode enum
- */
-
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  HIGHLIGHT_BUDGET,
-  planHighlights,
-  renderHighlightedText,
-} from '@/lib/impact-highlight'
+  getSpeakHighlightsBudgeted,
+  splitHighlighted,
+  type SpeakHighlightSpan,
+} from '@/lib/speak-highlight'
 import { cn } from '@/lib/utils'
-import type { AnswerMode, QACard, SuggestedAnswer } from '@/types'
+import type { AnswerMode, QACard } from '@/types'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
-import { memo, useMemo, type ReactNode } from 'react'
+import { memo, useMemo, useRef, type ReactNode } from 'react'
 
 const modes: { id: AnswerMode; label: string; hint: string }[] = [
   { id: 'shorter', label: 'Shorter', hint: '3 tight lines' },
@@ -30,78 +17,106 @@ const modes: { id: AnswerMode; label: string; hint: string }[] = [
   { id: 'code', label: 'Code', hint: 'sketch + speak' },
 ]
 
-const BEAT_LABELS = ['HOOK', 'PROOF', 'CLOSE'] as const
+const READY_RAILS = [
+  { id: 'hook', label: 'Hook', hint: 'One-line frame' },
+  { id: 'proof', label: 'Proof', hint: 'Action + metric' },
+  { id: 'close', label: 'Close', hint: 'Outcome / offer' },
+] as const
 
-const speakBody =
-  'max-w-[66ch] text-[17px] font-normal leading-[1.65] tracking-[-0.01em] text-white/90'
-const speakHook =
-  'max-w-[66ch] text-[19px] font-medium leading-[1.5] tracking-[-0.015em] text-white/95'
-const beatLabel =
-  'text-[10px] font-medium uppercase tracking-[0.08em] text-white/35'
-
-function ReadyRails({
-  preparing,
-  compact,
+function HighlightedText({
+  text,
+  spans,
+  className,
 }: {
-  preparing?: boolean
-  compact?: boolean
+  text: string
+  spans: SpeakHighlightSpan[]
+  className?: string
 }) {
+  const nodes = splitHighlighted(text, spans)
   return (
-    <div className="flex h-full min-h-[280px] flex-col justify-center space-y-4 px-1 py-6">
-      <div className="space-y-1">
-        <p className="text-[13px] font-medium tracking-tight text-white/70">
-          {preparing
-            ? 'Drafting speak rails…'
-            : 'Ready · glance here when answering'}
-        </p>
-        <p className="text-[12px] text-white/35">
-          {compact
-            ? 'Answers stream from the main InterviewPulse window.'
-            : 'Start interview or paste a question. First line appears when the model opens.'}
-        </p>
-        <p className="text-[11px] text-white/28">
-          Glance, don&apos;t read — short beats only.
-        </p>
-      </div>
-      <div className="space-y-3">
-        {BEAT_LABELS.map((label, i) => (
-          <div
-            key={label}
-            className={cn(
-              'rounded-[16px] border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-3',
-              preparing && 'animate-pulse',
-            )}
-          >
-            <div className={beatLabel}>{label}</div>
+    <span className={className}>
+      {nodes.map((n, i) =>
+        n.highlight ? (
+          <span key={i} className="speak-keyword">
+            {n.text}
+          </span>
+        ) : (
+          <span key={i}>{n.text}</span>
+        ),
+      )}
+    </span>
+  )
+}
+
+function SpeakRailsSkeleton({ compact }: { compact?: boolean }) {
+  return (
+    <div className={cn('speak-measure space-y-3', compact ? 'space-y-2.5' : 'space-y-3')}>
+      {READY_RAILS.map((rail, i) => (
+        <div
+          key={rail.id}
+          className={cn(
+            'rounded-[14px] border border-white/[0.06] bg-white/[0.02] px-4 py-3',
+            compact && 'px-3 py-2.5',
+          )}
+        >
+          <div className="speak-rail-label mb-2">{rail.label}</div>
+          <div className="space-y-2">
             <div
-              className={cn(
-                'mt-2 h-4 rounded-sm bg-white/[0.06]',
-                i === 0 ? 'w-[92%]' : i === 1 ? 'w-[70%]' : 'w-[55%]',
-              )}
+              className="speak-skeleton-line"
+              style={{ width: i === 0 ? '72%' : i === 1 ? '88%' : '64%' }}
             />
-            {i === 1 && (
-              <div className="mt-2 flex gap-1.5">
-                <span className="h-5 w-14 rounded-full bg-white/[0.05]" />
-                <span className="h-5 w-12 rounded-full bg-white/[0.05]" />
-              </div>
+            {i === 1 && !compact && (
+              <div className="speak-skeleton-line" style={{ width: '54%' }} />
             )}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   )
 }
 
-function MetricChips({ metrics }: { metrics: string[] }) {
-  const clean = metrics.map((m) => m.trim()).filter(Boolean).slice(0, 6)
-  if (!clean.length) return null
+function ReadyRails({ compact }: { compact?: boolean }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {clean.map((m) => (
-        <span
-          key={m}
-          className="inline-flex items-center rounded-full border border-[#20B8CD]/25 bg-[#20B8CD]/10 px-2.5 py-0.5 text-[12px] font-medium tabular-nums text-[#5DD5E3]"
+    <div className={cn('speak-measure w-full space-y-3', compact ? 'py-2' : 'py-4')}>
+      <div className="mb-1">
+        <p className="text-[15px] font-medium tracking-tight text-white/80">
+          Ready to speak
+        </p>
+        <p className="speak-body-secondary mt-1">
+          {compact
+            ? 'Answers stream here from the main window.'
+            : 'Type a question and press Answer — scaffold fills as you go.'}
+        </p>
+      </div>
+      {READY_RAILS.map((rail) => (
+        <div
+          key={rail.id}
+          className={cn(
+            'rounded-[14px] border border-dashed border-white/[0.08] bg-white/[0.015] px-4 py-3',
+            compact && 'px-3 py-2.5',
+          )}
         >
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="speak-rail-label">{rail.label}</span>
+            <span className="text-[11px] text-white/25">{rail.hint}</span>
+          </div>
+          <div className="mt-2.5 space-y-1.5 opacity-40">
+            <div className="h-2 w-[70%] rounded bg-white/[0.06]" />
+            <div className="h-2 w-[45%] rounded bg-white/[0.04]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function MetricsChips({ metrics }: { metrics: string[] }) {
+  const shown = metrics.filter(Boolean).slice(0, 6)
+  if (!shown.length) return null
+  return (
+    <div className="speak-measure flex flex-wrap gap-1.5 pt-1">
+      {shown.map((m, i) => (
+        <span key={`${m}-${i}`} className="speak-metric-chip" title={m}>
           {m}
         </span>
       ))}
@@ -109,140 +124,60 @@ function MetricChips({ metrics }: { metrics: string[] }) {
   )
 }
 
-function BeatBlock({
-  label,
-  children,
-  emphasis = 'normal',
-}: {
-  label: string
-  children: ReactNode
-  emphasis?: 'hook' | 'action' | 'normal' | 'soft'
-}) {
-  return (
-    <div
-      className={cn(
-        'rounded-[16px] px-4 py-3.5',
-        emphasis === 'action' &&
-          'border border-[#20B8CD]/20 bg-[#20B8CD]/10',
-        emphasis === 'hook' && 'border border-white/[0.08] bg-white/[0.04]',
-        emphasis === 'normal' && 'border border-white/[0.06] bg-white/[0.03]',
-        emphasis === 'soft' && 'border border-white/[0.04] bg-white/[0.02]',
-      )}
-    >
-      <div className={beatLabel}>{label}</div>
-      <div
-        className={cn(
-          'mt-2',
-          emphasis === 'hook' && speakHook,
-          emphasis === 'action' && cn(speakBody, 'font-medium'),
-          emphasis === 'soft' &&
-            'line-clamp-2 max-w-[66ch] text-[14px] leading-relaxed text-white/55',
-          emphasis === 'normal' && speakBody,
-        )}
-      >
-        {children}
-      </div>
-    </div>
-  )
-}
+/** Freeze-friendly highlight allocation for a card while streaming. */
+function useFrozenHighlights(
+  cardId: string | undefined,
+  parts: string[],
+  streaming: boolean,
+): SpeakHighlightSpan[][] {
+  const freezeKeyRef = useRef<string>('')
+  const frozenPartsRef = useRef<SpeakHighlightSpan[][] | null>(null)
+  // Content signature so we recompute when text changes (not array identity)
+  const partsKey = parts.join('\u0001')
 
-function SpeakBeats({
-  bullets,
-  streaming,
-}: {
-  bullets: string[]
-  streaming?: boolean
-}) {
-  const parts = bullets.filter(Boolean)
-  if (!parts.length) return null
+  return useMemo(() => {
+    const key = cardId ?? ''
+    if (!key) {
+      frozenPartsRef.current = null
+      freezeKeyRef.current = ''
+      return parts.map(() => [])
+    }
 
-  // Single streaming blob → one HOOK surface (anti multi-card remount flicker)
-  if (parts.length === 1) {
-    return (
-      <BeatBlock
-        label={streaming ? 'HOOK · streaming' : 'HOOK'}
-        emphasis="hook"
-      >
-        <span className="whitespace-pre-wrap">
-          {renderHighlightedText(parts[0]!, HIGHLIGHT_BUDGET)}
-        </span>
-      </BeatBlock>
+    // New card → reset freeze
+    if (freezeKeyRef.current !== key) {
+      freezeKeyRef.current = key
+      frozenPartsRef.current = null
+    }
+
+    const frozenHasHits = Boolean(
+      frozenPartsRef.current?.some((p) => p.length > 0),
     )
-  }
 
-  let remaining = HIGHLIGHT_BUDGET
-  return (
-    <div className="space-y-3">
-      {parts.map((text, i) => {
-        const n = planHighlights(text, remaining).length
-        const node = renderHighlightedText(text, remaining)
-        remaining = Math.max(0, remaining - n)
-        const label =
-          i < BEAT_LABELS.length ? BEAT_LABELS[i]! : `BEAT ${i + 1}`
-        const emphasis: 'hook' | 'normal' | 'soft' =
-          i === 0 ? 'hook' : i >= 3 ? 'soft' : 'normal'
-        return (
-          <BeatBlock key={`beat-${i}`} label={label} emphasis={emphasis}>
-            <span className="whitespace-pre-wrap">{node}</span>
-          </BeatBlock>
-        )
-      })}
-    </div>
-  )
-}
+    // Once we have a non-empty freeze set, hold it for the rest of the stream
+    // so spans do not reshuffle as tokens append.
+    if (streaming && frozenHasHits && frozenPartsRef.current) {
+      return getSpeakHighlightsBudgeted(parts, {
+        freeze: true,
+        frozenParts: frozenPartsRef.current,
+        max: 8,
+      })
+    }
 
-function StarWeighted({
-  star,
-}: {
-  star: NonNullable<SuggestedAnswer['star']>
-}) {
-  let remaining = HIGHLIGHT_BUDGET
-  const rows: {
-    label: string
-    text: string
-    emphasis: 'hook' | 'action' | 'soft'
-  }[] = []
+    const next = getSpeakHighlightsBudgeted(parts, { max: 8 })
+    if (streaming) {
+      // Keep scanning until first hits, then freeze; empty freeze is not sticky.
+      if (next.some((p) => p.length > 0)) {
+        frozenPartsRef.current = next
+      }
+      return next
+    }
 
-  // Speak order S→T→A→R; visual weight Action > Result > Situation/Task
-  if (star.situation?.trim()) {
-    rows.push({
-      label: 'S · Situation',
-      text: star.situation,
-      emphasis: 'soft',
-    })
-  }
-  if (star.task?.trim()) {
-    rows.push({ label: 'T · Task', text: star.task, emphasis: 'soft' })
-  }
-  if (star.action?.trim()) {
-    rows.push({
-      label: 'A · Action · speak most of this',
-      text: star.action,
-      emphasis: 'action',
-    })
-  }
-  if (star.result?.trim()) {
-    rows.push({
-      label: 'R · Result',
-      text: star.result,
-      emphasis: 'hook',
-    })
-  }
-
-  return (
-    <div className="space-y-3">
-      {rows.map((r) => {
-        const n = planHighlights(r.text, remaining).length
-        const node = renderHighlightedText(r.text, remaining)
-        remaining = Math.max(0, remaining - n)
-        return (
-          <BeatBlock key={r.label} label={r.label} emphasis={r.emphasis}>
-            {node}
-          </BeatBlock>
-        )
-      })}
-    </div>
-  )
+    // Streaming ended → one refresh to the final highlight set
+    frozenPartsRef.current = next
+    return next
+    // partsKey tracks text content; parts used for values
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardId, partsKey, streaming])
 }
 
 export const WhisperStream = memo(function WhisperStream({
@@ -269,46 +204,168 @@ export const WhisperStream = memo(function WhisperStream({
   const canPrev = cardIndex > 0
   const canNext = cardIndex < total - 1
   const answer = card?.answer
-  const bullets = useMemo(
-    () => answer?.bullets?.filter(Boolean) ?? [],
-    [answer?.bullets],
+  const bullets = answer?.bullets?.filter(Boolean) ?? []
+  const metrics = answer?.metrics?.filter(Boolean) ?? []
+  const streaming = Boolean(answer?.streaming)
+
+  const hasStarBody = Boolean(
+    answer?.star?.situation ||
+      answer?.star?.task ||
+      answer?.star?.action ||
+      answer?.star?.result,
   )
   const hasBody =
-    bullets.length > 0 ||
-    Boolean(answer?.codeSnippet) ||
-    Boolean(answer?.star?.situation || answer?.star?.action)
+    bullets.length > 0 || Boolean(answer?.codeSnippet) || hasStarBody
 
-  const metrics = answer?.metrics?.filter(Boolean) ?? []
-  const showRails = !card || !hasBody
-  const isStar =
-    answer?.mode === 'star' &&
-    Boolean(answer.star && (answer.star.situation || answer.star.action))
+  // Highlight parts: bullets OR STAR Action/Result (Situation/Task not highlighted)
+  const starAction = answer?.star?.action ?? ''
+  const starResult = answer?.star?.result ?? ''
+  const useStarLayout =
+    answer?.mode === 'star' && answer.star && hasStarBody
+
+  const bulletsKey = bullets.join('\u0001')
+  const highlightParts = useMemo(() => {
+    if (useStarLayout) {
+      return [starAction, starResult]
+    }
+    if (bullets.length <= 1) {
+      return [bullets[0] || answer?.bullets?.join('\n') || '']
+    }
+    return bullets
+    // bulletsKey tracks content; bullets/answer used for values
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useStarLayout, starAction, starResult, bulletsKey])
+
+  const highlightSets = useFrozenHighlights(card?.id, highlightParts, streaming)
+
+  let speakBody: ReactNode = null
+
+  if (card && hasBody) {
+    if (useStarLayout && answer?.star) {
+      const starFields = (
+        [
+          ['Situation', answer.star.situation, 'muted'],
+          ['Task', answer.star.task, 'muted'],
+          ['Action', answer.star.action, 'primary'],
+          ['Result', answer.star.result, 'secondary'],
+        ] as const
+      ).filter(([, t]) => Boolean(t))
+
+      speakBody = (
+        <div className="speak-measure grid gap-2.5">
+          {starFields.map(([label, t, weight]) => {
+            const isAction = weight === 'primary'
+            const isMuted = weight === 'muted'
+            const hlIndex = label === 'Action' ? 0 : label === 'Result' ? 1 : -1
+            const spans = hlIndex >= 0 ? highlightSets[hlIndex] ?? [] : []
+            return (
+              <div
+                key={label}
+                className={cn(
+                  'rounded-[14px] px-4',
+                  isAction
+                    ? 'border border-white/[0.08] bg-white/[0.03] py-3.5'
+                    : isMuted
+                      ? 'border border-transparent py-1.5'
+                      : 'border border-white/[0.05] bg-white/[0.015] py-3',
+                )}
+              >
+                <div
+                  className={cn(
+                    'speak-rail-label mb-1',
+                    isAction && 'text-[#5DD5E3]/70',
+                    isMuted && 'mb-0.5',
+                  )}
+                >
+                  {label}
+                </div>
+                {isMuted ? (
+                  <p
+                    className="line-clamp-1 text-[13px] leading-snug text-white/40"
+                    title={t}
+                  >
+                    {t}
+                  </p>
+                ) : (
+                  <p
+                    className={cn(
+                      'speak-body',
+                      isAction
+                        ? 'text-[17px] font-medium leading-[1.65] text-white/92'
+                        : 'text-[16px] leading-[1.6] text-white/82',
+                    )}
+                  >
+                    <HighlightedText text={t!} spans={spans} />
+                  </p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )
+    } else if (bullets.length <= 1) {
+      // Single growing stream block — anti-flicker stable surface
+      const text = bullets[0] || answer?.bullets?.join('\n') || ''
+      speakBody = (
+        <div className="speak-measure rounded-[14px] border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
+          <p className="speak-body whitespace-pre-wrap">
+            <HighlightedText text={text} spans={highlightSets[0] ?? []} />
+            {streaming ? <span className="stream-caret" aria-hidden /> : null}
+          </p>
+        </div>
+      )
+    } else {
+      // Short glanceable bullets — not dense multi-paragraph cards
+      speakBody = (
+        <ul className="speak-measure space-y-2">
+          {bullets.map((b, i) => (
+            <li
+              key={`${card.id}-b-${i}`}
+              className="flex gap-2.5 rounded-[12px] border border-white/[0.05] bg-white/[0.015] px-3.5 py-2.5"
+            >
+              <span
+                className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-[#5DD5E3]/70"
+                aria-hidden
+              />
+              <p className="speak-body min-w-0 text-[16px] leading-[1.6]">
+                <HighlightedText text={b} spans={highlightSets[i] ?? []} />
+              </p>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  }
+
+  const showReadyRails = !card && !preparing
+  const showPreparingSkeleton = preparing && (!card || !hasBody)
+  const showEmptyCardBody = card && !hasBody && !preparing
 
   return (
     <div
       className={cn(
+        // Tall reading surface: fill parent and keep a large floor so long answers stay readable
         'glass flex h-full min-h-[min(78vh,900px)] flex-col rounded-[28px] p-7 md:p-9',
+        // Overlay: drop fixed min-height so the window can shrink/grow freely
         compact && 'min-h-0 rounded-[20px] p-4 sm:rounded-[24px] sm:p-5',
       )}
     >
-      <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
+      <div className="mb-5 flex shrink-0 items-start justify-between gap-4">
         <div>
           <h2 className="text-[17px] font-medium tracking-tight text-white/95">
-            Speak this
+            Your answer
           </h2>
-          <p className="mt-1 text-[12px] text-white/40">
-            HOOK · PROOF · CLOSE · glance, don&apos;t read · format rewrites
+          <p className="mt-1 text-[13px] text-white/40">
+            {compact
+              ? 'Speak scaffold · formats rewrite live'
+              : 'Glance · speak · switch format to rewrite'}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {(preparing || regenerating) && (
             <Badge tone="amber">
               <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-              {regenerating
-                ? 'Rewriting…'
-                : preparing
-                  ? 'Drafting…'
-                  : 'Working…'}
+              {regenerating ? 'Rewriting…' : 'Working…'}
             </Badge>
           )}
           {total > 0 && (
@@ -319,7 +376,7 @@ export const WhisperStream = memo(function WhisperStream({
         </div>
       </div>
 
-      <div className="mb-4 flex shrink-0 flex-wrap gap-2">
+      <div className="mb-5 flex shrink-0 flex-wrap gap-2">
         {modes.map((m) => (
           <Button
             key={m.id}
@@ -335,57 +392,63 @@ export const WhisperStream = memo(function WhisperStream({
       </div>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-2 scrollbar-thin">
-        {showRails && (
-          <ReadyRails
-            preparing={Boolean(preparing && !hasBody)}
-            compact={compact}
-          />
+        {showReadyRails && <ReadyRails compact={compact} />}
+
+        {showPreparingSkeleton && !card && (
+          <div className="space-y-3">
+            <SpeakRailsSkeleton compact={compact} />
+          </div>
         )}
 
-        {card && hasBody && (
-          <div key={card.id} className="space-y-4 pb-2">
-            {card.question?.trim() ? (
-              <p className="line-clamp-2 max-w-[66ch] text-[13px] leading-snug text-white/40">
-                <span className="mr-1.5 text-[10px] font-medium uppercase tracking-wide text-white/25">
-                  Q
-                </span>
-                {card.question}
-              </p>
-            ) : null}
+        {card && (
+          // Stable key: do NOT remount on every streaming token (was causing heavy flicker).
+          // Only remount when the card identity changes (new question).
+          <div key={card.id} className="space-y-3.5 pb-2">
+            {/* Demoted question: single muted line, not large glass-inset card */}
+            <p
+              className="line-clamp-1 max-w-[66ch] text-[13px] leading-snug text-white/40"
+              title={card.question}
+            >
+              <span className="mr-1.5 text-[11px] font-medium uppercase tracking-wide text-white/28">
+                Q
+              </span>
+              {card.question}
+            </p>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={beatLabel}>Live scaffold</span>
-              <Badge tone="default">{answer?.mode ?? mode}</Badge>
-              {answer?.streaming ? (
-                <span className="text-[11px] text-white/30">streaming…</span>
-              ) : null}
-            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium uppercase tracking-tight text-white/35">
+                  Speak this
+                </p>
+                <Badge tone="default">{answer?.mode ?? mode}</Badge>
+              </div>
 
-            <MetricChips metrics={metrics} />
+              {showPreparingSkeleton && (
+                <SpeakRailsSkeleton compact={compact} />
+              )}
 
-            {isStar && answer?.star ? (
-              <StarWeighted star={answer.star} />
-            ) : (
-              <SpeakBeats
-                bullets={bullets}
-                streaming={Boolean(answer?.streaming)}
-              />
-            )}
+              {showEmptyCardBody && (
+                <div className="speak-measure rounded-[14px] border border-white/[0.06] bg-white/[0.02] px-4 py-5 text-[14px] text-white/40">
+                  No answer text yet — try Answer again or switch format.
+                </div>
+              )}
 
-            {answer?.codeSnippet ? (
-              <div className="space-y-1.5">
-                <div className={beatLabel}>Code sketch</div>
-                <pre className="max-h-[40vh] max-w-[72ch] overflow-auto rounded-[16px] border border-white/[0.06] bg-black/30 p-4 text-[13px] leading-relaxed text-[#5DD5E3]/95">
+              {speakBody}
+
+              {answer?.codeSnippet ? (
+                <pre className="speak-measure max-h-[40vh] overflow-auto rounded-[14px] border border-white/[0.06] bg-black/30 p-4 text-[13px] leading-relaxed text-[#5DD5E3]/95">
                   <code>{answer.codeSnippet}</code>
                 </pre>
-              </div>
-            ) : null}
+              ) : null}
+
+              <MetricsChips metrics={metrics} />
+            </div>
           </div>
         )}
       </div>
 
       {total > 0 && (
-        <div className="mt-5 flex shrink-0 items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
+        <div className="mt-6 flex shrink-0 items-center justify-between gap-3 border-t border-white/[0.06] pt-5">
           <Button
             variant="secondary"
             size="sm"
@@ -396,11 +459,7 @@ export const WhisperStream = memo(function WhisperStream({
             Previous
           </Button>
           <span className="text-[12px] text-white/35">
-            {canNext
-              ? 'Next when ready'
-              : preparing
-                ? 'More coming…'
-                : 'End of list'}
+            {canNext ? 'Next when ready' : preparing ? 'More coming…' : 'End of list'}
           </span>
           <Button
             variant="default"
