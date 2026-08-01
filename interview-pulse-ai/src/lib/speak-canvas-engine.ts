@@ -306,6 +306,31 @@ export function planSpeakCanvas(
   }
 }
 
+/**
+ * Detect atomic first answer (one-word rule): 1–4 word term + period.
+ * Matches: "Hook: CAPM." | "Hook — CAPM." | "Net Present Value." | "CAPM."
+ */
+export function extractAtomicPunchline(text: string): {
+  token: string
+  rest: string
+} | null {
+  const raw = (text || '').trim()
+  if (!raw) return null
+  const firstLine = raw.split(/\r?\n/)[0]?.trim() || ''
+  // Allow colon or em-dash after label (API bullets use "Hook — …" sometimes)
+  const m = firstLine.match(
+    /^(?:(?:Hook|Answer|Thesis)\s*[:—–-]\s*)?([A-Za-z0-9][\w./+-]*(?:\s+[A-Za-z0-9][\w./+-]*){0,3})\s*\.\s*$/i,
+  )
+  if (!m) return null
+  const token = m[1]!.replace(/\.$/, '').replace(/\s+/g, ' ').trim()
+  if (!token || token.length > 48) return null
+  const rest = raw.slice(firstLine.length).replace(/^\s*\n?/, '').trim()
+  const hasPeriod = /\.\s*$/.test(firstLine)
+  const hasLabel = /^(?:Hook|Answer|Thesis)\s*[:—–-]/i.test(firstLine)
+  if (!hasPeriod && !hasLabel) return null
+  return { token, rest }
+}
+
 /** Map STAR fields to psych roles with peak on Action. */
 export function starFieldWeights(): Array<{
   key: 'situation' | 'task' | 'action' | 'result'

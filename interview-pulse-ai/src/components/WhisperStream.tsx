@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
+  extractAtomicPunchline,
   planSpeakCanvas,
   starFieldWeights,
   type SpeakCanvasStats,
@@ -390,39 +391,113 @@ export const WhisperStream = memo(function WhisperStream({
       )
     } else if (bullets.length <= 1) {
       // Single growing stream — primacy surface (anti-flicker)
+      // One-word rule: if Hook is "Token." show huge punch then explain
       const text = bullets[0] || answer?.bullets?.join('\n') || ''
+      const punch = extractAtomicPunchline(text)
       const beat = canvasStats.beats[0]
-      speakBody = (
-        <div className="speak-measure speak-beat speak-beat-hook rounded-[14px] px-4 py-3.5">
-          <div className="mb-1.5 flex items-center justify-between gap-2">
-            <span className="speak-rail-label text-[#5DD5E3]/70">
-              {beat?.label ?? 'HOOK'}
-            </span>
-            <span className="speak-tech-hint">
-              {beat?.technique ?? 'Primacy · open here'}
-            </span>
-          </div>
-          <p
-            className="speak-body whitespace-pre-wrap"
-            style={{
-              fontSize: `${17 * (beat?.displayScale ?? 1)}px`,
-            }}
-          >
-            <HighlightedText text={text} spans={highlightSets[0] ?? []} />
-            {streaming ? <span className="stream-caret" aria-hidden /> : null}
-          </p>
-          {beat ? (
-            <div className="mt-2.5">
-              <AttentionBar a={beat.attention} />
+      if (punch && (punch.rest || !streaming)) {
+        speakBody = (
+          <div className="speak-measure space-y-3">
+            <div className="speak-punch">
+              <span className="speak-rail-label text-[#5DD5E3]/80">
+                Answer
+              </span>
+              <p className="speak-punch-word">
+                {punch.token}
+                <span className="speak-punch-period">.</span>
+              </p>
+              <p className="speak-tech-hint mt-1">
+                One word. Period. Then explain.
+              </p>
             </div>
-          ) : null}
-        </div>
-      )
+            {punch.rest ? (
+              <div className="speak-beat speak-beat-peak rounded-[14px] px-4 py-3">
+                <div className="speak-rail-label mb-1">Explain</div>
+                <p className="speak-body whitespace-pre-wrap text-[16px]">
+                  <HighlightedText
+                    text={punch.rest}
+                    spans={highlightSets[0] ?? []}
+                  />
+                  {streaming ? (
+                    <span className="stream-caret" aria-hidden />
+                  ) : null}
+                </p>
+              </div>
+            ) : streaming ? (
+              <p className="text-[13px] text-white/35">Explaining…</p>
+            ) : null}
+          </div>
+        )
+      } else {
+        speakBody = (
+          <div className="speak-measure speak-beat speak-beat-hook rounded-[14px] px-4 py-3.5">
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <span className="speak-rail-label text-[#5DD5E3]/70">
+                {beat?.label ?? 'HOOK'}
+              </span>
+              <span className="speak-tech-hint">
+                {beat?.technique ?? 'Primacy · open here'}
+              </span>
+            </div>
+            <p
+              className="speak-body whitespace-pre-wrap"
+              style={{
+                fontSize: `${17 * (beat?.displayScale ?? 1)}px`,
+              }}
+            >
+              <HighlightedText text={text} spans={highlightSets[0] ?? []} />
+              {streaming ? <span className="stream-caret" aria-hidden /> : null}
+            </p>
+            {beat ? (
+              <div className="mt-2.5">
+                <AttentionBar a={beat.attention} />
+              </div>
+            ) : null}
+          </div>
+        )
+      }
     } else {
-      // Multi-beat: Hook / Proof / Close with softmax attention scales
+      // Multi-beat: first bullet may be atomic "Word." punch
+      const firstPunch = extractAtomicPunchline(bullets[0] || '')
       speakBody = (
         <ul className="speak-measure space-y-2.5">
+          {firstPunch ? (
+            <li className="speak-punch list-none">
+              <span className="speak-rail-label text-[#5DD5E3]/80">
+                Answer
+              </span>
+              <p className="speak-punch-word">
+                {firstPunch.token}
+                <span className="speak-punch-period">.</span>
+              </p>
+            </li>
+          ) : null}
           {bullets.map((b, i) => {
+            if (i === 0 && firstPunch) {
+              // Rest of first line already shown as punch; skip if only token
+              if (!firstPunch.rest && bullets.length > 1) return null
+              if (!firstPunch.rest) return null
+              const beat = canvasStats.beats[i]
+              return (
+                <li
+                  key={`${card.id}-b-${i}`}
+                  className="speak-beat speak-beat-peak rounded-[12px] px-3.5 py-2.5"
+                >
+                  <div className="speak-rail-label mb-1">Explain</div>
+                  <p className="speak-body min-w-0 text-[16px] leading-[1.6]">
+                    <HighlightedText
+                      text={firstPunch.rest}
+                      spans={highlightSets[i] ?? []}
+                    />
+                  </p>
+                  {beat ? (
+                    <div className="mt-2">
+                      <AttentionBar a={beat.attention} />
+                    </div>
+                  ) : null}
+                </li>
+              )
+            }
             const beat = canvasStats.beats[i]
             const role = beat?.role ?? 'support'
             return (

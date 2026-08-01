@@ -124,7 +124,10 @@ FAST_STAR_SYSTEM = (
     "Rules: 120-200 words for short Qs; for multi-part/long Qs 200-320 words and "
     "address EVERY clause (do not skip later parts). Correct facts for the topic asked only; "
     "1 metric if real and grounded in context; precise jargon from question/role only; "
-    "no fluff, no markdown, never invent products or tools. Labels start with Hook: not /Hook:."
+    "no fluff, no markdown, never invent products or tools. Labels start with Hook: not /Hook:.\n"
+    "ONE-WORD RULE: If the question expects a single word/term/name/number/yes-no, "
+    "line 1 MUST be exactly that answer + a period (e.g. Hook: Latency.). "
+    "Then explain. Never bury the one-word answer in a sentence."
 )
 FAST_TECH_SYSTEM = (
     "Interview coach for any professional role. Speakable, FACTUALLY CORRECT answer.\n"
@@ -133,7 +136,10 @@ FAST_TECH_SYSTEM = (
     "each asked bullet. Use precise jargon only from the question, job context, and "
     "provided resume/knowledge context — never invent products, APIs, or metrics. "
     "Stay on the topic asked; do not substitute a different domain. "
-    "No markdown. Labels like Hook: not /Hook:."
+    "No markdown. Labels like Hook: not /Hook:.\n"
+    "ONE-WORD RULE: If the question expects a single word/term/acronym/number/yes|no, "
+    "Hook: MUST be only that token plus a period (Hook: CAPM.). Then Approach/Mechanism "
+    "explain. Zero fluff before the period."
 )
 
 def _is_long_or_multipart_question(question: str) -> bool:
@@ -169,6 +175,109 @@ def _is_long_or_multipart_question(question: str) -> bool:
     ) and words >= 20:
         return True
     return False
+
+
+def _is_one_word_answer_question(question: str) -> bool:
+    """
+    High-precision only: interviewer wants an atomic token first.
+
+    Precision > recall. False positives on behavioral "What is your…?" are worse
+    than missing a definitional Q (model can still answer normally).
+    """
+    q = (question or "").strip()
+    if not q:
+        return False
+    low = re.sub(r"\s+", " ", q.lower()).strip()
+    words = low.split()
+    if _is_long_or_multipart_question(q) or len(words) > 18:
+        return False
+    if low.count("?") >= 2:
+        return False
+    # Behavioral / narrative — never atomic
+    deny = (
+        "what is your",
+        "what's your",
+        "whats your",
+        "what are your",
+        "what is my",
+        "tell me about",
+        "describe a",
+        "walk me through",
+        "difference between",
+        " vs ",
+        "versus",
+        "compare ",
+        "and how ",
+        "and when ",
+        "and why ",
+        "and what ",
+        "biggest weakness",
+        "biggest strength",
+        "hardest bug",
+        "experience with",
+    )
+    if any(d in low for d in deny):
+        return False
+
+    # Explicit atomic asks (high precision)
+    if any(
+        p in low
+        for p in (
+            "in one word",
+            "in a word",
+            "one word",
+            "single word",
+            "one-word",
+            "just the term",
+            "just the name",
+            "yes or no",
+            "true or false",
+            "true/false",
+            "y/n",
+        )
+    ):
+        return True
+
+    # Naming / expand acronym — still precise
+    if any(
+        p in low
+        for p in (
+            "what do you call",
+            "what do we call",
+            "what's the term",
+            "what is the term",
+            "name the term",
+            "name the metric",
+            "name the formula",
+            "stands for",
+            "acronym for",
+            "abbreviation for",
+            "expand ",
+        )
+    ):
+        return True
+
+    # Short pure definition of a term: "What is CAPM?" / "Define latency."
+    # Require: starts with what is/define + short subject, no personal pronouns
+    m = re.match(
+        r"^(?:what(?:'s|s)?|define|definition of|meaning of)\s+(.+?)\??$",
+        low,
+    )
+    if not m:
+        return False
+    subject = m.group(1).strip()
+    # Reject personal / narrative subjects
+    if re.match(r"^(your|my|our|the best|the hardest|the biggest|a time|an example)\b", subject):
+        return False
+    # Subject should look like a term (≤6 tokens, no clause glue)
+    sub_words = subject.split()
+    if not (1 <= len(sub_words) <= 6):
+        return False
+    if any(x in subject for x in (" and ", " or when ", " or how ", " if ", " vs ")):
+        return False
+    return True
+
+
 FAST_SHORTER_SYSTEM = (
     "Interview coach. Exactly 4 short speakable lines:\n"
     "1) Thesis 2) Mechanism 3) Metric/tradeoff 4) Close.\n"
@@ -436,7 +545,57 @@ def _prefer_mode_for_question(mode: str, strategy: dict[str, Any], question: str
     return mode
 
 
-def _normalize_answer_text(text: str) -> str:
+def _enforce_one_word_first(text: str, question: str) -> str:
+    """
+    If Q wants an atomic answer: first line = 'Hook: <1–4 word term>.'
+    then explanation. If we cannot extract confidently, leave text alone
+    (never invent a garbage first token).
+    """
+    if not _is_one_word_answer_question(question):
+        return text
+    t = (text or "").strip()
+    if not t:
+        return t
+    lines = t.splitlines()
+    first = lines[0].strip() if lines else ""
+
+    # Already atomic: Hook: Net Present Value.  or  CAPM.
+    atomic_ok = re.match(
+        r"^(?:(?:Hook|Answer|Thesis)\s*:\s*)?([A-Za-z0-9][\w./+-]*(?:\s+[A-Za-z0-9][\w./+-]*){0,3})\s*\.\s*$",
+        first,
+        flags=re.I,
+    )
+    if atomic_ok:
+        tok = re.sub(r"\s+", " ", atomic_ok.group(1).strip())
+        rest = "\n".join(lines[1:]).strip()
+        head = f"Hook: {tok}."
+        return f"{head}\n{rest}".strip() if rest else head
+
+    # Hook: Term is/means ... → Term. + rest  (term 1–4 words before is/means)
+    m = re.match(
+        r"^(?:Hook|Answer|Thesis)\s*:\s*"
+        r"([A-Za-z0-9][\w./+-]*(?:\s+[A-Za-z0-9][\w./+-]*){0,3})"
+        r"\s+(is|are|means|refers to|stands for)\s+(.+)$",
+        first,
+        flags=re.I,
+    )
+    if m:
+        tok = re.sub(r"\s+", " ", m.group(1).strip())
+        rest_line = m.group(3).strip()
+        rest = "\n".join([rest_line] + lines[1:]).strip()
+        if rest and not re.match(
+            r"^(Approach|Mechanism|Situation|Action|Result|Explain)\s*:",
+            rest,
+            re.I,
+        ):
+            rest = f"Approach: {rest}"
+        return f"Hook: {tok}.\n{rest}".strip()
+
+    # Do not guess first-word-only — leave model text intact
+    return t
+
+
+def _normalize_answer_text(text: str, question: str = "") -> str:
     """Fix common model label glitches (/Hook:, markdown) for speakable UI."""
     t = (text or "").strip()
     if not t:
@@ -477,6 +636,9 @@ def _normalize_answer_text(text: str) -> str:
         m = re.search(r"^(.*[.!?])\s*[^.!?]*$", t, flags=re.S)
         if m and len(m.group(1).split()) >= 40:
             t = m.group(1).strip()
+    # One-word Qs: enforce "Token." on first line then explanation
+    if question:
+        t = _enforce_one_word_first(t, question)
     return t
 
 
@@ -694,13 +856,33 @@ def _build_user_prompt(
                 "(design, constraints, controls, metrics, failure modes, etc.). "
                 "Do not stop after only the first sub-question. 220-360 words."
             )
-        # Outline-first streaming: lead with Hook + structure so first tokens are usable
-        parts.append(
-            "STREAM ORDER: Start immediately with Hook: then labeled sections "
-            "(Situation/Task/Action/Result or Approach/Mechanism/Tradeoff). "
-            "First 2–3 lines must be speakable structure; then fill depth. "
-            "Never invent resume facts — only use PRE-SESSION CONTEXT when provided."
-        )
+        one_word = _is_one_word_answer_question(q)
+        if one_word:
+            # Atomic answer first — period — then explain (non-negotiable)
+            parts.append(
+                "ONE-WORD / ATOMIC ANSWER REQUIRED:\n"
+                "1) First labeled line AFTER the label is ONLY the single word/term/"
+                "number/yes|no plus a period. Examples:\n"
+                "   Hook: CAPM.\n"
+                "   Hook: Latency.\n"
+                "   Hook: No.\n"
+                "2) Forbidden on that first line: full sentences, 'is', 'means', "
+                "'refers to', commas, or extra clauses.\n"
+                "3) NEXT lines explain (mechanism, tradeoff, example). Period. "
+                "No preamble before the atomic answer."
+            )
+            parts.append(
+                "STREAM ORDER: Hook: <ONE_TOKEN>. then Approach:/Mechanism: or "
+                "Situation:/Action: explanation. Never invent resume facts."
+            )
+        else:
+            # Outline-first streaming: lead with Hook + structure so first tokens are usable
+            parts.append(
+                "STREAM ORDER: Start immediately with Hook: then labeled sections "
+                "(Situation/Task/Action/Result or Approach/Mechanism/Tradeoff). "
+                "First 2–3 lines must be speakable structure; then fill depth. "
+                "Never invent resume facts — only use PRE-SESSION CONTEXT when provided."
+            )
         if depth == "fast":
             parts.append("FAST MODE: 90–140 words. Tight bullets. One metric max.")
         elif depth == "deep":
@@ -973,7 +1155,7 @@ def generate_answer(
             )
         except Exception:
             answer = ""
-        answer = _normalize_answer_text(answer)
+        answer = _normalize_answer_text(answer, question)
         # Domain answers: never substitute generic SWE templates for specialized Qs
         if not answer:
             allow_template = (
@@ -987,7 +1169,7 @@ def generate_answer(
                 answer, _, _ = instant_answer(
                     question, job_context=job_context, mode=mode
                 )
-                answer = _normalize_answer_text(answer)
+                answer = _normalize_answer_text(answer, question)
                 generate_answer.last_source = "template_fallback"  # type: ignore[attr-defined]
                 return answer
             generate_answer.last_source = "llm_empty"  # type: ignore[attr-defined]
@@ -1044,7 +1226,7 @@ def generate_answer(
         max_tokens=_max_tokens_for_mode(mode, question=question),
         temperature=0.25 if accuracy else 0.42,
     )
-    answer = _normalize_answer_text(answer)
+    answer = _normalize_answer_text(answer, question)
     generate_answer.last_source = "llm" if (answer or "").strip() else "llm_empty"  # type: ignore[attr-defined]
 
     if _use_quality_regen() and answer:
@@ -1072,7 +1254,7 @@ def generate_answer(
                 max_tokens=_max_tokens_for_mode(mode, question=question) + 120,
                 temperature=0.3,
             )
-            answer2 = _normalize_answer_text(answer2)
+            answer2 = _normalize_answer_text(answer2, question)
             q2 = score_answer_quality(answer2, strategy, mode=mode)
             if q2["score"] >= quality["score"]:
                 answer = answer2
@@ -1279,7 +1461,15 @@ def to_bullets(text: str, mode: str = "star") -> list[str]:
                 title = key.capitalize() if key != "tradeoffs" else "Tradeoffs"
                 if key == "close":
                     title = "Close"
-                labeled.append(f"{title} — {body}")
+                # Atomic punch: keep "Hook: CAPM." so UI one-word rule can render
+                if key == "hook" and re.match(
+                    r"^[A-Za-z0-9][\w./+-]*(?:\s+[A-Za-z0-9][\w./+-]*){0,3}\s*\.?\s*$",
+                    body,
+                ):
+                    tok = body.rstrip().rstrip(".")
+                    labeled.append(f"Hook: {tok}.")
+                else:
+                    labeled.append(f"{title} — {body}")
                 mapped = True
                 break
         if not mapped:
