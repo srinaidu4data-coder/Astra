@@ -176,7 +176,8 @@ export const useAppStore = create<AppState>()(
         deepgramKey: '',
         anthropicKey: '',
         demoMode: false,
-        jobContext: 'Senior Full-Stack Engineer',
+        // Empty until the user types a role — no baked-in placeholder title
+        jobContext: '',
         tone: 'confident',
         // Speakers only by default — never mic (your answers must not be STT'd)
         audioSource: 'auto' as const,
@@ -375,19 +376,35 @@ export const useAppStore = create<AppState>()(
         sessions: s.sessions,
         answerMode: s.answerMode,
       }),
-      // Drop the old demo job title so Knowledge "Job match" stays blank
+      // Drop old demo / default titles so Job context & Knowledge stay blank
       merge: (persisted, current) => {
         const p = (persisted || {}) as Partial<typeof current> & {
           activeJobTitle?: string
+          settings?: Partial<typeof current.settings>
         }
         const demoTitles = new Set([
           'Staff Frontend / AI Copilot Engineer',
           'Staff Frontend / AI Copilot Engineer ',
         ])
+        // Former hard-coded defaults — clear so field is empty until user enters
+        const defaultJobContexts = new Set([
+          'Senior Full-Stack Engineer',
+          'AI/ML Engineer',
+          'Software Engineer',
+        ])
         const title = (p.activeJobTitle || '').trim()
+        const mergedSettings = {
+          ...current.settings,
+          ...(p.settings || {}),
+        }
+        const jc = (mergedSettings.jobContext || '').trim()
+        if (!jc || defaultJobContexts.has(jc)) {
+          mergedSettings.jobContext = ''
+        }
         return {
           ...current,
           ...p,
+          settings: mergedSettings,
           activeJobTitle:
             !title || demoTitles.has(title) ? '' : p.activeJobTitle || '',
         }
