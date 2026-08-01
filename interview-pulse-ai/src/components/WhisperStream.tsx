@@ -1,6 +1,11 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
+  planSpeakCanvas,
+  starFieldWeights,
+  type SpeakCanvasStats,
+} from '@/lib/speak-canvas-engine'
+import {
   getSpeakHighlightsBudgeted,
   splitHighlighted,
   type SpeakHighlightSpan,
@@ -8,7 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import type { AnswerMode, QACard } from '@/types'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
-import { memo, useMemo, useRef, type ReactNode } from 'react'
+import { memo, useMemo, useRef, useState, type ReactNode } from 'react'
 
 const modes: { id: AnswerMode; label: string; hint: string }[] = [
   { id: 'shorter', label: 'Shorter', hint: '3 tight lines' },
@@ -18,9 +23,9 @@ const modes: { id: AnswerMode; label: string; hint: string }[] = [
 ]
 
 const READY_RAILS = [
-  { id: 'hook', label: 'Hook', hint: 'One-line frame' },
-  { id: 'proof', label: 'Proof', hint: 'Action + metric' },
-  { id: 'close', label: 'Close', hint: 'Outcome / offer' },
+  { id: 'hook', label: 'Hook', hint: 'Primacy · first fixation' },
+  { id: 'proof', label: 'Proof', hint: 'Peak · action + metric' },
+  { id: 'close', label: 'Close', hint: 'Peak-end · last word' },
 ] as const
 
 function HighlightedText({
@@ -37,7 +42,13 @@ function HighlightedText({
     <span className={className}>
       {nodes.map((n, i) =>
         n.highlight ? (
-          <span key={i} className="speak-keyword">
+          <span
+            key={i}
+            className={cn(
+              'speak-keyword',
+              // von Restorff: metrics slightly louder than ownership
+            )}
+          >
             {n.text}
           </span>
         ) : (
@@ -45,6 +56,67 @@ function HighlightedText({
         ),
       )}
     </span>
+  )
+}
+
+/** Attention mass bar — visual softmax a_i */
+function AttentionBar({ a }: { a: number }) {
+  const pct = Math.round(Math.min(1, Math.max(0, a)) * 100)
+  return (
+    <span
+      className="speak-attn-bar"
+      title={`Attention aᵢ = ${(a * 100).toFixed(0)}% (softmax)`}
+      style={{ width: `${Math.max(8, pct)}%` }}
+    />
+  )
+}
+
+function IntentionStrip({ text }: { text: string }) {
+  return (
+    <div className="speak-intention" title="Implementation intention (Gollwitzer)">
+      <span className="speak-intention-tag">When → Then</span>
+      <span className="min-w-0 truncate">{text}</span>
+    </div>
+  )
+}
+
+function EngineStrip({ stats }: { stats: SpeakCanvasStats }) {
+  const [open, setOpen] = useState(false)
+  const loadTone =
+    stats.cognitiveLoad > 1.05
+      ? 'high'
+      : stats.cognitiveLoad > 0.75
+        ? 'mid'
+        : 'ok'
+  return (
+    <div className="speak-engine">
+      <button
+        type="button"
+        className="speak-engine-toggle"
+        onClick={() => setOpen((v) => !v)}
+        title="Psych-math engine (softmax, serial position, load, Zipf budget)"
+      >
+        <span>
+          L={stats.cognitiveLoad.toFixed(2)} · B={stats.highlightBudget} · U=
+          {stats.timeUtility.toFixed(2)}
+        </span>
+        <span className={cn('speak-load-dot', `is-${loadTone}`)} />
+        <span className="text-white/30">{open ? 'Hide math' : 'Psych-math'}</span>
+      </button>
+      {open && (
+        <ul className="speak-engine-formulas">
+          {stats.formulas.map((f) => (
+            <li key={f}>
+              <code>{f}</code>
+            </li>
+          ))}
+          <li className="text-white/35">
+            Techniques: primacy · recency · peak-end · isolation · chunking ·
+            implementation intentions · cognitive load
+          </li>
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -240,44 +312,52 @@ export const WhisperStream = memo(function WhisperStream({
 
   let speakBody: ReactNode = null
 
+  // Psych-math plan for multi-beat bullets (primacy / peak / recency)
+  const canvasStats = useMemo(() => {
+    const parts = useStarLayout
+      ? [starAction, starResult].filter(Boolean)
+      : bullets.length
+        ? bullets
+        : []
+    const hits = highlightSets.reduce((n, s) => n + s.length, 0)
+    return planSpeakCanvas(parts, { highlightHits: hits })
+  }, [useStarLayout, starAction, starResult, bulletsKey, highlightSets])
+
   if (card && hasBody) {
     if (useStarLayout && answer?.star) {
-      const starFields = (
-        [
-          ['Situation', answer.star.situation, 'muted'],
-          ['Task', answer.star.task, 'muted'],
-          ['Action', answer.star.action, 'primary'],
-          ['Result', answer.star.result, 'secondary'],
-        ] as const
-      ).filter(([, t]) => Boolean(t))
+      const starFields = starFieldWeights().filter(
+        (f) => Boolean(answer.star?.[f.key]),
+      )
 
       speakBody = (
         <div className="speak-measure grid gap-2.5">
-          {starFields.map(([label, t, weight]) => {
-            const isAction = weight === 'primary'
-            const isMuted = weight === 'muted'
-            const hlIndex = label === 'Action' ? 0 : label === 'Result' ? 1 : -1
+          {starFields.map((f) => {
+            const t = answer.star![f.key]
+            const isAction = f.weight === 'primary'
+            const isMuted = f.weight === 'muted'
+            const hlIndex =
+              f.key === 'action' ? 0 : f.key === 'result' ? 1 : -1
             const spans = hlIndex >= 0 ? highlightSets[hlIndex] ?? [] : []
             return (
               <div
-                key={label}
+                key={f.key}
                 className={cn(
-                  'rounded-[14px] px-4',
-                  isAction
-                    ? 'border border-white/[0.08] bg-white/[0.03] py-3.5'
-                    : isMuted
-                      ? 'border border-transparent py-1.5'
-                      : 'border border-white/[0.05] bg-white/[0.015] py-3',
+                  'speak-beat rounded-[14px] px-4',
+                  isAction && 'speak-beat-peak',
+                  isMuted && 'speak-beat-muted',
+                  !isAction && !isMuted && 'speak-beat-close',
                 )}
               >
-                <div
-                  className={cn(
-                    'speak-rail-label mb-1',
-                    isAction && 'text-[#5DD5E3]/70',
-                    isMuted && 'mb-0.5',
-                  )}
-                >
-                  {label}
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <div
+                    className={cn(
+                      'speak-rail-label',
+                      isAction && 'text-[#5DD5E3]/70',
+                    )}
+                  >
+                    {f.label}
+                  </div>
+                  <span className="speak-tech-hint">{f.technique}</span>
                 </div>
                 {isMuted ? (
                   <p
@@ -294,6 +374,11 @@ export const WhisperStream = memo(function WhisperStream({
                         ? 'text-[17px] font-medium leading-[1.65] text-white/92'
                         : 'text-[16px] leading-[1.6] text-white/82',
                     )}
+                    style={
+                      isAction
+                        ? { fontSize: `${17 * 1.06}px` }
+                        : undefined
+                    }
                   >
                     <HighlightedText text={t!} spans={spans} />
                   </p>
@@ -304,34 +389,80 @@ export const WhisperStream = memo(function WhisperStream({
         </div>
       )
     } else if (bullets.length <= 1) {
-      // Single growing stream block — anti-flicker stable surface
+      // Single growing stream — primacy surface (anti-flicker)
       const text = bullets[0] || answer?.bullets?.join('\n') || ''
+      const beat = canvasStats.beats[0]
       speakBody = (
-        <div className="speak-measure rounded-[14px] border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
-          <p className="speak-body whitespace-pre-wrap">
+        <div className="speak-measure speak-beat speak-beat-hook rounded-[14px] px-4 py-3.5">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span className="speak-rail-label text-[#5DD5E3]/70">
+              {beat?.label ?? 'HOOK'}
+            </span>
+            <span className="speak-tech-hint">
+              {beat?.technique ?? 'Primacy · open here'}
+            </span>
+          </div>
+          <p
+            className="speak-body whitespace-pre-wrap"
+            style={{
+              fontSize: `${17 * (beat?.displayScale ?? 1)}px`,
+            }}
+          >
             <HighlightedText text={text} spans={highlightSets[0] ?? []} />
             {streaming ? <span className="stream-caret" aria-hidden /> : null}
           </p>
+          {beat ? (
+            <div className="mt-2.5">
+              <AttentionBar a={beat.attention} />
+            </div>
+          ) : null}
         </div>
       )
     } else {
-      // Short glanceable bullets — not dense multi-paragraph cards
+      // Multi-beat: Hook / Proof / Close with softmax attention scales
       speakBody = (
-        <ul className="speak-measure space-y-2">
-          {bullets.map((b, i) => (
-            <li
-              key={`${card.id}-b-${i}`}
-              className="flex gap-2.5 rounded-[12px] border border-white/[0.05] bg-white/[0.015] px-3.5 py-2.5"
-            >
-              <span
-                className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-[#5DD5E3]/70"
-                aria-hidden
-              />
-              <p className="speak-body min-w-0 text-[16px] leading-[1.6]">
-                <HighlightedText text={b} spans={highlightSets[i] ?? []} />
-              </p>
-            </li>
-          ))}
+        <ul className="speak-measure space-y-2.5">
+          {bullets.map((b, i) => {
+            const beat = canvasStats.beats[i]
+            const role = beat?.role ?? 'support'
+            return (
+              <li
+                key={`${card.id}-b-${i}`}
+                className={cn(
+                  'speak-beat rounded-[12px] px-3.5 py-2.5',
+                  role === 'hook' && 'speak-beat-hook',
+                  role === 'proof' && 'speak-beat-peak',
+                  role === 'close' && 'speak-beat-close',
+                  role === 'support' && 'speak-beat-support',
+                )}
+              >
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className="speak-rail-label">
+                    {beat?.label ?? `BEAT ${i + 1}`}
+                  </span>
+                  <span className="speak-tech-hint">
+                    {beat?.technique ?? 'Chunk'}
+                    {beat
+                      ? ` · a=${(beat.attention * 100).toFixed(0)}%`
+                      : ''}
+                  </span>
+                </div>
+                <p
+                  className="speak-body min-w-0 leading-[1.6] text-white/90"
+                  style={{
+                    fontSize: `${15.5 * (beat?.displayScale ?? 1)}px`,
+                  }}
+                >
+                  <HighlightedText text={b} spans={highlightSets[i] ?? []} />
+                </p>
+                {beat ? (
+                  <div className="mt-2">
+                    <AttentionBar a={beat.attention} />
+                  </div>
+                ) : null}
+              </li>
+            )
+          })}
         </ul>
       )
     }
@@ -353,12 +484,12 @@ export const WhisperStream = memo(function WhisperStream({
       <div className="mb-5 flex shrink-0 items-start justify-between gap-4">
         <div>
           <h2 className="text-[17px] font-medium tracking-tight text-white/95">
-            Your answer
+            Speak this
           </h2>
           <p className="mt-1 text-[13px] text-white/40">
             {compact
-              ? 'Speak scaffold · formats rewrite live'
-              : 'Glance · speak · switch format to rewrite'}
+              ? 'Primacy · peak · end · glance only'
+              : 'HOOK → PROOF → CLOSE · isolation highlights · glance, don’t read'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -416,12 +547,17 @@ export const WhisperStream = memo(function WhisperStream({
             </p>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-medium uppercase tracking-tight text-white/35">
-                  Speak this
+                  Scaffold
                 </p>
                 <Badge tone="default">{answer?.mode ?? mode}</Badge>
               </div>
+
+              {/* Implementation intention (Gollwitzer) */}
+              {hasBody && (
+                <IntentionStrip text={canvasStats.intention} />
+              )}
 
               {showPreparingSkeleton && (
                 <SpeakRailsSkeleton compact={compact} />
@@ -442,6 +578,9 @@ export const WhisperStream = memo(function WhisperStream({
               ) : null}
 
               <MetricsChips metrics={metrics} />
+
+              {/* Psych-math strip: softmax, load L, Zipf B, utility U */}
+              {hasBody && !compact && <EngineStrip stats={canvasStats} />}
             </div>
           </div>
         )}
