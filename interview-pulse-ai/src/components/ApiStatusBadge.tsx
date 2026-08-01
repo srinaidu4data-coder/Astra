@@ -1,8 +1,20 @@
 import { checkCopilotHealth, type CopilotHealth } from '@/services/real-api'
 import { resolveCopilotHttpBase } from '@/lib/api-base'
 import { cn } from '@/lib/utils'
+import { useAppStore } from '@/stores/app-store'
 import { Activity, AlertTriangle, Loader2, RefreshCw, ServerOff } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+
+/** Short label for the top-bar pill (keeps layout compact). */
+function shortModelName(id: string | null | undefined): string {
+  const raw = (id || '').trim()
+  if (!raw) return ''
+  // Drop common vendor prefixes for space: openai/gpt-4o-mini → gpt-4o-mini
+  let s = raw.replace(/^openai\//i, '').replace(/^groq\//i, '')
+  // Very long ids: keep the distinctive tail
+  if (s.length > 28) s = s.slice(0, 26) + '…'
+  return s
+}
 
 type Props = {
   /** compact = pill for top bar; banner = full-width offline strip */
@@ -23,6 +35,10 @@ export function ApiStatusBadge({
   const [health, setHealth] = useState<CopilotHealth | null>(null)
   const [checking, setChecking] = useState(true)
   const [open, setOpen] = useState(false)
+  // Admin / account override wins over server default fast_model
+  const userModel = useAppStore(
+    (s) => s.user?.effective_answer_model || s.user?.answer_model || '',
+  )
 
   const poll = useCallback(async (opts?: { silent?: boolean }) => {
     // Avoid spinner flash on every interval tick — only spin on first load / manual refresh
@@ -37,7 +53,9 @@ export function ApiStatusBadge({
           prev.openai_ready === h.openai_ready &&
           prev.stt_provider === h.stt_provider &&
           prev.stt_deepgram_ready === h.stt_deepgram_ready &&
-          prev.llm_provider === h.llm_provider
+          prev.llm_provider === h.llm_provider &&
+          prev.fast_model === h.fast_model &&
+          prev.fast_fallback === h.fast_fallback
         ) {
           return prev
         }
@@ -65,6 +83,13 @@ export function ApiStatusBadge({
   const llmOk = Boolean(health?.openai_ready ?? health?.openai_key)
   const stt = health?.stt_provider || '—'
   const base = resolveCopilotHttpBase()
+  // Prefer per-user assigned model, else server live answer model from /api/health
+  const modelFull =
+    (typeof userModel === 'string' && userModel.trim()) ||
+    health?.fast_model ||
+    ''
+  const modelShort = shortModelName(modelFull)
+  const fallbackShort = shortModelName(health?.fast_fallback)
 
   if (variant === 'banner') {
     if (online && llmOk) return null
@@ -129,12 +154,18 @@ export function ApiStatusBadge({
       ? 'border-amber-400/40 bg-amber-400/12 text-amber-50'
       : 'border-emerald-400/35 bg-emerald-500/12 text-emerald-100'
 
-  const label = !online ? 'API OFF' : !llmOk ? 'API · no LLM' : 'API ON'
+  const label = !online
+    ? 'API OFF'
+    : !llmOk
+      ? 'API · no LLM'
+      : modelShort
+        ? `API · ${modelShort}`
+        : 'API ON'
   const title = !online
     ? `API offline (${base}). Run: cd src && python copilot_api.py`
     : !llmOk
       ? `API reachable but LLM not ready (${health?.llm_provider || '?'}). Set OPENAI_API_KEY / GROQ_API_KEY.`
-      : `API online · ${health?.llm_provider || 'llm'} · STT ${stt}`
+      : `API online · model ${modelFull || '—'} · provider ${health?.llm_provider || 'llm'} · STT ${stt}`
 
   return (
     <div className={cn('relative', className)}>
@@ -146,7 +177,7 @@ export function ApiStatusBadge({
         }}
         title={title}
         className={cn(
-          'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-medium tracking-tight transition-colors',
+          'inline-flex max-w-[min(100vw-8rem,22rem)] items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-medium tracking-tight transition-colors',
           tone,
         )}
         aria-live="polite"
@@ -164,9 +195,9 @@ export function ApiStatusBadge({
         {checking && !health ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin opacity-70" />
         ) : (
-          <Activity className="h-3.5 w-3.5 opacity-80" strokeWidth={1.75} />
+          <Activity className="h-3.5 w-3.5 shrink-0 opacity-80" strokeWidth={1.75} />
         )}
-        <span>{label}</span>
+        <span className="truncate">{label}</span>
       </button>
 
       {open && (
@@ -198,6 +229,15 @@ export function ApiStatusBadge({
               }
               good={llmOk}
             />
+            <Row
+              k="Model"
+              v={modelFull || '—'}
+              good={Boolean(modelFull) && llmOk}
+              mono
+            />
+            {fallbackShort ? (
+              <Row k="Fallback" v={health?.fast_fallback || fallbackShort} mono />
+            ) : null}
             <Row
               k="STT"
               v={

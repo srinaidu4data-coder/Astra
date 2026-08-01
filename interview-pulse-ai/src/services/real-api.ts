@@ -25,6 +25,7 @@ export type CopilotHealth = {
   llm_base_url?: string | null
   answer_profile?: string
   fast_model?: string
+  fast_fallback?: string
   default_audio_wav?: string | null
   whisper_model_ready?: boolean
   stt_provider?: string
@@ -53,6 +54,7 @@ export async function checkCopilotHealth(): Promise<CopilotHealth> {
       llm_base_url?: string | null
       answer_profile?: string
       fast_model?: string
+      fast_fallback?: string
       default_audio_wav?: string | null
       whisper_model_ready?: boolean
       stt?: {
@@ -70,6 +72,7 @@ export async function checkCopilotHealth(): Promise<CopilotHealth> {
       llm_base_url: data.llm_base_url,
       answer_profile: data.answer_profile,
       fast_model: data.fast_model,
+      fast_fallback: data.fast_fallback,
       default_audio_wav: data.default_audio_wav,
       whisper_model_ready: data.whisper_model_ready,
       stt_provider: data.stt?.provider,
