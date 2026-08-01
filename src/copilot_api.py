@@ -104,7 +104,7 @@ SAMPLE_RATE = 16000
 
 class AnswerRequest(BaseModel):
     question: str
-    job_context: str = "AI/ML Engineer"
+    job_context: str = ""
     tone: str = "confident"
     mode: str = Field(default="star", description="star | shorter | technical | code")
     # Optional overrides (validated against ALLOWED_MODELS); else per-user / global defaults
@@ -131,7 +131,7 @@ class SessionContextRequest(BaseModel):
 
 class InjectQuestionRequest(BaseModel):
     question: str
-    job_context: str = "AI/ML Engineer"
+    job_context: str = ""
     tone: str = "confident"
     mode: str = "star"
     depth: Optional[str] = None
@@ -140,7 +140,7 @@ class InjectQuestionRequest(BaseModel):
 class FileRunRequest(BaseModel):
     path: Optional[str] = None
     max_questions: int = 3
-    job_context: str = "AI/ML Engineer"
+    job_context: str = ""
     tone: str = "confident"
     mode: str = "star"
     min_segment_sec: float = 1.5
@@ -1210,7 +1210,7 @@ async def ws_interview(websocket: WebSocket):
                     os.environ["DEEPGRAM_API_KEY"] = dg_key
                 stt_pref = (msg.get("stt_provider") or msg.get("stt") or "").strip().lower() or None
                 sess.start(
-                    job_context=msg.get("job_context") or "AI/ML Engineer",
+                    job_context=(msg.get("job_context") or "").strip(),
                     tone=msg.get("tone") or "confident",
                     mode=msg.get("mode") or "star",
                     source=source,

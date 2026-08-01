@@ -61,7 +61,7 @@ class LiveInterviewSession:
         self._capture = None
         self._source = "browser"  # browser | system — browser is the reliable default
 
-        self.job_context = "AI/ML Engineer"
+        self.job_context = ""
         self.tone = "confident"
         self.mode = "star"
         self.answer_model: Optional[str] = None
@@ -131,7 +131,7 @@ class LiveInterviewSession:
             self._emit("status", {"message": "Already listening", "listening": True})
             return
 
-        self.job_context = job_context or "AI/ML Engineer"
+        self.job_context = (job_context or "").strip()
         self.tone = tone or "confident"
         self.mode = mode or "star"
         self.answer_model = answer_model

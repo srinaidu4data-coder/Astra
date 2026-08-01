@@ -185,7 +185,7 @@ export class LiveInterviewClient {
     try {
       this.send({
         type: 'start',
-        job_context: this.lastStartOpts.jobContext ?? 'AI/ML Engineer',
+        job_context: this.lastStartOpts.jobContext ?? '',
         tone: this.lastStartOpts.tone ?? 'confident',
         mode: this.lastStartOpts.mode ?? this.mode,
         source: this.lastStartOpts.source ?? 'browser',
@@ -651,7 +651,7 @@ export class LiveInterviewClient {
 
     const baseStart = {
       type: 'start' as const,
-      job_context: opts.jobContext ?? 'AI/ML Engineer',
+      job_context: opts.jobContext ?? '',
       tone: opts.tone ?? 'confident',
       mode: this.mode,
       ...models,

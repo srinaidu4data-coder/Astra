@@ -138,7 +138,7 @@ def effective_job_context(fallback: str = "") -> str:
     bits = [b for b in (pack.role, pack.company, pack.seniority) if b]
     if bits:
         return " · ".join(bits)[:120]
-    return (fallback or "").strip() or "Software Engineer"
+    return (fallback or "").strip()
 
 
 def get_depth() -> str:

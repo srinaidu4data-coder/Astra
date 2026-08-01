@@ -82,7 +82,7 @@ export function PracticePage() {
   } = useAppStore()
 
   const [phase, setPhase] = useState<Phase>('setup')
-  const [jobTitle, setJobTitle] = useState(settings.jobContext || 'Software Engineer')
+  const [jobTitle, setJobTitle] = useState(settings.jobContext || '')
   const [company, setCompany] = useState('')
   const [jd, setJd] = useState('')
   const [difficulty, setDifficulty] = useState<MockDifficulty>('medium')
@@ -267,7 +267,7 @@ export function PracticePage() {
         .map((m) => `${m.situation} → ${m.result}`)
         .join('\n')
       const res = await startMockSession({
-        job_title: jobTitle.trim() || 'Software Engineer',
+        job_title: jobTitle.trim() || '',
         job_description: jd,
         persona: practicePersona as MockPersona,
         difficulty,

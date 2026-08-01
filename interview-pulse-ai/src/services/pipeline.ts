@@ -28,7 +28,7 @@ export class InterviewPipeline {
   private questionIdx = 0
   private memories: StarMemory[] = DEMO_MEMORIES
   private mode: AnswerMode = 'star'
-  private jobContext = 'Software Engineer'
+  private jobContext = ''
 
   setMemories(memories: StarMemory[]) {
     this.memories = memories.length ? memories : DEMO_MEMORIES
@@ -39,7 +39,7 @@ export class InterviewPipeline {
   }
 
   setJobContext(ctx: string) {
-    this.jobContext = ctx || 'Software Engineer'
+    this.jobContext = ctx || ''
   }
 
   isRunning() {

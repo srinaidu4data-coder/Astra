@@ -177,43 +177,33 @@ class TestRegression_LongQuestionCapture:
 
 
 class TestRegression_DomainStrategy:
-    def test_no_sap_fico_forced_pack(self):
-        """SAP/FICO hardcoded strategy packs were removed — must not force FICO jargon."""
+    def test_no_forced_domain_packs(self):
+        """No SAP/FICO/ML hardcoded strategy packs — generic only."""
         from answer_engine import _fallback_strategy
+        import answer_engine as ae
 
         s = _fallback_strategy(
             "How do you design SAP ATTP serialization for MAH and CMO partners?",
             "SAP ATTP Techno-Functional Consultant",
         )
-        # Must not inject the old FICO default pack
-        assert s.get("accuracy_domain") != "sap"
-        blob = " ".join(
-            str(x)
-            for x in (
-                *(s.get("must_cover") or []),
-                *(s.get("jargon_bank") or []),
-                *(s.get("domain_tags") or []),
-            )
-        ).lower()
+        assert s.get("accuracy_domain") == "general"
+        assert s.get("jargon_bank") == []
+        assert s.get("domain_tags") == []
+        blob = " ".join(str(x) for x in (s.get("must_cover") or [])).lower()
         assert "fico" not in blob
         assert "posting key" not in blob
-        assert "tax procedure" not in blob
-        # No private SAP strategy helper
-        import answer_engine as ae
+        assert "precision" not in blob
 
-        assert not hasattr(ae, "_sap_strategy")
-        assert not hasattr(ae, "_is_sap_domain")
-
-    def test_ml_precision_recall(self):
-        from answer_engine import _fallback_strategy
-
-        s = _fallback_strategy(
+        s2 = _fallback_strategy(
             "What is the difference between precision and recall?",
             "AI/ML Engineer",
         )
-        assert s.get("accuracy_domain") == "ml"
-        jar = " ".join(s.get("jargon_bank") or []).lower()
-        assert "precision" in jar and "recall" in jar
+        assert s2.get("accuracy_domain") == "general"
+        assert s2.get("jargon_bank") == []
+        assert not hasattr(ae, "_sap_strategy")
+        assert not hasattr(ae, "_is_sap_domain")
+        assert not hasattr(ae, "_ml_strategy")
+        assert not hasattr(ae, "_is_ml_domain")
 
     def test_normalize_slash_labels(self):
         from answer_engine import _normalize_answer_text

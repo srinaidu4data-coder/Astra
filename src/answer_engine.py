@@ -119,21 +119,20 @@ def _prefer_fast_models() -> bool:
 
 # Compact prompts for ultra/live — still require technical correctness
 FAST_STAR_SYSTEM = (
-    "Senior interview coach. Speakable first-person answer. Labels required:\n"
+    "Interview coach for any role. Speakable first-person answer. Labels required:\n"
     "Hook: / Situation: / Task: / Action: / Result: / Close:\n"
     "Rules: 120-200 words for short Qs; for multi-part/long Qs 200-320 words and "
-    "address EVERY clause (do not skip later parts). Correct domain facts only, "
-    "1 metric if real, precise jargon, no fluff, no markdown, never invent modules. "
-    "Labels start with Hook: not /Hook:."
+    "address EVERY clause (do not skip later parts). Correct facts for the topic asked only; "
+    "1 metric if real and grounded in context; precise jargon from question/role only; "
+    "no fluff, no markdown, never invent products or tools. Labels start with Hook: not /Hook:."
 )
 FAST_TECH_SYSTEM = (
-    "Staff/principal engineer interview coach. Speakable, FACTUALLY CORRECT answer.\n"
+    "Interview coach for any professional role. Speakable, FACTUALLY CORRECT answer.\n"
     "Labels: Hook: / Approach: / Mechanism: / Tradeoff: / Close:\n"
     "Rules: 140-220 words for short Qs; multi-part/long Qs 220-360 words covering "
-    "each asked bullet (design + controls + metrics + failure modes as requested). "
-    "Use precise jargon only from the question, job context, and real domain knowledge — "
-    "never invent products, modules, T-codes, APIs, or metrics. "
-    "Stay on the topic asked; do not substitute a different product or module family. "
+    "each asked bullet. Use precise jargon only from the question, job context, and "
+    "provided resume/knowledge context — never invent products, APIs, or metrics. "
+    "Stay on the topic asked; do not substitute a different domain. "
     "No markdown. Labels like Hook: not /Hook:."
 )
 
@@ -210,11 +209,11 @@ Rules:
 - must_cover must force a complete answer, not a slogan.
 """
 
-RICH_STAR_SYSTEM = """You are a principal-level interview coach writing a HIGH-QUALITY spoken answer
-the candidate can deliver in a real senior interview.
+RICH_STAR_SYSTEM = """You are an interview coach writing a HIGH-QUALITY spoken answer
+the candidate can deliver in a real interview for their stated role (any domain).
 
-You do NOT write thin teleprompter fluff. You write a substantive, technical, first-person answer
-that demonstrates mastery.
+You do NOT write thin teleprompter fluff. You write a substantive, first-person answer
+that demonstrates mastery of the topic asked.
 
 ## Output format (labels required, multi-sentence allowed per section):
 Hook: 1–2 sentences that reframe the question with senior judgment.
@@ -238,7 +237,7 @@ Close: 1 confident closing line the candidate can end on.
 - Never produce a one-paragraph shrug. If uncertain, still give a rigorous framework answer.
 """
 
-RICH_TECHNICAL_SYSTEM = """You are a staff/principal engineer coaching a candidate through a technical interview.
+RICH_TECHNICAL_SYSTEM = """You are an interview coach for any professional role coaching a technical interview answer.
 
 Write a speakable, jargon-rich, correct answer — the kind that survives follow-ups.
 
@@ -358,181 +357,82 @@ def analyze_question_strategy(
     return data
 
 
-def _is_ml_domain(text: str, job: str) -> bool:
-    blob = f"{text} {job}".lower()
-    return any(
-        k in blob
-        for k in (
-            "machine learning",
-            "deep learning",
-            "neural",
-            "transformer",
-            "llm",
-            "gradient",
-            "embedding",
-            "inference",
-            "training set",
-            "overfitting",
-            "bias-variance",
-            "bias variance",
-            "precision and recall",
-            "precision vs recall",
-            "attention",
-            "backprop",
-            "pytorch",
-            "tensorflow",
-            "feature store",
-            "mlops",
-            "ai/ml",
-            "ai ml",
-            "ml engineer",
-            "data scientist",
-        )
-    ) or (
-        any(k in job for k in ("ml ", " ml", "ai/", "ai ", "machine learning", "deep learning"))
-        and any(
-            k in text
-            for k in (
-                "model",
-                "train",
-                "loss",
-                "accuracy",
-                "dataset",
-                "feature",
-                "predict",
-                "classif",
-                "regress",
-                "learning rate",
-                "epoch",
-            )
-        )
-    )
-
-
-def _ml_strategy(question: str) -> dict[str, Any]:
-    t = (question or "").lower()
-    if "bias" in t and "variance" in t:
-        must = [
-            "Bias = error from wrong assumptions (underfit); variance = sensitivity to training noise (overfit)",
-            "Total error ≈ bias² + variance + irreducible noise",
-            "More complex models lower bias / raise variance; regularization / more data reduce variance",
-            "Validate with train vs val curves or cross-validation",
-        ]
-        jargon = ["bias", "variance", "underfitting", "overfitting", "regularization", "cross-validation"]
-    elif "precision" in t and "recall" in t:
-        must = [
-            "Precision = TP/(TP+FP); recall = TP/(TP+FN)",
-            "High precision → few false alarms; high recall → few misses",
-            "Tradeoff controlled by threshold; F1 when balance needed",
-            "Choose metric from business cost of FP vs FN",
-        ]
-        jargon = ["precision", "recall", "true positive", "false positive", "threshold", "F1"]
-    elif "attention" in t or "transformer" in t:
-        must = [
-            "Q, K, V projections; scores = QK^T / sqrt(d_k); softmax → weights; weighted sum of V",
-            "Self-attention mixes all positions; multi-head captures different relations",
-            "Complexity O(n²) in sequence length; residual + layer norm in blocks",
-        ]
-        jargon = ["query", "key", "value", "scaled dot-product", "softmax", "multi-head attention"]
-    elif "gradient" in t or "learning rate" in t:
-        must = [
-            "Gradient descent updates params opposite the loss gradient",
-            "Learning rate = step size; too high diverges, too low slow/stuck",
-            "Mini-batch SGD / Adam; schedules and gradient clipping in practice",
-        ]
-        jargon = ["loss", "gradient", "learning rate", "SGD", "Adam", "local minimum"]
-    else:
-        must = [
-            "State the ML concept correctly (math or algorithmic definition)",
-            "Give train/serve implication (overfit, latency, data leakage, metrics)",
-            "One real tradeoff",
-            "How you'd validate in production or offline eval",
-        ]
-        jargon = ["training", "validation", "generalization", "feature", "metric", "inference"]
-    return {
-        "question_type": "technical",
-        "domain_tags": ["ml", "ai"],
-        "must_cover": must,
-        "jargon_bank": jargon,
-        "seniority_bar": "senior",
-        "pitfalls": [
-            "buzzwords without definitions",
-            "wrong formulas for precision/recall or attention",
-            "claiming accuracy is always the right metric",
-            "confusing training-time and inference-time concerns",
-        ],
-        "evidence_style": "framework",
-        "depth_target": "very_high",
-        "accuracy_domain": "ml",
-    }
-
-
 def _fallback_strategy(question: str, job_context: str) -> dict[str, Any]:
+    """
+    Domain-agnostic strategy. No vendor/ML/role packs.
+    Light question-type heuristic only; LLM strategy (when enabled) may refine.
+    """
     t = (question or "").lower()
-    job = (job_context or "").lower()
-
-    # Optional ML concept pack only when Q is clearly ML (no product/vendor packs)
-    if _is_ml_domain(t, job):
-        return _ml_strategy(t)
-
-    tags: list[str] = []
     jtype = "other"
-    if any(k in t for k in ("design", "architect", "scale", "system", "distributed")):
-        jtype = "system_design"
-        tags = ["scalability", "consistency", "latency", "availability", "observability"]
-    elif any(k in t for k in ("code", "implement", "algorithm", "complexity", "leetcode")):
-        jtype = "coding"
-        tags = ["time complexity", "space complexity", "edge cases"]
-    elif any(k in t for k in ("tell me about a time", "conflict", "leadership", "mentored", "failed")):
+    if any(
+        k in t
+        for k in (
+            "tell me about a time",
+            "describe a situation",
+            "conflict",
+            "leadership",
+            "mentored",
+            "failed",
+            "weakness",
+            "strength",
+        )
+    ):
         jtype = "behavioral"
-        tags = ["ownership", "stakeholder management", "metrics"]
-    elif any(k in t for k in ("debug", "outage", "incident", "root cause", "latency spike")):
+    elif any(k in t for k in ("code", "implement", "algorithm", "leetcode", "write a function")):
+        jtype = "coding"
+    elif any(k in t for k in ("design", "architect", "scale", "distributed", "system design")):
+        jtype = "system_design"
+    elif any(k in t for k in ("debug", "outage", "incident", "root cause", "troubleshoot")):
         jtype = "troubleshooting"
-        tags = ["observability", "SLOs", "rollback", "blast radius"]
-    elif any(k in t for k in ("how", "what is", "explain", "difference", "why", "compare")):
+    elif any(k in t for k in ("how", "what is", "explain", "difference", "why", "compare", "walk me")):
         jtype = "technical"
-        tags = ["tradeoffs", "fundamentals", "production"]
 
     return {
         "question_type": jtype,
-        "domain_tags": tags,
+        "domain_tags": [],
         "must_cover": [
-            "clear problem framing",
-            "concrete mechanism or actions",
-            "at least one tradeoff",
-            "measurable outcome or validation plan",
+            "answer the question as asked",
+            "concrete mechanism or actions (not slogans)",
+            "at least one tradeoff or validation step when relevant",
+            "use job/resume context only when provided — never invent",
         ],
-        "jargon_bank": tags,
-        "seniority_bar": "senior",
-        "pitfalls": ["vague adjectives", "no metrics", "no failure modes", "incorrect technical claims"],
-        "evidence_style": "STAR" if jtype == "behavioral" else "tradeoff_analysis",
-        "depth_target": "very_high" if jtype in ("system_design", "technical", "domain") else "high",
+        "jargon_bank": [],
+        "seniority_bar": "general",
+        "pitfalls": [
+            "vague adjectives",
+            "inventing tools/products/metrics",
+            "substituting a different domain than asked",
+            "incorrect technical claims",
+        ],
+        "evidence_style": "STAR" if jtype == "behavioral" else "framework",
+        "depth_target": "high",
         "accuracy_domain": "general",
     }
 
 
 def _needs_accuracy_model(strategy: dict[str, Any], question: str, job_context: str) -> bool:
-    """True for hard technical / ML — prefer stronger model (not nano)."""
-    dom = (strategy.get("accuracy_domain") or "").lower()
-    if dom in ("ml", "technical", "domain"):
+    """Prefer stronger model for non-soft question types (no domain keyword lists)."""
+    if strategy.get("question_type") in (
+        "technical",
+        "domain",
+        "system_design",
+        "coding",
+        "troubleshooting",
+    ):
         return True
-    if strategy.get("question_type") in ("technical", "domain", "system_design", "coding"):
+    q = (question or "").lower()
+    # Multipart / long questions benefit from the stronger model
+    if len(q.split()) >= 28 or q.count("?") >= 2:
         return True
-    return _is_ml_domain(question, job_context)
+    return False
 
 
 def _prefer_mode_for_question(mode: str, strategy: dict[str, Any], question: str) -> str:
-    """Auto-use technical mode for domain/tech Qs when UI still sends star."""
+    """Respect UI mode; only nudge STAR→technical for clear how/explain tech Qs."""
     mode = (mode or "star").strip().lower()
     if mode in ("technical", "code", "shorter"):
         return mode
-    jtype = strategy.get("question_type") or ""
-    if jtype in ("technical", "domain", "system_design", "coding", "troubleshooting"):
-        # Keep STAR for pure behavioral-sounding domain stories
-        q = (question or "").lower()
-        if any(p in q for p in ("tell me about a time", "describe a situation", "conflict")):
-            return "star"
-        return "technical"
+    # Do not force mode changes based on domain packs — leave user preference
     return mode
 
 
@@ -747,7 +647,7 @@ def _build_user_prompt(
     strict_regen: bool = False,
 ) -> str:
     q = (question or "").strip()
-    job = (job_context or "Senior professional").strip()
+    job = (job_context or "").strip()
 
     # Live/ultra: compact but accuracy-aware (use strategy + job context only)
     if _is_fast_profile() and not strict_regen:
@@ -773,7 +673,7 @@ def _build_user_prompt(
         # Keep full multi-part questions — truncating to 500 chars caused wrong answers
         q_budget = 1800 if long_q else 900
         parts = [
-            f"Role: {job[:160]}",
+            f"Role: {job[:160] if job else '(not specified — use only the question)'}",
             f"Q: {q[:q_budget]}",
             f"Domain: {domain}",
             f"Depth: {depth}",

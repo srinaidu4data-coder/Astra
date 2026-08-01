@@ -129,7 +129,7 @@ export async function fetchAnswer(
     },
     body: JSON.stringify({
       question,
-      job_context: opts.jobContext ?? 'AI/ML Engineer',
+      job_context: opts.jobContext ?? '',
       tone: opts.tone ?? 'confident',
       mode,
       ...(opts.depth ? { depth: opts.depth } : {}),
@@ -250,7 +250,7 @@ export async function injectAnswer(
     },
     body: JSON.stringify({
       question,
-      job_context: opts.jobContext ?? 'AI/ML Engineer',
+      job_context: opts.jobContext ?? '',
       tone: opts.tone ?? 'confident',
       mode,
       ...(opts.depth ? { depth: opts.depth } : {}),
@@ -331,7 +331,7 @@ export async function runTestAudioPipeline(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       max_questions: opts.maxQuestions ?? 3,
-      job_context: opts.jobContext ?? 'AI/ML Engineer',
+      job_context: opts.jobContext ?? '',
       tone: opts.tone ?? 'confident',
       mode,
       path: opts.path ?? null,

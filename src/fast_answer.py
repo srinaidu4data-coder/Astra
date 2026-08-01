@@ -222,10 +222,7 @@ _PATTERNS: list[tuple[re.Pattern[str], str, float]] = [
     (re.compile(r"\b(trade.?off|pros and cons|compare|difference between|vs\.?)\b", re.I), "tradeoff", 1.0),
     (re.compile(r"\b(strength|weakness|greatest strength|improve)\b", re.I), "self", 0.9),
     (re.compile(r"\b(why (this|our|the) (company|role|team)|why us)\b", re.I), "why_us", 0.9),
-    # Domain-specific vendor packs removed (SAP/FICO/Vertex caused wrong-module answers).
-    # Enterprise/product jargon is handled by the LLM + job_context, not forced templates.
-    (re.compile(r"\b(ml|model|training|inference|feature|llm|embedding)\b", re.I), "ml", 1.1),
-    (re.compile(r"\b(api|microservice|kafka|queue|cache|redis|postgres|sql)\b", re.I), "backend", 1.0),
+    # No vendor/ML/backend domain packs — templates stay generic.
     (re.compile(r"\b(what is|explain|how does|how would you|how do you)\b", re.I), "explain", 0.8),
 ]
 
@@ -245,8 +242,8 @@ def classify_pattern(question: str) -> tuple[str, float]:
 
 
 def _job_bit(job_context: str) -> str:
-    j = (job_context or "senior engineer").strip()
-    return j[:70] if j else "senior engineer"
+    j = (job_context or "").strip()
+    return j[:70] if j else "candidate"
 
 
 def template_answer(question: str, *, job_context: str = "", mode: str = "star") -> str:
@@ -290,9 +287,7 @@ def outline_skeleton(
         "performance": f"I'll optimize from measurement on the hot path.",
         "debug": f"I'll walk a hypothesis tree with evidence at each layer.",
         "coding": f"I'll clarify I/O and complexity, then the simplest correct structure.",
-        "tradeoff": f"I'll score options on latency, correctness, cost, and operability.",
-        "ml": f"I'll cover data, eval, serving, and train/serve skew.",
-        "backend": f"I'll cover contracts, idempotency, and backpressure.",
+        "tradeoff": f"I'll score options on criteria that matter for this decision.",
         "explain": f"Mechanism first, then tradeoffs, then how I'd validate.",
         "self": f"I'll map a real strength to the work of a {role}.",
         "why_us": f"I'll connect their problems to work I've already done.",
@@ -408,28 +403,12 @@ def _template_star(pid: str, role: str, q: str) -> str:
             "I narrate tradeoffs while coding so the interviewer can steer.",
         ),
         "tradeoff": (
-            "I frame tradeoffs as constraints on SLOs, cost, and operability.",
-            "As a {role}, the decision hinged on two viable designs with different failure modes.",
+            "I frame tradeoffs as constraints that matter for this decision.",
+            "As a {role}, the decision hinged on two viable paths with different risks.",
             "Success was an explicit choice we could revisit with data.",
-            "I listed axes (latency, consistency, cost, complexity), scored options, ran a short spike, and documented the decision.",
-            "We picked the option that protected the user-facing SLO with reversible complexity.",
+            "I listed criteria, scored options, and documented the decision.",
+            "We picked the option that best fit the constraints we could measure.",
             "I avoid false dichotomies; sometimes a hybrid with a clear default wins.",
-        ),
-        "ml": (
-            "I treat ML systems as data + evaluation + serving, not just a model file.",
-            "As a {role}, we needed better quality or latency on an inference path.",
-            "Success was a lift on the offline metric that held online, within latency budget.",
-            "I fixed labels/leakage, established a baseline, ran ablations, shipped behind a gate, and monitored drift + p99.",
-            "We saw a clear metric lift with stable latency.",
-            "I default to simple models until the eval says otherwise.",
-        ),
-        "backend": (
-            "I design APIs and data paths for idempotency and backpressure.",
-            "As a {role}, we needed a reliable service boundary under load.",
-            "Success was correct contracts, safe retries, and operable dashboards.",
-            "I defined schemas, made handlers idempotent, bounded queues, and added timeouts/retries with jitter.",
-            "Error budgets stabilized and on-call noise dropped.",
-            "I treat every dependency as unreliable until proven otherwise.",
         ),
         "explain": (
             "I explain mechanisms, then tradeoffs, then how I'd validate.",
