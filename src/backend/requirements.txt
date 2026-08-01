@@ -1,6 +1,9 @@
 fastapi[standard]>=0.115.0
+orjson>=3.10.0  # WS hot-path JSON serialization (copilot_api._ws_send_json) — pin explicitly,
+                # don't rely on it staying a transitive dep of fastapi[standard]
 httpx>=0.28.1
 openai>=1.58.0
+websocket-client>=1.6.0  # Deepgram Nova-3 streaming STT
 sqlmodel>=0.0.22
 python-dotenv>=1.0.0
 pydantic-settings>=2.0.0

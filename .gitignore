@@ -4,6 +4,9 @@ dist/
 dist-ssr/
 *.local
 
+# Separate upstream clone (own git remote) — keep local, don't nest in Astra commits
+career-ops/
+
 # Python
 **/venv/
 **/__pycache__/
@@ -11,6 +14,10 @@ dist-ssr/
 *.egg-info/
 .pytest_cache/
 *.db
+
+# Lab apply telemetry (PII-adjacent URLs / KPI) — local only
+src/data/apply_metrics.json
+src/data/apply_audit.jsonl
 
 # Env / secrets
 .env

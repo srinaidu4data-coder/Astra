@@ -9,7 +9,6 @@ const MAX_TEXT_CHARS = 120_000
 /** Extract plain text from PDF using pdf.js (browser). */
 export async function extractPdfText(file: File): Promise<string> {
   const pdfjs = await import('pdfjs-dist')
-  // Use CDN worker for Vite compatibility
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url,
@@ -36,19 +35,182 @@ export async function extractPdfText(file: File): Promise<string> {
   return out.slice(0, MAX_TEXT_CHARS)
 }
 
-export async function extractDocxText(file: File): Promise<string> {
-  // Lightweight DOCX: read as text and strip rough XML tags for MVP.
-  // Full OOXML parsing can be swapped for mammoth later.
-  const buf = await file.arrayBuffer()
-  const raw = new TextDecoder('utf-8').decode(buf)
-  return raw
+function u16(view: DataView, o: number) {
+  return view.getUint16(o, true)
+}
+function u32(view: DataView, o: number) {
+  return view.getUint32(o, true)
+}
+
+/**
+ * Minimal ZIP reader for OOXML (.docx): find entry by name and inflate.
+ * Avoids a jszip dependency while still producing real resume text.
+ */
+async function zipReadEntry(
+  bytes: Uint8Array,
+  entryName: string,
+): Promise<Uint8Array | null> {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  let offset = 0
+  const target = entryName.replace(/\\/g, '/')
+
+  while (offset + 30 < bytes.length) {
+    const sig = u32(view, offset)
+    if (sig !== 0x04034b50) break // local file header
+    const method = u16(view, offset + 8)
+    const compSize = u32(view, offset + 18)
+    const uncompSize = u32(view, offset + 22)
+    const nameLen = u16(view, offset + 26)
+    const extraLen = u16(view, offset + 28)
+    const nameStart = offset + 30
+    const name = new TextDecoder('utf-8').decode(
+      bytes.subarray(nameStart, nameStart + nameLen),
+    )
+    const dataStart = nameStart + nameLen + extraLen
+    const dataEnd = dataStart + compSize
+    if (dataEnd > bytes.length) return null
+
+    if (name === target || name.endsWith('/' + target)) {
+      const payload = bytes.subarray(dataStart, dataEnd)
+      if (method === 0) {
+        return payload.slice(0, uncompSize || payload.length)
+      }
+      if (method === 8) {
+        // deflate
+        if (typeof DecompressionStream === 'undefined') {
+          throw new Error('Browser cannot decompress DOCX (no DecompressionStream)')
+        }
+        const ds = new DecompressionStream('deflate-raw')
+        // Copy into a fresh ArrayBuffer so BlobPart typing is happy under TS 5.x DOM libs
+        const copy = new Uint8Array(payload.byteLength)
+        copy.set(payload)
+        const stream = new Blob([copy]).stream().pipeThrough(ds)
+        const ab = await new Response(stream).arrayBuffer()
+        return new Uint8Array(ab)
+      }
+      throw new Error(`Unsupported ZIP compression method ${method} in DOCX`)
+    }
+    offset = dataEnd
+  }
+  return null
+}
+
+function stripDocxXml(xml: string): string {
+  return xml
+    .replace(/<w:tab[^/]*\/>/gi, '\t')
+    .replace(/<\/w:p>/gi, '\n')
+    .replace(/<w:br[^/]*\/>/gi, '\n')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/[^\S\n]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+/**
+ * True if text looks like ZIP/DOCX binary (broken parse) or unreadable junk.
+ * Empty string is NOT garbage — callers decide empty vs missing.
+ */
+export function looksLikeBinaryGarbage(text: string): boolean {
+  const t = (text || '').trim()
+  if (!t) return false
+
+  // OOXML / ZIP magic — real resumes never start this way
+  if (t.startsWith('PK')) {
+    if (t.length <= 4) return true
+    if (/^PK[\x00-\x08\x0b\x0c\x0e-\x1f\uFFFD]/.test(t)) return true
+    if (/Content_Types|word\/|_rels|docProps|\[Content_Types\]/i.test(t.slice(0, 800))) {
+      return true
+    }
+    // PK + mostly non-letters in the head → zip bytes decoded as text
+    const head = t.slice(0, 120)
+    const letters = (head.match(/[A-Za-z]/g) || []).length
+    if (letters / head.length < 0.4) return true
+  }
+
+  if (t.includes('RESUME: PK') || /^RESUME:\s*PK/i.test(t)) return true
+  if (/\[Content_Types\]\.xml/i.test(t) || /word\/document\.xml/i.test(t)) return true
+
+  // high ratio of replacement / non-printable in sample
+  let bad = 0
+  const sample = t.slice(0, 500)
+  for (let i = 0; i < sample.length; i++) {
+    const c = sample.charCodeAt(i)
+    if (c < 9 || (c > 13 && c < 32) || c === 0xfffd) bad++
+  }
+  if (bad / Math.max(sample.length, 1) > 0.06) return true
+
+  // Too few readable words for "resume length" text
+  if (t.length > 80) {
+    const words = t.match(/[A-Za-z]{3,}/g) || []
+    if (words.length < 5) return true
+  }
+  return false
+}
+
+/** Return text if readable, else empty string. */
+export function sanitizeResumeText(text: string | undefined | null): string {
+  const raw = (text || '').trim()
+  if (!raw || looksLikeBinaryGarbage(raw)) return ''
+  return raw
+}
+
+/**
+ * Extract plain text from DOCX by reading word/document.xml inside the zip.
+ */
+export async function extractDocxText(file: File): Promise<string> {
+  const buf = new Uint8Array(await file.arrayBuffer())
+  // Magic: PK
+  if (buf.length < 4 || buf[0] !== 0x50 || buf[1] !== 0x4b) {
+    throw new Error(`${file.name} does not look like a DOCX/ZIP file.`)
+  }
+  const xmlBytes = await zipReadEntry(buf, 'word/document.xml')
+  if (!xmlBytes || !xmlBytes.length) {
+    throw new Error(
+      `Could not read document.xml from ${file.name}. Re-export as PDF or plain text.`,
+    )
+  }
+  const xml = new TextDecoder('utf-8').decode(xmlBytes)
+  const text = stripDocxXml(xml).slice(0, MAX_TEXT_CHARS)
+  if (!text || text.length < 20 || looksLikeBinaryGarbage(text)) {
+    throw new Error(
+      `Could not extract readable text from ${file.name}. Try PDF or .txt export.`,
+    )
+  }
+  return text
+}
+
+/** Guess "First Last" from resume filename like Sri_Naidu_SAP_ABAP.docx */
+export function nameFromResumeFilename(filename: string): string | null {
+  const base = filename.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim()
+  // Drop common resume suffixes
+  const cleaned = base
+    .replace(
+      /\b(resume|cv|sap|abap|hana|consultant|engineer|developer|profile|final|v\d+)\b/gi,
+      ' ',
+    )
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 50000)
+  const parts = cleaned.split(' ').filter((p) => p.length > 1 && /^[A-Za-z]+$/.test(p))
+  if (parts.length >= 2) {
+    return `${parts[0]} ${parts[1]}`.replace(/\b\w/g, (c) => c.toUpperCase())
+  }
+  if (parts.length === 1 && parts[0]!.length >= 3) {
+    return parts[0]!.charAt(0).toUpperCase() + parts[0]!.slice(1).toLowerCase()
+  }
+  // Fallback: first two underscore tokens if they look like names
+  const tokens = filename
+    .replace(/\.[^.]+$/, '')
+    .split(/[_\s-]+/)
+    .filter((t) => /^[A-Za-z]{2,}$/.test(t))
+  if (tokens.length >= 2) {
+    return `${tokens[0]} ${tokens[1]}`.replace(/\b\w/g, (c) => c.toUpperCase())
+  }
+  return null
 }
 
 const ALLOWED_EXT = /\.(pdf|docx|md|txt|markdown)$/i
@@ -79,9 +241,9 @@ export async function parseUploadedFile(
     text = (await file.text()).slice(0, MAX_TEXT_CHARS)
   }
 
-  if (!text || text.trim().length < 20) {
+  if (!text || text.trim().length < 20 || looksLikeBinaryGarbage(text)) {
     throw new Error(
-      `Could not extract text from ${file.name}. If it is a scanned PDF, use a text-based export.`,
+      `Could not extract text from ${file.name}. If it is a scanned PDF, use a text-based export. For Word, save as PDF or .txt.`,
     )
   }
 
@@ -250,12 +412,15 @@ function extractTags(text: string): string[] {
     'ros',
     'robotics',
     'gnc',
+    'abap',
+    'hana',
+    'fiori',
   ]
   const lower = text.toLowerCase()
   return vocab.filter((v) => lower.includes(v)).slice(0, 8)
 }
 
-/** Simple cosine-like bag-of-words match for top-k memories. */
+/** Bag-of-words Jaccard match for top-k STAR memories (interview RAG + JD match). */
 export function rankMemories(
   query: string,
   memories: StarMemory[],
@@ -278,7 +443,7 @@ function tokenize(s: string): Set<string> {
   return new Set(
     s
       .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/[^a-z0-9\s+#./-]/g, ' ')
       .split(/\s+/)
       .filter((t) => t.length > 2),
   )

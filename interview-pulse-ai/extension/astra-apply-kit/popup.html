@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Astra Apply Kit</title>
+    <style>
+      body {
+        width: 340px;
+        margin: 0;
+        padding: 14px;
+        font: 13px/1.4 system-ui, sans-serif;
+        background: #0c0c0c;
+        color: #eaeaea;
+      }
+      h1 {
+        font-size: 15px;
+        margin: 0 0 4px;
+        font-weight: 650;
+      }
+      .sub {
+        color: #888;
+        font-size: 11px;
+        margin-bottom: 12px;
+      }
+      label {
+        display: block;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #666;
+        margin: 8px 0 4px;
+      }
+      input,
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        background: #141414;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        color: #eee;
+        padding: 8px;
+        font: 12px/1.35 ui-monospace, monospace;
+      }
+      textarea {
+        min-height: 72px;
+        resize: vertical;
+      }
+      .row {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-weight: 650;
+        font-size: 12px;
+        background: #20b8cd;
+        color: #0c0c0c;
+      }
+      button.secondary {
+        background: #1a1a1a;
+        color: #5dd5e3;
+        border: 1px solid #2a2a2a;
+      }
+      button.danger {
+        background: transparent;
+        color: #e85d5d;
+        border: 1px solid #3a2020;
+      }
+      #status {
+        margin-top: 10px;
+        font-size: 11px;
+        color: #5dd5e3;
+        min-height: 16px;
+      }
+      #status.err {
+        color: #e85d5d;
+      }
+      .chip {
+        display: inline-block;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: #152528;
+        color: #5dd5e3;
+        margin-right: 4px;
+      }
+      .chip.grade {
+        background: #2a2240;
+        color: #b8a6ff;
+      }
+      .chip.active {
+        background: #1a3a40;
+        color: #5dd5e3;
+        font-weight: 700;
+      }
+      #injects {
+        margin-top: 10px;
+        max-height: 160px;
+        overflow-y: auto;
+      }
+      .pack-row {
+        border-top: 1px solid #1e1e1e;
+        padding: 8px 0 4px;
+      }
+      .pack-row:first-child {
+        border-top: 0;
+        padding-top: 4px;
+      }
+      .pack-title {
+        font-size: 11px;
+        color: #ccc;
+        margin-bottom: 4px;
+      }
+      .kw {
+        display: inline-block;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: #152528;
+        color: #5dd5e3;
+        margin: 0 4px 4px 0;
+      }
+      .muted {
+        font-size: 10px;
+        color: #555;
+      }
+      .toggle-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid #2a2a2a;
+        background: #121212;
+        cursor: pointer;
+      }
+      .toggle-row input {
+        width: auto;
+        margin-top: 2px;
+        accent-color: #e8c547;
+      }
+      .toggle-row .toggle-copy {
+        flex: 1;
+        min-width: 0;
+      }
+      .toggle-row .toggle-title {
+        font-size: 12px;
+        color: #ddd;
+        font-weight: 600;
+      }
+      .toggle-row .toggle-hint {
+        font-size: 10px;
+        color: #666;
+        margin-top: 2px;
+      }
+      .chip.warn {
+        background: #3a3218;
+        color: #e8c547;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Astra Apply Kit</h1>
+    <div class="sub">
+      AI-tailored resume + form answers for auto-apply. Sync from Job Search lab, then fill any ATS page.
+    </div>
+    <div id="meta"></div>
+    <div id="injects"></div>
+
+    <label class="toggle-row" id="strictSoftRow" title="When on, soft same-board kit matches do not fill sibling materials (safer).">
+      <input id="strictSoft" type="checkbox" checked />
+      <span class="toggle-copy">
+        <span class="toggle-title">Strict soft kit</span>
+        <span class="toggle-hint" id="strictSoftHint">Cold / id before soft sibling packs</span>
+      </span>
+    </label>
+
+    <label>Lab API</label>
+    <input id="apiBase" value="http://127.0.0.1:8787" />
+
+    <label>Or paste form-pack / extension-store JSON</label>
+    <textarea id="paste" placeholder='{"schema":"astra.extension_store.v1",...}'></textarea>
+
+    <div class="row">
+      <button id="btnSync" type="button">Sync from lab</button>
+      <button id="btnImport" class="secondary" type="button">Import JSON</button>
+      <button id="btnFill" class="secondary" type="button">Fill this page</button>
+      <button id="btnClear" class="danger" type="button">Clear</button>
+    </div>
+    <div id="status"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

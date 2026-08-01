@@ -12,6 +12,8 @@
     "build": "tsc -b && vite build",
     "build:electron": "tsc -b && cross-env VITE_ELECTRON=1 vite build",
     "lint": "oxlint",
+    "check:boot": "node scripts/check-boot-exports.mjs",
+    "prebuild": "node scripts/check-boot-exports.mjs",
     "preview": "vite preview",
     "electron": "electron .",
     "start": "npm run dev:electron",

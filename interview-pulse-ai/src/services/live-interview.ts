@@ -1,4 +1,4 @@
-import type { AnswerMode, SuggestedAnswer } from '@/types'
+import type { AnswerMode, PipelineMetrics, SuggestedAnswer } from '@/types'
 import { preferBrowserMic, resolveCopilotWsUrl } from '@/lib/api-base'
 import { normalizeAnswer } from './real-api'
 import { uid } from '@/lib/utils'
@@ -28,9 +28,12 @@ export type LiveHandlers = {
   onListening?: (active: boolean, device?: string) => void
   onLevel?: (level: number, state?: string) => void
   onTranscript?: (text: string) => void
+  /** Deepgram interim partials while interviewer is still speaking */
+  onTranscriptPartial?: (text: string, meta?: { final?: boolean; stt_provider?: string }) => void
   onChatter?: (text: string, reason?: string) => void
   onAnswerPending?: (question: string) => void
   onAnswer?: (answer: SuggestedAnswer) => void
+  onMetrics?: (m: PipelineMetrics) => void
   onError?: (message: string) => void
   onConnection?: (state: 'open' | 'closed' | 'error') => void
 }
@@ -226,6 +229,18 @@ export class LiveInterviewClient {
       case 'transcript':
         this.handlers.onTranscript?.(String((data as { text?: string }).text ?? ''))
         break
+      case 'transcript_partial': {
+        const p = data as {
+          text?: string
+          final?: boolean
+          stt_provider?: string
+        }
+        this.handlers.onTranscriptPartial?.(String(p.text ?? ''), {
+          final: p.final,
+          stt_provider: p.stt_provider,
+        })
+        break
+      }
       case 'answer_pending':
         this.handlers.onAnswerPending?.(
           String((data as { question?: string }).question ?? ''),
@@ -245,8 +260,19 @@ export class LiveInterviewClient {
           mode?: string
           pipeline_ms?: number
           first_token_ms?: number
+          llm_first_token_ms?: number
           answer_ms?: number
+          full_answer_ms?: number
+          total_pipeline_ms?: number
+          stt_ms?: number
+          classify_ms?: number
+          cache_ms?: number
+          outline_ms?: number
           streaming?: boolean
+          source?: string
+          depth?: string
+          stages?: Record<string, number | null | undefined>
+          latency_trace?: Record<string, unknown>
         }
         const mode = (a.mode as AnswerMode) || this.mode
         const text = a.answer ?? ''
@@ -256,7 +282,7 @@ export class LiveInterviewClient {
             : text
               ? text.split(/\n+/).map((l) => l.trim()).filter(Boolean)
               : ['(empty answer from model)']
-        // Prefer first-token latency for the Latency tile (sub-1s target)
+        // Prefer first-token latency for the Latency tile (honest first paint)
         const latency =
           a.first_token_ms ?? a.pipeline_ms ?? a.answer_ms
         const ans = normalizeAnswer({
@@ -271,6 +297,57 @@ export class LiveInterviewClient {
         // Guarantee UI has something to render
         if (!ans.bullets.length && text) ans.bullets = [text]
         this.handlers.onAnswer?.(ans)
+        // Full stage metrics for competitor dashboard
+        if (!a.streaming) {
+          this.handlers.onMetrics?.({
+            vadMs: 0,
+            sttMs: Number(a.stt_ms ?? 0),
+            firstTokenMs: Number(a.first_token_ms ?? latency ?? 0),
+            totalMs: Number(a.first_token_ms ?? latency ?? 0),
+            lastUpdated: Date.now(),
+            classifyMs: a.classify_ms != null ? Number(a.classify_ms) : undefined,
+            cacheMs: a.cache_ms != null ? Number(a.cache_ms) : undefined,
+            outlineMs: a.outline_ms != null ? Number(a.outline_ms) : undefined,
+            llmFirstTokenMs:
+              a.llm_first_token_ms != null ? Number(a.llm_first_token_ms) : undefined,
+            fullAnswerMs: Number(a.full_answer_ms ?? a.answer_ms ?? 0) || undefined,
+            totalPipelineMs:
+              a.total_pipeline_ms != null ? Number(a.total_pipeline_ms) : undefined,
+            source: a.source,
+            depth: a.depth,
+          })
+        }
+        break
+      }
+      case 'latency': {
+        const L = data as {
+          stt_ms?: number
+          first_token_ms?: number
+          full_answer_ms?: number
+          total_ms?: number
+          outline_ms?: number
+          cache_ms?: number
+          classify_ms?: number
+          llm_first_token_ms?: number
+          source?: string
+          depth?: string
+        }
+        this.handlers.onMetrics?.({
+          vadMs: 0,
+          sttMs: Number(L.stt_ms ?? 0),
+          firstTokenMs: Number(L.first_token_ms ?? 0),
+          totalMs: Number(L.first_token_ms ?? L.total_ms ?? 0),
+          lastUpdated: Date.now(),
+          classifyMs: L.classify_ms != null ? Number(L.classify_ms) : undefined,
+          cacheMs: L.cache_ms != null ? Number(L.cache_ms) : undefined,
+          outlineMs: L.outline_ms != null ? Number(L.outline_ms) : undefined,
+          llmFirstTokenMs:
+            L.llm_first_token_ms != null ? Number(L.llm_first_token_ms) : undefined,
+          fullAnswerMs: L.full_answer_ms != null ? Number(L.full_answer_ms) : undefined,
+          totalPipelineMs: L.total_ms != null ? Number(L.total_ms) : undefined,
+          source: L.source,
+          depth: L.depth,
+        })
         break
       }
       case 'error':
@@ -408,6 +485,9 @@ export class LiveInterviewClient {
     userFallbackModel?: string | null
     answerModel?: string | null
     fallbackModel?: string | null
+    /** Deepgram API key for Nova-3 streaming STT */
+    deepgramKey?: string | null
+    sttProvider?: 'auto' | 'deepgram' | 'whisper' | null
   }) {
     await this.ensureOpen()
     this.mode = opts.mode ?? 'star'
@@ -415,6 +495,14 @@ export class LiveInterviewClient {
     this.lastStartOpts = { ...opts, mode: this.mode, source }
     this.wasListening = true
     const models = this.modelPayload(opts)
+    const sttPayload = {
+      ...(opts.deepgramKey
+        ? { deepgram_api_key: opts.deepgramKey, deepgram_key: opts.deepgramKey }
+        : {}),
+      ...(opts.sttProvider && opts.sttProvider !== 'auto'
+        ? { stt_provider: opts.sttProvider }
+        : {}),
+    }
 
     if (source === 'browser') {
       // Open mic first so permission UX is immediate; then start server session
@@ -426,6 +514,7 @@ export class LiveInterviewClient {
         mode: this.mode,
         source: 'browser',
         ...models,
+        ...sttPayload,
       })
       this.handlers.onStatus?.(
         'Listening via browser mic — play interviewer audio aloud or speak questions',
@@ -439,6 +528,7 @@ export class LiveInterviewClient {
         mode: this.mode,
         source: 'system',
         ...models,
+        ...sttPayload,
       })
     }
   }
@@ -460,6 +550,38 @@ export class LiveInterviewClient {
     try {
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.send({ type: 'set_mode', mode })
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  /** Manual question inject when STT lags (skips audio path). */
+  injectQuestion(question: string, opts?: { depth?: string; jobContext?: string }) {
+    const q = (question || '').trim()
+    if (!q) throw new Error('Empty question')
+    this.send({
+      type: 'inject',
+      question: q,
+      ...(opts?.depth ? { depth: opts.depth } : {}),
+      ...(opts?.jobContext ? { job_context: opts.jobContext } : {}),
+    })
+  }
+
+  setDepth(depth: 'fast' | 'balanced' | 'deep') {
+    try {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.send({ type: 'set_depth', depth })
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  requestLatencySnapshot() {
+    try {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.send({ type: 'latency_snapshot' })
       }
     } catch {
       // ignore

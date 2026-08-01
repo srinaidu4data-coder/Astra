@@ -7,7 +7,6 @@ import { AdminPage } from '@/pages/AdminPage'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AuthPage } from '@/pages/AuthPage'
 import { CopilotPage } from '@/pages/CopilotPage'
-import { JobSearchPage } from '@/pages/JobSearchPage'
 import { KnowledgePage } from '@/pages/KnowledgePage'
 import { OverlayPage } from '@/pages/OverlayPage'
 import { PaywallPage } from '@/pages/PaywallPage'
@@ -21,19 +20,53 @@ import {
 import { publishLiveSync } from '@/lib/window-sync'
 import { useAppStore } from '@/stores/app-store'
 import { Loader2 } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { HashRouter, Route, Routes, useSearchParams } from 'react-router-dom'
+
+/** Jobs hub is large (search + playbooks + auto-apply) — load on demand. */
+const JobSearchPage = lazy(() =>
+  import('@/pages/JobSearchPage').then((m) => ({ default: m.JobSearchPage })),
+)
+
+function JobsRouteFallback() {
+  return (
+    <div className="flex items-center justify-center gap-2 py-16 text-white/45">
+      <Loader2 className="h-5 w-5 animate-spin" />
+      Loading Jobs…
+    </div>
+  )
+}
 
 function PageBody() {
   const route = useAppStore((s) => s.route)
   const setRoute = useAppStore((s) => s.setRoute)
 
-  // Deep-link: http://localhost:5173/#/jobsearch
+  // Deep-link: unified Jobs hub (#/jobsearch, #/auto-apply, #/night-scout, #/jobsearch/auto)
   useEffect(() => {
     const applyHash = () => {
       const raw = (window.location.hash || '').replace(/^#\/?/, '')
       const path = raw.split('?')[0]?.toLowerCase() || ''
-      if (path === 'jobsearch' || path === 'job-search' || path === 'jobs') {
+      if (
+        path === 'jobsearch' ||
+        path === 'job-search' ||
+        path === 'jobs' ||
+        path.startsWith('jobsearch/') ||
+        path === 'autoapply' ||
+        path === 'auto-apply' ||
+        path === 'aiapply' ||
+        path === 'auto' ||
+        path === 'nexus' ||
+        path === 'careerops' ||
+        path === 'career-ops' ||
+        path === 'applypilot' ||
+        path === 'aihawk' ||
+        path === 'hitl' ||
+        path === 'autofill' ||
+        path === 'nightscout' ||
+        path === 'night-scout' ||
+        path === 'night' ||
+        path === 'morning'
+      ) {
         setRoute('jobsearch')
       }
     }
@@ -50,7 +83,13 @@ function PageBody() {
       {route === 'analytics' && <AnalyticsPage />}
       {route === 'settings' && <SettingsPage />}
       {route === 'admin' && <AdminPage />}
-      {route === 'jobsearch' && <JobSearchPage />}
+      {(route === 'jobsearch' ||
+        route === 'autoapply' ||
+        route === 'nightscout') && (
+        <Suspense fallback={<JobsRouteFallback />}>
+          <JobSearchPage />
+        </Suspense>
+      )}
     </>
   )
 }

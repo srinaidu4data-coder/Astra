@@ -21,13 +21,113 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Optional
 
-_UA = "InterviewPulse-JobSearchAI/0.2 (localhost lab; +https://jobinterviewcracker.com)"
+from jobsearch.job_model import is_synthetic_job
+
+_UA = "InterviewPulse-JobSearchAI/2.0 (enterprise lab; +https://jobinterviewcracker.com)"
 
 
-def _get_json(url: str, timeout: float = 12.0) -> Any:
-    req = urllib.request.Request(url, headers={"User-Agent": _UA, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8", errors="replace"))
+def sanitize_url(url: str | None, *, fallback: str = "") -> str:
+    """
+    Normalize board URLs so Apply links are not broken:
+    - HTML entities (&amp; → &)
+    - protocol-relative (//host → https://host)
+    - whitespace / bare schemes
+    - trailing junk from scrapes
+    """
+    u = (url or "").strip()
+    if not u or u.lower() in ("none", "null", "n/a", "#"):
+        return fallback
+    # common HTML entity / unicode pollution
+    u = (
+        u.replace("&amp;", "&")
+        .replace("&quot;", "")
+        .replace("&#39;", "'")
+        .replace("&lt;", "")
+        .replace("&gt;", "")
+        .replace("\u00a0", " ")
+        .strip()
+    )
+    u = re.sub(r"\s+", "", u)  # spaces break links
+    if u.startswith("//"):
+        u = "https:" + u
+    if u.startswith("www."):
+        u = "https://" + u
+    # LinkedIn job id only
+    m = re.search(r"linkedin\.com/jobs/view/(\d+)", u, re.I)
+    if m:
+        u = f"https://www.linkedin.com/jobs/view/{m.group(1)}/"
+    # drop tracking noise that sometimes corrupts
+    if "linkedin.com/jobs/view/" in u.lower():
+        u = re.sub(r"\?.*$", "", u)
+        if not u.endswith("/"):
+            u += "/"
+    if not re.match(r"^https?://", u, re.I):
+        # reject javascript: data: etc.
+        if ":" in u.split("/")[0]:
+            return fallback
+        u = "https://" + u.lstrip("/")
+    # freehire / ATS: ensure no double-encoding artifacts
+    if "%" in u:
+        try:
+            # only unquote if clearly double-encoded once
+            once = urllib.parse.unquote(u)
+            if once != u and " " not in once and once.startswith("http"):
+                # re-quote path carefully — leave as original if already valid
+                pass
+        except Exception:
+            pass
+    if "example.com" in u.lower():
+        return fallback
+    return u
+
+
+def linkedin_job_view_url(job_id: str | int) -> str:
+    return f"https://www.linkedin.com/jobs/view/{job_id}/"
+
+
+def indeed_search_url(title: str, company: str = "", location: str = "United States") -> str:
+    clean_t = re.sub(r"\s*\([^)]*\)\s*", " ", title or "").strip()
+    q = urllib.parse.quote_plus(f"{clean_t} {company or ''}".strip())
+    loc = urllib.parse.quote_plus(location or "United States")
+    return f"https://www.indeed.com/jobs?q={q}&l={loc}"
+
+
+def linkedin_search_url(title: str, company: str = "") -> str:
+    clean_t = re.sub(r"\s*\([^)]*\)\s*", " ", title or "").strip()
+    q = urllib.parse.quote_plus(f"{clean_t} {company or ''}".strip())
+    return f"https://www.linkedin.com/jobs/search/?keywords={q}"
+
+
+def _get_json(url: str, timeout: float = 12.0, *, retries: int = 1) -> Any:
+    """
+    GET JSON with one retry on timeout / 5xx / transient URLError.
+    Retries are intentional: boards flake; double-hit only on failure.
+    """
+    last: Exception | None = None
+    attempts = max(1, retries + 1)
+    for i in range(attempts):
+        try:
+            req = urllib.request.Request(
+                url, headers={"User-Agent": _UA, "Accept": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8", errors="replace"))
+        except urllib.error.HTTPError as e:
+            last = e
+            # retry only server errors
+            if e.code < 500 or i + 1 >= attempts:
+                raise
+        except (TimeoutError, urllib.error.URLError, OSError) as e:
+            last = e
+            if i + 1 >= attempts:
+                raise
+        # brief backoff (no sleep heavy — 50ms-ish via busy loop avoid; use time.sleep)
+        import time as _time
+
+        _time.sleep(0.15 * (i + 1))
+    if last:
+        raise last
+    raise RuntimeError("unreachable")
 
 
 def _strip_html(html: str) -> str:
@@ -304,6 +404,326 @@ def is_linkedin_job(job: dict[str, Any]) -> bool:
     return False
 
 
+# Non-US signals in title/location (EU/LATAM/APAC postings freehire mis-tags)
+_NON_US_TITLE_MARKERS = (
+    "m/w/d",
+    "m/f/d",
+    "(w/m/d)",
+    " latam",
+    "latam only",
+    "latam ***",
+    "remote only latam",
+    "emea",
+    "apac",
+    "deutschland",
+    "germany only",
+    "india only",
+    "eu only",
+    "europe only",
+    "uk only",
+    "canada only",
+    "hungary",
+    "romania",
+    "greece",
+    "spain",
+    "portugal",
+    "poland",
+    "netherlands",
+    "belgium",
+    "sweden",
+    "norway",
+    "denmark",
+    "finland",
+    "austria",
+    "switzerland",
+    "italy",
+    "france",
+    "czech",
+    "slovakia",
+    "bulgaria",
+    "serbia",
+    "croatia",
+    "ukraine",
+    "ireland",
+    "scotland",
+    "england",
+    "united kingdom",
+    "u.k.",
+    "mexico",
+    "brazil",
+    "argentina",
+    "colombia",
+    "chile",
+    "philippines",
+    "singapore",
+    "australia",
+    "new zealand",
+    "japan",
+    "korea",
+    "china",
+    "taiwan",
+    "israel",
+    "uae",
+    "dubai",
+    "egypt",
+    "pakistan",
+    "bangladesh",
+    "nigeria",
+    "south africa",
+)
+
+# Cities that must never be treated as US (even if freehire injects ", OR" noise)
+_NON_US_CITIES = (
+    "budapest",
+    "bucharest",
+    "athens",
+    "madrid",
+    "barcelona",
+    "lisbon",
+    "porto",
+    "warsaw",
+    "krakow",
+    "amsterdam",
+    "rotterdam",
+    "brussels",
+    "stockholm",
+    "oslo",
+    "copenhagen",
+    "helsinki",
+    "vienna",
+    "zurich",
+    "geneva",
+    "milan",
+    "rome",
+    "paris",
+    "lyon",
+    "prague",
+    "bratislava",
+    "sofia",
+    "belgrade",
+    "zagreb",
+    "kyiv",
+    "kiev",
+    "dublin",
+    "london",
+    "manchester",
+    "berlin",
+    "munich",
+    "münchen",
+    "frankfurt",
+    "hamburg",
+    "cologne",
+    "stuttgart",
+    "heidelberg",
+    "toronto",
+    "vancouver",
+    "montreal",
+    "mexico city",
+    "são paulo",
+    "sao paulo",
+    "buenos aires",
+    "bogota",
+    "santiago",
+    "manila",
+    "singapore",
+    "sydney",
+    "melbourne",
+    "tokyo",
+    "seoul",
+    "shanghai",
+    "beijing",
+    "taipei",
+    "tel aviv",
+    "dubai",
+    "cairo",
+    "bangalore",
+    "bengaluru",
+    "hyderabad",
+    "mumbai",
+    "pune",
+    "chennai",
+    "delhi",
+)
+
+# ISO-3166 alpha-2 that are NOT the United States (freehire trails: "City, XX, hu")
+_NON_US_ISO2 = frozenset(
+    "hu ro gr es pt pl nl be se no dk fi at ch it fr cz sk bg rs hr ua ie gb uk de "
+    "ca mx br ar co cl pe uy cr in ph sg au nz jp kr cn tw il ae eg pk bd ng za "
+    "lt lv ee si lu mt cy is".split()
+)
+
+
+def looks_non_us_listing(job: dict[str, Any]) -> bool:
+    """Extra signals that a listing is not US-based despite vague location text."""
+    title = str(job.get("title") or "")
+    title_l = title.lower()
+    loc = str(job.get("location") or "").lower()
+    blob = f" {title_l} {loc} "
+    if any(m in blob for m in _NON_US_TITLE_MARKERS):
+        return True
+    if any(c in blob for c in _NON_US_CITIES):
+        return True
+    # Non-Latin titles (e.g. Russian «Консультант») are almost never US postings
+    if re.search(r"[\u0400-\u04FF\u4E00-\u9FFF\u0600-\u06FF\u3040-\u30FF\uac00-\ud7af]", title):
+        return True
+    if "baden-württemberg" in loc or "nordrhein" in loc or "bayern" in loc:
+        return True
+    # freehire style "Budapest, OR, hu" — trailing ISO2 country
+    m_iso = re.search(r",\s*([a-z]{2})\s*$", loc.strip())
+    if m_iso and m_iso.group(1) in _NON_US_ISO2:
+        return True
+    # countries list from board (ignore lying multi-tags when sole tag is non-US)
+    cc = {str(c).lower().strip() for c in (job.get("countries") or []) if str(c).strip()}
+    if cc and "us" not in cc and "usa" not in cc and (cc & _NON_US_ISO2):
+        return True
+    if re.search(r"\b(deutschland|germany|berlin|munich|münchen|frankfurt|hamburg)\b", loc):
+        return True
+    return False
+
+
+def _location_has_us_text(location: str) -> bool:
+    """True only when location *string* proves US — never trust board country tags alone."""
+    loc_raw = location or ""
+    loc = f" {loc_raw.lower()} "
+    loc_stripped = loc_raw.strip().lower()
+
+    # Explicit non-US city / country name in location → never US
+    if any(c in loc for c in _NON_US_CITIES):
+        return False
+    if any(
+        m in loc
+        for m in (
+            "hungary",
+            "romania",
+            "greece",
+            "spain",
+            "germany",
+            "deutschland",
+            "france",
+            "poland",
+            "india",
+            "canada",
+            "mexico",
+            "brazil",
+            "united kingdom",
+            "england",
+            "scotland",
+            "ireland",
+        )
+    ):
+        return False
+
+    # freehire "City, ST, hu" or "..., hu" — ISO country trail wins over false US state
+    m_iso = re.search(r",\s*([a-z]{2})\s*$", loc_stripped)
+    if m_iso:
+        code = m_iso.group(1)
+        if code in _NON_US_ISO2:
+            return False
+        if code == "us":
+            return True
+
+    # freehire "Remote, Remote, ca" is ISO Canada — NOT California
+    if re.search(r"\bremote\b.*\bremote\b[,\s]+([a-z]{2})\s*$", loc_stripped):
+        code = re.search(r"\bremote\b.*\bremote\b[,\s]+([a-z]{2})\s*$", loc_stripped)
+        if code and code.group(1) != "us":
+            return False
+    if re.search(r"\bremote\b[,\s]+([a-z]{2})\s*$", loc_stripped):
+        code = re.search(r"\bremote\b[,\s]+([a-z]{2})\s*$", loc_stripped)
+        if code and code.group(1) not in ("us",):
+            return False
+
+    if any(h in loc for h in _US_HINTS):
+        return True
+    if re.search(r"\b(united states|u\.s\.a\.?|usa)\b", loc):
+        return True
+    if re.search(r"(,\s*us\b|\bus\s*$)", loc_stripped):
+        return True
+
+    # "City, ST" US state — only if NOT followed by another ISO country code
+    # Reject "Budapest, OR, hu" (state-like token then non-US ISO)
+    if re.search(
+        r",\s*(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY)\s*,\s*[a-z]{2}\s*$",
+        loc_raw,
+        re.I,
+    ):
+        trail = re.search(r",\s*([a-z]{2})\s*$", loc_stripped)
+        if trail and trail.group(1) in _NON_US_ISO2:
+            return False
+
+    # US state after a city name (e.g. "Fort Lee, NJ") — not "Remote, CA" alone
+    state_m = re.search(
+        r"[A-Za-z]{3,},\s*(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY)\b",
+        loc_raw,
+        re.I,
+    )
+    if state_m:
+        if re.match(r"^\s*remote\s*,\s*[A-Z]{2}\s*$", loc_raw, re.I):
+            return False
+        # If location ends with non-US ISO after the state, reject (Budapest, OR, hu)
+        if re.search(r",\s*(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY)\s*,\s*([a-z]{2})\s*$", loc_raw, re.I):
+            code = re.search(
+                r",\s*(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY)\s*,\s*([a-z]{2})\s*$",
+                loc_raw,
+                re.I,
+            )
+            if code and code.group(1).lower() in _NON_US_ISO2:
+                return False
+        return True
+
+    if re.search(
+        r"\b(austin|dallas|houston|seattle|denver|atlanta|chicago|boston|miami|phoenix|"
+        r"portland|minneapolis|detroit|wixom|sandy springs|charlotte|sunnyvale|andover|"
+        r"fort lee|hoboken|novi|katy|cary|charleston|san diego)\b",
+        loc,
+    ):
+        return True
+    return False
+
+
+def _is_bare_remote_location(location: str) -> bool:
+    s = re.sub(r"\s+", " ", (location or "").strip().lower())
+    return s in (
+        "",
+        "remote",
+        "remote job",
+        "remote only",
+        "worldwide",
+        "anywhere",
+        "global",
+        "unspecified",
+        "work from home",
+        "wfh",
+        "remote, remote",
+    ) or re.fullmatch(r"remote([\s,-]+remote)?", s) is not None
+
+
+def is_strict_us_job(job: dict[str, Any]) -> bool:
+    """
+    Strict US-only for product mode.
+
+    freehire often tags non-US remote roles with countries=['us'] — **ignore that**.
+    Require US evidence in the location string (state, city, United States, etc.).
+    """
+    if looks_non_us_listing(job):
+        return False
+
+    loc_raw = str(job.get("location") or "")
+    if _is_bare_remote_location(loc_raw):
+        return False
+
+    # Location text must prove US. Board country codes are untrusted for remote roles.
+    if _location_has_us_text(loc_raw):
+        # Still drop if countries explicitly non-US only
+        cc = {str(c).lower() for c in (job.get("countries") or []) if str(c).strip()}
+        if cc and "us" not in cc and "usa" not in cc:
+            # e.g. location text noise + countries=['de']
+            if cc & {"de", "fr", "in", "eg", "mx", "br", "pl", "gb", "uk", "ca", "ae"}:
+                return False
+        return True
+
+    return False
+
+
 def _norm_job(
     *,
     id_: str,
@@ -333,19 +753,38 @@ def _norm_job(
     body = text or f"{title} {company} {loc} {' '.join(skills)}"
     title_s = title.strip() or "Role"
     company_s = company.strip() or "Company"
-    apply_url = (url or "").strip()
-    # Clean title for search links (drop seniority tags like "(senior)")
+    raw_url = sanitize_url(url)
     title_search = re.sub(r"\s*\([^)]*\)\s*", " ", title_s).strip()
-    q = urllib.parse.quote_plus(f"{title_search} {company_s}")
-    linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={q}"
-    google_url = f"https://www.google.com/search?q={urllib.parse.quote_plus(title_search + ' ' + company_s + ' careers apply')}"
-    indeed_url = f"https://www.indeed.com/jobs?q={q}&l=United+States"
-    if not apply_url or "example.com" in apply_url:
-        # Prefer non-LinkedIn discovery for lab "non-LinkedIn" filter
-        apply_url = indeed_url
-        apply_kind = "search"
-    else:
+    indeed_url = indeed_search_url(title_search, company_s)
+    google_url = (
+        "https://www.google.com/search?q="
+        + urllib.parse.quote_plus(f"{title_search} {company_s} careers apply")
+    )
+    is_li_src = "linkedin" in (source or "").lower() or "linkedin.com" in raw_url.lower()
+
+    apply_url = raw_url
+    # Real LinkedIn job post URL (view/ID) vs keyword search fallback
+    if "linkedin.com/jobs/view/" in raw_url.lower():
+        linkedin_url = raw_url
+        apply_url = raw_url
         apply_kind = "direct"
+    elif is_li_src and re.search(r"/jobs/view/(\d+)", raw_url):
+        m = re.search(r"/jobs/view/(\d+)", raw_url)
+        linkedin_url = linkedin_job_view_url(m.group(1))  # type: ignore[union-attr]
+        apply_url = linkedin_url
+        apply_kind = "direct"
+    else:
+        linkedin_url = linkedin_search_url(title_search, company_s)
+        if not apply_url:
+            apply_url = indeed_url
+            apply_kind = "search"
+        else:
+            apply_kind = "direct"
+
+    apply_url = sanitize_url(apply_url, fallback=indeed_url)
+    final_url = sanitize_url(raw_url or apply_url, fallback=apply_url)
+    linkedin_url = sanitize_url(linkedin_url, fallback=linkedin_search_url(title_search, company_s))
+
     country = infer_country(loc, countries, body)
     return {
         "id": id_,
@@ -356,13 +795,13 @@ def _norm_job(
         "work_mode": mode,  # remote | hybrid | onsite
         "country": country,
         "countries": countries or ([country] if country not in ("unknown",) else []),
-        "url": url or apply_url,
+        "url": final_url,
         "apply_url": apply_url,
         "apply_kind": apply_kind,  # direct | search
         "linkedin_url": linkedin_url,
         "google_url": google_url,
         "indeed_url": indeed_url,
-        "is_linkedin": "linkedin.com" in (url or "").lower() or "linkedin" in source.lower(),
+        "is_linkedin": is_li_src,
         "skills": skills,
         "seniority": seniority or "mid",
         "text": body[:2500],
@@ -375,65 +814,90 @@ def _norm_job(
 # ---------------------------------------------------------------------------
 
 
-def fetch_freehire(query: str, limit: int = 50, *, remote_only: bool = False) -> list[dict[str, Any]]:
-    """freehire.me agent search — full descriptions, multi-market ATS."""
-    q = (query or "").strip() or "software"
+def _freehire_page(query: str, page: int, *, remote_only: bool) -> list[dict[str, Any]]:
+    """One freehire page — used for parallel page fetch (latency)."""
+    params: dict[str, str] = {
+        "q": query,
+        "limit": "25",
+        "page": str(page),
+    }
+    if remote_only:
+        params["work_mode"] = "remote"
+    url = "https://freehire.me/api/v1/agent/jobs/search?" + urllib.parse.urlencode(params)
+    try:
+        data = _get_json(url, timeout=8.0, retries=0)  # retries handled at page level once
+    except Exception:
+        return []
+    rows = []
+    if isinstance(data, dict):
+        rows = data.get("data") or data.get("results") or data.get("jobs") or []
+    elif isinstance(data, list):
+        rows = data
     out: list[dict[str, Any]] = []
-    pages = max(1, min(6, (limit + 24) // 25))
-    for page in range(1, pages + 1):
-        params: dict[str, str] = {
-            "q": q,
-            "limit": "25",
-            "page": str(page),
-        }
-        if remote_only:
-            params["work_mode"] = "remote"
-        url = "https://freehire.me/api/v1/agent/jobs/search?" + urllib.parse.urlencode(params)
-        try:
-            data = _get_json(url, timeout=14.0)
-        except Exception:
-            break
-        rows = []
-        if isinstance(data, dict):
-            rows = data.get("data") or data.get("results") or data.get("jobs") or []
-        elif isinstance(data, list):
-            rows = data
-        if not rows:
-            break
-        for it in rows:
-            if not isinstance(it, dict):
-                continue
-            slug = str(it.get("public_slug") or it.get("id") or len(out))
-            skills = it.get("skills") or []
-            if isinstance(skills, str):
-                skills = [s.strip() for s in skills.split(",") if s.strip()]
-            wm = str(it.get("work_mode") or "")
-            countries = it.get("countries") or []
-            if not isinstance(countries, list):
-                countries = []
-            out.append(
-                _norm_job(
-                    id_=f"fh-{slug}",
-                    title=str(it.get("title") or "Role"),
-                    company=str(it.get("company") or "Company"),
-                    location=str(it.get("location") or ""),
-                    remote=wm == "remote",
-                    work_mode=wm,
-                    url=str(it.get("url") or f"https://freehire.me/jobs/{slug}"),
-                    skills=[str(s) for s in skills],
-                    seniority=str(
-                        (it.get("enrichment") or {}).get("seniority")
-                        or it.get("seniority")
-                        or "mid"
-                    ),
-                    text=_strip_html(str(it.get("description") or "")),
-                    source="freehire",
-                    countries=[str(c) for c in countries],
-                )
+    for it in rows or []:
+        if not isinstance(it, dict):
+            continue
+        slug = str(it.get("public_slug") or it.get("id") or len(out))
+        skills = it.get("skills") or []
+        if isinstance(skills, str):
+            skills = [s.strip() for s in skills.split(",") if s.strip()]
+        wm = str(it.get("work_mode") or "")
+        countries = it.get("countries") or []
+        if not isinstance(countries, list):
+            countries = []
+        raw_u = (
+            it.get("url")
+            or it.get("apply_url")
+            or it.get("application_url")
+            or it.get("external_url")
+            or ""
+        )
+        raw_u = sanitize_url(str(raw_u))
+        if not raw_u:
+            raw_u = f"https://freehire.me/jobs/{slug}"
+        # Latency: keep description short for rank (full text not needed for scoring)
+        desc = _strip_html(str(it.get("description") or ""))[:1200]
+        out.append(
+            _norm_job(
+                id_=f"fh-{slug}",
+                title=str(it.get("title") or "Role"),
+                company=str(it.get("company") or "Company"),
+                location=str(it.get("location") or ""),
+                remote=wm == "remote",
+                work_mode=wm,
+                url=raw_u,
+                skills=[str(s) for s in skills],
+                seniority=str(
+                    (it.get("enrichment") or {}).get("seniority")
+                    or it.get("seniority")
+                    or "mid"
+                ),
+                text=desc,
+                source="freehire",
+                countries=[str(c) for c in countries],
             )
-            if len(out) >= limit:
-                return out
+        )
     return out
+
+
+def fetch_freehire(query: str, limit: int = 50, *, remote_only: bool = False) -> list[dict[str, Any]]:
+    """freehire.me agent search — pages fetched in parallel for lower wall latency."""
+    q = (query or "").strip() or "software"
+    # Latency budget: max 2 pages (50 rows) per query
+    pages = max(1, min(2, (limit + 24) // 25))
+    out: list[dict[str, Any]] = []
+    if pages == 1:
+        out = _freehire_page(q, 1, remote_only=remote_only)
+    else:
+        with ThreadPoolExecutor(max_workers=pages) as ex:
+            futs = [
+                ex.submit(_freehire_page, q, p, remote_only=remote_only)
+                for p in range(1, pages + 1)
+            ]
+            for fut in as_completed(futs):
+                out.extend(fut.result() or [])
+    # preserve some page order by id stability; truncate
+    return out[:limit]
 
 
 def fetch_remotive(query: str, limit: int = 40) -> list[dict[str, Any]]:
@@ -450,6 +914,7 @@ def fetch_remotive(query: str, limit: int = 40) -> list[dict[str, Any]]:
         if not isinstance(it, dict):
             continue
         tags = it.get("tags") or []
+        rm_url = sanitize_url(str(it.get("url") or ""))
         out.append(
             _norm_job(
                 id_=f"rm-{it.get('id')}",
@@ -458,7 +923,7 @@ def fetch_remotive(query: str, limit: int = 40) -> list[dict[str, Any]]:
                 location=str(it.get("candidate_required_location") or "Remote"),
                 remote=True,
                 work_mode="remote",
-                url=str(it.get("url") or ""),
+                url=rm_url,
                 skills=[str(t) for t in tags][:16],
                 seniority="mid",
                 text=_strip_html(str(it.get("description") or "")),
@@ -468,6 +933,146 @@ def fetch_remotive(query: str, limit: int = 40) -> list[dict[str, Any]]:
         if len(out) >= limit:
             break
     return out
+
+
+def fetch_linkedin_guest(
+    query: str,
+    *,
+    location: str = "United States",
+    limit: int = 40,
+    remote_only: bool = False,
+) -> list[dict[str, Any]]:
+    """
+    LinkedIn public jobs-guest search (HTML). Localhost lab only — low volume.
+    Used when exclude_linkedin is False so users can see LinkedIn openings.
+    """
+    q = (query or "").strip() or "software"
+    loc = (location or "United States").strip() or "United States"
+    out: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    # Latency: ≤2 pages for typical limit≤20
+    pages = max(1, min(2, (limit + 9) // 10))
+
+    def _li_page(start: int) -> str:
+        params: dict[str, str] = {
+            "keywords": q,
+            "location": loc,
+            "start": str(start),
+        }
+        if remote_only:
+            params["f_WT"] = "2"
+        url = (
+            "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?"
+            + urllib.parse.urlencode(params)
+        )
+        try:
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                    ),
+                    "Accept": "text/html,application/xhtml+xml",
+                    "Accept-Language": "en-US,en;q=0.9",
+                },
+            )
+            with urllib.request.urlopen(req, timeout=8.0) as resp:
+                return resp.read().decode("utf-8", errors="replace")
+        except Exception:
+            return ""
+
+    # Parallel LI pages when >1
+    html_pages: list[str] = []
+    if pages == 1:
+        html_pages = [_li_page(0)]
+    else:
+        with ThreadPoolExecutor(max_workers=pages) as ex:
+            futs = [ex.submit(_li_page, p * 10) for p in range(pages)]
+            for fut in as_completed(futs):
+                html_pages.append(fut.result() or "")
+
+    for html in html_pages:
+        if not html:
+            continue
+
+        # Global extract (card split is brittle — class attributes wrap newlines)
+        ids = re.findall(r"urn:li:jobPosting:(\d+)", html)
+        # preserve order, unique
+        ordered_ids: list[str] = []
+        for jid in ids:
+            if jid not in seen_ids:
+                seen_ids.add(jid)
+                ordered_ids.append(jid)
+        titles = [
+            re.sub(r"\s+", " ", t).strip()
+            for t in re.findall(
+                r'class="base-search-card__title"[^>]*>\s*([^<]+)', html, flags=re.I
+            )
+        ]
+        companies = [
+            re.sub(r"\s+", " ", t).strip()
+            for t in re.findall(
+                r'class="base-search-card__subtitle"[^>]*>\s*(?:<a[^>]*>)?\s*([^<]+)',
+                html,
+                flags=re.I,
+            )
+        ]
+        locs = [
+            re.sub(r"\s+", " ", t).strip()
+            for t in re.findall(
+                r'class="job-search-card__location"[^>]*>\s*([^<]+)', html, flags=re.I
+            )
+        ]
+        if not ordered_ids:
+            break
+        for i, jid in enumerate(ordered_ids):
+            title = titles[i] if i < len(titles) else ""
+            company = companies[i] if i < len(companies) else "Company"
+            jloc = locs[i] if i < len(locs) else loc
+            if not title:
+                continue
+            jl = jloc.lower()
+            countries: list[str] | None = None
+            if (
+                any(x in jl for x in ("united states", "usa"))
+                or re.search(r",\s*[A-Z]{2}\b", jloc)
+                or loc.lower() in ("united states", "usa", "us")
+            ):
+                # Guest search scoped to US location → treat as us when state/city present
+                countries = ["us"]
+            # Decode HTML entities in scraped titles (e.g. &amp;)
+            title = (
+                title.replace("&amp;", "&")
+                .replace("&quot;", '"')
+                .replace("&#39;", "'")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+            )
+            company = (
+                company.replace("&amp;", "&")
+                .replace("&quot;", '"')
+                .replace("&#39;", "'")
+            )
+            apply_url = linkedin_job_view_url(jid)
+            out.append(
+                _norm_job(
+                    id_=f"li-{jid}",
+                    title=title,
+                    company=company,
+                    location=jloc or loc,
+                    remote="remote" in jl,
+                    work_mode="remote" if "remote" in jl else "onsite",
+                    url=apply_url,
+                    skills=[],
+                    text=f"{title} at {company} — {jloc}. Source: LinkedIn.",
+                    source="linkedin",
+                    countries=countries,
+                )
+            )
+            if len(out) >= limit:
+                return out
+    return out[:limit]
 
 
 def fetch_arbeitnow(query: str, limit: int = 40) -> list[dict[str, Any]]:
@@ -707,31 +1312,8 @@ def apply_filters(
         j["country"] = country
         loc_blob = f"{j.get('location','')}".lower()
         if loc_f in ("us", "usa", "united states", "u.s."):
-            # Strict US-only: keep country=us; soft-pass only generic Remote (unknown)
-            if country == "us":
-                pass
-            elif country == "unknown":
-                # generic Remote / Worldwide — soft keep for US remote seekers
-                if any(
-                    x in loc_blob
-                    for x in (
-                        "remote (eu)",
-                        "remote (india)",
-                        "remote (latam)",
-                        "europe only",
-                        "emea",
-                        "deutschland",
-                        "germany",
-                        "egypt",
-                        "argentina",
-                        "india only",
-                    )
-                ):
-                    continue
-                if not any(h in f" {loc_blob} " for h in _US_HINTS) and "remote" not in loc_blob:
-                    continue
-            else:
-                # eu | in | ca | uk | latam | other — drop
+            # Strict US-only — no generic Remote / unknown soft-pass
+            if not is_strict_us_job(j):
                 continue
         elif loc_f and loc_f not in ("all", "any", ""):
             if loc_f not in loc_blob and loc_f not in country:
@@ -852,6 +1434,67 @@ def title_matches_query(job_title: str, query: str, *, min_overlap: int = 1) -> 
     """
     if not domain_title_ok(job_title, query):
         return False
+
+    # TITLE_MIN_DOMAIN_SCORE: SAP FICO queries need finance signal, not bare SAP/MM/dev
+    ql = (query or "").lower()
+    tl = (job_title or "").lower()
+    if any(x in ql for x in ("fico", "fi/co", "s4hana", "s/4")) or (
+        "sap" in ql and "fico" in ql
+    ):
+        finance_signal = any(
+            x in tl
+            for x in (
+                "fico",
+                "fi/co",
+                "fi-co",
+                "fi co",
+                "finance",
+                "controlling",
+                "treasury",
+                "tax",
+                "vertex",
+                "rar",
+                "lease",
+                "fi ",
+                " co ",
+                "fi-",
+                "s/4hana finance",
+                "s4hana finance",
+                "financial",
+            )
+        )
+        # Explicit non-finance SAP modules / pure tech roles
+        non_finance = any(
+            re.search(p, tl)
+            for p in (
+                r"\babap\b",
+                r"\bbasis\b",
+                r"\bsecurity\b",
+                r"\bmm\b",
+                r"\bsd\b",
+                r"\bewm\b",
+                r"\bwm\b",
+                r"\bhcm\b",
+                r"\bsuccessfactors\b",
+                r"\bdeveloper\b",
+                r"\bdevelopment\b",
+                r"\binfrastructure\b",
+                r"\bdelivery executive\b",
+                r"\btm consultant\b",
+                r"\btransport",
+            )
+        )
+        if "sap" in tl and non_finance and not finance_signal:
+            return False
+        # Bare "SAP Consultant / Specialist" without finance keywords — weak for FICO search
+        if re.search(r"\bsap\b", tl) and not finance_signal:
+            if re.search(
+                r"\b(consultant|specialist|architect|analyst|manager|lead|developer)\b",
+                tl,
+            ) and not re.search(
+                r"\b(fi|co|fico|finance|controlling|treasury|tax|s/4|s4)\b", tl
+            ):
+                return False
 
     q_toks = [t for t in relevance_tokens(query) if t not in ("finance",)]  # too broad alone
     if not q_toks:
@@ -976,7 +1619,34 @@ def load_jobs(
     if use_live:
         remote_only = remote == "remote"
 
-        def _safe(name: str, fn, *args, **kwargs):
+        # Enterprise: per-board circuit breakers + graceful degrade
+        try:
+            from jobsearch.enterprise import breakers, protected_fetch
+        except Exception:  # pragma: no cover — always present in package
+            breakers = None  # type: ignore
+            protected_fetch = None  # type: ignore
+
+        def _safe(name: str, board: str, fn, *args, **kwargs):
+            """Harvest one board under circuit breaker; never raise."""
+            if protected_fetch is not None:
+                rows = protected_fetch(board, fn, *args, **kwargs)
+                if breakers is not None:
+                    br = breakers().get(board)
+                    if br.state.value == "open":
+                        diagnostics["sources_error"][name] = (
+                            f"circuit_open:{board}:{br.last_error or 'cooling down'}"
+                        )
+                        diagnostics["counts"][name] = 0
+                        diagnostics.setdefault("circuit", {})[board] = br.snapshot()
+                        return []
+                if isinstance(rows, list):
+                    if rows:
+                        diagnostics["sources_ok"][name] = True
+                    diagnostics["counts"][name] = len(rows)
+                    return rows
+                diagnostics["counts"][name] = 0
+                return []
+            # Fallback without enterprise module
             try:
                 rows = fn(*args, **kwargs)
                 diagnostics["sources_ok"][name] = True
@@ -987,25 +1657,99 @@ def load_jobs(
                 diagnostics["counts"][name] = 0
                 return []
 
+        # LinkedIn guest harvest when user allows LinkedIn (exclude_linkedin=False)
+        li_location = "United States"
+        if loc_f in ("us", "usa", "united states"):
+            li_location = "United States"
+        elif location and str(location).lower() not in ("all", "any", ""):
+            li_location = str(location)
+
+        # Latency-first fan-out:
+        #   freehire: primary + 1 expansion
+        #   remotive: primary only
+        #   arbeitnow: skip when US-only (EU board, high noise / wasted RTT)
+        #   linkedin: primary only, fewer pages
+        q_live: list[str] = []
+        for q in qlist:
+            q = " ".join(str(q).split())
+            if q and q.lower() not in {x.lower() for x in q_live}:
+                q_live.append(q)
+            if len(q_live) >= 2:
+                break
+        if not q_live:
+            q_live = [primary]
+
+        us_only = loc_f in ("us", "usa", "united states")
         tasks = []
-        with ThreadPoolExecutor(max_workers=6) as ex:
-            for q in qlist[:5]:
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            for q in q_live:
                 tasks.append(
                     ex.submit(
                         _safe,
                         f"freehire:{q[:40]}",
+                        "freehire",
                         fetch_freehire,
                         q,
-                        80,
+                        50,
                         remote_only=remote_only,
                     )
                 )
-                tasks.append(
-                    ex.submit(_safe, f"remotive:{q[:40]}", fetch_remotive, q, 40)
+            # Remotive once on primary — multi-query rarely helps US SAP
+            tasks.append(
+                ex.submit(
+                    _safe,
+                    f"remotive:{primary[:40]}",
+                    "remotive",
+                    fetch_remotive,
+                    primary,
+                    40,
                 )
-            tasks.append(ex.submit(_safe, "arbeitnow", fetch_arbeitnow, primary, 60))
+            )
+            if not us_only:
+                tasks.append(
+                    ex.submit(_safe, "arbeitnow", "arbeitnow", fetch_arbeitnow, primary, 40)
+                )
+            if not exclude_linkedin:
+                # 1 LI query, 20 results (~2 pages) — largest latency win
+                tasks.append(
+                    ex.submit(
+                        _safe,
+                        f"linkedin:{primary[:40]}",
+                        "linkedin",
+                        fetch_linkedin_guest,
+                        primary,
+                        location=li_location,
+                        limit=20,
+                        remote_only=remote_only,
+                    )
+                )
             for fut in as_completed(tasks):
                 collected.extend(fut.result() or [])
+        if not exclude_linkedin:
+            li_n = sum(1 for j in collected if str(j.get("source") or "") == "linkedin")
+            diagnostics["counts"]["linkedin"] = li_n
+            if li_n == 0:
+                li_err = diagnostics.get("sources_error", {}).get(
+                    f"linkedin:{primary[:40]}", ""
+                )
+                if "circuit_open" in str(li_err):
+                    warnings.append(
+                        "LinkedIn circuit open (recent failures) — skipped this run; "
+                        "other boards still searched."
+                    )
+                else:
+                    warnings.append(
+                        "LinkedIn allowed but guest search returned 0 rows "
+                        "(rate-limit or network). Other boards still searched."
+                    )
+            else:
+                diagnostics["sources_ok"]["linkedin"] = True
+        # Surface breaker states in diagnostics
+        if breakers is not None:
+            diagnostics["circuit_breakers"] = {
+                b: breakers().get(b).snapshot()
+                for b in ("freehire", "remotive", "arbeitnow", "linkedin")
+            }
     else:
         warnings.append("Live boards off — only practice market data (if enabled).")
 
@@ -1047,12 +1791,9 @@ def load_jobs(
     diagnostics["counts"]["after_title_filter"] = len(jobs)
 
     for j in jobs:
-        if j.get("source") in ("seed_market", "seed") or j.get("is_synthetic"):
-            j["is_synthetic"] = True
-            j["product_label"] = "practice"
-        else:
-            j["is_synthetic"] = False
-            j["product_label"] = "live"
+        synth = is_synthetic_job(j)
+        j["is_synthetic"] = synth
+        j["product_label"] = "practice" if synth else "live"
         j["title_relevant"] = True
 
     if not jobs:

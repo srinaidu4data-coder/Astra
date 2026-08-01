@@ -1,15 +1,30 @@
+import { ApiStatusBadge } from '@/components/ApiStatusBadge'
 import { Waveform } from '@/components/Waveform'
 import { WhisperStream } from '@/components/WhisperStream'
 import { Button } from '@/components/ui/button'
 import { formatMs } from '@/lib/utils'
 import { liveInterview } from '@/services/live-interview'
 import { pipeline } from '@/services/pipeline'
-import { checkCopilotHealth, fetchAnswer, warmCopilotApi } from '@/services/real-api'
+import {
+  checkCopilotHealth,
+  fetchAnswer,
+  fetchLatencyMetrics,
+  setSessionContext,
+  warmCopilotApi,
+} from '@/services/real-api'
 import { useAppStore } from '@/stores/app-store'
-import type { AnswerMode, QACard } from '@/types'
+import type { AnswerMode, LatencySnapshot, QACard } from '@/types'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Mic, MicOff, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+
+function gradeColor(grade?: string) {
+  if (grade === 'excellent') return 'text-emerald-400'
+  if (grade === 'good') return 'text-[#20B8CD]'
+  if (grade === 'acceptable') return 'text-[#E8C547]'
+  if (grade === 'poor') return 'text-rose-400'
+  return 'text-white/70'
+}
 
 /**
  * Real interview UX:
@@ -48,6 +63,9 @@ export function CopilotPage() {
   const [regenerating, setRegenerating] = useState(false)
   const [manualQ, setManualQ] = useState('')
   const [answering, setAnswering] = useState(false)
+  const [depth, setDepth] = useState<'fast' | 'balanced' | 'deep'>('balanced')
+  const [latencySnap, setLatencySnap] = useState<LatencySnapshot | null>(null)
+  const [showBench, setShowBench] = useState(false)
 
   const pushStatus = useCallback((msg: string) => {
     if (!msg) return
@@ -149,6 +167,12 @@ export function CopilotPage() {
         })
         pushStatus(`Heard: ${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`)
       },
+      onTranscriptPartial: (text) => {
+        if (!text?.trim()) return
+        // Live Deepgram interim — status only (avoid flooding transcript list)
+        pushStatus(`Hearing… ${text.slice(0, 90)}${text.length > 90 ? '…' : ''}`)
+        setPhase('hearing')
+      },
       onAnswerPending: (question) => {
         pushStatus(`Writing answer for: ${question.slice(0, 60)}…`)
         setPhase('processing')
@@ -156,6 +180,9 @@ export function CopilotPage() {
       },
       onChatter: (text, reason) => {
         pushStatus(`Filtered (${reason || 'chatter'}): ${text.slice(0, 60)}…`)
+      },
+      onMetrics: (m) => {
+        setMetrics(m)
       },
       onAnswer: (ans) => {
         const q = (ans.question || 'Interview question').trim()
@@ -188,18 +215,22 @@ export function CopilotPage() {
           return next
         })
         setAnswer(ans)
+        // Prefer full stage metrics from onMetrics/latency events; fall back to first token
         if (ans.latencyMs != null) {
           setMetrics({
             vadMs: 0,
             sttMs: 0,
             firstTokenMs: ans.latencyMs,
-            // Latency tile = time-to-first-usable answer (target <1s)
             totalMs: ans.latencyMs,
             lastUpdated: Date.now(),
           })
         }
         setPhase('listening')
         pushStatus('Answer ready — still listening')
+        // Refresh competitor benchmark snapshot
+        void fetchLatencyMetrics().then((s) => {
+          if (s) setLatencySnap(s)
+        })
       },
       onError: (msg) => {
         // Session/audio errors are not the same as "API offline"
@@ -268,12 +299,19 @@ export function CopilotPage() {
         userAnswerModel: user?.answer_model ?? user?.effective_answer_model ?? null,
         userFallbackModel:
           user?.fallback_model ?? user?.effective_fallback_model ?? null,
+        // Deepgram Nova-3 streaming STT (Settings key or server DEEPGRAM_API_KEY)
+        deepgramKey: settings.deepgramKey || null,
+        sttProvider: settings.deepgramKey ? 'deepgram' : 'auto',
       })
       setSessionOn(true)
       setListening(true)
       setApiOk(true)
       setDevice('browser-mic')
-      pushStatus('Listening (browser mic) — speak the interview question clearly')
+      pushStatus(
+        settings.deepgramKey
+          ? 'Listening (browser mic) · Deepgram Nova-3 STT'
+          : 'Listening (browser mic) · Whisper STT (add Deepgram key in Settings for faster streaming)',
+      )
     } catch (e) {
       const msg = (e as Error).message || 'Could not start'
       pushStatus(`Could not start: ${msg}`)
@@ -341,11 +379,26 @@ export function CopilotPage() {
       final: true,
     })
     try {
-      if (apiOk) {
+      // Pre-load context pack so answers are resume/JD grounded (latency amortization)
+      void setSessionContext({
+        role: settings.jobContext || activeJobTitle || undefined,
+        depth,
+        outline_first: true,
+      })
+      if (apiOk && sessionOn && liveInterview.connected) {
+        // Live session: inject skips STT (market pattern for lag fallback)
+        showPending(q)
+        liveInterview.injectQuestion(q, {
+          depth,
+          jobContext: settings.jobContext || activeJobTitle,
+        })
+        setManualQ('')
+      } else if (apiOk) {
         const ans = await fetchAnswer(q, {
           jobContext: settings.jobContext || activeJobTitle,
           tone: settings.tone,
           mode: answerMode,
+          depth,
         })
         pushCard({
           id: ans.id,
@@ -353,15 +406,22 @@ export function CopilotPage() {
           answer: { ...ans, question: q },
         })
         if (ans.latencyMs != null) {
+          const fullMs = (ans as { fullMs?: number }).fullMs
           setMetrics({
             vadMs: 0,
             sttMs: 0,
-            firstTokenMs: Math.min(ans.latencyMs, 50),
-            // full answer wait time (was incorrectly using first_paint ~1ms)
+            firstTokenMs: ans.latencyMs,
             totalMs: ans.latencyMs,
+            fullAnswerMs: fullMs,
             lastUpdated: Date.now(),
+            source: (ans as { source?: string }).source,
+            depth,
           })
         }
+        void fetchLatencyMetrics().then((s) => {
+          if (s) setLatencySnap(s)
+        })
+        setManualQ('')
       } else {
         // Local offline fallback so Answer never feels dead
         await pipeline.injectQuestion(q, {
@@ -385,6 +445,24 @@ export function CopilotPage() {
     }
   }
 
+  // Poll latency snapshot for competitor board
+  useEffect(() => {
+    if (!apiOk) return
+    const tick = () => {
+      void fetchLatencyMetrics().then((s) => {
+        if (s) setLatencySnap(s)
+      })
+    }
+    tick()
+    const id = window.setInterval(tick, 12000)
+    return () => window.clearInterval(id)
+  }, [apiOk])
+
+  useEffect(() => {
+    void setSessionContext({ depth, outline_first: true })
+    if (liveInterview.connected) liveInterview.setDepth(depth)
+  }, [depth])
+
   const phaseLabel =
     phase === 'hearing'
       ? 'Hearing speech…'
@@ -395,7 +473,11 @@ export function CopilotPage() {
           : 'Idle'
 
   return (
-    <div className="grid min-h-[calc(100vh-9rem)] gap-8 xl:grid-cols-12 xl:items-stretch xl:gap-10">
+    <div className="space-y-5">
+      {/* Loud offline / no-LLM banner — hidden when API + LLM are healthy */}
+      <ApiStatusBadge variant="banner" />
+
+      <div className="grid min-h-[calc(100vh-9rem)] gap-8 xl:grid-cols-12 xl:items-stretch xl:gap-10">
       <div className="flex flex-col gap-6 xl:col-span-4">
         <section className="glass rounded-[28px] p-6 md:p-8">
           <div className="mb-8 flex items-start justify-between gap-4">
@@ -503,14 +585,32 @@ export function CopilotPage() {
           </div>
 
           <div className="space-y-3">
-            <span className="label-quiet">Or type a question (optional)</span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="label-quiet">Or type a question (skips STT lag)</span>
+              <div className="flex gap-1 rounded-full bg-white/5 p-0.5 text-[11px]">
+                {(['fast', 'balanced', 'deep'] as const).map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setDepth(d)}
+                    className={`rounded-full px-2.5 py-1 capitalize ${
+                      depth === d
+                        ? 'bg-[#20B8CD]/20 text-[#20B8CD]'
+                        : 'text-white/40 hover:text-white/70'
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 className="field min-w-0 flex-1"
                 value={manualQ}
                 onChange={(e) => setManualQ(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && void askManual()}
-                placeholder="Paste a question if needed…"
+                placeholder="Paste a question if STT lags…"
                 disabled={answering}
               />
               <Button
@@ -580,11 +680,17 @@ export function CopilotPage() {
         <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
           {[
             { label: 'Session', value: sessionOn ? 'ON' : 'Off' },
-            { label: 'Latency', value: metrics ? formatMs(metrics.totalMs) : '—' },
-            { label: 'Answers', value: String(cards.length) },
             {
-              label: 'Viewing',
-              value: cards.length ? `${cardIndex + 1}/${cards.length}` : '—',
+              label: 'First token',
+              value: metrics ? formatMs(metrics.firstTokenMs || metrics.totalMs) : '—',
+            },
+            {
+              label: 'Full answer',
+              value: metrics?.fullAnswerMs != null ? formatMs(metrics.fullAnswerMs) : '—',
+            },
+            {
+              label: 'STT',
+              value: metrics?.sttMs != null && metrics.sttMs > 0 ? formatMs(metrics.sttMs) : '—',
             },
           ].map((k) => (
             <div key={k.label} className="glass rounded-[18px] px-4 py-4">
@@ -601,6 +707,127 @@ export function CopilotPage() {
             </div>
           ))}
         </div>
+
+        {/* Stage breakdown + competitor board */}
+        <section className="glass shrink-0 rounded-[22px] px-5 py-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-[14px] font-medium text-white/90">Latency stack</h3>
+              <p className="text-[11px] text-white/35">
+                Honest stages vs market — first token ≠ full monologue
+              </p>
+            </div>
+            <button
+              type="button"
+              className="text-[12px] text-[#20B8CD] hover:underline"
+              onClick={() => {
+                setShowBench((v) => !v)
+                void fetchLatencyMetrics().then((s) => {
+                  if (s) setLatencySnap(s)
+                })
+              }}
+            >
+              {showBench ? 'Hide benchmark' : 'vs competitors'}
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+            {[
+              { label: 'Outline', ms: metrics?.outlineMs },
+              { label: 'Cache', ms: metrics?.cacheMs },
+              { label: 'Classify', ms: metrics?.classifyMs },
+              { label: 'LLM first', ms: metrics?.llmFirstTokenMs },
+              { label: 'Full ans', ms: metrics?.fullAnswerMs },
+              { label: 'E2E', ms: metrics?.totalPipelineMs },
+            ].map((s) => (
+              <div key={s.label} className="rounded-[14px] bg-white/[0.04] px-3 py-2">
+                <div className="text-[10px] uppercase tracking-wide text-white/30">
+                  {s.label}
+                </div>
+                <div className="mt-0.5 text-[15px] font-medium text-white/85">
+                  {s.ms != null && s.ms > 0 ? formatMs(s.ms) : '—'}
+                </div>
+              </div>
+            ))}
+          </div>
+          {latencySnap?.verdict && (
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px]">
+              <span className="text-white/40">Market rank:</span>
+              <span className={gradeColor(latencySnap.verdict.first_token_grade)}>
+                first-token {latencySnap.verdict.first_token_grade || 'n/a'}
+              </span>
+              <span className={gradeColor(latencySnap.verdict.full_answer_grade)}>
+                full {latencySnap.verdict.full_answer_grade || 'n/a'}
+              </span>
+              <span className={gradeColor(latencySnap.verdict.stt_grade)}>
+                stt {latencySnap.verdict.stt_grade || 'n/a'}
+              </span>
+              <span className="text-white/50">
+                · {latencySnap.verdict.rank_vs_market || '—'} (
+                {latencySnap.verdict.beat_real_world_count ?? 0}/
+                {latencySnap.verdict.competitor_count ?? 0} beat real-world)
+              </span>
+            </div>
+          )}
+          {showBench && latencySnap?.comparison && (
+            <div className="mt-3 max-h-48 overflow-auto rounded-[14px] border border-white/5">
+              <table className="w-full text-left text-[11px]">
+                <thead className="sticky top-0 bg-[#0B0F17] text-white/40">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Tool</th>
+                    <th className="px-2 py-2 font-medium">Claimed</th>
+                    <th className="px-2 py-2 font-medium">User-reported</th>
+                    <th className="px-2 py-2 font-medium">Our p50</th>
+                    <th className="px-2 py-2 font-medium">Beat real?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {latencySnap.comparison.map((row) => (
+                    <tr key={row.id} className="border-t border-white/5 text-white/70">
+                      <td className="px-3 py-1.5">{row.label}</td>
+                      <td className="px-2 py-1.5">
+                        {row.their_claimed_ms != null ? `${row.their_claimed_ms}ms` : '—'}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {row.their_user_reported_ms != null
+                          ? `${row.their_user_reported_ms}ms`
+                          : '—'}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {row.our_p50_ms != null ? `${Math.round(row.our_p50_ms)}ms` : '—'}
+                      </td>
+                      <td
+                        className={`px-2 py-1.5 ${
+                          row.beat_their_real_world ? 'text-emerald-400' : 'text-white/40'
+                        }`}
+                      >
+                        {row.our_p50_ms == null
+                          ? 'need samples'
+                          : row.beat_their_real_world
+                            ? 'yes'
+                            : 'no'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {latencySnap.verdict?.tips?.[0] && (
+                <p className="border-t border-white/5 px-3 py-2 text-[11px] text-white/40">
+                  Tip: {latencySnap.verdict.tips[0]}
+                </p>
+              )}
+            </div>
+          )}
+          {metrics?.source && (
+            <p className="mt-2 text-[11px] text-white/30">
+              Last source: {metrics.source}
+              {metrics.depth ? ` · depth ${metrics.depth}` : ''}
+              {latencySnap?.sample_count != null
+                ? ` · ${latencySnap.sample_count} samples`
+                : ''}
+            </p>
+          )}
+        </section>
+      </div>
       </div>
     </div>
   )

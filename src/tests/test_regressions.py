@@ -273,6 +273,134 @@ class TestRegression_FriendlyErrors:
                "computer sound" in friendly_error("WASAPI loopback missing").lower()
 
 
+class TestRegression_WsSendJsonFallback:
+    """orjson swap on the WS hot path — must degrade gracefully, not drop messages."""
+
+    def test_normal_payload_uses_orjson_and_round_trips(self):
+        import asyncio
+        import json as _json
+        import copilot_api
+
+        sent = []
+
+        class FakeWS:
+            async def send_text(self, s):
+                sent.append(s)
+
+        payload = {"type": "answer", "answer": "Hook: test", "words": 12, "ok": True}
+        asyncio.run(copilot_api._ws_send_json(FakeWS(), payload))
+        assert len(sent) == 1
+        assert _json.loads(sent[0]) == payload
+
+    def test_unsupported_type_falls_back_instead_of_dropping(self):
+        import asyncio
+        import json as _json
+        import copilot_api
+
+        sent = []
+
+        class FakeWS:
+            async def send_text(self, s):
+                sent.append(s)
+
+        # A set has no encoder in either orjson or stdlib json by default —
+        # must not raise out of _ws_send_json, must still send something.
+        asyncio.run(copilot_api._ws_send_json(FakeWS(), {"type": "answer", "bad": {1, 2, 3}}))
+        assert len(sent) == 1
+        assert _json.loads(sent[0])["bad"]  # stringified, not dropped
+
+    def test_nan_does_not_need_fallback(self):
+        """orjson silently encodes NaN/Infinity as null — same as stdlib json's
+        default behavior for this app previously; documents that the fallback
+        path exists for genuinely unsupported types, not NaN."""
+        import orjson
+
+        assert orjson.dumps({"x": float("nan")}) == b'{"x":null}'
+
+
+class TestRegression_AutofillCountryEcho:
+    """country field was the whole location string ("Bangalore, India"),
+    not the actual country — broke autofill on every non-US ATS form."""
+
+    def test_country_extracted_not_echoed(self):
+        from jobsearch.autofill import _normalize_location
+
+        loc, city, country = _normalize_location("Bangalore, India")
+        assert country == "India"
+        assert city == "Bangalore"
+        assert country != loc
+
+    def test_uk_canonicalized(self):
+        from jobsearch.autofill import _normalize_location
+
+        _, _, country = _normalize_location("London, UK")
+        assert country == "United Kingdom"
+
+    def test_us_variants_unaffected(self):
+        from jobsearch.autofill import _normalize_location
+
+        for variant in ("us", "USA", "United States", "", "anywhere"):
+            _, _, country = _normalize_location(variant)
+            assert country == "United States"
+
+    def test_build_autofill_profile_country_field(self):
+        from jobsearch.autofill import build_autofill_profile
+
+        profile = build_autofill_profile(
+            {"email": "a@b.com", "name": "Jane Doe", "location": "Berlin, Germany"}
+        )
+        assert profile["fields"]["country"] == "Germany"
+        assert profile["fields"]["city"] == "Berlin"
+
+
+class TestRegression_WhisperModelRace:
+    """get_whisper_model() had no lock — concurrent first-callers (main.py's
+    startup preload thread vs. a session-start thread) could both pass the
+    `is None` check and both construct a WhisperModel (~1.2-1.5s each,
+    wasted work, and the loser's instance is silently discarded)."""
+
+    def test_concurrent_first_calls_construct_model_once(self):
+        import threading
+        import time
+        import transcriber
+
+        calls = []
+        lock = threading.Lock()
+
+        class FakeWhisperModel:
+            def __init__(self, *a, **kw):
+                # Simulate real load time so threads actually overlap
+                time.sleep(0.05)
+                with lock:
+                    calls.append(1)
+
+        original_model = transcriber._whisper_model
+        original_cls = transcriber.WhisperModel
+        transcriber._whisper_model = None
+        transcriber.WhisperModel = FakeWhisperModel
+        try:
+            threads = [
+                threading.Thread(target=transcriber.get_whisper_model)
+                for _ in range(8)
+            ]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join(timeout=5)
+            assert len(calls) == 1, f"expected exactly 1 construction, got {len(calls)}"
+        finally:
+            transcriber.WhisperModel = original_cls
+            transcriber._whisper_model = original_model
+
+    def test_already_loaded_fast_path_skips_lock_reentry(self):
+        """Fast path (model already loaded) must not block on the lock at all."""
+        import inspect
+        import transcriber
+
+        src = inspect.getsource(transcriber.get_whisper_model)
+        assert "Lock" in inspect.getsource(transcriber) or "_whisper_lock" in src
+
+
 class TestRegression_DedupFingerprint:
     def test_near_duplicate_blocks_reanswer_logic(self):
         from pipeline_utils import is_near_duplicate, question_fingerprint

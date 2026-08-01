@@ -356,6 +356,13 @@ export async function fetchBillingStatus(): Promise<{
 
 export function logout() {
   setToken(null)
+  // PII hygiene: clear Apply Kit + jobsearch local caches on sign-out
+  try {
+    // dynamic import avoid circular deps at module load
+    void import('@/services/piiKit').then((m) => m.clearAllJobsearchLocalData())
+  } catch {
+    /* ignore */
+  }
 }
 
 export { API_BASE }

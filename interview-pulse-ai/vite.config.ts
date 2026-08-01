@@ -36,5 +36,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // Jobs hub + pdf.js are intentionally large; main app chunk stays lean via lazy routes.
+    chunkSizeWarningLimit: 1200,
   },
 })

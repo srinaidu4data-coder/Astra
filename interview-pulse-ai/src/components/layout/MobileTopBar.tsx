@@ -1,3 +1,4 @@
+import { ApiStatusBadge } from '@/components/ApiStatusBadge'
 import { useAppStore } from '@/stores/app-store'
 import { Loader2 } from 'lucide-react'
 
@@ -41,14 +42,17 @@ export function MobileTopBar() {
             <p className="mt-0.5 truncate text-[12px] text-white/40">{activeJobTitle}</p>
           )}
         </div>
-        {user?.email && (
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#20B8CD]/30 bg-[#141414] text-[12px] font-medium text-[#5DD5E3]"
-            title={user.email}
-          >
-            {(user.name || user.email).slice(0, 1).toUpperCase()}
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          <ApiStatusBadge variant="compact" />
+          {user?.email && (
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#20B8CD]/30 bg-[#141414] text-[12px] font-medium text-[#5DD5E3]"
+              title={user.email}
+            >
+              {(user.name || user.email).slice(0, 1).toUpperCase()}
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )

@@ -3,10 +3,12 @@
 System Audio Transcription for Astra MVP.
 
 Uses platform-agnostic AudioCapture abstraction and transcribes
-using faster-whisper.
+using faster-whisper (local) or Deepgram Nova-3 (streaming, preferred).
 """
 
 import os
+import threading
+import time
 
 import numpy as np
 from faster_whisper import WhisperModel
@@ -18,24 +20,39 @@ from config import (
     WHISPER_MODEL,
     WHISPER_DEVICE,
     WHISPER_COMPUTE_TYPE,
+    get_stt_provider,
 )
 
 
 # Global Whisper model (lazy loaded)
 _whisper_model = None
+_whisper_lock = threading.Lock()
 
 
 def get_whisper_model() -> WhisperModel:
-    """Get or initialize the Whisper model."""
+    """
+    Get or initialize the Whisper model.
+
+    Double-checked locking (same pattern as rag._get_openai_client): the
+    fast path (model already loaded — nearly every call) never touches the
+    lock. Only the first-ever call(s) can race, which is real in practice —
+    main.py preloads on the main thread at startup while live_session.py's
+    session-start thread also calls this; without the lock both could pass
+    the `is None` check and each construct a full WhisperModel (~1.2-1.5s
+    wasted, one instance silently discarded).
+    """
     global _whisper_model
-    if _whisper_model is None:
-        print(f"Loading Whisper model '{WHISPER_MODEL}'...")
-        _whisper_model = WhisperModel(
-            WHISPER_MODEL,
-            device=WHISPER_DEVICE,
-            compute_type=WHISPER_COMPUTE_TYPE
-        )
-        print("Model loaded.")
+    if _whisper_model is not None:
+        return _whisper_model
+    with _whisper_lock:
+        if _whisper_model is None:
+            print(f"Loading Whisper model '{WHISPER_MODEL}'...")
+            _whisper_model = WhisperModel(
+                WHISPER_MODEL,
+                device=WHISPER_DEVICE,
+                compute_type=WHISPER_COMPUTE_TYPE
+            )
+            print("Model loaded.")
     return _whisper_model
 
 
@@ -157,6 +174,71 @@ def transcribe_audio(
     # Collapse repeated whitespace / Whisper artifacts
     text = " ".join(text.split())
     return text
+
+
+def transcribe_best(
+    audio_array: np.ndarray,
+    *,
+    initial_prompt: str | None = None,
+    prefer: str | None = None,
+    api_key: str | None = None,
+) -> tuple[str, dict]:
+    """
+    Best available STT for a PCM clip.
+
+    Prefer Deepgram Nova-3 (streaming WebSocket clip) when configured;
+    fall back to local faster-whisper.
+
+    Returns (text, meta) where meta has provider, ms, model, error?.
+    """
+    provider = (prefer or get_stt_provider() or "auto").strip().lower()
+    if provider in ("auto", ""):
+        from config import get_deepgram_api_key
+
+        provider = "deepgram" if (api_key or get_deepgram_api_key()) else "whisper"
+
+    meta: dict = {"provider": provider}
+    t0 = time.perf_counter()
+
+    if provider == "deepgram":
+        try:
+            from deepgram_stt import transcribe_pcm_nova3
+
+            text, dg_meta = transcribe_pcm_nova3(
+                audio_array,
+                sample_rate=int(AUDIO_SAMPLE_RATE or 16000),
+                api_key=api_key,
+            )
+            meta.update(dg_meta or {})
+            meta["provider"] = "deepgram"
+            if (text or "").strip():
+                meta["ms"] = meta.get("ms") or round((time.perf_counter() - t0) * 1000, 2)
+                return text.strip(), meta
+            # Fall through to Whisper
+            meta["fallback"] = "whisper"
+            print(
+                f"[stt] Deepgram empty ({meta.get('error') or 'no text'}) → Whisper fallback"
+            )
+        except Exception as e:
+            meta["deepgram_error"] = f"{type(e).__name__}: {e}"
+            meta["fallback"] = "whisper"
+            print(f"[stt] Deepgram failed: {meta['deepgram_error']} → Whisper")
+
+    try:
+        text = transcribe_audio(audio_array, initial_prompt=initial_prompt)
+        meta["provider"] = "whisper" if meta.get("fallback") else meta.get("provider", "whisper")
+        if meta.get("fallback"):
+            meta["provider"] = "whisper"
+        else:
+            meta["provider"] = "whisper"
+        meta["model"] = WHISPER_MODEL
+        meta["ms"] = round((time.perf_counter() - t0) * 1000, 2)
+        meta["ok"] = bool((text or "").strip())
+        return (text or "").strip(), meta
+    except Exception as e:
+        meta["error"] = f"{type(e).__name__}: {e}"
+        meta["ms"] = round((time.perf_counter() - t0) * 1000, 2)
+        return "", meta
 
 
 class ContinuousTranscriber:

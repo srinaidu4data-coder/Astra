@@ -6,6 +6,8 @@ export type NavRoute =
   | 'settings'
   | 'admin'
   | 'jobsearch'
+  | 'autoapply'
+  | 'nightscout'
 
 export type AnswerMode =
   | 'star'
@@ -100,6 +102,66 @@ export interface PipelineMetrics {
   firstTokenMs: number
   totalMs: number
   lastUpdated: number
+  /** Stage breakdown for competitor benchmarking */
+  classifyMs?: number
+  cacheMs?: number
+  outlineMs?: number
+  llmFirstTokenMs?: number
+  fullAnswerMs?: number
+  totalPipelineMs?: number
+  source?: string
+  depth?: string
+  grade?: string
+}
+
+/** Live latency snapshot from /api/latency/metrics */
+export interface LatencySnapshot {
+  ok?: boolean
+  sample_count?: number
+  stages?: Record<
+    string,
+    {
+      n?: number
+      min?: number | null
+      avg?: number | null
+      p50?: number | null
+      p95?: number | null
+      p99?: number | null
+      max?: number | null
+    }
+  >
+  grades?: Record<
+    string,
+    {
+      p50?: number | null
+      p95?: number | null
+      grade?: string
+      label?: string
+      bars?: { excellent?: number; good?: number; acceptable?: number }
+    }
+  >
+  comparison?: Array<{
+    id: string
+    label: string
+    their_claimed_ms?: number
+    their_user_reported_ms?: number
+    our_p50_ms?: number | null
+    beat_their_claim?: boolean
+    beat_their_real_world?: boolean
+    delta_vs_reported_ms?: number | null
+    notes?: string
+  }>
+  verdict?: {
+    rank_vs_market?: string
+    beat_real_world_count?: number
+    competitor_count?: number
+    first_token_grade?: string
+    full_answer_grade?: string
+    stt_grade?: string
+    tips?: string[]
+  }
+  counters?: Record<string, number>
+  recent?: Array<Record<string, unknown>>
 }
 
 export interface PracticeSession {

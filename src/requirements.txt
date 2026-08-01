@@ -11,6 +11,7 @@ platformdirs>=4.0.0
 pyyaml>=6.0.0
 rank_bm25>=0.2.2  # Sparse retrieval for hybrid search
 requests>=2.28.0  # License activation/deactivation HTTP calls
+websocket-client>=1.6.0  # Deepgram Nova-3 streaming STT
 
 # Platform-specific audio dependencies
 sounddevice>=0.4.6; sys_platform == "win32"

@@ -9,6 +9,7 @@ pushes events to the UI over a WebSocket callback.
 
 from __future__ import annotations
 
+import os
 import re
 import threading
 import time
@@ -42,7 +43,7 @@ except ImportError:  # pragma: no cover
     BROWSER_LONG_SILENCE_DURATION = 1.35
 from pipeline_utils import is_near_duplicate, question_fingerprint, speech_window_seconds
 from rag import classify_utterance
-from transcriber import get_whisper_model, transcribe_audio
+from transcriber import get_whisper_model, transcribe_audio, transcribe_best
 
 EventFn = Callable[[str, dict[str, Any]], None]
 
@@ -80,6 +81,12 @@ class LiveInterviewSession:
         self._job_id = 0
         # Browser path: create capture immediately so early PCM is not dropped
         self._early_browser_cap: Optional[BrowserAudioCapture] = None
+        # Deepgram Nova-3 continuous stream (optional)
+        self._dg_stream = None
+        self._dg_api_key: Optional[str] = None
+        self._stt_provider = "whisper"  # deepgram | whisper
+        self._dg_feed_cursor = 0  # samples already fed from ring (system path)
+        self._last_partial_emit = 0.0
 
     @property
     def running(self) -> bool:
@@ -100,6 +107,8 @@ class LiveInterviewSession:
         fallback_model: str | None = None,
         user_answer_model: str | None = None,
         user_fallback_model: str | None = None,
+        deepgram_api_key: str | None = None,
+        stt_provider: str | None = None,
     ) -> None:
         src = (source or "system").strip().lower()
         if src in ("mic", "browser-mic", "client"):
@@ -129,6 +138,23 @@ class LiveInterviewSession:
         self.fallback_model = fallback_model
         self.user_answer_model = user_answer_model
         self.user_fallback_model = user_fallback_model
+        self._dg_api_key = (deepgram_api_key or "").strip() or None
+        if self._dg_api_key:
+            os.environ.setdefault("DEEPGRAM_API_KEY", self._dg_api_key)
+        # Resolve STT provider
+        try:
+            from config import get_deepgram_api_key, get_stt_provider
+
+            if stt_provider in ("deepgram", "whisper"):
+                self._stt_provider = stt_provider
+            else:
+                self._stt_provider = get_stt_provider()
+            if self._stt_provider == "deepgram" and not (
+                self._dg_api_key or get_deepgram_api_key()
+            ):
+                self._stt_provider = "whisper"
+        except Exception:
+            self._stt_provider = "whisper"
         self._source = src
         self._stop.clear()
         self._noise_floor = 0.01
@@ -140,6 +166,7 @@ class LiveInterviewSession:
         self._pending = []
         self._processing = False
         self._peak_speech_level = 0.0
+        self._dg_feed_cursor = 0
 
         self._thread = threading.Thread(target=self._run, name="live-interview", daemon=True)
         self._thread.start()
@@ -157,6 +184,8 @@ class LiveInterviewSession:
                 self._early_browser_cap.push_pcm16(pcm16)
             except Exception:
                 pass
+            # Still try to stream early PCM to Deepgram if live
+            self._feed_deepgram_pcm(pcm16)
             return
         if not isinstance(cap, BrowserAudioCapture):
             return
@@ -164,6 +193,86 @@ class LiveInterviewSession:
             cap.push_pcm16(pcm16)
         except Exception:
             pass
+        self._feed_deepgram_pcm(pcm16)
+
+    def _feed_deepgram_pcm(self, pcm16: bytes) -> None:
+        dg = self._dg_stream
+        if dg is None or not pcm16:
+            return
+        try:
+            dg.send_pcm(pcm16)
+        except Exception:
+            pass
+
+    def _start_deepgram_stream(self) -> None:
+        """Open continuous Nova-3 listen socket when key is available."""
+        if self._stt_provider != "deepgram":
+            return
+        try:
+            from config import AUDIO_SAMPLE_RATE, get_deepgram_api_key
+            from deepgram_stt import DeepgramLiveStream, deepgram_available
+
+            key = self._dg_api_key or get_deepgram_api_key()
+            if not key or not deepgram_available():
+                if not deepgram_available():
+                    self._emit(
+                        "status",
+                        {
+                            "message": (
+                                "Deepgram requested but unavailable "
+                                "(install websocket-client + set DEEPGRAM_API_KEY) "
+                                "— using Whisper"
+                            ),
+                            "stt_provider": "whisper",
+                        },
+                    )
+                self._stt_provider = "whisper"
+                return
+            stream = DeepgramLiveStream(
+                sample_rate=int(AUDIO_SAMPLE_RATE or 16000),
+                emit=self._emit,
+                api_key=key,
+            )
+            if stream.start(timeout=6.0):
+                self._dg_stream = stream
+                self._emit(
+                    "status",
+                    {
+                        "message": "STT: Deepgram Nova-3 streaming",
+                        "stt_provider": "deepgram",
+                        "listening": True,
+                    },
+                )
+            else:
+                self._stt_provider = "whisper"
+                self._emit(
+                    "status",
+                    {
+                        "message": (
+                            f"Deepgram connect failed ({stream.error or 'timeout'}) "
+                            "— Whisper fallback"
+                        ),
+                        "stt_provider": "whisper",
+                    },
+                )
+        except Exception as e:
+            self._stt_provider = "whisper"
+            self._emit(
+                "status",
+                {
+                    "message": f"Deepgram init error: {e} — Whisper fallback",
+                    "stt_provider": "whisper",
+                },
+            )
+
+    def _stop_deepgram_stream(self) -> None:
+        dg = self._dg_stream
+        self._dg_stream = None
+        if dg is not None:
+            try:
+                dg.stop()
+            except Exception:
+                pass
 
     def stop(self) -> None:
         self._stop.set()
@@ -171,6 +280,7 @@ class LiveInterviewSession:
         with self._process_lock:
             self._pending.clear()
             self._processing = False
+        self._stop_deepgram_stream()
         cap = self._capture
         self._capture = None
         if cap is not None:
@@ -193,6 +303,297 @@ class LiveInterviewSession:
             self.job_context = job_context
         if tone:
             self.tone = tone
+        try:
+            from session_context import update_pack
+
+            if job_context:
+                update_pack(role=job_context)
+        except Exception:
+            pass
+
+    def inject_question(self, question: str) -> None:
+        """
+        Manual question inject (STT lag fallback — market pattern).
+        Spawns the same answer path without waiting for audio/VAD.
+        """
+        q = (question or "").strip()
+        if not q:
+            self._emit("error", {"message": "Empty question"})
+            return
+        try:
+            from latency_metrics import get_registry
+
+            get_registry().incr("manual_injects")
+        except Exception:
+            pass
+        # Fake a short speech_s so _process_clip path works if we share it
+        self._emit(
+            "status",
+            {
+                "message": "Manual question inject — generating…",
+                "listening": True,
+                "answering": True,
+            },
+        )
+        def _run_inject() -> None:
+            self._job_id += 1
+            job_id = self._job_id
+            gen = self._generation
+            try:
+                self._generate_and_emit(
+                    q, stt_ms=0.0, classify_ms=0.0, job_id=job_id, gen=gen
+                )
+            except Exception as e:
+                traceback.print_exc()
+                self._emit("error", {"message": str(e)})
+
+        threading.Thread(target=_run_inject, daemon=True, name="inject-q").start()
+
+    def _generate_and_emit(
+        self,
+        question: str,
+        *,
+        stt_ms: float = 0.0,
+        classify_ms: float | None = None,
+        job_id: int = 0,
+        gen: int = 0,
+        vad_ms: float | None = None,
+    ) -> None:
+        """Core answer cascade + latency trace emit (used by STT path and inject)."""
+        from answer_engine import (
+            generate_answer,
+            to_bullets,
+            _normalize_answer_text,
+        )
+        from answer_engine import iter_answer_tokens
+        from fast_answer import iter_cascade_answer
+
+        try:
+            from session_context import effective_job_context, get_depth
+
+            job_ctx = effective_job_context(self.job_context) or self.job_context
+            depth = get_depth()
+        except Exception:
+            job_ctx = self.job_context
+            depth = "balanced"
+
+        self._emit(
+            "status",
+            {
+                "message": f"Writing answer ({self.mode})…",
+                "listening": True,
+                "answering": True,
+                "job_id": job_id,
+            },
+        )
+        self._emit(
+            "answer_pending",
+            {"question": question, "mode": self.mode, "job_id": job_id},
+        )
+
+        t1 = time.perf_counter()
+        first_token_ms: float | None = None
+        outline_ms: float | None = None
+        cache_ms: float | None = None
+        llm_first_ms: float | None = None
+        answer = ""
+        source = "llm"
+        stages: dict[str, Any] = {}
+        try:
+            last_emit_len = 0
+            raw_answer = ""
+            for text, meta in iter_cascade_answer(
+                question,
+                job_context=job_ctx,
+                tone=self.tone,
+                mode=self.mode,
+                answer_model=self.answer_model,
+                fallback_model=self.fallback_model,
+                user_answer_model=self.user_answer_model,
+                user_fallback_model=self.user_fallback_model,
+                llm_streamer=iter_answer_tokens,
+            ):
+                if gen != self._generation or self._stop.is_set():
+                    break
+                raw_answer = text or ""
+                source = str(meta.get("source") or source)
+                if meta.get("cache_ms") is not None:
+                    cache_ms = float(meta["cache_ms"])
+                if meta.get("outline_ms") is not None:
+                    outline_ms = float(meta["outline_ms"])
+                if meta.get("llm_first_token_ms") is not None:
+                    llm_first_ms = float(meta["llm_first_token_ms"])
+                if meta.get("stages"):
+                    stages = dict(meta["stages"])
+                if first_token_ms is None and raw_answer:
+                    first_token_ms = round(
+                        float(meta.get("first_paint_ms") or (time.perf_counter() - t1) * 1000)
+                    )
+                is_final = bool(meta.get("final"))
+                if raw_answer and (
+                    is_final
+                    or len(raw_answer) - last_emit_len >= 80
+                    or last_emit_len == 0
+                ):
+                    last_emit_len = len(raw_answer)
+                    answer = _normalize_answer_text(raw_answer)
+                    if not is_final:
+                        partial_bullets = to_bullets(answer, self.mode) or [answer]
+                        self._emit(
+                            "answer",
+                            {
+                                "question": question,
+                                "answer": answer,
+                                "bullets": partial_bullets,
+                                "mode": self.mode,
+                                "streaming": True,
+                                "source": source,
+                                "stt_ms": stt_ms,
+                                "classify_ms": classify_ms,
+                                "cache_ms": cache_ms,
+                                "outline_ms": outline_ms,
+                                "first_token_ms": first_token_ms,
+                                "llm_first_token_ms": llm_first_ms,
+                                "answer_ms": round((time.perf_counter() - t1) * 1000),
+                                "pipeline_ms": first_token_ms
+                                or round((time.perf_counter() - t1) * 1000),
+                                "job_id": job_id,
+                                "stages": stages,
+                                "depth": depth,
+                            },
+                        )
+                if is_final:
+                    break
+
+            if raw_answer and len(raw_answer) != last_emit_len:
+                answer = _normalize_answer_text(raw_answer)
+
+            if not answer:
+                answer = generate_answer(
+                    question,
+                    answer_model=self.answer_model,
+                    fallback_model=self.fallback_model,
+                    user_answer_model=self.user_answer_model,
+                    user_fallback_model=self.user_fallback_model,
+                    job_context=job_ctx,
+                    tone=self.tone,
+                    mode=self.mode,
+                )
+                answer = _normalize_answer_text(answer)
+                source = "blocking_fallback"
+        except Exception as gen_err:
+            traceback.print_exc()
+            self._emit("error", {"message": f"Answer generation failed: {gen_err}"})
+            from fast_answer import instant_answer
+
+            answer, source, ms = instant_answer(
+                question, job_context=job_ctx, mode=self.mode
+            )
+            answer = _normalize_answer_text(answer)
+            if first_token_ms is None:
+                first_token_ms = round(ms)
+            if not answer:
+                answer = (
+                    f"I heard: {question}\n"
+                    "I'd structure this with a clear situation, what I owned, "
+                    "the concrete actions I took, and a measurable result."
+                )
+
+        if self._stop.is_set() or gen != self._generation:
+            if not answer:
+                return
+
+        ans_ms = round((time.perf_counter() - t1) * 1000)
+        if first_token_ms is None:
+            first_token_ms = ans_ms
+        bullets = to_bullets(answer, self.mode)
+        if not bullets and answer:
+            bullets = [answer]
+
+        from pipeline_utils import question_fingerprint
+
+        fp = question_fingerprint(question)
+        self._last_fp = fp
+        self._recent_fps.append(fp)
+        if len(self._recent_fps) > 8:
+            self._recent_fps = self._recent_fps[-8:]
+
+        total_ms = round(float(stt_ms or 0) + ans_ms, 2)
+        latency_trace = {
+            "vad_ms": vad_ms,
+            "stt_ms": stt_ms,
+            "classify_ms": classify_ms,
+            "cache_ms": cache_ms,
+            "outline_ms": outline_ms,
+            "first_token_ms": first_token_ms,
+            "llm_first_token_ms": llm_first_ms,
+            "full_answer_ms": ans_ms,
+            "total_ms": total_ms,
+            "source": source,
+            "depth": depth,
+            "stages": stages,
+        }
+        try:
+            from latency_metrics import record_trace
+
+            record_trace(
+                question=question[:200],
+                source=source,
+                depth=depth,
+                vad_ms=vad_ms,
+                stt_ms=stt_ms if stt_ms else None,
+                classify_ms=classify_ms,
+                cache_ms=cache_ms,
+                outline_ms=outline_ms,
+                first_token_ms=first_token_ms,
+                full_answer_ms=ans_ms,
+                total_ms=total_ms,
+                from_cache="cache" in (source or ""),
+                outline_first=outline_ms is not None,
+                words=len((answer or "").split()),
+                meta={"llm_first_token_ms": llm_first_ms},
+            )
+        except Exception:
+            pass
+
+        self._emit(
+            "answer",
+            {
+                "question": question,
+                "answer": answer,
+                "bullets": bullets,
+                "mode": self.mode,
+                "streaming": False,
+                "source": source,
+                "stt_ms": stt_ms,
+                "classify_ms": classify_ms,
+                "cache_ms": cache_ms,
+                "outline_ms": outline_ms,
+                "first_token_ms": first_token_ms,
+                "llm_first_token_ms": llm_first_ms,
+                "answer_ms": ans_ms,
+                "pipeline_ms": first_token_ms,
+                "full_answer_ms": ans_ms,
+                "total_pipeline_ms": total_ms,
+                "job_id": job_id,
+                "latency_trace": latency_trace,
+                "stages": stages,
+                "depth": depth,
+            },
+        )
+        self._emit(
+            "latency",
+            {**latency_trace, "job_id": job_id, "question": question[:160]},
+        )
+        self._emit(
+            "status",
+            {
+                "message": "Answer ready — still listening for next question",
+                "listening": True,
+                "answering": False,
+                "job_id": job_id,
+            },
+        )
 
     def _run(self) -> None:
         try:
@@ -247,18 +648,29 @@ class LiveInterviewSession:
                 },
             )
 
-            # Warm Whisper after audio is already flowing into the ring buffer
-            try:
-                get_whisper_model()
-            except Exception as e:
-                self._emit("error", {"message": f"Whisper load failed: {e}"})
+            # Prefer Deepgram Nova-3 streaming; warm Whisper only as fallback
+            self._start_deepgram_stream()
+            if self._stt_provider != "deepgram":
+                try:
+                    get_whisper_model()
+                except Exception as e:
+                    self._emit("error", {"message": f"Whisper load failed: {e}"})
+            else:
+                # Lazy-warm Whisper in background for fallback without blocking
+                threading.Thread(
+                    target=lambda: get_whisper_model(),
+                    daemon=True,
+                    name="whisper-warm",
+                ).start()
 
             # Warm the LLM provider's TCP/TLS connection in the background so
             # question #1 doesn't pay a ~2-3s cold-connection penalty (measured
             # first_token_ms ~2900ms on Q1 vs ~300ms steady-state otherwise).
             try:
                 from answer_engine import warm_llm_connection
+                from latency_metrics import get_registry
 
+                get_registry().mark_session_start()
                 threading.Thread(
                     target=warm_llm_connection, daemon=True, name="llm-warm"
                 ).start()
@@ -267,6 +679,7 @@ class LiveInterviewSession:
 
             while not self._stop.is_set():
                 self._tick_vad()
+                self._feed_deepgram_from_ring()
                 time.sleep(0.05)  # snappier end-of-speech detection
 
         except Exception as e:
@@ -308,6 +721,32 @@ class LiveInterviewSession:
             return float(cap.get_audio_level() or 0.0)
         except Exception:
             return 0.0
+
+    def _feed_deepgram_from_ring(self) -> None:
+        """
+        System-audio path: pull new samples from the capture ring into Deepgram.
+        Browser path already feeds via push_audio.
+        """
+        dg = self._dg_stream
+        if dg is None or self._source == "browser":
+            return
+        cap = self._capture
+        if cap is None:
+            return
+        try:
+            # Prefer incremental API if capture exposes it
+            if hasattr(cap, "read_new_int16"):
+                chunk = cap.read_new_int16()  # type: ignore[attr-defined]
+                if chunk is not None and len(chunk) > 0:
+                    dg.send_pcm_int16(np.asarray(chunk, dtype=np.int16))
+                return
+            # Fallback: last 200ms window (small overlap is fine for STT)
+            if hasattr(cap, "get_last_n_seconds"):
+                clip = cap.get_last_n_seconds(0.2)
+                if clip is not None and len(clip) > 0:
+                    dg.send_pcm_int16(np.asarray(clip, dtype=np.int16))
+        except Exception:
+            pass
 
     def _tick_vad(self) -> None:
         # Always run VAD even while answering — long interviews queue the next Q.
@@ -515,17 +954,50 @@ class LiveInterviewSession:
                 self._emit("status", {"message": "No clip captured — still listening"})
                 return
 
+            stt_provider = self._stt_provider
             self._emit(
                 "status",
                 {
-                    "message": "Transcribing…",
+                    "message": (
+                        "Transcribing (Deepgram Nova-3)…"
+                        if stt_provider == "deepgram"
+                        else "Transcribing (Whisper)…"
+                    ),
                     "listening": True,
                     "job_id": job_id,
+                    "stt_provider": stt_provider,
                 },
             )
             t0 = time.perf_counter()
-            text = transcribe_audio(audio)
-            stt_ms = round((time.perf_counter() - t0) * 1000)
+            text = ""
+            stt_meta: dict[str, Any] = {"provider": stt_provider}
+
+            # 1) Prefer continuous Deepgram stream finals (lowest latency)
+            if stt_provider == "deepgram" and self._dg_stream is not None:
+                try:
+                    text = self._dg_stream.finalize_turn(wait_s=0.4)
+                    stt_meta = {
+                        "provider": "deepgram",
+                        "model": "nova-3",
+                        "mode": "live_stream",
+                        "ms": round((time.perf_counter() - t0) * 1000, 2),
+                    }
+                except Exception as e:
+                    stt_meta["stream_error"] = str(e)
+
+            # 2) Deepgram clip stream / REST if live stream empty
+            if not (text or "").strip():
+                text, stt_meta = transcribe_best(
+                    audio,
+                    prefer=stt_provider,
+                    api_key=self._dg_api_key,
+                )
+
+            stt_ms = round(
+                float(stt_meta.get("ms") or (time.perf_counter() - t0) * 1000)
+            )
+            # Prefer wall clock for total if meta ms is partial
+            stt_ms = max(stt_ms, round((time.perf_counter() - t0) * 1000))
 
             if gen != self._generation or self._stop.is_set():
                 return
@@ -534,7 +1006,11 @@ class LiveInterviewSession:
                 # Quick retry only — no long sleeps on the hot path
                 retry = self._snapshot(max(speech_s, 4.0))
                 if retry is not None and len(retry) > len(audio):
-                    text = transcribe_audio(retry)
+                    text, stt_meta = transcribe_best(
+                        retry,
+                        prefer=stt_provider,
+                        api_key=self._dg_api_key,
+                    )
                     stt_ms = round((time.perf_counter() - t0) * 1000)
                 if not text or not text.strip():
                     self._emit(
@@ -577,11 +1053,16 @@ class LiveInterviewSession:
             if len(words) < 4 or _looks_incomplete(text):
                 retry = self._snapshot(max(speech_s + 2.0, 12.0))
                 if retry is not None and len(retry) >= len(audio or []):
-                    text2 = transcribe_audio(retry)
+                    text2, meta2 = transcribe_best(
+                        retry,
+                        prefer=stt_provider,
+                        api_key=self._dg_api_key,
+                    )
                     words2 = [w for w in (text2 or "").strip().split() if w]
                     if len(words2) > len(words):
                         text = text2
                         words = words2
+                        stt_meta = meta2
                         stt_ms = round((time.perf_counter() - t0) * 1000)
                 if len(words) < 4 and not (text or "").strip().endswith("?"):
                     self._emit(
@@ -612,19 +1093,18 @@ class LiveInterviewSession:
                     "stt_ms": stt_ms,
                     "final": True,
                     "role": "interviewer",
+                    "stt_provider": stt_meta.get("provider") or stt_provider,
+                    "stt_model": stt_meta.get("model"),
+                    "stt_mode": stt_meta.get("mode"),
                 },
             )
 
-            from answer_engine import (
-                generate_answer,
-                looks_like_question,
-                to_bullets,
-                _normalize_answer_text,
-            )
+            from answer_engine import looks_like_question
 
             soft_q = looks_like_question(text)
             # Fast path: skip classify LLM when heuristics already say "question"
             # (saves ~0.5–2s before answer generation starts).
+            t_cls = time.perf_counter()
             if soft_q:
                 classification = {
                     "is_interview_question": True,
@@ -634,6 +1114,7 @@ class LiveInterviewSession:
                 }
             else:
                 classification = classify_utterance(text, min_words=4)
+            classify_ms = round((time.perf_counter() - t_cls) * 1000)
             question = classification.get("cleaned_question") or text
             is_q = bool(classification.get("is_interview_question", False))
             conf = float(classification.get("confidence", 0.0) or 0.0)
@@ -673,154 +1154,16 @@ class LiveInterviewSession:
                     )
                     return
 
-            self._emit(
-                "status",
-                {
-                    "message": f"Writing answer ({self.mode})…",
-                    "listening": True,
-                    "answering": True,
-                    "job_id": job_id,
-                },
+            # Shared cascade + stage metrics (also used by manual inject)
+            self._generate_and_emit(
+                question,
+                stt_ms=float(stt_ms or 0),
+                classify_ms=float(classify_ms),
+                job_id=job_id,
+                gen=gen,
+                vad_ms=None,
             )
-            # Let UI show a pending card immediately (include job_id for multi-Q)
-            self._emit(
-                "answer_pending",
-                {"question": question, "mode": self.mode, "job_id": job_id},
-            )
-
-            t1 = time.perf_counter()
-            first_token_ms: float | None = None
-            answer = ""
-            source = "llm"
-            try:
-                # Cascade: exact cache / LLM stream (no approx cache mid-interview)
-                from answer_engine import iter_answer_tokens
-                from fast_answer import iter_cascade_answer
-
-                last_emit_len = 0
-                for text, meta in iter_cascade_answer(
-                    question,
-                    job_context=self.job_context,
-                    tone=self.tone,
-                    mode=self.mode,
-                    answer_model=self.answer_model,
-                    fallback_model=self.fallback_model,
-                    user_answer_model=self.user_answer_model,
-                    user_fallback_model=self.user_fallback_model,
-                    llm_streamer=iter_answer_tokens,
-                ):
-                    # Finish this answer even if another Q is queued — only stop cancels
-                    if gen != self._generation or self._stop.is_set():
-                        break
-                    answer = _normalize_answer_text(text or "")
-                    source = str(meta.get("source") or source)
-                    if first_token_ms is None and answer:
-                        first_token_ms = round(
-                            float(meta.get("first_paint_ms") or (time.perf_counter() - t1) * 1000)
-                        )
-                    # Emit upgrades (first paint, then ~every ~80 chars, then final)
-                    if answer and (
-                        meta.get("final")
-                        or len(answer) - last_emit_len >= 80
-                        or last_emit_len == 0
-                    ):
-                        last_emit_len = len(answer)
-                        partial_bullets = to_bullets(answer, self.mode) or [answer]
-                        self._emit(
-                            "answer",
-                            {
-                                "question": question,
-                                "answer": answer,
-                                "bullets": partial_bullets,
-                                "mode": self.mode,
-                                "streaming": not bool(meta.get("final")),
-                                "source": source,
-                                "stt_ms": stt_ms,
-                                "first_token_ms": first_token_ms,
-                                "answer_ms": round((time.perf_counter() - t1) * 1000),
-                                "pipeline_ms": first_token_ms
-                                or round((time.perf_counter() - t1) * 1000),
-                                "job_id": job_id,
-                            },
-                        )
-                    if meta.get("final"):
-                        break
-
-                if not answer:
-                    answer = generate_answer(
-                        question,
-                        answer_model=self.answer_model,
-                        fallback_model=self.fallback_model,
-                        user_answer_model=self.user_answer_model,
-                        user_fallback_model=self.user_fallback_model,
-                        job_context=self.job_context,
-                        tone=self.tone,
-                        mode=self.mode,
-                    )
-                    answer = _normalize_answer_text(answer)
-                    source = "blocking_fallback"
-            except Exception as gen_err:
-                traceback.print_exc()
-                self._emit("error", {"message": f"Answer generation failed: {gen_err}"})
-                from fast_answer import instant_answer
-
-                answer, source, ms = instant_answer(
-                    question, job_context=self.job_context, mode=self.mode
-                )
-                answer = _normalize_answer_text(answer)
-                if first_token_ms is None:
-                    first_token_ms = round(ms)
-                if not answer:
-                    answer = (
-                        f"I heard: {question}\n"
-                        "I'd structure this with a clear situation, what I owned, "
-                        "the concrete actions I took, and a measurable result."
-                    )
-
-            if self._stop.is_set() or gen != self._generation:
-                # Session stopped mid-answer — still try to show what we have
-                if not answer:
-                    return
-
-            ans_ms = round((time.perf_counter() - t1) * 1000)
-            if first_token_ms is None:
-                first_token_ms = ans_ms
-            bullets = to_bullets(answer, self.mode)
-            if not bullets and answer:
-                bullets = [answer]
-
-            self._last_fp = fp
-            self._recent_fps.append(fp)
-            if len(self._recent_fps) > 8:
-                self._recent_fps = self._recent_fps[-8:]
-            # Always emit final answer tagged with question + job_id for UI matching
-            self._emit(
-                "answer",
-                {
-                    "question": question,
-                    "answer": answer,
-                    "bullets": bullets,
-                    "mode": self.mode,
-                    "streaming": False,
-                    "source": source,
-                    "stt_ms": stt_ms,
-                    "first_token_ms": first_token_ms,
-                    "answer_ms": ans_ms,
-                    "pipeline_ms": first_token_ms,
-                    "full_answer_ms": ans_ms,
-                    "total_pipeline_ms": stt_ms + ans_ms,
-                    "job_id": job_id,
-                },
-            )
-            self._emit(
-                "status",
-                {
-                    "message": "Answer ready — still listening for next question",
-                    "listening": True,
-                    "answering": False,
-                    "job_id": job_id,
-                },
-            )
+            return
         except Exception as e:
             traceback.print_exc()
             self._emit("error", {"message": str(e)})

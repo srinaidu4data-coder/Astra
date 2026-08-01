@@ -23,6 +23,8 @@ import re
 from collections import Counter, defaultdict
 from typing import Any, Iterable
 
+from jobsearch.job_model import is_synthetic_job
+
 _TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\+\#\.\-]{1,32}")
 
 
@@ -166,20 +168,26 @@ def elo_rank(scores: list[float], k: float = 16.0) -> list[float]:
     """
     Pairwise Elo updates treating higher raw score as a win.
     Produces a smoothed ranking signal less sensitive to outliers.
+
+    For large N, compare each job only to a sliding window of stronger peers
+    (O(N·W) instead of O(N²)) — justified: full pairwise is wasteful past ~200.
     """
     n = len(scores)
     if n == 0:
         return []
+    if n == 1:
+        return [0.5]
     ratings = [1500.0] * n
     order = sorted(range(n), key=lambda i: scores[i], reverse=True)
+    # Window: full pairwise for small N; capped for large N
+    window = n if n <= 120 else 40
     for a_idx in range(n):
-        for b_idx in range(a_idx + 1, n):
+        # only play against next `window` lower-ranked items
+        for b_idx in range(a_idx + 1, min(n, a_idx + 1 + window)):
             i, j = order[a_idx], order[b_idx]
-            # i ranked above j in raw score
             ea = 1.0 / (1.0 + 10 ** ((ratings[j] - ratings[i]) / 400.0))
             ratings[i] += k * (1.0 - ea)
             ratings[j] += k * (0.0 - (1.0 - ea))
-    # normalize to 0-1
     lo, hi = min(ratings), max(ratings)
     if hi - lo < 1e-9:
         return [0.5] * n
@@ -221,30 +229,33 @@ def ensemble_rank(
     jobs: list[dict[str, Any]],
     *,
     weights: dict[str, float] | None = None,
+    fast: bool = True,
 ) -> list[dict[str, Any]]:
     """
-    Multi-algorithm ensemble. Returns jobs sorted by ensemble score with
-    per-algorithm breakdown for RT agent transparency.
+    Job ranking. Default fast=True (latency path):
+      BM25 + cosine + Jaccard + title boost + live boost.
+    Full ensemble (centrality/spectral/Elo/diversity) only when fast=False.
     """
-    w = {
-        "bm25": 0.22,
-        "cosine": 0.18,
-        "jaccard": 0.18,
-        "bayes": 0.14,
-        "centrality": 0.08,
-        "spectral": 0.08,
-        "elo": 0.07,
-        "diversity_bonus": 0.05,
-    }
-    if weights:
-        w.update(weights)
+    if not jobs:
+        return []
+
+    # Latency: rank on title + skills + short text head (not full description)
+    def _rank_blob(j: dict[str, Any]) -> str:
+        return " ".join(
+            [
+                str(j.get("title") or ""),
+                " ".join(j.get("skills") or []),
+                str(j.get("text") or "")[:400],
+            ]
+        )
 
     q_tokens = tokenize(profile_text) + [s.lower() for s in profile_skills]
+    # Cap query tokens for BM25
+    q_tokens = q_tokens[:80]
     cand_skills = skill_set(profile_text, profile_skills)
     q_vec = tf_vector(q_tokens)
 
-    # corpus stats for BM25
-    docs = [tokenize(j.get("text", "") + " " + " ".join(j.get("skills") or [])) for j in jobs]
+    docs = [tokenize(_rank_blob(j)) for j in jobs]
     avgdl = sum(len(d) for d in docs) / max(len(docs), 1)
     df: dict[str, int] = defaultdict(int)
     for d in docs:
@@ -252,19 +263,39 @@ def ensemble_rank(
             df[t] += 1
     n_docs = len(docs)
 
-    centrality = skill_graph_centrality(jobs)
+    use_heavy = not fast and len(jobs) <= 150
+    centrality: dict[str, float] = {}
     neighbors: dict[str, set[str]] = defaultdict(set)
-    for job in jobs:
-        sk = list(skill_set(job.get("text", ""), job.get("skills") or []))
-        for s in sk:
-            for t in sk:
-                if s != t:
-                    neighbors[s].add(t)
+    if use_heavy:
+        centrality = skill_graph_centrality(jobs)
+        for job in jobs:
+            sk = list(skill_set(job.get("text", "")[:400], job.get("skills") or []))
+            for s in sk:
+                for t in sk:
+                    if s != t:
+                        neighbors[s].add(t)
+
+    w = {
+        "bm25": 0.40 if fast else 0.22,
+        "cosine": 0.25 if fast else 0.18,
+        "jaccard": 0.20 if fast else 0.18,
+        "bayes": 0.15 if fast else 0.14,
+        "centrality": 0.0 if fast else 0.08,
+        "spectral": 0.0 if fast else 0.08,
+        "elo": 0.0 if fast else 0.07,
+        "diversity_bonus": 0.0 if fast else 0.05,
+    }
+    if weights:
+        w.update(weights)
+
+    skill_bits = [str(s).lower() for s in profile_skills if len(str(s)) > 2][:12]
+    qbits = [t for t in (profile_text or "").lower().split() if len(t) > 2][:12]
+    # Single set for title-hit scan (avoids per-job set rebuild)
+    title_needles = tuple(dict.fromkeys(skill_bits + qbits))
 
     raw_rows: list[dict[str, Any]] = []
     for i, job in enumerate(jobs):
-        jtext = job.get("text", "")
-        jskills = skill_set(jtext, job.get("skills") or [])
+        jskills = skill_set(str(job.get("title") or ""), job.get("skills") or [])
         j_tokens = docs[i]
         j_vec = tf_vector(j_tokens)
 
@@ -272,13 +303,27 @@ def ensemble_rank(
         s_cos = cosine(q_vec, j_vec)
         s_jac = jaccard(cand_skills, jskills)
         req = list(job.get("skills") or []) or list(jskills)[:12]
-        hits = sum(1 for r in req if r.lower().replace(" ", "") in cand_skills or r.lower() in cand_skills)
+        hits = 0
+        for r in req:
+            rl = str(r).lower()
+            if rl.replace(" ", "") in cand_skills or rl in cand_skills:
+                hits += 1
         s_bayes = bayesian_fit(hits, max(len(req), 1))
-        # boost if job skills are high-centrality (transferable market skills)
         cent = 0.0
-        if jskills and centrality:
-            cent = sum(centrality.get(s, 0.0) for s in jskills) / max(len(jskills), 1)
-        s_spec = spectral_path_distance(cand_skills, jskills, neighbors)
+        s_spec = 0.0
+        if use_heavy:
+            if jskills and centrality:
+                cent = sum(centrality.get(s, 0.0) for s in jskills) / max(len(jskills), 1)
+            s_spec = spectral_path_distance(cand_skills, jskills, neighbors)
+
+        gaps: list[str] = []
+        if req:
+            for r in req:
+                rl = str(r).lower()
+                if rl.replace(" ", "") not in cand_skills and rl not in cand_skills:
+                    gaps.append(rl)
+                    if len(gaps) >= 8:
+                        break
 
         raw_rows.append(
             {
@@ -291,42 +336,29 @@ def ensemble_rank(
                 "spectral": s_spec,
                 "hits": hits,
                 "required": len(req),
-                "gap_skills": sorted(
-                    {
-                        r
-                        for r in (job.get("skills") or [])
-                        if r.lower().replace(" ", "") not in cand_skills
-                        and r.lower() not in cand_skills
-                    }
-                )[:8],
+                "gap_skills": gaps,
             }
         )
 
     base = [
-        0.35 * r["bm25"]
-        + 0.25 * r["cosine"]
-        + 0.25 * r["jaccard"]
-        + 0.15 * r["bayes"]
+        0.40 * r["bm25"] + 0.25 * r["cosine"] + 0.20 * r["jaccard"] + 0.15 * r["bayes"]
         for r in raw_rows
     ]
-    elo = elo_rank(base)
+    elo = elo_rank(base) if use_heavy else [0.5] * len(raw_rows)
 
-    # diversity: prefer jobs that add new skill clusters (entropy of coverage)
-    covered: set[str] = set()
-    diversity: list[float] = []
-    order_by_base = sorted(range(len(raw_rows)), key=lambda i: base[i], reverse=True)
-    temp_scores = [0.0] * len(raw_rows)
-    for idx in order_by_base:
-        jskills = skill_set(
-            raw_rows[idx]["job"].get("text", ""),
-            raw_rows[idx]["job"].get("skills") or [],
-        )
-        novel = len(jskills - covered)
-        temp_scores[idx] = novel / max(len(jskills), 1) if jskills else 0.0
-        covered |= jskills
-    diversity = temp_scores
+    diversity = [0.0] * len(raw_rows)
+    if use_heavy:
+        covered: set[str] = set()
+        order_by_base = sorted(range(len(raw_rows)), key=lambda i: base[i], reverse=True)
+        for idx in order_by_base:
+            jskills = skill_set(
+                "",
+                raw_rows[idx]["job"].get("skills") or [],
+            )
+            novel = len(jskills - covered)
+            diversity[idx] = novel / max(len(jskills), 1) if jskills else 0.0
+            covered |= jskills
 
-    # Softmax utility blend
     scored: list[dict[str, Any]] = []
     for i, r in enumerate(raw_rows):
         ensemble = (
@@ -341,44 +373,56 @@ def ensemble_rank(
         )
         job = dict(r["job"])
         src = str(job.get("source") or "")
-        is_synth = bool(
-            job.get("is_synthetic") or src in ("seed_market", "seed")
-        )
-        # Product rule: live boards dominate; synthetic is practice-only
+        is_synth = is_synthetic_job(job)
         if is_synth:
             ensemble = ensemble * 0.55
         else:
             ensemble = min(1.0, ensemble + 0.12)
-        # Title match boost — profile tokens + skills (title-only signal)
+            # Prefer real LinkedIn posts slightly (user asked for LI links)
+            if src == "linkedin":
+                ensemble = min(1.0, ensemble + 0.03)
+
         title_l = (job.get("title") or "").lower()
-        qbits = [t for t in (profile_text or "").lower().split() if len(t) > 2][:12]
-        skill_bits = [str(s).lower() for s in profile_skills if len(str(s)) > 2][:12]
-        title_hits = sum(1 for t in set(qbits + skill_bits) if t in title_l)
+        title_hits = 0
+        for t in title_needles:
+            if t in title_l:
+                title_hits += 1
         if title_hits and not is_synth:
-            ensemble = min(1.0, ensemble + 0.04 * min(title_hits, 4))
+            ensemble = min(1.0, ensemble + 0.05 * min(title_hits, 4))
         elif title_hits and is_synth:
             ensemble = min(1.0, ensemble + 0.005 * min(title_hits, 2))
-        # Penalize weak title overlap even if body matched (defense in depth)
         if title_hits == 0 and not is_synth:
-            ensemble = ensemble * 0.35
+            ensemble = ensemble * 0.25
+
         job["is_synthetic"] = is_synth
         job["product_label"] = "practice" if is_synth else "live"
         job["title_hits"] = title_hits
-        job["scores"] = {
-            "ensemble": round(100 * ensemble, 1),
-            "bm25": round(100 * r["bm25"], 1),
-            "cosine": round(100 * r["cosine"], 1),
-            "jaccard": round(100 * r["jaccard"], 1),
-            "bayesian_fit": round(100 * r["bayes"], 1),
-            "skill_centrality": round(100 * r["centrality"], 1),
-            "spectral_path": round(100 * r["spectral"], 1),
-            "elo": round(100 * elo[i], 1),
-            "diversity": round(100 * diversity[i], 1),
-        }
+        # Fast path: omit zero-weight fields to cut payload + allocs (~30% scores dict)
+        if fast:
+            job["scores"] = {
+                "ensemble": round(100 * ensemble, 1),
+                "bm25": round(100 * r["bm25"], 1),
+                "cosine": round(100 * r["cosine"], 1),
+                "jaccard": round(100 * r["jaccard"], 1),
+                "bayesian_fit": round(100 * r["bayes"], 1),
+                "mode": "fast",
+            }
+        else:
+            job["scores"] = {
+                "ensemble": round(100 * ensemble, 1),
+                "bm25": round(100 * r["bm25"], 1),
+                "cosine": round(100 * r["cosine"], 1),
+                "jaccard": round(100 * r["jaccard"], 1),
+                "bayesian_fit": round(100 * r["bayes"], 1),
+                "skill_centrality": round(100 * r["centrality"], 1),
+                "spectral_path": round(100 * r["spectral"], 1),
+                "elo": round(100 * elo[i], 1),
+                "diversity": round(100 * diversity[i], 1),
+                "mode": "full",
+            }
         job["skill_hits"] = r["hits"]
         job["skill_required"] = r["required"]
         job["gap_skills"] = r["gap_skills"]
-        # Absolute IR bands — UI should treat as relative ranking aid only
         job["verdict"] = (
             "strong"
             if ensemble >= 0.72 and not is_synth

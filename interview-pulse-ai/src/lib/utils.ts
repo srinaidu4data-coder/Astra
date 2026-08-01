@@ -28,3 +28,9 @@ export function highlightMetrics(text: string): string[] {
   )
   return matches ?? []
 }
+
+/** Avatar / chip initials from a company or person name. */
+export function companyInitials(company: string, fallback = 'J'): string {
+  const parts = (company || fallback).trim().split(/\s+/).slice(0, 2)
+  return parts.map((p) => p[0]?.toUpperCase() || '').join('') || fallback
+}

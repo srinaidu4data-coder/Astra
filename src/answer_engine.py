@@ -39,7 +39,8 @@ def _default_chat_models() -> tuple[str, str, str]:
             "llama-3.1-8b-instant",
             "llama-3.3-70b-versatile",
         )
-    return ("gpt-4.1-mini", "gpt-4.1-nano", "gpt-4.1-mini")
+    # OpenAI: gpt-4o-mini is universally available; 4.1-* may 404 on some keys
+    return ("gpt-4o-mini", "gpt-4o-mini", "gpt-4o")
 
 
 _DEF_PRIMARY, _DEF_FAST, _DEF_FALLBACK = _default_chat_models()
@@ -820,17 +821,43 @@ def _system_for_mode(mode: str) -> str:
     return RICH_STAR_SYSTEM
 
 
+def _answer_depth() -> str:
+    """fast | balanced | deep — from session pack or env."""
+    try:
+        from session_context import get_depth
+
+        d = get_depth()
+        if d in ("fast", "balanced", "deep"):
+            return d
+    except Exception:
+        pass
+    raw = os.environ.get("ASTRA_ANSWER_DEPTH", "").strip().lower()
+    if raw in ("fast", "balanced", "deep", "quality"):
+        return "deep" if raw == "quality" else raw
+    return "balanced"
+
+
 def _max_tokens_for_mode(mode: str, *, question: str = "") -> int:
     # Enough room to finish technical + multi-part answers
     long_q = _is_long_or_multipart_question(question)
-    if ANSWER_PROFILE in ("ultra", "fast"):
+    depth = _answer_depth()
+    # Depth overrides shrink/expand token budget (fast first paint vs deep quality)
+    if depth == "fast" or ANSWER_PROFILE in ("ultra", "fast"):
         base = {
-            "shorter": 100,
-            "technical": 280,
-            "code": 240,
-            "star": 220,
-        }.get(mode, 220)
-        return base + (120 if long_q else 0)
+            "shorter": 90,
+            "technical": 240,
+            "code": 220,
+            "star": 200,
+        }.get(mode, 200)
+        return base + (100 if long_q else 0)
+    if depth == "deep":
+        base = {
+            "shorter": 360,
+            "technical": 1000,
+            "code": 1000,
+            "star": 1100,
+        }.get(mode, 1000)
+        return base + (200 if long_q else 0)
     if ANSWER_PROFILE == "live":
         base = {
             "shorter": 160,
@@ -880,13 +907,25 @@ def _build_user_prompt(
         pit_s = "; ".join(str(p) for p in pitfalls[:4] if p)
         domain = strategy.get("accuracy_domain") or "general"
         long_q = _is_long_or_multipart_question(q)
+        depth = _answer_depth()
+        # Prefer pre-session pack role over bare job string
+        try:
+            from session_context import effective_job_context, format_for_prompt
+
+            job = effective_job_context(job) or job
+            pre = format_for_prompt(1200)
+        except Exception:
+            pre = ""
         # Keep full multi-part questions — truncating to 500 chars caused wrong answers
         q_budget = 1800 if long_q else 900
         parts = [
             f"Role: {job[:160]}",
             f"Q: {q[:q_budget]}",
             f"Domain: {domain}",
+            f"Depth: {depth}",
         ]
+        if pre:
+            parts.append(pre)
         if tag_s:
             parts.append(f"Topics: {tag_s}")
         if jar_s:
@@ -900,6 +939,20 @@ def _build_user_prompt(
                 "LONG/MULTI-PART QUESTION: Answer every clause in order "
                 "(design, constraints, controls, metrics, failure modes, etc.). "
                 "Do not stop after only the first sub-question. 220-360 words."
+            )
+        # Outline-first streaming: lead with Hook + structure so first tokens are usable
+        parts.append(
+            "STREAM ORDER: Start immediately with Hook: then labeled sections "
+            "(Situation/Task/Action/Result or Approach/Mechanism/Tradeoff). "
+            "First 2–3 lines must be speakable structure; then fill depth. "
+            "Never invent resume facts — only use PRE-SESSION CONTEXT when provided."
+        )
+        if depth == "fast":
+            parts.append("FAST MODE: 90–140 words. Tight bullets. One metric max.")
+        elif depth == "deep":
+            parts.append(
+                "DEEP MODE: 220–360 words. Mechanisms, failure modes, validation. "
+                "At least 2 quantitative signals if defensible from context."
             )
         parts.append(
             "Accuracy rules: state correct definitions/mechanisms for this domain; "
@@ -1359,7 +1412,30 @@ def iter_answer_tokens(
         )
 
     client = _get_openai_client()
-    models_try = [primary, fallback, SCRIPT_MODEL, FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL]
+    try:
+        from config import get_llm_provider, remap_model_for_provider
+
+        provider = get_llm_provider()
+        def _ok_model(m: str | None) -> str | None:
+            if not m:
+                return None
+            m2 = remap_model_for_provider(m) or m
+            low = m2.lower()
+            if provider == "openai" and any(
+                x in low for x in ("llama", "mixtral", "gemma", "gpt-oss")
+            ):
+                return "gpt-4o-mini"
+            return m2
+    except Exception:
+        provider = "openai"
+        def _ok_model(m: str | None) -> str | None:
+            return m
+
+    models_try = []
+    for m in [primary, fallback, SCRIPT_MODEL, FAST_ANSWER_MODEL, FAST_FALLBACK_MODEL, "gpt-4o-mini", "gpt-4o"]:
+        mm = _ok_model(m)
+        if mm and mm not in models_try:
+            models_try.append(mm)
     stream = None
     last_err: Exception | None = None
     messages = [
@@ -1538,6 +1614,7 @@ def warm_llm_connection() -> None:
     on Q1 vs ~300ms steady-state for every later question in the same session).
     Best-effort only — never raises, never blocks the caller for long.
     """
+    t0 = time.perf_counter()
     try:
         from config import remap_model_for_provider
 
@@ -1550,6 +1627,12 @@ def warm_llm_connection() -> None:
             temperature=0,
             timeout=6.0,
         )
+        try:
+            from latency_metrics import get_registry
+
+            get_registry().mark_warm((time.perf_counter() - t0) * 1000)
+        except Exception:
+            pass
     except Exception:
         pass
 

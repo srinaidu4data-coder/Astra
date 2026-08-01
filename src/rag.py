@@ -92,13 +92,20 @@ def _get_openai_client() -> OpenAI:
         with _openai_lock:
             if _openai_client is None or _openai_client_key != cache_key:
                 # Low retries + tight timeout: fail fast, cascade to template
+                # Clear empty OPENAI_BASE_URL so the SDK does not build a broken URL
+                for _env_name in ("OPENAI_BASE_URL", "GROQ_BASE_URL"):
+                    _v = os.environ.get(_env_name)
+                    if _v is not None and not str(_v).strip():
+                        os.environ.pop(_env_name, None)
                 kwargs = {
                     "api_key": api_key,
-                    "timeout": float(os.environ.get("OPENAI_TIMEOUT", "12") or "12"),
-                    "max_retries": 0,
+                    "timeout": float(os.environ.get("OPENAI_TIMEOUT", "45") or "45"),
+                    "max_retries": 1,
                 }
-                if base_url:
-                    kwargs["base_url"] = base_url
+                if base_url and str(base_url).strip().lower().startswith(
+                    ("http://", "https://")
+                ):
+                    kwargs["base_url"] = str(base_url).strip().rstrip("/")
                 _openai_client = OpenAI(**kwargs)
                 _openai_client_key = cache_key
             return _openai_client

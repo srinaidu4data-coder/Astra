@@ -37,10 +37,64 @@ def test_us_filter_drops_non_us():
             "remote": False,
             "work_mode": "onsite",
         },
+        {
+            "title": "SAP FI/CO Consultant (m/w/d)",
+            "company": "DE Co",
+            "location": "Remote job",
+            "countries": [],
+            "text": "",
+            "source": "freehire",
+            "remote": True,
+            "work_mode": "remote",
+        },
+        {
+            "title": "SAP FI/CO Consultant – Remote Only LATAM",
+            "company": "Lat",
+            "location": "United States",
+            "countries": ["us"],
+            "text": "",
+            "source": "freehire",
+            "remote": True,
+            "work_mode": "remote",
+        },
+        {
+            "title": "SAP FICO",
+            "company": "X",
+            "location": "Remote job",
+            "countries": [],
+            "text": "",
+            "source": "freehire",
+            "remote": True,
+            "work_mode": "remote",
+        },
+        {
+            # freehire often lies with countries=['us'] on non-US remote
+            "title": "Консультант SAP FICO",
+            "company": "Top Selection",
+            "location": "Remote",
+            "countries": ["us"],
+            "text": "",
+            "source": "freehire",
+            "remote": True,
+            "work_mode": "remote",
+        },
+        {
+            "title": "SAP FICO Consultant",
+            "company": "Y",
+            "location": "Remote - United States",
+            "countries": ["us"],
+            "text": "",
+            "source": "freehire",
+            "remote": True,
+            "work_mode": "remote",
+        },
     ]
     out = apply_filters(jobs, location="us")
-    assert len(out) == 1
-    assert "Fort Lee" in out[0]["location"]
+    locs = [j["location"] for j in out]
+    assert any("Fort Lee" in x for x in locs)
+    assert any("United States" in x for x in locs)
+    assert not any("Консультант" in (j.get("title") or "") for j in out)
+    assert not any(x.strip().lower() in ("remote", "remote job") for x in locs)
 
 
 def test_product_default_no_seed():

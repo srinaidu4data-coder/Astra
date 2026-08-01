@@ -1,3 +1,4 @@
+import { ApiStatusBadge } from '@/components/ApiStatusBadge'
 import { DesktopOption } from '@/components/DesktopOption'
 import { Button } from '@/components/ui/button'
 import { formatMs } from '@/lib/utils'
@@ -19,7 +20,9 @@ export function TopBar() {
     analytics: 'Analytics',
     settings: 'Settings',
     admin: 'Admin · models',
-    jobsearch: 'Job Search',
+    jobsearch: 'Jobs',
+    autoapply: 'Jobs',
+    nightscout: 'Jobs',
   }
 
   const hasDesktop = typeof window !== 'undefined' && !!window.interviewPulse
@@ -75,6 +78,9 @@ export function TopBar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 md:gap-3">
+        {/* Always-visible backend online/offline */}
+        <ApiStatusBadge variant="compact" />
+
         {metrics && (
           <div className="glass-soft hidden items-center gap-4 rounded-full px-4 py-2 text-[12px] text-white/45 md:flex">
             <span>STT {formatMs(metrics.sttMs)}</span>

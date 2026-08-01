@@ -266,6 +266,81 @@ def template_answer(question: str, *, job_context: str = "", mode: str = "star")
     return _template_star(pid, role, q_short)
 
 
+def outline_skeleton(
+    question: str, *, job_context: str = "", mode: str = "star"
+) -> str:
+    """
+    Honest outline-first paint (no invented metrics or fake stories).
+
+    Market pattern (Final Round et al.): surface structure you can speak from
+    before the full LLM body arrives. Placeholders only — never claim numbers.
+    """
+    role = _job_bit(job_context)
+    pid, conf = classify_pattern(question)
+    q_short = re.sub(r"\s+", " ", (question or "").strip())[:120]
+    mode = (mode or "star").strip().lower()
+
+    hooks = {
+        "behavioral": f"I'll answer this with a concrete ownership story as a {role}.",
+        "conflict": f"I'll frame this as a metric-aligned disagreement, not an ego fight.",
+        "failure": f"I'll own the failure, the RCA, and the permanent control.",
+        "leadership": f"I'll show how I set frame, unblock, and measure progress.",
+        "system_design": f"I'll start from SLOs and failure modes, then the design.",
+        "performance": f"I'll optimize from measurement on the hot path.",
+        "debug": f"I'll walk a hypothesis tree with evidence at each layer.",
+        "coding": f"I'll clarify I/O and complexity, then the simplest correct structure.",
+        "tradeoff": f"I'll score options on latency, correctness, cost, and operability.",
+        "domain_sap": f"I'll ground this in determination, postings, and controls.",
+        "ml": f"I'll cover data, eval, serving, and train/serve skew.",
+        "backend": f"I'll cover contracts, idempotency, and backpressure.",
+        "explain": f"Mechanism first, then tradeoffs, then how I'd validate.",
+        "self": f"I'll map a real strength to the work of a {role}.",
+        "why_us": f"I'll connect their problems to work I've already done.",
+        "general": f"Clear frame → mechanism → metric I can defend.",
+    }
+    hook = hooks.get(pid, hooks["general"])
+
+    if mode == "shorter":
+        return (
+            f"Outline ({pid}):\n"
+            f"1) Hook: {hook}\n"
+            f"2) Mechanism — the one lever that mattered\n"
+            f"3) Tradeoff — what you gave up\n"
+            f"4) Proof — a number or outcome you can defend\n"
+            f"(Filling full answer… · Q: {q_short})"
+        )
+    if mode == "code":
+        return (
+            f"Outline (coding):\n"
+            f"• Clarify I/O + constraints\n"
+            f"• Approach + complexity target\n"
+            f"• Core structure / edge cases\n"
+            f"• Tests + residual risks\n"
+            f"(Generating detail… · Q: {q_short})"
+        )
+    if mode == "technical":
+        return (
+            f"Outline (technical · {pid}):\n"
+            f"Hook: {hook}\n"
+            f"• Definition / mechanism\n"
+            f"• When it works / fails\n"
+            f"• Tradeoff vs alternatives\n"
+            f"• How I'd validate in production\n"
+            f"(Generating detail… · conf={conf:.2f})"
+        )
+    # STAR scaffold — placeholders only (no fake % / fake companies)
+    return (
+        f"Outline (STAR · {pid}):\n"
+        f"Hook: {hook}\n"
+        f"• Situation — your context + constraint for this Q\n"
+        f"• Task — what success meant (SLO / outcome)\n"
+        f"• Action — 2–3 concrete mechanisms you owned\n"
+        f"• Result — a metric or outcome you can defend (no invention)\n"
+        f"• Close — invite follow-up on the hardest part\n"
+        f"(Streaming full answer… · Q: {q_short})"
+    )
+
+
 def _template_star(pid: str, role: str, q: str) -> str:
     bank = {
         "behavioral": (
@@ -511,69 +586,120 @@ def iter_cascade_answer(
 ) -> Generator[tuple[str, dict[str, Any]], None, None]:
     """
     Yields (text_so_far, meta) where meta includes:
-      source, first_paint_ms, streaming, final
+      source, first_paint_ms, streaming, final, cache_ms, outline_ms, stages
 
-    Cascade order (anytime):
-      1) exact/approx cache → full answer immediately
-      2) template draft → immediate paint
-      3) optional LLM stream upgrade (replaces draft when better/longer)
+    Cascade order (anytime / market pattern):
+      1) exact cache → full answer immediately (sub-ms)
+      2) outline skeleton → honest structure paint (no fake metrics)
+      3) optional legacy template paint (ASTRA_TEMPLATE_PAINT=1 only)
+      4) LLM stream upgrade (replaces outline when substance arrives)
     """
     t0 = time.perf_counter()
     mode = (mode or "star").strip().lower() or "star"
+    stages: dict[str, Any] = {}
 
     # 1) Exact cache only for live streams (approx caused wrong answers in long interviews)
+    t_cache = time.perf_counter()
     cached = cache_lookup(
         question, mode=mode, job_context=job_context, allow_approx=False
     )
+    cache_ms = round((time.perf_counter() - t_cache) * 1000, 2)
+    stages["cache_ms"] = cache_ms
     if cached:
         ans, src = cached
         ms = (time.perf_counter() - t0) * 1000
+        stages["first_token_ms"] = round(ms, 2)
+        stages["full_answer_ms"] = round(ms, 2)
         yield ans, {
             "source": src,
             "first_paint_ms": round(ms, 2),
             "streaming": False,
             "final": True,
             "from_cache": True,
+            "cache_ms": cache_ms,
+            "outline_ms": None,
+            "stages": stages,
         }
         return
 
-    # 2) Do NOT paint fake STAR templates as real answers.
-    # Live UI already shows answer_pending ("Writing…"). Emitting invented metrics
-    # ("30–40% better…") was the main "wrong answers" complaint.
-    # Templates only as last-resort offline fallback when LLM fails entirely.
+    # 2) Outline-first honest skeleton (default ON) — market pattern for TTFT
     draft = ""
     first_paint_ms = 0.0
+    outline_ms: Optional[float] = None
+    outline_used = False
+    use_outline = os.environ.get("ASTRA_OUTLINE_FIRST", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+    try:
+        from session_context import outline_first_enabled
+
+        use_outline = use_outline and outline_first_enabled()
+    except Exception:
+        pass
+
+    if use_outline:
+        t_out = time.perf_counter()
+        draft = outline_skeleton(question, job_context=job_context, mode=mode)
+        outline_ms = round((time.perf_counter() - t_out) * 1000, 2)
+        first_paint_ms = (time.perf_counter() - t0) * 1000
+        stages["outline_ms"] = outline_ms
+        stages["first_token_ms"] = round(first_paint_ms, 2)
+        outline_used = True
+        yield draft, {
+            "source": "outline",
+            "first_paint_ms": round(first_paint_ms, 2),
+            "streaming": True,
+            "final": False,
+            "from_cache": False,
+            "cache_ms": cache_ms,
+            "outline_ms": outline_ms,
+            "outline_first": True,
+            "stages": dict(stages),
+        }
+
+    # 3) Optional full template paint (off by default — invented metrics risk)
     use_template_paint = ENABLE_TEMPLATE_FIRST and os.environ.get(
         "ASTRA_TEMPLATE_PAINT", "0"
     ).strip().lower() in ("1", "true", "yes", "on")
-    if use_template_paint:
+    if use_template_paint and not outline_used:
         draft = template_answer(question, job_context=job_context, mode=mode)
         first_paint_ms = (time.perf_counter() - t0) * 1000
+        stages["first_token_ms"] = round(first_paint_ms, 2)
         yield draft, {
             "source": "template",
             "first_paint_ms": round(first_paint_ms, 2),
             "streaming": True,
             "final": False,
             "from_cache": False,
+            "cache_ms": cache_ms,
+            "outline_ms": outline_ms,
+            "stages": dict(stages),
         }
 
-    # 3) LLM stream (primary product path)
+    # 4) LLM stream (primary product path)
     if not ENABLE_LLM_REFINE or llm_streamer is None:
         if not draft and ENABLE_TEMPLATE_FIRST:
             draft = template_answer(question, job_context=job_context, mode=mode)
             first_paint_ms = (time.perf_counter() - t0) * 1000
         if draft:
-            # Never cache templates as if they were model answers
+            stages["full_answer_ms"] = round((time.perf_counter() - t0) * 1000, 2)
             yield draft, {
-                "source": "template",
+                "source": "outline" if outline_used else "template",
                 "first_paint_ms": round(first_paint_ms, 2),
                 "streaming": False,
                 "final": True,
                 "from_cache": False,
+                "cache_ms": cache_ms,
+                "outline_ms": outline_ms,
+                "stages": stages,
             }
         return
 
     acc = ""
+    llm_first_ms: Optional[float] = None
     try:
         for tok in llm_streamer(
             question,
@@ -588,20 +714,38 @@ def iter_cascade_answer(
             acc += tok
             # Prefer LLM text once it has enough substance
             if len(acc.strip()) >= 24:
+                if llm_first_ms is None:
+                    llm_first_ms = (time.perf_counter() - t0) * 1000
+                    # Keep outline first_paint; also expose llm_first_token_ms
+                    stages["llm_first_token_ms"] = round(llm_first_ms, 2)
+                    if not first_paint_ms:
+                        first_paint_ms = llm_first_ms
+                        stages["first_token_ms"] = round(first_paint_ms, 2)
                 yield acc, {
                     "source": "llm_stream",
                     "first_paint_ms": round(
                         first_paint_ms or (time.perf_counter() - t0) * 1000, 2
                     ),
+                    "llm_first_token_ms": round(llm_first_ms, 2) if llm_first_ms else None,
                     "streaming": True,
                     "final": False,
                     "from_cache": False,
+                    "cache_ms": cache_ms,
+                    "outline_ms": outline_ms,
+                    "outline_first": outline_used,
+                    "stages": dict(stages),
                 }
     except Exception as e:
         # Root cause of a template_fallback answer must be visible somewhere —
         # this was silently swallowed before, leaving no trace of why a real
         # question got a generic canned answer mid-interview.
         print(f"[fast_answer] llm_streamer failed, falling back to template: {type(e).__name__}: {e}")
+        try:
+            from latency_metrics import get_registry
+
+            get_registry().incr("provider_failovers")
+        except Exception:
+            pass
         acc = ""
 
     final = (acc or "").strip()
@@ -614,15 +758,26 @@ def iter_cascade_answer(
 
     if final and src == "llm":
         cache_store(question, final, mode=mode, job_context=job_context)
+    full_ms = round((time.perf_counter() - t0) * 1000, 2)
+    stages["full_answer_ms"] = full_ms
+    if "first_token_ms" not in stages:
+        stages["first_token_ms"] = round(
+            first_paint_ms or full_ms, 2
+        )
     yield final, {
         "source": src,
         "first_paint_ms": round(
             first_paint_ms or (time.perf_counter() - t0) * 1000, 2
         ),
+        "llm_first_token_ms": round(llm_first_ms, 2) if llm_first_ms else None,
         "streaming": False,
         "final": True,
         "from_cache": False,
-        "full_ms": round((time.perf_counter() - t0) * 1000, 2),
+        "cache_ms": cache_ms,
+        "outline_ms": outline_ms,
+        "outline_first": outline_used,
+        "full_ms": full_ms,
+        "stages": stages,
     }
 
 

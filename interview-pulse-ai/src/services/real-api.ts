@@ -16,32 +16,73 @@ export interface RealPipelineCallbacks {
   onComplete?: (summary: { answered: number; segments: number }) => void
 }
 
-export async function checkCopilotHealth(): Promise<{
+export type CopilotHealth = {
   ok: boolean
   openai_key?: boolean
+  openai_ready?: boolean
+  openai_key_configured?: boolean
+  llm_provider?: string
+  llm_base_url?: string | null
+  answer_profile?: string
+  fast_model?: string
   default_audio_wav?: string | null
   whisper_model_ready?: boolean
-}> {
+  stt_provider?: string
+  stt_deepgram_ready?: boolean
+  stt_hint?: string | null
+  /** Milliseconds of last successful health poll (client clock) */
+  polledAt?: number
+  error?: string
+}
+
+export async function checkCopilotHealth(): Promise<CopilotHealth> {
   try {
     const res = await fetch(`${API_BASE}/api/health`, {
       signal: AbortSignal.timeout(8000),
       mode: 'cors',
     })
-    if (!res.ok) return { ok: false }
+    if (!res.ok) {
+      return { ok: false, error: `HTTP ${res.status}`, polledAt: Date.now() }
+    }
     const data = (await res.json()) as {
       ok?: boolean
       openai_key?: boolean
+      openai_ready?: boolean
+      openai_key_configured?: boolean
+      llm_provider?: string
+      llm_base_url?: string | null
+      answer_profile?: string
+      fast_model?: string
       default_audio_wav?: string | null
       whisper_model_ready?: boolean
+      stt?: {
+        provider?: string
+        deepgram_ready?: boolean
+        hint?: string | null
+      }
     }
     return {
       ok: Boolean(data.ok),
-      openai_key: data.openai_key,
+      openai_key: data.openai_key ?? data.openai_ready,
+      openai_ready: data.openai_ready ?? data.openai_key,
+      openai_key_configured: data.openai_key_configured ?? data.openai_key,
+      llm_provider: data.llm_provider,
+      llm_base_url: data.llm_base_url,
+      answer_profile: data.answer_profile,
+      fast_model: data.fast_model,
       default_audio_wav: data.default_audio_wav,
       whisper_model_ready: data.whisper_model_ready,
+      stt_provider: data.stt?.provider,
+      stt_deepgram_ready: data.stt?.deepgram_ready,
+      stt_hint: data.stt?.hint,
+      polledAt: Date.now(),
     }
-  } catch {
-    return { ok: false }
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : 'offline',
+      polledAt: Date.now(),
+    }
   }
 }
 
@@ -69,6 +110,7 @@ export async function fetchAnswer(
     jobContext?: string
     tone?: string
     mode?: AnswerMode
+    depth?: string
     /** Explicit override; otherwise server uses JWT user assignment */
     answerModel?: string | null
     fallbackModel?: string | null
@@ -87,6 +129,7 @@ export async function fetchAnswer(
       job_context: opts.jobContext ?? 'AI/ML Engineer',
       tone: opts.tone ?? 'confident',
       mode,
+      ...(opts.depth ? { depth: opts.depth } : {}),
       ...(opts.answerModel ? { answer_model: opts.answerModel } : {}),
       ...(opts.fallbackModel ? { fallback_model: opts.fallbackModel } : {}),
     }),
@@ -101,24 +144,134 @@ export async function fetchAnswer(
     bullets?: string[]
     latency_ms?: number
     first_paint_ms?: number
+    first_token_ms?: number
     full_ms?: number
+    full_answer_ms?: number
+    outline_ms?: number
+    cache_ms?: number
+    classify_ms?: number
+    stages?: Record<string, number | null | undefined>
     question?: string
     source?: string
+    depth?: string
   }
-  // Prefer full_ms (true wait for answer). latency_ms was first_paint (~1ms)
-  // which made the UI lie about speed while the user still waited for the body.
-  const waitMs =
+  // Prefer first_token for latency tile; keep full_ms on the answer for honesty
+  const firstMs =
+    typeof data.first_token_ms === 'number'
+      ? data.first_token_ms
+      : typeof data.first_paint_ms === 'number'
+        ? data.first_paint_ms
+        : typeof data.latency_ms === 'number'
+          ? data.latency_ms
+          : undefined
+  const fullMs =
     typeof data.full_ms === 'number'
       ? data.full_ms
-      : typeof data.latency_ms === 'number'
-        ? data.latency_ms
-        : undefined
+      : typeof data.full_answer_ms === 'number'
+        ? data.full_answer_ms
+        : firstMs
+  const ans = normalizeAnswer({
+    id: uid('ans'),
+    mode,
+    text: data.answer ?? '',
+    bullets: data.bullets,
+    latencyMs: firstMs ?? fullMs,
+    question: data.question || question,
+  })
+  // Attach stage metrics for UI (non-breaking extra fields via cast)
+  ;(ans as SuggestedAnswer & { stages?: typeof data.stages; fullMs?: number }).stages =
+    data.stages
+  ;(ans as SuggestedAnswer & { fullMs?: number }).fullMs = fullMs
+  ;(ans as SuggestedAnswer & { source?: string }).source = data.source
+  return ans
+}
+
+export async function fetchLatencyMetrics(): Promise<
+  import('@/types').LatencySnapshot | null
+> {
+  try {
+    const res = await fetch(`${API_BASE}/api/latency/metrics`, {
+      signal: AbortSignal.timeout(8000),
+      mode: 'cors',
+    })
+    if (!res.ok) return null
+    return (await res.json()) as import('@/types').LatencySnapshot
+  } catch {
+    return null
+  }
+}
+
+export async function setSessionContext(pack: {
+  role?: string
+  company?: string
+  seniority?: string
+  interview_type?: string
+  job_description?: string
+  resume_text?: string
+  stories?: string[]
+  keywords?: string[]
+  depth?: string
+  outline_first?: boolean
+  clear?: boolean
+}): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/session/context`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(pack),
+      signal: AbortSignal.timeout(8000),
+      mode: 'cors',
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+export async function injectAnswer(
+  question: string,
+  opts: {
+    jobContext?: string
+    tone?: string
+    mode?: AnswerMode
+    depth?: string
+  } = {},
+  signal?: AbortSignal,
+): Promise<SuggestedAnswer> {
+  const mode = opts.mode ?? 'star'
+  const res = await fetch(`${API_BASE}/api/answer/inject`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(),
+    },
+    body: JSON.stringify({
+      question,
+      job_context: opts.jobContext ?? 'AI/ML Engineer',
+      tone: opts.tone ?? 'confident',
+      mode,
+      ...(opts.depth ? { depth: opts.depth } : {}),
+    }),
+    signal,
+  })
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`Inject failed (${res.status}): ${errText || res.statusText}`)
+  }
+  const data = (await res.json()) as {
+    answer?: string
+    bullets?: string[]
+    first_token_ms?: number
+    full_ms?: number
+    question?: string
+    stages?: Record<string, number | null | undefined>
+  }
   return normalizeAnswer({
     id: uid('ans'),
     mode,
     text: data.answer ?? '',
     bullets: data.bullets,
-    latencyMs: waitMs,
+    latencyMs: data.first_token_ms ?? data.full_ms,
     question: data.question || question,
   })
 }

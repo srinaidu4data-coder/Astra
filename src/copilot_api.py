@@ -18,6 +18,7 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 import traceback
 from pathlib import Path
@@ -44,7 +45,7 @@ from rag import (  # noqa: E402
     classify_utterance,
     search_context,
 )
-from transcriber import get_whisper_model, transcribe_audio  # noqa: E402
+from transcriber import get_whisper_model, transcribe_audio, transcribe_best  # noqa: E402
 
 app = FastAPI(title="InterviewPulse Copilot API", version="1.0.0")
 
@@ -75,8 +76,16 @@ except Exception as _auth_import_err:  # pragma: no cover - optional until deps 
 # Job Search AI lab (localhost-gated) — does not touch interview/answer path
 try:
     from jobsearch.api import router as jobsearch_router  # noqa: E402
+    from jobsearch.apply_api import router as jobsearch_apply_router  # noqa: E402
+    from jobsearch.marvel_api import router as jobsearch_marvel_router  # noqa: E402
+    from jobsearch.night_api import router as jobsearch_night_router  # noqa: E402
+    from jobsearch.nexus_api import router as jobsearch_nexus_router  # noqa: E402
 
     app.include_router(jobsearch_router)
+    app.include_router(jobsearch_apply_router)
+    app.include_router(jobsearch_marvel_router)
+    app.include_router(jobsearch_night_router)
+    app.include_router(jobsearch_nexus_router)
 except Exception as _js_err:  # pragma: no cover
     print(f"[jobsearch] lab router not loaded: {_js_err}")
 
@@ -101,6 +110,31 @@ class AnswerRequest(BaseModel):
     # Optional overrides (validated against ALLOWED_MODELS); else per-user / global defaults
     answer_model: Optional[str] = None
     fallback_model: Optional[str] = None
+    depth: Optional[str] = Field(
+        default=None, description="fast | balanced | deep — latency vs quality"
+    )
+
+
+class SessionContextRequest(BaseModel):
+    role: Optional[str] = None
+    company: Optional[str] = None
+    seniority: Optional[str] = None
+    interview_type: Optional[str] = None
+    job_description: Optional[str] = None
+    resume_text: Optional[str] = None
+    stories: Optional[list[str]] = None
+    keywords: Optional[list[str]] = None
+    depth: Optional[str] = None
+    outline_first: Optional[bool] = None
+    clear: bool = False
+
+
+class InjectQuestionRequest(BaseModel):
+    question: str
+    job_context: str = "AI/ML Engineer"
+    tone: str = "confident"
+    mode: str = "star"
+    depth: Optional[str] = None
 
 
 class FileRunRequest(BaseModel):
@@ -290,6 +324,20 @@ def health():
     audio_wav = DEFAULT_AUDIO.exists()
     audio_mp3 = DEFAULT_AUDIO_MP3.exists()
     provider = get_llm_provider()
+    latency_brief = None
+    try:
+        from latency_metrics import snapshot
+
+        snap = snapshot()
+        latency_brief = {
+            "sample_count": snap.get("sample_count"),
+            "first_token_p50": (snap.get("stages") or {}).get("first_token_ms", {}).get("p50"),
+            "full_answer_p50": (snap.get("stages") or {}).get("full_answer_ms", {}).get("p50"),
+            "stt_p50": (snap.get("stages") or {}).get("stt_ms", {}).get("p50"),
+            "verdict": (snap.get("verdict") or {}).get("rank_vs_market"),
+        }
+    except Exception:
+        pass
     return {
         "ok": True,
         "openai_key": key_ok,
@@ -303,11 +351,193 @@ def health():
         "fast_fallback": FAST_FALLBACK_MODEL,
         "default_audio_wav": str(DEFAULT_AUDIO) if audio_wav else None,
         "default_audio_mp3": str(DEFAULT_AUDIO_MP3) if audio_mp3 else None,
+        "latency": latency_brief,
+        "stt": _stt_health(),
         "hint": (
             None
             if key_ok
             else "Set GROQ_API_KEY or OPENAI_API_KEY in the process environment."
         ),
+    }
+
+
+def _stt_health() -> dict:
+    try:
+        from config import DEEPGRAM_MODEL, get_deepgram_api_key, get_stt_provider
+        from deepgram_stt import deepgram_status
+
+        provider = get_stt_provider()
+        dg = deepgram_status()
+        return {
+            "provider": provider,
+            "deepgram": dg,
+            "deepgram_model": DEEPGRAM_MODEL,
+            "deepgram_ready": bool(dg.get("ready")),
+            "whisper_model": True,
+            "active": provider,
+            "hint": (
+                None
+                if provider == "deepgram"
+                else (
+                    "Set DEEPGRAM_API_KEY for Nova-3 streaming STT "
+                    "(much lower latency than local Whisper)."
+                    if not get_deepgram_api_key()
+                    else "Install websocket-client for Deepgram streaming."
+                )
+            ),
+        }
+    except Exception as e:
+        return {"provider": "whisper", "error": str(e)}
+
+
+@app.get("/api/latency/metrics")
+def latency_metrics():
+    """Stage-by-stage histograms + competitor comparison (live process samples)."""
+    from latency_metrics import snapshot
+
+    return snapshot()
+
+
+@app.get("/api/latency/benchmark")
+def latency_benchmark():
+    """Static competitor bars + live comparison if samples exist."""
+    from latency_metrics import competitor_table
+
+    return competitor_table()
+
+
+@app.post("/api/latency/reset")
+def latency_reset():
+    from latency_metrics import get_registry
+
+    get_registry().reset()
+    return {"ok": True, "message": "Latency samples cleared"}
+
+
+@app.get("/api/session/context")
+def get_session_context():
+    from session_context import get_pack
+
+    return {"ok": True, "pack": get_pack().to_dict()}
+
+
+@app.post("/api/session/context")
+def set_session_context(req: SessionContextRequest):
+    """
+    Pre-session context pack (resume, JD, stories, depth).
+    Market pattern: amortize latency by loading context before the call.
+    """
+    from session_context import get_pack, update_pack
+
+    kwargs = req.model_dump(exclude_none=True)
+    pack = update_pack(**kwargs)
+    return {"ok": True, "pack": pack.to_dict(), "empty": pack.is_empty()}
+
+
+@app.post("/api/answer/inject")
+def answer_inject(req: InjectQuestionRequest, request: Request):
+    """
+    Manual question path when STT lags (same cascade as live, no audio).
+    Returns full stage latency for competitor benchmarking.
+    """
+    if not req.question.strip():
+        raise HTTPException(400, "question required")
+    if not get_openai_api_key():
+        raise HTTPException(500, "OPENAI_API_KEY missing or placeholder")
+
+    from answer_engine import ANSWER_PROFILE, looks_like_question
+    from fast_answer import iter_cascade_answer
+    from latency_metrics import get_registry, record_trace
+    from session_context import effective_job_context, get_depth, update_pack
+
+    if req.depth:
+        update_pack(depth=req.depth)
+    get_registry().incr("manual_injects")
+
+    t0 = time.perf_counter()
+    q = req.question.strip()
+    job = effective_job_context(req.job_context) or req.job_context
+    depth = get_depth()
+    u_primary, u_fallback = _user_model_prefs(request)
+
+    first_paint_ms = None
+    outline_ms = None
+    cache_ms = None
+    llm_first_ms = None
+    source = "llm"
+    acc = ""
+    stages: dict[str, Any] = {}
+
+    def streamer(**kwargs):
+        return iter_answer_tokens(**kwargs)
+
+    for text, meta in iter_cascade_answer(
+        q,
+        job_context=job,
+        tone=req.tone,
+        mode=req.mode or "star",
+        answer_model=None,
+        fallback_model=None,
+        user_answer_model=u_primary,
+        user_fallback_model=u_fallback,
+        llm_streamer=streamer,
+    ):
+        acc = text or acc
+        source = str(meta.get("source") or source)
+        if meta.get("cache_ms") is not None:
+            cache_ms = meta["cache_ms"]
+        if meta.get("outline_ms") is not None:
+            outline_ms = meta["outline_ms"]
+        if meta.get("llm_first_token_ms") is not None:
+            llm_first_ms = meta["llm_first_token_ms"]
+        if first_paint_ms is None and acc:
+            first_paint_ms = meta.get("first_paint_ms")
+        if meta.get("stages"):
+            stages = dict(meta["stages"])
+
+    full_ms = round((time.perf_counter() - t0) * 1000)
+    if first_paint_ms is None:
+        first_paint_ms = full_ms
+    total_ms = full_ms  # inject has no STT
+    try:
+        record_trace(
+            question=q[:200],
+            source=source,
+            depth=depth,
+            stt_ms=0,
+            classify_ms=0,
+            cache_ms=cache_ms,
+            outline_ms=outline_ms,
+            first_token_ms=first_paint_ms,
+            full_answer_ms=full_ms,
+            total_ms=total_ms,
+            from_cache="cache" in source,
+            outline_first=outline_ms is not None,
+            words=len((acc or "").split()),
+            meta={"path": "inject", "llm_first_token_ms": llm_first_ms},
+        )
+    except Exception:
+        pass
+
+    return {
+        "question": q,
+        "answer": acc,
+        "bullets": _to_bullets(acc, req.mode or "star"),
+        "source": source,
+        "depth": depth,
+        "model_profile": ANSWER_PROFILE,
+        "latency_ms": first_paint_ms,
+        "first_paint_ms": first_paint_ms,
+        "first_token_ms": first_paint_ms,
+        "llm_first_token_ms": llm_first_ms,
+        "outline_ms": outline_ms,
+        "cache_ms": cache_ms,
+        "full_ms": full_ms,
+        "full_answer_ms": full_ms,
+        "total_ms": total_ms,
+        "stages": stages,
+        "is_question": looks_like_question(q),
+        "openai_ready": True,
     }
 
 
@@ -397,7 +627,7 @@ async def transcribe_route(
     request: Request,
     file: Optional[UploadFile] = File(None),
 ):
-    """Mic → Whisper. Used by Practice Dictate (reliable path)."""
+    """Mic → Deepgram Nova-3 (if configured) or Whisper. Practice Dictate path."""
     t0 = time.perf_counter()
     if file is not None:
         raw = await file.read()
@@ -417,7 +647,7 @@ async def transcribe_route(
         return {"ok": True, "text": "", "latency_ms": 0, "samples": int(len(audio))}
 
     try:
-        text = transcribe_audio(audio)
+        text, stt_meta = transcribe_best(audio)
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(500, f"transcription failed: {e}") from e
@@ -428,6 +658,9 @@ async def transcribe_route(
         "latency_ms": round((time.perf_counter() - t0) * 1000),
         "samples": int(len(audio)),
         "duration_sec": round(len(audio) / SAMPLE_RATE, 2),
+        "stt_provider": (stt_meta or {}).get("provider"),
+        "stt_model": (stt_meta or {}).get("model"),
+        "stt_mode": (stt_meta or {}).get("mode"),
     }
 
 
@@ -471,9 +704,17 @@ def answer(req: AnswerRequest, request: Request):
     t0 = time.perf_counter()
     # Fast path: skip classify LLM for typed questions (saves 0.5–2s)
     from answer_engine import ANSWER_PROFILE, looks_like_question
-    from fast_answer import cache_lookup, instant_answer
+    from fast_answer import cache_lookup, outline_skeleton
+    from latency_metrics import record_trace
+    from session_context import effective_job_context, get_depth, update_pack
+
+    if req.depth:
+        update_pack(depth=req.depth)
 
     q = req.question.strip()
+    job = effective_job_context(req.job_context) or req.job_context
+    depth = get_depth()
+    t_cls = time.perf_counter()
     if ANSWER_PROFILE in ("quality", "full"):
         cls = classify_utterance(req.question)
         q = cls.get("cleaned_question") or req.question
@@ -484,26 +725,30 @@ def answer(req: AnswerRequest, request: Request):
             "cleaned_question": q,
             "reason": "fast_path_skip_classify",
         }
+    classify_ms = round((time.perf_counter() - t_cls) * 1000, 2)
     u_primary, u_fallback = _user_model_prefs(request)
 
     source = "llm"
     first_paint_ms = None
-    # Instant cache/template for sub-ms paint when profile is ultra/live
+    outline_ms = None
+    cache_ms = None
+    # Instant cache/outline for sub-ms paint when profile is ultra/live
     if ANSWER_PROFILE not in ("quality", "full"):
-        hit = cache_lookup(q, mode=req.mode or "star", job_context=req.job_context)
+        t_c = time.perf_counter()
+        hit = cache_lookup(q, mode=req.mode or "star", job_context=job)
+        cache_ms = round((time.perf_counter() - t_c) * 1000, 2)
         if hit:
             text, source = hit[0], hit[1]
             first_paint_ms = round((time.perf_counter() - t0) * 1000, 2)
         else:
-            # Template immediately available; still try LLM upgrade
-            draft, src, ms = instant_answer(
-                q, job_context=req.job_context, mode=req.mode or "star"
-            )
-            first_paint_ms = round(ms, 2)
+            t_o = time.perf_counter()
+            outline = outline_skeleton(q, job_context=job, mode=req.mode or "star")
+            outline_ms = round((time.perf_counter() - t_o) * 1000, 2)
+            first_paint_ms = round((time.perf_counter() - t0) * 1000, 2)
             try:
                 text = generate_answer(
                     q,
-                    job_context=req.job_context,
+                    job_context=job,
                     tone=req.tone,
                     mode=req.mode,
                     answer_model=req.answer_model,
@@ -513,22 +758,21 @@ def answer(req: AnswerRequest, request: Request):
                 )
                 last_src = getattr(generate_answer, "last_source", None)
                 if not (text or "").strip():
-                    text = draft
-                    source = src
+                    text = outline
+                    source = "outline"
                 elif last_src == "llm":
                     source = "llm"
-                elif last_src in ("template_fallback", "template", "cache"):
+                elif last_src in ("template_fallback", "template", "cache", "exact_cache"):
                     source = last_src
                 else:
-                    # Unknown marker: only claim LLM if body differs from template
-                    source = "llm" if text.strip() != draft.strip() else src
+                    source = "llm" if text.strip() != outline.strip() else "outline"
             except Exception:
-                text = draft
-                source = src
+                text = outline
+                source = "outline"
     else:
         text = generate_answer(
             q,
-            job_context=req.job_context,
+            job_context=job,
             tone=req.tone,
             mode=req.mode,
             answer_model=req.answer_model,
@@ -539,18 +783,52 @@ def answer(req: AnswerRequest, request: Request):
         source = getattr(generate_answer, "last_source", None) or "llm"
 
     full_ms = round((time.perf_counter() - t0) * 1000)
+    if first_paint_ms is None:
+        first_paint_ms = full_ms
+    try:
+        record_trace(
+            question=q[:200],
+            source=source,
+            depth=depth,
+            classify_ms=classify_ms,
+            cache_ms=cache_ms,
+            outline_ms=outline_ms,
+            first_token_ms=first_paint_ms,
+            full_answer_ms=full_ms,
+            total_ms=full_ms,
+            from_cache="cache" in (source or ""),
+            outline_first=outline_ms is not None,
+            words=len((text or "").split()),
+            meta={"path": "api_answer"},
+        )
+    except Exception:
+        pass
     return {
         "question": req.question,
         "classification": cls,
         "answer": text,
         "bullets": _to_bullets(text, req.mode),
-        # Latency tile: first paint (cache/template) when available
+        # Latency tile: first paint (cache/outline) when available
         "latency_ms": first_paint_ms if first_paint_ms is not None else full_ms,
         "first_paint_ms": first_paint_ms,
+        "first_token_ms": first_paint_ms,
+        "outline_ms": outline_ms,
+        "cache_ms": cache_ms,
+        "classify_ms": classify_ms,
         "full_ms": full_ms,
+        "full_answer_ms": full_ms,
+        "total_ms": full_ms,
+        "depth": depth,
         "source": source,
         "model_profile": ANSWER_PROFILE,
         "openai_ready": True,
+        "stages": {
+            "classify_ms": classify_ms,
+            "cache_ms": cache_ms,
+            "outline_ms": outline_ms,
+            "first_token_ms": first_paint_ms,
+            "full_answer_ms": full_ms,
+        },
     }
 
 
@@ -633,13 +911,33 @@ def run_test_audio(req: FileRunRequest):
                 },
             )
 
-            yield _sse("status", {"message": "Loading Whisper model…"})
-            t_w = time.perf_counter()
-            get_whisper_model()
-            yield _sse(
-                "status",
-                {"message": f"Whisper ready in {round((time.perf_counter() - t_w) * 1000)}ms"},
-            )
+            try:
+                from config import get_stt_provider
+
+                stt_p = get_stt_provider()
+            except Exception:
+                stt_p = "whisper"
+            if stt_p == "deepgram":
+                yield _sse(
+                    "status",
+                    {"message": "STT: Deepgram Nova-3 (Whisper kept as fallback)…"},
+                )
+                threading.Thread(
+                    target=lambda: get_whisper_model(), daemon=True, name="whisper-warm"
+                ).start()
+            else:
+                yield _sse("status", {"message": "Loading Whisper model…"})
+                t_w = time.perf_counter()
+                get_whisper_model()
+                yield _sse(
+                    "status",
+                    {
+                        "message": (
+                            f"Whisper ready in "
+                            f"{round((time.perf_counter() - t_w) * 1000)}ms"
+                        )
+                    },
+                )
 
             segs = _segment_by_silence(
                 audio,
@@ -662,7 +960,7 @@ def run_test_audio(req: FileRunRequest):
 
                 clip = audio[start:end]
                 t_stt = time.perf_counter()
-                text = transcribe_audio(clip)
+                text, stt_meta = transcribe_best(clip)
                 stt_ms = round((time.perf_counter() - t_stt) * 1000)
 
                 yield _sse(
@@ -674,6 +972,8 @@ def run_test_audio(req: FileRunRequest):
                         "text": text,
                         "stt_ms": stt_ms,
                         "final": True,
+                        "stt_provider": (stt_meta or {}).get("provider"),
+                        "stt_model": (stt_meta or {}).get("model"),
                     },
                 )
 
@@ -756,6 +1056,36 @@ def _to_bullets(text: str, mode: str) -> list[str]:
 from fastapi import WebSocket, WebSocketDisconnect  # noqa: E402
 from live_session import LiveInterviewSession  # noqa: E402
 
+try:
+    import orjson
+
+    def _dumps_fast(payload: dict[str, Any]) -> str:
+        return orjson.dumps(payload).decode("utf-8")
+except ImportError:  # pragma: no cover - orjson is a pinned dependency
+    orjson = None  # type: ignore[assignment]
+
+    def _dumps_fast(payload: dict[str, Any]) -> str:
+        return json.dumps(payload)
+
+
+async def _ws_send_json(websocket: WebSocket, payload: dict[str, Any]) -> None:
+    """
+    Send a JSON text frame via orjson (faster than stdlib json on the hot
+    streaming path — every token upgrade during an answer goes through this).
+
+    Falls back to stdlib json.dumps(default=str) on any encode error (e.g. a
+    set or other type neither encoder has a handler for — verified NaN/
+    Infinity do NOT need this fallback, orjson silently encodes those as
+    `null` same as this app's prior behavior) so a rare bad-payload edge
+    case degrades gracefully instead of dropping the WebSocket message.
+    Wire format is unchanged either way — still a JSON string in a text
+    frame, so the frontend's JSON.parse(event.data) needs no changes.
+    """
+    try:
+        await websocket.send_text(_dumps_fast(payload))
+    except Exception:
+        await websocket.send_text(json.dumps(payload, default=str))
+
 
 @app.websocket("/ws/interview")
 async def ws_interview(websocket: WebSocket):
@@ -804,7 +1134,7 @@ async def ws_interview(websocket: WebSocket):
             msg = await out_q.get()
             if msg is None:
                 break
-            await websocket.send_json(msg)
+            await _ws_send_json(websocket, msg)
 
     writer_task = asyncio.create_task(writer())
 
@@ -814,7 +1144,7 @@ async def ws_interview(websocket: WebSocket):
             sess.push_audio(raw)
 
     try:
-        await websocket.send_json(
+        await _ws_send_json(websocket, 
             {
                 "type": "status",
                 "message": "Connected to live interview backend",
@@ -839,12 +1169,12 @@ async def ws_interview(websocket: WebSocket):
             try:
                 msg = json.loads(raw)
             except json.JSONDecodeError:
-                await websocket.send_json({"type": "error", "message": "Invalid JSON"})
+                await _ws_send_json(websocket, {"type": "error", "message": "Invalid JSON"})
                 continue
 
             mtype = (msg.get("type") or "").strip().lower()
             if mtype == "ping":
-                await websocket.send_json({"type": "pong"})
+                await _ws_send_json(websocket, {"type": "pong"})
                 continue
 
             if mtype == "audio":
@@ -869,6 +1199,16 @@ async def ws_interview(websocket: WebSocket):
                         "COPILOT_FORCE_SYSTEM_AUDIO", ""
                     ).lower() in ("1", "true", "yes")
                     source = "system" if force_system else "browser"
+                # Deepgram key may be sent from the UI Settings field
+                dg_key = (
+                    msg.get("deepgram_api_key")
+                    or msg.get("deepgram_key")
+                    or msg.get("deepgramKey")
+                    or ""
+                ).strip() or None
+                if dg_key:
+                    os.environ["DEEPGRAM_API_KEY"] = dg_key
+                stt_pref = (msg.get("stt_provider") or msg.get("stt") or "").strip().lower() or None
                 sess.start(
                     job_context=msg.get("job_context") or "AI/ML Engineer",
                     tone=msg.get("tone") or "confident",
@@ -878,6 +1218,8 @@ async def ws_interview(websocket: WebSocket):
                     fallback_model=msg.get("fallback_model"),
                     user_answer_model=msg.get("user_answer_model"),
                     user_fallback_model=msg.get("user_fallback_model"),
+                    deepgram_api_key=dg_key,
+                    stt_provider=stt_pref,
                 )
                 continue
 
@@ -901,9 +1243,95 @@ async def ws_interview(websocket: WebSocket):
                         job_context=msg.get("job_context") or "",
                         tone=msg.get("tone") or "",
                     )
+                # Also merge into pre-session pack when provided
+                try:
+                    from session_context import update_pack
+
+                    pack_keys = {
+                        k: msg[k]
+                        for k in (
+                            "role",
+                            "company",
+                            "seniority",
+                            "interview_type",
+                            "job_description",
+                            "resume_text",
+                            "stories",
+                            "keywords",
+                            "depth",
+                            "outline_first",
+                        )
+                        if k in msg and msg[k] is not None
+                    }
+                    if msg.get("job_context") and "role" not in pack_keys:
+                        pack_keys["role"] = msg["job_context"]
+                    if pack_keys:
+                        update_pack(**pack_keys)
+                except Exception:
+                    pass
                 continue
 
-            await websocket.send_json(
+            if mtype == "inject" or mtype == "inject_question":
+                # Manual question when STT lags (market pattern)
+                q = (msg.get("question") or msg.get("text") or "").strip()
+                sess = session_holder.get("session")
+                if not q:
+                    await _ws_send_json(
+                        websocket, {"type": "error", "message": "inject requires question"}
+                    )
+                    continue
+                if sess is None:
+                    # One-shot without active listen session
+                    sess = LiveInterviewSession(emit)
+                    session_holder["session"] = sess
+                    if msg.get("job_context"):
+                        sess.job_context = msg["job_context"]
+                    if msg.get("mode"):
+                        sess.mode = msg["mode"]
+                    if msg.get("tone"):
+                        sess.tone = msg["tone"]
+                if msg.get("depth"):
+                    try:
+                        from session_context import update_pack
+
+                        update_pack(depth=msg["depth"])
+                    except Exception:
+                        pass
+                sess.inject_question(q)
+                continue
+
+            if mtype == "set_depth":
+                try:
+                    from session_context import update_pack
+
+                    update_pack(depth=msg.get("depth") or "balanced")
+                    await _ws_send_json(
+                        websocket,
+                        {
+                            "type": "status",
+                            "message": f"Answer depth → {msg.get('depth') or 'balanced'}",
+                        },
+                    )
+                except Exception as e:
+                    await _ws_send_json(
+                        websocket, {"type": "error", "message": str(e)}
+                    )
+                continue
+
+            if mtype == "latency_snapshot":
+                try:
+                    from latency_metrics import snapshot
+
+                    await _ws_send_json(
+                        websocket, {"type": "latency_snapshot", **snapshot()}
+                    )
+                except Exception as e:
+                    await _ws_send_json(
+                        websocket, {"type": "error", "message": str(e)}
+                    )
+                continue
+
+            await _ws_send_json(websocket, 
                 {"type": "error", "message": f"Unknown message type: {mtype}"}
             )
     except WebSocketDisconnect:
@@ -911,7 +1339,7 @@ async def ws_interview(websocket: WebSocket):
     except Exception as e:
         traceback.print_exc()
         try:
-            await websocket.send_json({"type": "error", "message": str(e)})
+            await _ws_send_json(websocket, {"type": "error", "message": str(e)})
         except Exception:
             pass
     finally:

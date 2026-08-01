@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Astra Apply Kit",
+  "version": "1.0.0",
+  "description": "Holds AI-tailored resume + form answers for Job Search lab. Autofills ATS pages (Greenhouse, Lever, Freshteam, Workday-ish, generic).",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": [
+    "http://127.0.0.1:8787/*",
+    "http://localhost:8787/*",
+    "http://127.0.0.1:5173/*",
+    "http://localhost:5173/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_title": "Astra Apply Kit",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

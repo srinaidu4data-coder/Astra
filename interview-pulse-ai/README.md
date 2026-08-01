@@ -7,7 +7,7 @@ Real-time AI interview copilot & prep suite — stealth overlay, STAR RAG, mock 
 - **Desktop:** Electron + React (TypeScript) + Tailwind CSS v4
 - **UI:** Lucide, Framer Motion, Zustand, glassmorphism design system
 - **Audio:** Web Audio API + energy VAD (Silero-ready); system loopback hooks via Electron
-- **STT / LLM:** Demo streaming pipeline (&lt;850ms budget); pluggable Deepgram + Claude/OpenAI keys
+- **STT / LLM:** Demo pipeline simulates &lt;850ms; **live** path reports honest first-token + full-answer stages (see Copilot latency stack)
 - **RAG:** Client-side PDF/DOCX/MD parsing → atomic STAR memories + bag-of-words top-k (Supabase/pgvector-ready)
 
 ## Screens
@@ -60,12 +60,30 @@ VITE_DESKTOP_DOWNLOAD_URL=https://jobinterviewcracker.com/downloads/InterviewPul
 | Indigo | `#6366F1` |
 | Emerald | `#10B981` |
 
-## Latency budget (demo pipeline)
+## Latency (honest)
 
-1. VAD end-of-turn ~100ms  
-2. STT deltas ~250ms  
-3. RAG top-3 memories  
-4. First token &lt;400ms → **total &lt;850ms**
+**Demo pipeline (simulated, no API):** VAD ~100ms · STT ~250ms · first token &lt;400ms → total &lt;850ms.
+
+**Live path (real STT + LLM):** track stages in Copilot → Latency stack:
+- **First token** (outline/cache/LLM first paint) — target excellent ≤400ms, good ≤800ms
+- **Full answer** — market-honest bar ~1.5–3s (competitors often claim sub-1s, users report 3–8s)
+- **STT** — **Deepgram Nova-3 streaming** when `DEEPGRAM_API_KEY` is set (preferred); else local faster-whisper
+- **vs competitors** board compares our p50 to Cluely / LockedIn / Final Round / Sensei / Preptail bars
+
+### Deepgram Nova-3 setup
+
+```bash
+# src/.env (or Settings → Deepgram API key in the UI)
+DEEPGRAM_API_KEY=your_key_here
+# optional:
+# ASTRA_STT_PROVIDER=auto          # auto | deepgram | whisper
+# ASTRA_DEEPGRAM_MODEL=nova-3
+# ASTRA_DEEPGRAM_ENDPOINTING=300   # ms silence endpointing
+```
+
+Install once: `pip install websocket-client` (also in `src/requirements.txt`).
+
+API: `GET /api/latency/metrics`, `GET /api/latency/benchmark`, `GET /api/health` → `stt`, `POST /api/session/context`, `POST /api/answer/inject`
 
 ## Related
 

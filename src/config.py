@@ -165,6 +165,9 @@ def _ensure_project_env_loaded() -> None:
                 if k in (
                     "GROQ_API_KEY",
                     "OPENAI_API_KEY",
+                    "DEEPGRAM_API_KEY",
+                    "ASTRA_DEEPGRAM_KEY",
+                    "ASTRA_STT_PROVIDER",
                     "ASTRA_LLM_PROVIDER",
                     "LLM_PROVIDER",
                     "OPENAI_BASE_URL",
@@ -200,8 +203,17 @@ def get_llm_provider() -> str:
 
 def get_openai_base_url() -> str | None:
     """OpenAI-compatible base URL. Groq default when provider is groq."""
+    # Empty OPENAI_BASE_URL= in .env breaks the OpenAI SDK
+    # (UnsupportedProtocol: URL missing http:// or https://).
+    for name in ("OPENAI_BASE_URL", "GROQ_BASE_URL"):
+        raw = os.environ.get(name)
+        if raw is not None and not str(raw).strip():
+            os.environ.pop(name, None)
     explicit = (os.environ.get("OPENAI_BASE_URL") or os.environ.get("GROQ_BASE_URL") or "").strip()
     if explicit:
+        # Require absolute URL
+        if not explicit.lower().startswith(("http://", "https://")):
+            explicit = "https://" + explicit.lstrip("/")
         return explicit.rstrip("/")
     if get_llm_provider() == "groq":
         return "https://api.groq.com/openai/v1"
@@ -230,20 +242,31 @@ _GROQ_MODEL_MAP = {
     "o3": "llama-3.3-70b-versatile",
 }
 
+# Groq Llama IDs → OpenAI when provider=openai (stale env / admin leftovers)
+_OPENAI_FROM_GROQ_MAP = {
+    "llama-3.3-70b-versatile": "gpt-4o-mini",
+    "llama-3.1-8b-instant": "gpt-4o-mini",
+    "llama-3.1-70b-versatile": "gpt-4o-mini",
+    "llama-3.3-70b-specdec": "gpt-4o-mini",
+    "mixtral-8x7b-32768": "gpt-4o-mini",
+    "gemma2-9b-it": "gpt-4o-mini",
+}
+
 
 def remap_model_for_provider(model: str | None) -> str | None:
     """
-    Map OpenAI model IDs to provider-native IDs.
+    Map model IDs to provider-native IDs.
 
     Critical for Groq: requesting gpt-4o fails, then the answer path used to
     wait ~6s per failed model → ~10–12s typed-answer latency.
+    Critical for OpenAI: leftover llama-* IDs from Groq sessions must remap.
     """
     if not model or not str(model).strip():
         return model
     m = str(model).strip()
     provider = get_llm_provider()
+    low = m.lower()
     if provider == "groq":
-        low = m.lower()
         if low in _GROQ_MODEL_MAP:
             return _GROQ_MODEL_MAP[low]
         # Already a Groq/Llama/Mixtral/Gemma id
@@ -262,6 +285,15 @@ def remap_model_for_provider(model: str | None) -> str | None:
         # Unknown OpenAI-ish id → safe Groq default
         if low.startswith("gpt-") or low.startswith("o1") or low.startswith("o3") or low.startswith("o4"):
             return "llama-3.3-70b-versatile"
+    elif provider == "openai":
+        if low in _OPENAI_FROM_GROQ_MAP:
+            return _OPENAI_FROM_GROQ_MAP[low]
+        if any(x in low for x in ("llama", "mixtral", "gemma", "gpt-oss")):
+            return "gpt-4o-mini"
+        # Prefer widely available OpenAI chat models
+        if low in ("gpt-4.1-nano", "gpt-4.1-mini"):
+            # Keep if account has them; callers may still fall back
+            return m
     return m
 
 
@@ -558,6 +590,58 @@ AUDIO_DEVICE = "alsa_output.pci-0000_00_1f.3-platform-skl_hda_dsp_generic.HiFi__
 AUDIO_SAMPLE_RATE = 16000  # Whisper expects 16kHz
 AUDIO_CHANNELS = 1  # Mono
 
+# ---------------------------------------------------------------------------
+# STT: Deepgram Nova-3 (streaming, preferred) + Whisper local fallback
+# ---------------------------------------------------------------------------
+# ASTRA_STT_PROVIDER: auto | deepgram | whisper
+#   auto = Deepgram when DEEPGRAM_API_KEY is set, else Whisper
+DEEPGRAM_MODEL = (
+    os.environ.get("ASTRA_DEEPGRAM_MODEL") or os.environ.get("DEEPGRAM_MODEL") or "nova-3"
+).strip() or "nova-3"
+# Endpointing silence (ms) for Deepgram stream — market sweet spot ~200–400
+DEEPGRAM_ENDPOINTING_MS = max(
+    10, int(os.environ.get("ASTRA_DEEPGRAM_ENDPOINTING", "300") or "300")
+)
+DEEPGRAM_UTTERANCE_END_MS = max(
+    100, int(os.environ.get("ASTRA_DEEPGRAM_UTTERANCE_END", "1000") or "1000")
+)
+
+
+def get_deepgram_api_key() -> str | None:
+    """Deepgram API key from env / .env (never log the value)."""
+    _ensure_project_env_loaded()
+    for name in ("DEEPGRAM_API_KEY", "ASTRA_DEEPGRAM_KEY", "DEEPGRAM_KEY"):
+        raw = (os.environ.get(name) or "").strip().strip('"').strip("'")
+        if raw and len(raw) >= 16 and "your" not in raw.lower():
+            return raw
+    # User config dir .env (%APPDATA%/astra/.env)
+    try:
+        data = _read_env_file()
+        for name in ("DEEPGRAM_API_KEY", "ASTRA_DEEPGRAM_KEY", "DEEPGRAM_KEY"):
+            raw = (data.get(name) or "").strip().strip('"').strip("'")
+            if raw and len(raw) >= 16 and "your" not in raw.lower():
+                os.environ.setdefault(name, raw)
+                return raw
+    except Exception:
+        pass
+    return None
+
+
+def get_stt_provider() -> str:
+    """
+    Return: deepgram | whisper
+    auto (default) → deepgram when key present else whisper.
+    """
+    _ensure_project_env_loaded()
+    raw = (os.environ.get("ASTRA_STT_PROVIDER") or "auto").strip().lower()
+    if raw in ("deepgram", "dg", "nova", "nova-3"):
+        return "deepgram" if get_deepgram_api_key() else "whisper"
+    if raw in ("whisper", "local", "faster-whisper"):
+        return "whisper"
+    # auto
+    return "deepgram" if get_deepgram_api_key() else "whisper"
+
+
 # Whisper Configuration
 # tiny.en is fast but mangles jargon (S/4HANA, Vertex, FICO) and weak on long Qs.
 # base.en is the production default for interview accuracy on CPU; override via env.
@@ -598,8 +682,17 @@ SILENCE_THRESHOLD = 0.0015      # Floor absolute silence (legacy / fallback)
 # End-of-question hangover.
 # Short questions can cut fast; long multi-clause questions need more hangover
 # so mid-sentence pauses don't truncate (was the main "long Q wrong answer" bug).
-SILENCE_DURATION = 1.05         # Seconds of relative silence to end an utterance
-MIN_SPEECH_DURATION = 0.55      # Ignore 1–2 word blips; wait for a real phrase
+# End-of-speech hangover (env-overridable). Market voice stacks use ~200–300ms
+# endpointing; interview questions need more hangover to avoid multi-clause cuts.
+def _env_float(name: str, default: float) -> float:
+    try:
+        return float(os.environ.get(name, str(default)) or default)
+    except (TypeError, ValueError):
+        return default
+
+
+SILENCE_DURATION = _env_float("ASTRA_SILENCE_DURATION", 0.95)
+MIN_SPEECH_DURATION = _env_float("ASTRA_MIN_SPEECH_DURATION", 0.55)
 # If speech never "ends" (noisy room / continuous audio), force process after this
 MAX_UTTERANCE_SECONDS = 50.0
 # Adaptive VAD: speech if level > noise_floor * factor + offset
@@ -608,12 +701,13 @@ VAD_NOISE_FACTOR = 1.95
 VAD_NOISE_OFFSET = 0.0055
 VAD_SILENCE_FACTOR = 1.08       # Stay "in speech" through quieter mid-sentence dips
 # Browser mic (getUserMedia) — AGC dips need a touch more hangover than system
-BROWSER_SILENCE_DURATION = 1.15
-BROWSER_MIN_SPEECH_DURATION = 0.6
+BROWSER_SILENCE_DURATION = _env_float("ASTRA_BROWSER_SILENCE", 1.05)
+BROWSER_MIN_SPEECH_DURATION = _env_float("ASTRA_BROWSER_MIN_SPEECH", 0.55)
 # Only for SHORT utterances (see live_session) — never on long multi-clause Qs
-BROWSER_FAST_SILENCE_DURATION = 0.65
+# Tighter default (0.55) for faster first-token vs market streaming STT stacks
+BROWSER_FAST_SILENCE_DURATION = _env_float("ASTRA_BROWSER_FAST_SILENCE", 0.55)
 # Long questions: extra hangover after already speaking a while
-BROWSER_LONG_SILENCE_DURATION = 1.55
+BROWSER_LONG_SILENCE_DURATION = _env_float("ASTRA_BROWSER_LONG_SILENCE", 1.45)
 CLASSIFICATION_CONFIDENCE = 0.55  # slightly looser for live auto path
 MIN_WORDS_FOR_CLASSIFICATION = 4  # Skip LLM if fewer words than this
 # Must fit full multi-clause interview questions (20–40s spoken is common)

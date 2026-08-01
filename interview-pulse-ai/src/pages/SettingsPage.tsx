@@ -294,11 +294,17 @@ export function SettingsPage() {
             placeholder="sk-ant-…"
           />
           <Field
-            label="Deepgram API key"
+            label="Deepgram API key (Nova-3 streaming STT)"
             value={settings.deepgramKey}
             onChange={(v) => updateSettings({ deepgramKey: v })}
-            placeholder="dg-…"
+            placeholder="your Deepgram key…"
           />
+          <p className="text-[12px] leading-relaxed text-white/35">
+            When set, live interviews use <strong className="text-white/55">Deepgram Nova-3</strong>{' '}
+            streaming speech-to-text (much faster than local Whisper). Also set{' '}
+            <code className="text-[11px] text-white/45">DEEPGRAM_API_KEY</code> on the API server.
+            Leave empty to use Whisper only.
+          </p>
           <label>
             <span className="label-quiet">Job context</span>
             <input
