@@ -14,12 +14,20 @@ import {
 } from '@/services/real-api'
 import { useAppStore } from '@/stores/app-store'
 import type { AnswerMode, LatencySnapshot, QACard } from '@/types'
-import { MicOff, RefreshCw, Volume2 } from 'lucide-react'
+import {
+  MicOff,
+  PanelLeftClose,
+  PanelLeftOpen,
+  RefreshCw,
+  Volume2,
+} from 'lucide-react'
 import {
   resolveInterviewAudioSource,
   type InterviewAudioSource,
 } from '@/lib/api-base'
 import { useCallback, useEffect, useRef, useState } from 'react'
+
+const LEFT_PANEL_KEY = 'ip_copilot_left_collapsed'
 
 function gradeColor(grade?: string) {
   if (grade === 'excellent') return 'text-emerald-400'
@@ -75,6 +83,25 @@ export function CopilotPage() {
   const [depth, setDepth] = useState<'fast' | 'balanced' | 'deep'>('balanced')
   const [latencySnap, setLatencySnap] = useState<LatencySnapshot | null>(null)
   const [showBench, setShowBench] = useState(false)
+  /** Hide left controls so the answer panel can expand full-width */
+  const [leftCollapsed, setLeftCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(LEFT_PANEL_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  const toggleLeftPanel = useCallback(() => {
+    setLeftCollapsed((v) => {
+      const next = !v
+      try {
+        localStorage.setItem(LEFT_PANEL_KEY, next ? '1' : '0')
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }, [])
 
   const pushStatus = useCallback((msg: string) => {
     if (!msg) return
@@ -559,7 +586,58 @@ export function CopilotPage() {
       {/* Loud offline / no-LLM banner — hidden when API + LLM are healthy */}
       <ApiStatusBadge variant="banner" />
 
-      <div className="grid min-h-[calc(100vh-9rem)] gap-8 xl:grid-cols-12 xl:items-stretch xl:gap-10">
+      <div
+        className={
+          leftCollapsed
+            ? 'flex min-h-[calc(100vh-9rem)] flex-col gap-4 xl:flex-row xl:items-stretch xl:gap-4'
+            : 'grid min-h-[calc(100vh-9rem)] gap-8 xl:grid-cols-12 xl:items-stretch xl:gap-10'
+        }
+      >
+      {/* Collapsed: slim rail with expand + Start/Stop so session stays controllable */}
+      {leftCollapsed ? (
+        <aside className="flex shrink-0 flex-row items-center gap-2 rounded-[20px] border border-white/[0.08] bg-white/[0.03] p-2 xl:w-[4.25rem] xl:flex-col xl:py-4">
+          <button
+            type="button"
+            onClick={toggleLeftPanel}
+            title="Show controls (expand answer less)"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/70 hover:bg-white/10 hover:text-white"
+          >
+            <PanelLeftOpen className="h-4 w-4" strokeWidth={1.75} />
+          </button>
+          <span
+            className={`h-2.5 w-2.5 shrink-0 rounded-full xl:mt-1 ${
+              sessionOn
+                ? 'bg-[#20B8CD]'
+                : apiOk
+                  ? 'bg-white/30'
+                  : 'bg-[#E8C547]'
+            }`}
+            title={phaseLabel}
+          />
+          <button
+            type="button"
+            onClick={() => void toggleSession()}
+            title={sessionOn ? 'Stop interview' : 'Start interview'}
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-full border ${
+              sessionOn
+                ? 'border-rose-400/40 bg-rose-500/15 text-rose-100'
+                : 'border-[#20B8CD]/40 bg-[#20B8CD]/15 text-[#5DD5E3]'
+            }`}
+          >
+            {sessionOn ? (
+              <MicOff className="h-4 w-4" strokeWidth={1.75} />
+            ) : (
+              <Volume2 className="h-4 w-4" strokeWidth={1.75} />
+            )}
+          </button>
+          <p className="hidden max-w-[3.5rem] text-center text-[10px] leading-tight text-white/35 xl:block">
+            {phaseLabel}
+          </p>
+          <p className="min-w-0 flex-1 truncate text-[11px] text-white/40 xl:hidden">
+            {statusLine || phaseLabel}
+          </p>
+        </aside>
+      ) : (
       <div className="flex flex-col gap-6 xl:col-span-4">
         <section className="glass rounded-[28px] p-6 md:p-8">
           <div className="mb-8 flex items-start justify-between gap-4">
@@ -571,24 +649,35 @@ export function CopilotPage() {
                 Stays on · filters chatter · answers questions only
               </p>
             </div>
-            <div className="text-right">
-              <div className="flex items-center justify-end gap-2">
-                <span
-                  className={`h-2.5 w-2.5 rounded-full ${
-                    sessionOn
-                      ? 'bg-[#20B8CD]'
-                      : apiOk
-                        ? 'bg-white/30'
-                        : 'bg-[#E8C547]'
-                  }`}
-                />
-                <span className="text-[12px] text-white/50">{phaseLabel}</span>
+            <div className="flex flex-col items-end gap-2">
+              <button
+                type="button"
+                onClick={toggleLeftPanel}
+                title="Hide controls — expand answer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/55 hover:bg-white/[0.08] hover:text-white/80"
+              >
+                <PanelLeftClose className="h-3.5 w-3.5" strokeWidth={1.75} />
+                Hide
+              </button>
+              <div className="text-right">
+                <div className="flex items-center justify-end gap-2">
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      sessionOn
+                        ? 'bg-[#20B8CD]'
+                        : apiOk
+                          ? 'bg-white/30'
+                          : 'bg-[#E8C547]'
+                    }`}
+                  />
+                  <span className="text-[12px] text-white/50">{phaseLabel}</span>
+                </div>
+                {device && (
+                  <p className="mt-1 max-w-[200px] truncate text-[11px] text-white/30">
+                    {device}
+                  </p>
+                )}
               </div>
-              {device && (
-                <p className="mt-1 max-w-[200px] truncate text-[11px] text-white/30">
-                  {device}
-                </p>
-              )}
             </div>
           </div>
 
@@ -749,8 +838,30 @@ export function CopilotPage() {
           )}
         </section>
       </div>
+      )}
 
-      <div className="flex min-h-[720px] flex-col gap-5 xl:col-span-8 xl:min-h-0">
+      <div
+        className={
+          leftCollapsed
+            ? 'flex min-h-[720px] min-w-0 flex-1 flex-col gap-5'
+            : 'flex min-h-[720px] flex-col gap-5 xl:col-span-8 xl:min-h-0'
+        }
+      >
+        {leftCollapsed && (
+          <div className="flex shrink-0 items-center justify-between gap-3 rounded-[16px] border border-white/[0.06] bg-white/[0.03] px-4 py-2 text-[12px] text-white/45">
+            <span className="truncate">
+              Answer expanded · {statusLine || phaseLabel}
+            </span>
+            <button
+              type="button"
+              onClick={toggleLeftPanel}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-[11px] text-white/70 hover:bg-white/[0.06]"
+            >
+              <PanelLeftOpen className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Show controls
+            </button>
+          </div>
+        )}
         <div className="min-h-0 flex-1">
           <WhisperStream
             cards={cards}
