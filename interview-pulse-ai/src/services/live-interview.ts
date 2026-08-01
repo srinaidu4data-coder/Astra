@@ -1,5 +1,9 @@
 import type { AnswerMode, PipelineMetrics, SuggestedAnswer } from '@/types'
-import { preferBrowserMic, resolveCopilotWsUrl } from '@/lib/api-base'
+import {
+  resolveCopilotWsUrl,
+  resolveInterviewAudioSource,
+  type InterviewAudioSource,
+} from '@/lib/api-base'
 import { normalizeAnswer } from './real-api'
 import { uid } from '@/lib/utils'
 
@@ -68,8 +72,8 @@ function floatTo16BitPCM(float32: Float32Array): Int16Array {
 
 /**
  * WebSocket client for continuous live interview backend.
- * On web/cloud: streams browser microphone PCM to the API.
- * Local Windows can still request system (Stereo Mix) capture.
+ * Default: speakers only (share-tab audio or system Stereo Mix) so the
+ * candidate's mic answers are never transcribed. Mic is explicit opt-in only.
  */
 export class LiveInterviewClient {
   private ws: WebSocket | null = null
@@ -83,19 +87,26 @@ export class LiveInterviewClient {
     jobContext?: string
     tone?: string
     mode?: AnswerMode
+    /** Wire protocol to backend: browser = client PCM, system = server loopback */
     source?: 'browser' | 'system'
+    audioMode?: InterviewAudioSource
     userAnswerModel?: string | null
     userFallbackModel?: string | null
     answerModel?: string | null
     fallbackModel?: string | null
   } | null = null
 
-  // Browser mic streaming
+  // Client-side PCM capture (display/system audio or explicit mic fallback)
   private mediaStream: MediaStream | null = null
   private audioCtx: AudioContext | null = null
   private processor: ScriptProcessorNode | null = null
   private mediaSource: MediaStreamAudioSourceNode | null = null
   private micActive = false
+  private clientCaptureMode: 'display' | 'mic' | null = null
+  /** Throttle streaming answer UI paints to cut flicker */
+  private _lastStreamUiAt = 0
+  private _lastStreamLen = 0
+  private _lastLevelUiAt = 0
 
   connect(handlers: LiveHandlers) {
     this.handlers = handlers
@@ -180,8 +191,11 @@ export class LiveInterviewClient {
         source: this.lastStartOpts.source ?? 'browser',
         ...this.modelPayload(this.lastStartOpts),
       })
-      if ((this.lastStartOpts.source ?? 'browser') === 'browser' && !this.micActive) {
-        await this.startBrowserMic()
+      // Re-open client capture only for display/mic paths (not pure server system)
+      const mode = this.lastStartOpts.audioMode ?? resolveInterviewAudioSource()
+      if (mode !== 'system' && !this.micActive) {
+        if (mode === 'display') await this.startSpeakerCapture()
+        else await this.startBrowserMic()
       }
       this.handlers.onStatus?.('Reconnected — live session resumed')
     } catch {
@@ -220,12 +234,17 @@ export class LiveInterviewClient {
           this.handlers.onStatus?.(String((data as { message?: string }).message))
         }
         break
-      case 'level':
+      case 'level': {
+        // Cap level events ~10/s — backend can fire ~20/s and was thrashing React
+        const now = Date.now()
+        if (now - this._lastLevelUiAt < 100) break
+        this._lastLevelUiAt = now
         this.handlers.onLevel?.(
           Number((data as { level?: number }).level ?? 0),
           (data as { state?: string }).state,
         )
         break
+      }
       case 'transcript':
         this.handlers.onTranscript?.(String((data as { text?: string }).text ?? ''))
         break
@@ -271,6 +290,7 @@ export class LiveInterviewClient {
           streaming?: boolean
           source?: string
           depth?: string
+          job_id?: number | string
           stages?: Record<string, number | null | undefined>
           latency_trace?: Record<string, unknown>
         }
@@ -285,8 +305,16 @@ export class LiveInterviewClient {
         // Prefer first-token latency for the Latency tile (honest first paint)
         const latency =
           a.first_token_ms ?? a.pipeline_ms ?? a.answer_ms
+        // Stable id per question so streaming tokens don't remount the whole panel
+        const qKey = String(a.question || '').trim().toLowerCase().slice(0, 80)
+        const stableId =
+          a.job_id != null
+            ? `job_${a.job_id}`
+            : qKey
+              ? `q_${qKey.replace(/\s+/g, '_').slice(0, 48)}`
+              : uid('ans')
         const ans = normalizeAnswer({
-          id: uid('ans'),
+          id: stableId,
           mode,
           text,
           bullets,
@@ -296,6 +324,17 @@ export class LiveInterviewClient {
         ans.streaming = Boolean(a.streaming)
         // Guarantee UI has something to render
         if (!ans.bullets.length && text) ans.bullets = [text]
+        // Throttle intermediate stream paints (~8/s) — finals always pass
+        if (a.streaming) {
+          const now = Date.now()
+          if (now - this._lastStreamUiAt < 120 && text.length - this._lastStreamLen < 40) {
+            return
+          }
+          this._lastStreamUiAt = now
+          this._lastStreamLen = text.length
+        } else {
+          this._lastStreamLen = 0
+        }
         this.handlers.onAnswer?.(ans)
         // Full stage metrics for competitor dashboard
         if (!a.streaming) {
@@ -390,6 +429,94 @@ export class LiveInterviewClient {
     }
   }
 
+  /**
+   * Capture what plays on speakers / shared tab — NOT the candidate mic.
+   * Uses getDisplayMedia (same pattern as web interview copilots).
+   * User should share the Teams/Zoom tab or "System audio" / entire screen with audio.
+   */
+  private async startSpeakerCapture() {
+    if (this.micActive) return
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      throw new Error(
+        'Speaker capture needs a modern browser (Chrome/Edge). ' +
+          'Share the interview tab with audio, or enable Stereo Mix (system mode).',
+      )
+    }
+
+    // Chromium: systemAudio + prefer tab surface. Video track is required by the
+    // API but stopped immediately — we only keep audio (interviewer / meeting).
+    const constraints: DisplayMediaStreamOptions = {
+      video: {
+        // Prefer sharing a browser tab (Teams/Meet in Chrome)
+        displaySurface: 'browser',
+        width: { max: 1 },
+        height: { max: 1 },
+        frameRate: { max: 1 },
+      } as MediaTrackConstraints,
+      audio: {
+        // Critical: do not process as a "voice call" mic — keep meeting mix clean
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        channelCount: 1,
+      } as MediaTrackConstraints,
+      // @ts-expect-error Chromium extensions
+      systemAudio: 'include',
+      // @ts-expect-error Chromium
+      preferCurrentTab: false,
+      // @ts-expect-error Chromium
+      selfBrowserSurface: 'exclude',
+      // @ts-expect-error Chromium
+      monitorTypeSurfaces: 'include',
+    }
+
+    let stream: MediaStream
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia(constraints)
+    } catch (e) {
+      const name = e instanceof Error ? e.name : ''
+      if (name === 'NotAllowedError') {
+        throw new Error(
+          'Screen/tab share cancelled. To hear the interviewer only: share the ' +
+            'Teams/Zoom tab and enable "Share tab audio" (or system audio). ' +
+            'We do not use your microphone by default.',
+        )
+      }
+      throw e
+    }
+
+    // Drop video immediately — audio-only pipeline
+    stream.getVideoTracks().forEach((t) => {
+      try {
+        t.stop()
+      } catch {
+        /* ignore */
+      }
+    })
+    const audioTracks = stream.getAudioTracks()
+    if (!audioTracks.length) {
+      stream.getTracks().forEach((t) => t.stop())
+      throw new Error(
+        'No audio in the share. In Chrome: share a tab and check "Also share tab audio", ' +
+          'or share the entire screen with system audio. Mic is not used for interviews.',
+      )
+    }
+
+    // If user stops sharing, end capture cleanly
+    audioTracks[0]!.onended = () => {
+      this.handlers.onStatus?.(
+        'Speaker share ended — interview audio stopped. Start again and re-share the meeting tab.',
+        false,
+      )
+      this.stop()
+    }
+
+    this.mediaStream = new MediaStream(audioTracks)
+    this.clientCaptureMode = 'display'
+    await this._wirePcmFromStream(this.mediaStream)
+  }
+
+  /** Explicit mic fallback only (not recommended — captures your answers too). */
   private async startBrowserMic() {
     if (this.micActive) return
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -405,8 +532,14 @@ export class LiveInterviewClient {
       video: false,
     })
     this.mediaStream = stream
+    this.clientCaptureMode = 'mic'
+    await this._wirePcmFromStream(stream)
+  }
 
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+  private async _wirePcmFromStream(stream: MediaStream) {
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     const ctx = new Ctx()
     this.audioCtx = ctx
     if (ctx.state === 'suspended') {
@@ -415,7 +548,6 @@ export class LiveInterviewClient {
 
     const source = ctx.createMediaStreamSource(stream)
     this.mediaSource = source
-    // ScriptProcessor is deprecated but widely supported for PCM tap without worklet deploy
     const processor = ctx.createScriptProcessor(4096, 1, 1)
     this.processor = processor
     const inputRate = ctx.sampleRate
@@ -430,7 +562,6 @@ export class LiveInterviewClient {
       const pcm = floatTo16BitPCM(down)
       this.sendPcm(pcm)
 
-      // Local waveform feedback while waiting for server levels
       let sum = 0
       for (let i = 0; i < copy.length; i++) sum += copy[i]! * copy[i]!
       const rms = Math.sqrt(sum / Math.max(1, copy.length))
@@ -438,7 +569,6 @@ export class LiveInterviewClient {
     }
 
     source.connect(processor)
-    // Keep graph alive without audible monitor (avoid feedback)
     const mute = ctx.createGain()
     mute.gain.value = 0
     processor.connect(mute)
@@ -448,6 +578,7 @@ export class LiveInterviewClient {
 
   private stopBrowserMic() {
     this.micActive = false
+    this.clientCaptureMode = null
     try {
       this.processor?.disconnect()
     } catch {
@@ -478,21 +609,32 @@ export class LiveInterviewClient {
     jobContext?: string
     tone?: string
     mode?: AnswerMode
+    /**
+     * High-level capture mode. Default: speakers only (system or display).
+     * Never uses mic unless explicitly set to 'mic'.
+     */
+    audioMode?: InterviewAudioSource
+    /** Low-level wire source override (advanced) */
     source?: 'browser' | 'system'
-    /** User-assigned primary from admin console */
     userAnswerModel?: string | null
-    /** User-assigned fallback from admin console */
     userFallbackModel?: string | null
     answerModel?: string | null
     fallbackModel?: string | null
-    /** Deepgram API key for Nova-3 streaming STT */
     deepgramKey?: string | null
     sttProvider?: 'auto' | 'deepgram' | 'whisper' | null
   }) {
     await this.ensureOpen()
     this.mode = opts.mode ?? 'star'
-    const source = opts.source ?? (preferBrowserMic() ? 'browser' : 'system')
-    this.lastStartOpts = { ...opts, mode: this.mode, source }
+    const audioMode = opts.audioMode ?? resolveInterviewAudioSource()
+    // Backend: "system" = server loopback; "browser" = client PCM stream
+    const wireSource: 'browser' | 'system' =
+      opts.source ?? (audioMode === 'system' ? 'system' : 'browser')
+    this.lastStartOpts = {
+      ...opts,
+      mode: this.mode,
+      source: wireSource,
+      audioMode,
+    }
     this.wasListening = true
     const models = this.modelPayload(opts)
     const sttPayload = {
@@ -504,33 +646,43 @@ export class LiveInterviewClient {
         : {}),
     }
 
-    if (source === 'browser') {
-      // Open mic first so permission UX is immediate; then start server session
-      await this.startBrowserMic()
-      this.send({
-        type: 'start',
-        job_context: opts.jobContext ?? 'AI/ML Engineer',
-        tone: opts.tone ?? 'confident',
-        mode: this.mode,
-        source: 'browser',
-        ...models,
-        ...sttPayload,
-      })
+    const baseStart = {
+      type: 'start' as const,
+      job_context: opts.jobContext ?? 'AI/ML Engineer',
+      tone: opts.tone ?? 'confident',
+      mode: this.mode,
+      ...models,
+      ...sttPayload,
+    }
+
+    if (audioMode === 'system') {
+      // Server captures PC speakers (Stereo Mix / WASAPI). No mic opened.
+      this.send({ ...baseStart, source: 'system' })
       this.handlers.onStatus?.(
-        'Listening via browser mic — play interviewer audio aloud or speak questions',
+        'Listening to PC speakers (system audio) — your mic is off. Play the interview on this computer.',
         true,
       )
-    } else {
-      this.send({
-        type: 'start',
-        job_context: opts.jobContext ?? 'AI/ML Engineer',
-        tone: opts.tone ?? 'confident',
-        mode: this.mode,
-        source: 'system',
-        ...models,
-        ...sttPayload,
-      })
+      return
     }
+
+    if (audioMode === 'display') {
+      // Share meeting tab / system audio — not the candidate microphone
+      await this.startSpeakerCapture()
+      this.send({ ...baseStart, source: 'browser' })
+      this.handlers.onStatus?.(
+        'Listening to shared tab/system audio — your mic is off. Keep the interview tab shared with audio.',
+        true,
+      )
+      return
+    }
+
+    // Explicit mic fallback only
+    await this.startBrowserMic()
+    this.send({ ...baseStart, source: 'browser' })
+    this.handlers.onStatus?.(
+      '⚠ Mic mode — your spoken answers may be transcribed. Prefer Speakers / share-tab audio.',
+      true,
+    )
   }
 
   stop() {

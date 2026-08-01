@@ -75,21 +75,37 @@ export function resolveCopilotWsUrl(): string {
 }
 
 /**
- * Prefer browser mic for the live interview path.
+ * Interview audio source — **speakers / loopback only by default**.
  *
- * Stereo Mix / system loopback is opt-in only (local Windows advanced). Defaulting
- * localhost to system audio was breaking the flow for most users (silent capture,
- * no transcript, no answer).
+ * Competitors (Final Round, Cluely, LockedIn desktop) listen to PC output so the
+ * candidate's own spoken answers are NOT transcribed. Mic is never the default.
+ *
+ * - `system`  — server-side Stereo Mix / WASAPI loopback (best on local Windows)
+ * - `display` — browser getDisplayMedia tab/system audio (web + cloud)
+ * - `mic`     — last-resort getUserMedia (explicit opt-in only; picks up your voice)
+ *
+ * Override: localStorage `ip_audio_source` = system | display | mic | browser
+ * (browser is treated as mic for backward compatibility)
  */
-export function preferBrowserMic(): boolean {
-  if (typeof window === 'undefined') return true
+export type InterviewAudioSource = 'system' | 'display' | 'mic'
+
+export function resolveInterviewAudioSource(): InterviewAudioSource {
+  if (typeof window === 'undefined') return 'display'
   try {
-    const forced = localStorage.getItem('ip_audio_source')
-    if (forced === 'system') return false
-    if (forced === 'browser') return true
+    const forced = (localStorage.getItem('ip_audio_source') || '').trim().toLowerCase()
+    if (forced === 'system') return 'system'
+    if (forced === 'display' || forced === 'speaker' || forced === 'speakers') return 'display'
+    if (forced === 'mic' || forced === 'browser' || forced === 'microphone') return 'mic'
   } catch {
     /* ignore */
   }
-  // Default: always browser mic (works on web + localhost)
-  return true
+  // Localhost → prefer OS loopback on the Python host (no mic)
+  if (isLocalHostName(window.location.hostname)) return 'system'
+  // Production web → share tab / system audio dialog (no mic)
+  return 'display'
+}
+
+/** @deprecated use resolveInterviewAudioSource — kept for older callers */
+export function preferBrowserMic(): boolean {
+  return resolveInterviewAudioSource() === 'mic'
 }

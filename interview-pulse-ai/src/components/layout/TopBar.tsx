@@ -73,7 +73,7 @@ export function TopBar() {
           {settings.demoMode ? ' · Demo' : ' · Live'}
         </p>
         <h1 className="truncate text-[28px] font-medium tracking-tight text-white/95 md:text-[32px]">
-          {activeJobTitle}
+          {activeJobTitle?.trim() || 'Your target role'}
         </h1>
       </div>
 

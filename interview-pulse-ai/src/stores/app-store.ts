@@ -178,9 +178,26 @@ export const useAppStore = create<AppState>()(
         demoMode: false,
         jobContext: 'Senior Full-Stack Engineer',
         tone: 'confident',
+        // Speakers only by default — never mic (your answers must not be STT'd)
+        audioSource: 'auto' as const,
       },
       updateSettings: (p) =>
-        set((s) => ({ settings: { ...s.settings, ...p } })),
+        set((s) => {
+          const next = { ...s.settings, ...p }
+          // Keep resolveInterviewAudioSource() in sync for any callers
+          if (p.audioSource) {
+            try {
+              if (p.audioSource === 'auto') {
+                localStorage.removeItem('ip_audio_source')
+              } else {
+                localStorage.setItem('ip_audio_source', p.audioSource)
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+          return { settings: next }
+        }),
 
       stealth: {
         contentProtection: true,
@@ -264,7 +281,8 @@ export const useAppStore = create<AppState>()(
         }),
       jobMatch: null,
       setJobMatch: (jobMatch) => set({ jobMatch }),
-      activeJobTitle: 'Staff Frontend / AI Copilot Engineer',
+      // Always start empty — user types the real target role (no demo placeholder)
+      activeJobTitle: '',
       setActiveJobTitle: (activeJobTitle) => set({ activeJobTitle }),
 
       transcript: [],
@@ -357,6 +375,23 @@ export const useAppStore = create<AppState>()(
         sessions: s.sessions,
         answerMode: s.answerMode,
       }),
+      // Drop the old demo job title so Knowledge "Job match" stays blank
+      merge: (persisted, current) => {
+        const p = (persisted || {}) as Partial<typeof current> & {
+          activeJobTitle?: string
+        }
+        const demoTitles = new Set([
+          'Staff Frontend / AI Copilot Engineer',
+          'Staff Frontend / AI Copilot Engineer ',
+        ])
+        const title = (p.activeJobTitle || '').trim()
+        return {
+          ...current,
+          ...p,
+          activeJobTitle:
+            !title || demoTitles.has(title) ? '' : p.activeJobTitle || '',
+        }
+      },
     },
   ),
 )

@@ -18,26 +18,42 @@ type Props = {
 export function ApiStatusBadge({
   variant = 'compact',
   className,
-  pollMs = 4000,
+  pollMs = 10000,
 }: Props) {
   const [health, setHealth] = useState<CopilotHealth | null>(null)
   const [checking, setChecking] = useState(true)
   const [open, setOpen] = useState(false)
 
-  const poll = useCallback(async () => {
-    setChecking(true)
+  const poll = useCallback(async (opts?: { silent?: boolean }) => {
+    // Avoid spinner flash on every interval tick — only spin on first load / manual refresh
+    if (!opts?.silent) setChecking(true)
     try {
       const h = await checkCopilotHealth()
-      setHealth(h)
+      setHealth((prev) => {
+        // Skip React update if nothing meaningful changed (stops badge flicker)
+        if (
+          prev &&
+          prev.ok === h.ok &&
+          prev.openai_ready === h.openai_ready &&
+          prev.stt_provider === h.stt_provider &&
+          prev.stt_deepgram_ready === h.stt_deepgram_ready &&
+          prev.llm_provider === h.llm_provider
+        ) {
+          return prev
+        }
+        return h
+      })
     } finally {
-      setChecking(false)
+      if (!opts?.silent) setChecking(false)
+      else setChecking(false)
     }
   }, [])
 
   useEffect(() => {
     void poll()
-    const id = window.setInterval(() => void poll(), pollMs)
-    const onFocus = () => void poll()
+    // Slower background poll; silent so UI doesn't flash "checking"
+    const id = window.setInterval(() => void poll({ silent: true }), pollMs)
+    const onFocus = () => void poll({ silent: true })
     window.addEventListener('focus', onFocus)
     return () => {
       window.clearInterval(id)
@@ -139,11 +155,10 @@ export function ApiStatusBadge({
           className={cn(
             'h-2 w-2 shrink-0 rounded-full',
             !online
-              ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.8)]'
+              ? 'bg-rose-400'
               : !llmOk
-                ? 'bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.7)]'
-                : 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]',
-            online && llmOk && 'animate-pulse',
+                ? 'bg-amber-300'
+                : 'bg-emerald-400',
           )}
         />
         {checking && !health ? (

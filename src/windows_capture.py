@@ -1,14 +1,17 @@
 """
-Windows system-audio capture (what you hear).
+Windows system-audio capture (what you hear — interviewer only).
 
 Priority:
-1) Stereo Mix / What U Hear (most reliable for YouTube on this machine)
-2) sounddevice default input (mic) as last-resort room pickup
-3) PyAudioWPatch WASAPI loopback if available
+1) Stereo Mix / What U Hear (most reliable for YouTube / meetings)
+2) PyAudioWPatch WASAPI loopback if available
+3) Mic ONLY if ASTRA_ALLOW_MIC_FALLBACK=1 (otherwise refuse — picks up candidate answers)
+
+Competitors (Final Round, Cluely) never use the room mic for interview STT.
 """
 
 from __future__ import annotations
 
+import os
 import sys
 import threading
 from typing import Any
@@ -16,6 +19,25 @@ from typing import Any
 import numpy as np
 
 from audio_capture import AudioCapture, Int16RingBuffer, MAX_BUFFER_SECONDS
+
+
+def _mic_fallback_allowed() -> bool:
+    return os.environ.get("ASTRA_ALLOW_MIC_FALLBACK", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+_SPEAKER_ONLY_HELP = (
+    "No system/speaker audio device found. Interview capture must hear the "
+    "interviewer from PC speakers — not your microphone (your answers would be transcribed). "
+    "Enable Stereo Mix: Windows Sound → Recording → right-click empty area → "
+    "Show Disabled Devices → enable Stereo Mix. "
+    "Or use the web UI with Share tab audio. "
+    "Override only if intentional: set ASTRA_ALLOW_MIC_FALLBACK=1."
+)
 
 try:
     import sounddevice as sd
@@ -103,15 +125,14 @@ class WindowsAudioCapture(AudioCapture):
                     break
 
         if chosen is None:
-            # Prefer Stereo Mix / system virtual line
+            # Prefer Stereo Mix / system virtual line only
             mixes = [d for d in devices if d["is_mix"]]
             if mixes:
-                # Prefer names containing stereo mix
                 stereo = [d for d in mixes if "stereo mix" in d["name"].lower()]
                 chosen = stereo[0] if stereo else mixes[0]
-                self._using_microphone = "mic" in chosen["name"].lower() and "mix" not in chosen["name"].lower()
-            else:
-                # Default input (often mic array)
+                self._using_microphone = False
+            elif _mic_fallback_allowed():
+                # Explicit override — room mic (hears candidate answers too)
                 if sd is not None:
                     try:
                         di = sd.default.device[0]
@@ -125,28 +146,58 @@ class WindowsAudioCapture(AudioCapture):
                 if chosen is None and devices:
                     chosen = devices[0]
                     self._using_microphone = not chosen["is_mix"]
+                print(
+                    "[audio] WARNING: ASTRA_ALLOW_MIC_FALLBACK — using microphone; "
+                    "your spoken answers may be transcribed.",
+                    flush=True,
+                )
+            else:
+                # Prefer WASAPI loopback name; never silently fall back to mic
+                if pyaudio is not None:
+                    self._backend = "pyaudio"
+                    self._device = device_name or "WASAPI Loopback"
+                    self._device_index = None
+                    self._using_microphone = False
+                    print(
+                        "[audio] No Stereo Mix device; will try PyAudioWPatch WASAPI loopback",
+                        flush=True,
+                    )
+                    return
+                raise RuntimeError(_SPEAKER_ONLY_HELP)
 
         if chosen is None:
-            # Last chance: pyaudiowpatch loopback name only
             if pyaudio is not None:
                 self._backend = "pyaudio"
                 self._device = device_name or "WASAPI Loopback"
                 self._device_index = None
+                self._using_microphone = False
                 print("[audio] sounddevice has no inputs; will try PyAudioWPatch at start")
                 return
-            raise RuntimeError(
-                "No recording devices found. Enable Stereo Mix in Windows "
-                "Sound settings → Recording, or plug in a microphone."
-            )
+            raise RuntimeError(_SPEAKER_ONLY_HELP)
+
+        # Refuse pure mic devices unless override is set
+        is_pure_mic = (not chosen["is_mix"]) and (
+            "mic" in chosen["name"].lower() or "microphone" in chosen["name"].lower()
+        )
+        if is_pure_mic and not _mic_fallback_allowed():
+            if pyaudio is not None:
+                self._backend = "pyaudio"
+                self._device = "WASAPI Loopback"
+                self._device_index = None
+                self._using_microphone = False
+                print(
+                    f"[audio] Refusing mic device '{chosen['name']}'; trying WASAPI loopback",
+                    flush=True,
+                )
+                return
+            raise RuntimeError(_SPEAKER_ONLY_HELP)
 
         self._backend = "sounddevice"
         self._device = chosen["name"]
         self._device_index = chosen["index"]
         self._actual_sample_rate = int(chosen["rate"] or 44100)
         self._actual_channels = min(2, max(1, chosen["channels"]))
-        self._using_microphone = (not chosen["is_mix"]) and (
-            "mic" in chosen["name"].lower() or "microphone" in chosen["name"].lower()
-        )
+        self._using_microphone = is_pure_mic
         print(
             f"[audio] Selected: {self._device} "
             f"(idx={self._device_index}, mix={chosen['is_mix']}, mic={self._using_microphone})",
@@ -248,10 +299,10 @@ class WindowsAudioCapture(AudioCapture):
                 return
             except Exception as e:
                 print(f"[audio] sounddevice open failed: {e}", flush=True)
-                # fall through to mic default / pyaudio
+                # fall through — try loopback or refuse mic
 
-        # Fallback: default sounddevice input
-        if sd is not None:
+        # Mic default only with explicit override (otherwise candidate answers get STT'd)
+        if _mic_fallback_allowed() and sd is not None:
             try:
                 di = sd.default.device[0]
                 info = sd.query_devices(di)
@@ -270,16 +321,16 @@ class WindowsAudioCapture(AudioCapture):
                 )
                 self._stream.start()
                 self._capturing = True
-                print(f"[audio] Using default microphone: {self._device}", flush=True)
+                print(
+                    f"[audio] WARNING mic fallback: {self._device} "
+                    "(ASTRA_ALLOW_MIC_FALLBACK=1)",
+                    flush=True,
+                )
                 return
             except Exception as e:
                 print(f"[audio] default mic failed: {e}", flush=True)
 
-        raise RuntimeError(
-            "Couldn't start listening. Enable Stereo Mix in Windows Sound → Recording "
-            "(right-click empty area → Show Disabled Devices → enable Stereo Mix), "
-            "or allow microphone access."
-        )
+        raise RuntimeError(_SPEAKER_ONLY_HELP)
 
     def stop_capture(self) -> np.ndarray:
         self._capturing = False

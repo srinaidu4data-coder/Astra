@@ -202,6 +202,12 @@ export interface StealthSettings {
   hotkey: string
 }
 
+/**
+ * Interview capture — speakers/system by default so your answers are not transcribed.
+ * `auto` = local Windows → system loopback; web/cloud → share-tab audio.
+ */
+export type InterviewAudioSourceSetting = 'auto' | 'system' | 'display' | 'mic'
+
 export interface AppSettings {
   openaiKey: string
   deepgramKey: string
@@ -209,6 +215,14 @@ export interface AppSettings {
   demoMode: boolean
   jobContext: string
   tone: 'professional' | 'casual' | 'confident'
+  /**
+   * Where interviewer audio comes from.
+   * - auto: smart default (system on local Windows, display on web)
+   * - system: PC speakers via Stereo Mix / WASAPI (local Windows)
+   * - display: share Teams/Zoom tab with audio (web / cloud)
+   * - mic: last resort only — picks up your spoken answers too
+   */
+  audioSource: InterviewAudioSourceSetting
 }
 
 export type OverlaySizePreset =

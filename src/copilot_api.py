@@ -1191,8 +1191,8 @@ async def ws_interview(websocket: WebSocket):
                 if sess is None or not sess.running:
                     sess = LiveInterviewSession(emit)
                     session_holder["session"] = sess
-                # Default: browser mic (reliable). System/Stereo Mix only when
-                # explicitly requested — Windows system default was silent for most users.
+                # Default: browser = client PCM (UI sends speaker/tab audio, not mic).
+                # System/Stereo Mix when UI requests source=system (local Windows).
                 source = (msg.get("source") or "").strip().lower()
                 if not source:
                     force_system = os.environ.get(

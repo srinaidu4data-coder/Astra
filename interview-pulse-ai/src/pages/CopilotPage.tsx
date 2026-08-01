@@ -14,8 +14,11 @@ import {
 } from '@/services/real-api'
 import { useAppStore } from '@/stores/app-store'
 import type { AnswerMode, LatencySnapshot, QACard } from '@/types'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Mic, MicOff, RefreshCw } from 'lucide-react'
+import { MicOff, RefreshCw, Volume2 } from 'lucide-react'
+import {
+  resolveInterviewAudioSource,
+  type InterviewAudioSource,
+} from '@/lib/api-base'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 function gradeColor(grade?: string) {
@@ -29,8 +32,8 @@ function gradeColor(grade?: string) {
 /**
  * Real interview UX:
  * - One big Listen button stays ON for the whole interview
- * - Web/cloud: browser mic streams PCM → API Whisper + answers
- * - Local Windows: can use system Stereo Mix when source=system
+ * - Speakers / tab / system loopback only by default (not mic)
+ * - Candidate answers are NOT transcribed — same model as Final Round / Cluely
  * - Filters chatter, answers only interviewer questions
  * - Answers queue; you step with Next when ready
  */
@@ -53,6 +56,10 @@ export function CopilotPage() {
   } = useAppStore()
 
   const cardIndexRef = useRef(0)
+  const lastLevelAt = useRef(0)
+  const lastPartialAt = useRef(0)
+  const lastStatusAt = useRef(0)
+  const lastStatusMsg = useRef('')
   const [apiOk, setApiOk] = useState(false)
   const [sessionOn, setSessionOn] = useState(false)
   const [device, setDevice] = useState('')
@@ -69,7 +76,16 @@ export function CopilotPage() {
 
   const pushStatus = useCallback((msg: string) => {
     if (!msg) return
-    setStatusLog((prev) => [msg, ...prev].slice(0, 20))
+    // Dedupe identical spam + throttle status list churn (was major flicker source)
+    const now = Date.now()
+    if (msg === lastStatusMsg.current && now - lastStatusAt.current < 800) return
+    if (now - lastStatusAt.current < 200 && msg.startsWith('Hearing')) return
+    lastStatusMsg.current = msg
+    lastStatusAt.current = now
+    setStatusLog((prev) => {
+      if (prev[0] === msg) return prev
+      return [msg, ...prev].slice(0, 12)
+    })
   }, [])
 
   const pushCard = useCallback(
@@ -149,11 +165,15 @@ export function CopilotPage() {
         if (!active) setPhase('idle')
       },
       onLevel: (level, state) => {
-        if (state) setPhase(state)
-        // Build a simple waveform from scalar level
-        const bars = Array.from({ length: 32 }, (_, i) => {
-          const wobble = 0.15 * Math.sin(Date.now() / 120 + i * 0.45)
-          return Math.min(1, Math.max(0.04, level * 2.8 + wobble * level))
+        const now = Date.now()
+        // ~8 fps max for waveform + phase (prevents whole-page thrash)
+        if (now - lastLevelAt.current < 120) return
+        lastLevelAt.current = now
+        if (state) setPhase((p) => (p === state ? p : state))
+        // Stable bar shape from level only — no Date.now() wobble (that forced repaints)
+        const bars = Array.from({ length: 24 }, (_, i) => {
+          const wave = 0.12 * Math.sin(i * 0.55 + level * 8)
+          return Math.min(1, Math.max(0.05, level * 2.6 + wave * level))
         })
         setLevels(bars)
       },
@@ -169,9 +189,12 @@ export function CopilotPage() {
       },
       onTranscriptPartial: (text) => {
         if (!text?.trim()) return
-        // Live Deepgram interim — status only (avoid flooding transcript list)
+        // Deepgram interims fire very often — throttle status text hard
+        const now = Date.now()
+        if (now - lastPartialAt.current < 400) return
+        lastPartialAt.current = now
         pushStatus(`Hearing… ${text.slice(0, 90)}${text.length > 90 ? '…' : ''}`)
-        setPhase('hearing')
+        setPhase((p) => (p === 'hearing' ? p : 'hearing'))
       },
       onAnswerPending: (question) => {
         pushStatus(`Writing answer for: ${question.slice(0, 60)}…`)
@@ -190,33 +213,56 @@ export function CopilotPage() {
         // so Q2 doesn't overwrite Q1 and pending cards stay paired correctly.
         setCards((prev) => {
           const next = [...prev]
-          const card: QACard = { id: ans.id, question: q, answer: ans }
+          // Prefer stable ans.id (job_*) so we update in place without remount
+          let idx = next.findIndex((c) => c.id === ans.id)
           const qNorm = q.toLowerCase()
-          let idx = -1
-          for (let i = next.length - 1; i >= 0; i--) {
-            const cq = (next[i]?.question || '').trim().toLowerCase()
-            if (cq && (cq === qNorm || qNorm.includes(cq.slice(0, 40)) || cq.includes(qNorm.slice(0, 40)))) {
-              idx = i
-              break
-            }
-            if (next[i]?.answer?.streaming) {
-              idx = i
-              break
+          if (idx < 0) {
+            for (let i = next.length - 1; i >= 0; i--) {
+              const cq = (next[i]?.question || '').trim().toLowerCase()
+              if (
+                cq &&
+                (cq === qNorm ||
+                  qNorm.includes(cq.slice(0, 40)) ||
+                  cq.includes(qNorm.slice(0, 40)))
+              ) {
+                idx = i
+                break
+              }
+              if (next[i]?.answer?.streaming) {
+                idx = i
+                break
+              }
             }
           }
+          const card: QACard = {
+            id: idx >= 0 ? next[idx]!.id : ans.id,
+            question: q,
+            answer: { ...ans, id: idx >= 0 ? next[idx]!.id : ans.id },
+          }
           if (idx >= 0) {
+            // Skip no-op updates (same text) to avoid flicker
+            const prevText = next[idx]?.answer?.bullets?.join('\n') || ''
+            const nextText = card.answer.bullets?.join('\n') || ''
+            if (
+              prevText === nextText &&
+              next[idx]?.answer?.streaming === card.answer.streaming
+            ) {
+              return prev
+            }
             next[idx] = card
           } else {
             next.push(card)
             idx = next.length - 1
           }
-          cardIndexRef.current = idx
-          setCardIndex(idx)
+          if (cardIndexRef.current !== idx) {
+            cardIndexRef.current = idx
+            setCardIndex(idx)
+          }
           return next
         })
         setAnswer(ans)
-        // Prefer full stage metrics from onMetrics/latency events; fall back to first token
-        if (ans.latencyMs != null) {
+        // Metrics only on final answer (streaming metrics caused top-bar thrash)
+        if (!ans.streaming && ans.latencyMs != null) {
           setMetrics({
             vadMs: 0,
             sttMs: 0,
@@ -225,12 +271,13 @@ export function CopilotPage() {
             lastUpdated: Date.now(),
           })
         }
-        setPhase('listening')
-        pushStatus('Answer ready — still listening')
-        // Refresh competitor benchmark snapshot
-        void fetchLatencyMetrics().then((s) => {
-          if (s) setLatencySnap(s)
-        })
+        if (!ans.streaming) {
+          setPhase('listening')
+          pushStatus('Answer ready — still listening')
+          void fetchLatencyMetrics().then((s) => {
+            if (s) setLatencySnap(s)
+          })
+        }
       },
       onError: (msg) => {
         // Session/audio errors are not the same as "API offline"
@@ -288,29 +335,43 @@ export function CopilotPage() {
     }
 
     try {
-      pushStatus('Starting interview — allow microphone if prompted…')
+      const rawSource = settings.audioSource || 'auto'
+      const audioMode: InterviewAudioSource =
+        rawSource === 'auto' || !rawSource
+          ? resolveInterviewAudioSource()
+          : (rawSource as InterviewAudioSource)
+      const modeHint =
+        audioMode === 'system'
+          ? 'PC speakers (Stereo Mix / loopback)'
+          : audioMode === 'mic'
+            ? '⚠ microphone (your answers may be transcribed)'
+            : 'shared tab / system audio'
+      pushStatus(
+        `Starting interview — ${modeHint}. Prefer speakers so only the interviewer is heard…`,
+      )
       await liveInterview.start({
         jobContext: settings.jobContext || activeJobTitle,
         tone: settings.tone,
         mode: answerMode,
-        // Always browser mic unless user opted into Stereo Mix (ip_audio_source=system)
-        source: 'browser',
-        // Admin-assigned models (null → server gpt-4.1-mini / nano)
+        // Speakers / loopback only unless Settings explicitly set mic
+        audioMode,
+        // Admin-assigned models (null → server defaults)
         userAnswerModel: user?.answer_model ?? user?.effective_answer_model ?? null,
         userFallbackModel:
           user?.fallback_model ?? user?.effective_fallback_model ?? null,
-        // Deepgram Nova-3 streaming STT (Settings key or server DEEPGRAM_API_KEY)
         deepgramKey: settings.deepgramKey || null,
         sttProvider: settings.deepgramKey ? 'deepgram' : 'auto',
       })
       setSessionOn(true)
       setListening(true)
       setApiOk(true)
-      setDevice('browser-mic')
+      setDevice(audioMode === 'mic' ? 'microphone' : 'speakers')
       pushStatus(
-        settings.deepgramKey
-          ? 'Listening (browser mic) · Deepgram Nova-3 STT'
-          : 'Listening (browser mic) · Whisper STT (add Deepgram key in Settings for faster streaming)',
+        audioMode === 'mic'
+          ? '⚠ Mic mode on — switch to Speakers in Settings so your answers are not transcribed'
+          : settings.deepgramKey
+            ? 'Listening to speakers/tab audio · Deepgram Nova-3 · your mic is off'
+            : 'Listening to speakers/tab audio · your mic is off',
       )
     } catch (e) {
       const msg = (e as Error).message || 'Could not start'
@@ -322,7 +383,9 @@ export function CopilotPage() {
       window.alert(
         `Cannot start interview.\n\n${msg}\n\n` +
           `Tips:\n` +
-          `• Allow microphone access in the browser\n` +
+          `• Share the Teams/Zoom tab with "Share tab audio" (or system audio)\n` +
+          `• Local Windows: enable Stereo Mix / use Speakers mode (Settings)\n` +
+          `• Do NOT use mic mode — your answers would be transcribed\n` +
           `• On this website the API should be api.jobinterviewcracker.com\n` +
           `• Local only: cd src && python copilot_api.py`,
       )
@@ -494,7 +557,7 @@ export function CopilotPage() {
                 <span
                   className={`h-2.5 w-2.5 rounded-full ${
                     sessionOn
-                      ? 'listening-pulse bg-[#20B8CD]'
+                      ? 'bg-[#20B8CD]'
                       : apiOk
                         ? 'bg-white/30'
                         : 'bg-[#E8C547]'
@@ -514,15 +577,9 @@ export function CopilotPage() {
             <Waveform levels={levels} active={sessionOn} className="h-16 w-full" />
           </div>
 
-          {/* Always-visible status so actions never feel silent */}
+          {/* Status: no color thrash — fixed chrome, text-only updates */}
           {statusLog[0] && (
-            <div
-              className={`mb-4 rounded-sm border px-4 py-3 text-[12px] tracking-normal ${
-                apiOk
-                  ? 'border-[#20B8CD]/30 text-[#20B8CD]'
-                  : 'border-[#E8C547]/40 text-[#E8C547]'
-              }`}
-            >
+            <div className="mb-4 rounded-sm border border-white/10 bg-white/[0.03] px-4 py-3 text-[12px] tracking-normal text-white/55">
               {statusLog[0]}
             </div>
           )}
@@ -541,7 +598,7 @@ export function CopilotPage() {
                 </>
               ) : (
                 <>
-                  <Mic className="h-4 w-4" strokeWidth={1.75} /> Start interview
+                  <Volume2 className="h-4 w-4" strokeWidth={1.75} /> Start interview
                 </>
               )}
             </Button>
@@ -570,11 +627,23 @@ export function CopilotPage() {
           <div className="mb-8 space-y-2 rounded-[18px] glass-inset px-5 py-4 text-[13px] leading-relaxed text-white/45">
             <p className="font-light text-white/75">How this works</p>
             <ol className="list-decimal space-y-1.5 pl-4">
-              <li>Press <strong className="text-white/70">Start interview</strong> — allow mic if asked</li>
-              <li>Play the interviewer on speakers (or speak the question)</li>
-              <li>Browser mic streams audio to the API; chatter is filtered</li>
-              <li>When a real question ends, an answer appears here</li>
+              <li>
+                Press <strong className="text-white/70">Start interview</strong> — we capture{' '}
+                <strong className="text-white/70">speakers / meeting audio only</strong>, not your mic
+              </li>
+              <li>
+                When prompted, share the <strong className="text-white/70">Teams/Zoom tab</strong> and
+                enable <strong className="text-white/70">Share tab audio</strong> (or system audio)
+              </li>
+              <li>
+                Answer out loud as usual — your voice is not transcribed; only the interviewer is
+              </li>
+              <li>When a real question ends, a suggested answer appears here</li>
             </ol>
+            <p className="mt-2 text-[12px] text-white/30">
+              Audio source: Settings → Interview audio source. Local Windows can use Stereo Mix
+              (system loopback) instead of tab share.
+            </p>
             {!apiOk && (
               <p className="mt-2 text-[#E8C547]">
                 Backend offline. Production uses{' '}
@@ -633,25 +702,21 @@ export function CopilotPage() {
           </p>
 
           <div className="max-h-[260px] space-y-3 overflow-auto pr-1">
-            <AnimatePresence initial={false}>
-              {transcript.length === 0 && (
-                <p className="py-8 text-center text-[14px] text-white/35">
-                  {sessionOn
-                    ? 'Waiting for speech…'
-                    : 'Start interview to begin listening'}
-                </p>
-              )}
-              {transcript.map((line) => (
-                <motion.div
-                  key={line.id + line.text.slice(0, 24)}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-[16px] glass-inset px-4 py-3 text-[14px] leading-relaxed text-white/80"
-                >
-                  {line.text}
-                </motion.div>
-              ))}
-            </AnimatePresence>
+            {transcript.length === 0 && (
+              <p className="py-8 text-center text-[14px] text-white/35">
+                {sessionOn
+                  ? 'Waiting for speech…'
+                  : 'Start interview to begin listening'}
+              </p>
+            )}
+            {transcript.map((line) => (
+              <div
+                key={line.id}
+                className="rounded-[16px] glass-inset px-4 py-3 text-[14px] leading-relaxed text-white/80"
+              >
+                {line.text}
+              </div>
+            ))}
           </div>
 
           {statusLog.length > 0 && (

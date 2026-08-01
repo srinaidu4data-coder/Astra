@@ -600,7 +600,13 @@ class LiveInterviewSession:
             # CRITICAL: open capture BEFORE Whisper load so the first question
             # is not dropped while the model warms (that caused 1-word STT tails).
             if self._source == "browser":
-                self._emit("status", {"message": "Waiting for browser microphone audio…"})
+                # Client PCM is speaker/tab audio by default (not the candidate mic)
+                self._emit(
+                    "status",
+                    {
+                        "message": "Waiting for speaker/tab audio from browser…",
+                    },
+                )
                 try:
                     from config import AUDIO_SAMPLE_RATE, AUDIO_CHANNELS
 
@@ -614,10 +620,10 @@ class LiveInterviewSession:
                 self._capture = cap
                 # start_capture flushes any pre-roll PCM buffered before this point
                 self._capture.start_capture()
-                device = "browser-mic"
+                device = "speakers/tab"
                 status_msg = (
-                    "Live session ON · browser mic · allow microphone access, "
-                    "then speak or play interview audio near the mic"
+                    "Live session ON · speakers/tab audio · your mic stays off — "
+                    "only the interviewer should be shared"
                 )
             else:
                 self._emit(
@@ -627,7 +633,21 @@ class LiveInterviewSession:
                 self._capture = get_audio_capture()
                 self._capture.start_capture()
                 device = getattr(self._capture, "device", "unknown")
-                status_msg = f"Live session ON · {device} · speak (or play interview audio)"
+                using_mic = bool(
+                    getattr(self._capture, "diagnostics", lambda: {})().get(
+                        "using_microphone"
+                    )
+                )
+                if using_mic:
+                    status_msg = (
+                        f"Live session ON · {device} · WARNING: microphone fallback — "
+                        "your spoken answers may be transcribed"
+                    )
+                else:
+                    status_msg = (
+                        f"Live session ON · {device} · PC speakers only — "
+                        "answer out loud; your voice is not captured"
+                    )
 
             self._emit(
                 "listening",

@@ -2,7 +2,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { AnswerMode, QACard } from '@/types'
-import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 
 const modes: { id: AnswerMode; label: string; hint: string }[] = [
@@ -103,11 +102,10 @@ export function WhisperStream({
         )}
 
         {card && (
-          <motion.div
-            key={`${card.id}-${answer?.mode ?? mode}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+          // Stable key: do NOT remount on every streaming token (was causing heavy flicker).
+          // Only remount when the card identity changes (new question).
+          <div
+            key={card.id}
             className="space-y-5 pb-2"
           >
             <div className="rounded-[22px] glass-inset px-6 py-5">
@@ -171,7 +169,7 @@ export function WhisperStream({
                 </pre>
               ) : null}
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
 

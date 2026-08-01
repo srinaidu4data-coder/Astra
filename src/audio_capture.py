@@ -529,7 +529,8 @@ class BrowserAudioCapture(AudioCapture):
         self._capturing = False
         self._level = 0.0
         self._raw_level = 0.0
-        self._device_name = "browser-mic"
+        # Client PCM from share-tab / system audio (or rare mic opt-in) — not "mic" by default
+        self._device_name = "speakers/tab"
         self._prebuf = bytearray()
         self._prebuf_lock = threading.Lock()
 

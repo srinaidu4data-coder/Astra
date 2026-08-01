@@ -261,7 +261,8 @@ export function KnowledgePage() {
             className="field mb-4"
             value={activeJobTitle}
             onChange={(e) => setActiveJobTitle(e.target.value)}
-            placeholder="Role title"
+            placeholder="Role title (e.g. SAP ATTP Techno-Functional Consultant)"
+            autoComplete="off"
           />
           <textarea
             className="field min-h-[140px] resize-y"

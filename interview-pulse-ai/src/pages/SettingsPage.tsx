@@ -329,6 +329,64 @@ export function SettingsPage() {
               <option value="confident">Confident</option>
             </select>
           </label>
+          <label>
+            <span className="label-quiet">Interview audio source</span>
+            <select
+              className="field"
+              value={settings.audioSource || 'auto'}
+              onChange={(e) =>
+                updateSettings({
+                  audioSource: e.target.value as
+                    | 'auto'
+                    | 'system'
+                    | 'display'
+                    | 'mic',
+                })
+              }
+            >
+              <option value="auto">
+                Auto (recommended) — speakers only, never mic
+              </option>
+              <option value="display">
+                Share tab / system audio (Chrome share dialog)
+              </option>
+              <option value="system">
+                System loopback (local Windows Stereo Mix / WASAPI)
+              </option>
+              <option value="mic">
+                Microphone (last resort — also hears your answers)
+              </option>
+            </select>
+          </label>
+          <p className="text-[12px] leading-relaxed text-white/35">
+            Like Final Round / Cluely: we listen to <strong className="text-white/55">what plays on
+            your PC</strong> (meeting tab or system audio), not your mic. That way only the
+            interviewer is transcribed — not your spoken answers.
+            {(settings.audioSource === 'display' ||
+              settings.audioSource === 'auto' ||
+              !settings.audioSource) && (
+              <>
+                {' '}
+                On Start (web), pick the Teams/Zoom <strong className="text-white/55">tab</strong>{' '}
+                and enable <strong className="text-white/55">Share tab audio</strong>. Local
+                Windows Auto uses Stereo Mix when available.
+              </>
+            )}
+            {settings.audioSource === 'system' && (
+              <>
+                {' '}
+                Enable <strong className="text-white/55">Stereo Mix</strong> in Windows Sound →
+                Recording (right-click empty area → Show Disabled Devices).
+              </>
+            )}
+            {settings.audioSource === 'mic' && (
+              <>
+                {' '}
+                <strong className="text-[#E8C547]">Warning:</strong> mic mode will hear you answer
+                out loud and may generate answers to your own speech. Prefer Speakers.
+              </>
+            )}
+          </p>
         </div>
       </section>
 
