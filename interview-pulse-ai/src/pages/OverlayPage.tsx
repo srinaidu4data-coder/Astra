@@ -17,8 +17,8 @@ import {
   GripHorizontal,
   Maximize2,
   Minimize2,
+  PanelLeftOpen,
   PanelTopClose,
-  PanelTopOpen,
   X,
 } from 'lucide-react'
 import {
@@ -53,7 +53,14 @@ export function OverlayPage() {
 
   const desktop = isDesktopApp()
   const [cardIndex, setCardIndex] = useState(0)
-  const [chromeCollapsed, setChromeCollapsed] = useState(false)
+  /** One Hide: collapses chrome + pulls Speak full height (persists for this popup) */
+  const [chromeCollapsed, setChromeCollapsed] = useState(() => {
+    try {
+      return sessionStorage.getItem('ip_overlay_chrome_hidden') === '1'
+    } catch {
+      return false
+    }
+  })
   const [sizeLabel, setSizeLabel] = useState('')
   const [maximized, setMaximized] = useState(false)
   const [activePreset, setActivePreset] = useState<OverlaySizePreset | null>('medium')
@@ -66,6 +73,19 @@ export function OverlayPage() {
     w: number
     h: number
   } | null>(null)
+
+  const setChromeHidden = useCallback((hidden: boolean) => {
+    setChromeCollapsed(hidden)
+    try {
+      sessionStorage.setItem('ip_overlay_chrome_hidden', hidden ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  const toggleHide = useCallback(() => {
+    setChromeHidden(!chromeCollapsed)
+  }, [chromeCollapsed, setChromeHidden])
 
   const cards: QACard[] = useMemo(() => {
     if (!answer) return []
@@ -316,11 +336,12 @@ export function OverlayPage() {
   return (
     <div
       className={cn(
-        'relative flex h-screen flex-col p-2.5 text-white sm:p-3',
+        'relative flex h-screen flex-col text-white',
         desktop ? 'bg-transparent' : 'bg-[#131314]',
+        chromeCollapsed ? 'p-1.5 sm:p-2' : 'p-2.5 sm:p-3',
       )}
     >
-      {desktop && stealth.clickThrough && (
+      {desktop && stealth.clickThrough && !chromeCollapsed && (
         <div
           className="mb-2 rounded-[14px] border border-[#E8C547]/40 bg-[#E8C547]/15 px-3 py-2 text-[11px] text-[#E8C547]"
           style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
@@ -330,151 +351,212 @@ export function OverlayPage() {
         </div>
       )}
 
-      {/* Title bar — primary move surface */}
-      <div
-        className={cn(
-          'glass mb-2 flex shrink-0 cursor-grab items-center justify-between rounded-[16px] px-2.5 py-2 active:cursor-grabbing sm:mb-3 sm:rounded-[18px] sm:px-3 sm:py-2.5',
-          stealth.clickThrough && 'opacity-60',
-        )}
-        style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
-        onPointerDown={onMovePointerDown}
-        onPointerMove={onMovePointerMove}
-        onPointerUp={onMovePointerUp}
-        onPointerCancel={onMovePointerUp}
-        onDoubleClick={() => void toggleMaximize()}
-        title="Drag this bar to move · double-click to expand"
-      >
-        <div className="flex min-w-0 items-center gap-2 text-[12px] text-white/55">
-          <GripHorizontal className="h-4 w-4 shrink-0 text-[#5DD5E3]" strokeWidth={1.5} />
-          <span className="truncate font-medium text-white/70">
-            {desktop ? 'Drag to move' : 'Answer · drag to move'}
-          </span>
-          <Badge tone={listening ? 'emerald' : 'default'}>
-            {listening ? 'live' : 'idle'}
-          </Badge>
-          {sizeLabel ? (
-            <span className="hidden truncate text-[10px] text-white/30 sm:inline">
-              {sizeLabel}
-            </span>
-          ) : null}
-        </div>
+      {/* Hidden mode: floating pill only — Speak fills the window (pull up) */}
+      {chromeCollapsed ? (
         <div
-          className="flex shrink-0 items-center gap-0.5"
+          className="pointer-events-none absolute left-2 top-2 z-40 flex items-center gap-1.5 sm:left-3 sm:top-3"
           style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
-          onPointerDown={(e) => e.stopPropagation()}
         >
-          <Button
-            size="icon"
-            variant="ghost"
-            title="Reset size & position"
-            onClick={() => void resetPosition()}
+          <div
+            className="pointer-events-auto flex cursor-grab items-center gap-1 rounded-full border border-white/12 bg-[#141414]/95 p-1 shadow-lg backdrop-blur-md active:cursor-grabbing"
+            onPointerDown={onMovePointerDown}
+            onPointerMove={onMovePointerMove}
+            onPointerUp={onMovePointerUp}
+            onPointerCancel={onMovePointerUp}
+            title="Drag to move · Show pulls chrome back up"
           >
-            <span className="text-[10px] font-semibold text-white/50">⌂</span>
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            title={chromeCollapsed ? 'Show controls' : 'Hide controls'}
-            onClick={() => setChromeCollapsed((v) => !v)}
-          >
-            {chromeCollapsed ? (
-              <PanelTopOpen className="h-4 w-4" strokeWidth={1.5} />
-            ) : (
-              <PanelTopClose className="h-4 w-4" strokeWidth={1.5} />
-            )}
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            title={maximized ? 'Restore size' : 'Expand to fill screen'}
-            onClick={() => void toggleMaximize()}
-          >
-            {maximized ? (
-              <Minimize2 className="h-4 w-4" strokeWidth={1.5} />
-            ) : (
-              <Maximize2 className="h-4 w-4" strokeWidth={1.5} />
-            )}
-          </Button>
-          {desktop && (
-            <Button
-              size="icon"
-              variant="ghost"
-              title={
-                stealth.clickThrough
-                  ? 'Click-through ON — click to interact again'
-                  : 'Click-through OFF — click so mouse passes through'
-              }
-              onClick={() => {
-                const next = !stealth.clickThrough
-                updateStealth({ clickThrough: next })
-                void window.interviewPulse?.setClickThrough?.(next)
-              }}
-            >
-              {stealth.clickThrough ? (
-                <EyeOff className="h-4 w-4 text-[#E8C547]" strokeWidth={1.5} />
-              ) : (
-                <Eye className="h-4 w-4" strokeWidth={1.5} />
+            <span className="inline-flex h-8 w-8 items-center justify-center text-[#5DD5E3]">
+              <GripHorizontal className="h-4 w-4" strokeWidth={1.5} />
+            </span>
+            <span
+              className={cn(
+                'mx-0.5 h-2 w-2 shrink-0 rounded-full',
+                listening ? 'bg-[#20B8CD]' : 'bg-white/30',
               )}
-            </Button>
-          )}
-          <Button
-            size="icon"
-            variant="ghost"
-            title="Close detached answer"
-            onClick={closeWindow}
-          >
-            <X className="h-4 w-4" strokeWidth={1.5} />
-          </Button>
-        </div>
-      </div>
-
-      {!chromeCollapsed && (
-        <div
-          className="mb-2 flex shrink-0 flex-col gap-2 sm:mb-3"
-          style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
-        >
-          <div className="glass flex flex-wrap items-center gap-1.5 rounded-[16px] px-2.5 py-2">
-            <span className="mr-1 text-[10px] font-medium uppercase tracking-wide text-white/35">
-              Size
-            </span>
-            {PRESETS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                title={p.title}
-                onClick={() => void applyPreset(p.id)}
-                className={cn(
-                  'h-7 min-w-[2rem] rounded-lg px-2 text-[11px] font-medium transition-colors',
-                  activePreset === p.id
-                    ? 'bg-[#20B8CD] text-[#0C0C0C]'
-                    : 'bg-white/[0.06] text-white/55 hover:bg-white/[0.1] hover:text-white/85',
-                )}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="glass flex items-center gap-3 rounded-[16px] px-3 py-2">
-            <Waveform levels={levels} active={listening} className="h-8 flex-1" />
-            <input
-              type="range"
-              min={20}
-              max={100}
-              value={Math.round(stealth.opacity * 100)}
-              title="Opacity"
-              onChange={(e) => {
-                const opacity = Number(e.target.value) / 100
-                updateStealth({ opacity })
-                void window.interviewPulse?.setOverlayOpacity(opacity)
-              }}
-              className="w-20 shrink-0 accent-[#20B8CD] sm:w-28"
+              title={listening ? 'live' : 'idle'}
             />
+            <button
+              type="button"
+              onClick={toggleHide}
+              title="Show controls (pull up)"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-2.5 text-[11px] font-medium text-white/80 hover:bg-white/10 hover:text-white"
+            >
+              <PanelLeftOpen className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Show
+            </button>
+            <button
+              type="button"
+              onClick={() => void toggleMaximize()}
+              title={maximized ? 'Restore size' : 'Expand window'}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10 hover:text-white"
+            >
+              {maximized ? (
+                <Minimize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+              ) : (
+                <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={closeWindow}
+              title="Close"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/55 hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
           </div>
         </div>
+      ) : (
+        <>
+          {/* Full chrome — one primary Hide button */}
+          <div
+            className={cn(
+              'glass mb-2 flex shrink-0 cursor-grab items-center justify-between rounded-[16px] px-2.5 py-2 active:cursor-grabbing sm:mb-3 sm:rounded-[18px] sm:px-3 sm:py-2.5',
+              stealth.clickThrough && 'opacity-60',
+            )}
+            style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
+            onPointerDown={onMovePointerDown}
+            onPointerMove={onMovePointerMove}
+            onPointerUp={onMovePointerUp}
+            onPointerCancel={onMovePointerUp}
+            onDoubleClick={() => void toggleMaximize()}
+            title="Drag to move · double-click to expand window"
+          >
+            <div className="flex min-w-0 items-center gap-2 text-[12px] text-white/55">
+              <GripHorizontal className="h-4 w-4 shrink-0 text-[#5DD5E3]" strokeWidth={1.5} />
+              <span className="truncate font-medium text-white/70">
+                {desktop ? 'Drag to move' : 'Answer · drag to move'}
+              </span>
+              <Badge tone={listening ? 'emerald' : 'default'}>
+                {listening ? 'live' : 'idle'}
+              </Badge>
+              {sizeLabel ? (
+                <span className="hidden truncate text-[10px] text-white/30 sm:inline">
+                  {sizeLabel}
+                </span>
+              ) : null}
+            </div>
+            <div
+              className="flex shrink-0 items-center gap-1.5"
+              style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={toggleHide}
+                title="Hide chrome — pull Speak full height"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-medium text-white/70 hover:bg-white/[0.08] hover:text-white"
+              >
+                <PanelTopClose className="h-3.5 w-3.5" strokeWidth={1.75} />
+                Hide
+              </button>
+              <Button
+                size="icon"
+                variant="ghost"
+                title={maximized ? 'Restore size' : 'Expand to fill screen'}
+                onClick={() => void toggleMaximize()}
+              >
+                {maximized ? (
+                  <Minimize2 className="h-4 w-4" strokeWidth={1.5} />
+                ) : (
+                  <Maximize2 className="h-4 w-4" strokeWidth={1.5} />
+                )}
+              </Button>
+              {desktop && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  title={
+                    stealth.clickThrough
+                      ? 'Click-through ON — click to interact again'
+                      : 'Click-through OFF — click so mouse passes through'
+                  }
+                  onClick={() => {
+                    const next = !stealth.clickThrough
+                    updateStealth({ clickThrough: next })
+                    void window.interviewPulse?.setClickThrough?.(next)
+                  }}
+                >
+                  {stealth.clickThrough ? (
+                    <EyeOff className="h-4 w-4 text-[#E8C547]" strokeWidth={1.5} />
+                  ) : (
+                    <Eye className="h-4 w-4" strokeWidth={1.5} />
+                  )}
+                </Button>
+              )}
+              <Button
+                size="icon"
+                variant="ghost"
+                title="Close detached answer"
+                onClick={closeWindow}
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </Button>
+            </div>
+          </div>
+
+          <div
+            className="mb-2 flex shrink-0 flex-col gap-2 sm:mb-3"
+            style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
+          >
+            <div className="glass flex flex-wrap items-center gap-1.5 rounded-[16px] px-2.5 py-2">
+              <span className="mr-1 text-[10px] font-medium uppercase tracking-wide text-white/35">
+                Size
+              </span>
+              {PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  title={p.title}
+                  onClick={() => void applyPreset(p.id)}
+                  className={cn(
+                    'h-7 min-w-[2rem] rounded-lg px-2 text-[11px] font-medium transition-colors',
+                    activePreset === p.id
+                      ? 'bg-[#20B8CD] text-[#0C0C0C]'
+                      : 'bg-white/[0.06] text-white/55 hover:bg-white/[0.1] hover:text-white/85',
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                title="Reset size & position"
+                onClick={() => void resetPosition()}
+                className="ml-auto h-7 rounded-lg px-2 text-[11px] text-white/40 hover:bg-white/[0.06] hover:text-white/70"
+              >
+                Reset
+              </button>
+            </div>
+
+            <div className="glass flex items-center gap-3 rounded-[16px] px-3 py-2">
+              <Waveform levels={levels} active={listening} className="h-8 flex-1" />
+              <input
+                type="range"
+                min={20}
+                max={100}
+                value={Math.round(stealth.opacity * 100)}
+                title="Opacity"
+                onChange={(e) => {
+                  const opacity = Number(e.target.value) / 100
+                  updateStealth({ opacity })
+                  void window.interviewPulse?.setOverlayOpacity?.(opacity)
+                }}
+                className="w-20 shrink-0 accent-[#20B8CD] sm:w-28"
+              />
+            </div>
+          </div>
+        </>
       )}
 
-      <div className="min-h-0 flex-1 overflow-hidden rounded-[20px] sm:rounded-[24px]">
+      <div
+        className={cn(
+          'min-h-0 flex-1 overflow-hidden',
+          chromeCollapsed
+            ? 'rounded-[16px] pt-11 sm:rounded-[18px] sm:pt-12'
+            : 'rounded-[20px] sm:rounded-[24px]',
+        )}
+      >
         <WhisperStream
           compact
           cards={cards}
