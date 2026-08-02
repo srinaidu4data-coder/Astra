@@ -4,17 +4,33 @@ import {
   extractAtomicPunchline,
   planSpeakCanvas,
   starFieldWeights,
-  type SpeakCanvasStats,
+  type BeatRole,
 } from '@/lib/speak-canvas-engine'
 import {
   getSpeakHighlightsBudgeted,
-  splitHighlighted,
   type SpeakHighlightSpan,
 } from '@/lib/speak-highlight'
+import {
+  keywordMagnitude,
+  lensedDisplayScale,
+  orbitalShell,
+  segmentForNeuro,
+} from '@/lib/speak-neuro-astro'
+import { buildSpeakSheetFromAnswer, chipsFromSpans } from '@/lib/speak-impact'
 import { cn } from '@/lib/utils'
 import type { AnswerMode, QACard } from '@/types'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
-import { memo, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Check, ChevronLeft, ChevronRight, Copy, Loader2 } from 'lucide-react'
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
+
+type Spotlight = 'all' | 'hook' | 'proof' | 'close'
 
 const modes: { id: AnswerMode; label: string; hint: string }[] = [
   { id: 'shorter', label: 'Shorter', hint: '3 tight lines' },
@@ -24,11 +40,17 @@ const modes: { id: AnswerMode; label: string; hint: string }[] = [
 ]
 
 const READY_RAILS = [
-  { id: 'hook', label: 'Hook', hint: 'Primacy · first fixation' },
-  { id: 'proof', label: 'Proof', hint: 'Peak · action + metric' },
-  { id: 'close', label: 'Close', hint: 'Peak-end · last word' },
+  { id: 'hook', label: 'Hook', hint: 'Open with the claim' },
+  { id: 'proof', label: 'Proof', hint: 'Action + evidence' },
+  { id: 'close', label: 'Close', hint: 'Land the result' },
 ] as const
 
+/**
+ * Neuro-astro render: full text always present.
+ * Fovea (first ~11 words) full luminance; periphery slightly dimmer.
+ * Impact spans get gravitational magnitude classes (O/B/A/F/G).
+ * Zero words deleted.
+ */
 function HighlightedText({
   text,
   spans,
@@ -38,88 +60,250 @@ function HighlightedText({
   spans: SpeakHighlightSpan[]
   className?: string
 }) {
-  const nodes = splitHighlighted(text, spans)
-  return (
-    <span className={className}>
-      {nodes.map((n, i) =>
-        n.highlight ? (
+  const segments = useMemo(() => segmentForNeuro(text), [text])
+  const magSpans = useMemo(() => {
+    const L = text.length
+    return [...spans]
+      .filter((s) => s.end > s.start && s.start >= 0 && s.start < L)
+      .map((s) => {
+        const m = keywordMagnitude(s.kind, s.start, L)
+        return {
+          ...s,
+          end: Math.min(s.end, L),
+          css: m.cssClass,
+          mass: m.mass,
+        }
+      })
+      .sort((a, b) => a.start - b.start)
+  }, [spans, text])
+
+  // Walk text with absolute offsets so highlights align with original string
+  let cursor = 0
+  const nodes: ReactNode[] = []
+  let key = 0
+
+  for (const seg of segments) {
+    const segStart = cursor
+    const segEnd = cursor + seg.text.length
+    cursor = segEnd
+
+    // Slice this segment with any overlapping highlights
+    let local = segStart
+    const covering = magSpans.filter(
+      (s) => s.end > segStart && s.start < segEnd,
+    )
+    if (!covering.length) {
+      nodes.push(
+        <span
+          key={key++}
+          className={cn(
+            seg.foveal ? 'speak-fovea' : 'speak-periphery',
+            'speak-phrase',
+          )}
+        >
+          {seg.text}
+        </span>,
+      )
+      continue
+    }
+    for (const s of covering) {
+      const from = Math.max(s.start, segStart)
+      const to = Math.min(s.end, segEnd)
+      if (from > local) {
+        nodes.push(
           <span
-            key={i}
+            key={key++}
             className={cn(
-              'speak-keyword',
-              // von Restorff: metrics slightly louder than ownership
+              seg.foveal ? 'speak-fovea' : 'speak-periphery',
+              'speak-phrase',
             )}
           >
-            {n.text}
-          </span>
-        ) : (
-          <span key={i}>{n.text}</span>
-        ),
+            {text.slice(local, from)}
+          </span>,
+        )
+      }
+      if (to > from) {
+        nodes.push(
+          <strong
+            key={key++}
+            className={cn('speak-keyword', s.css)}
+            data-mass={s.mass.toFixed(2)}
+          >
+            {text.slice(from, to)}
+          </strong>,
+        )
+      }
+      local = Math.max(local, to)
+    }
+    if (local < segEnd) {
+      nodes.push(
+        <span
+          key={key++}
+          className={cn(
+            seg.foveal ? 'speak-fovea' : 'speak-periphery',
+            'speak-phrase',
+          )}
+        >
+          {text.slice(local, segEnd)}
+        </span>,
+      )
+    }
+  }
+
+  return <span className={className}>{nodes}</span>
+}
+
+function OrbitBeat({
+  role,
+  label,
+  children,
+  scale,
+  opacity,
+  collapsed,
+  fullText,
+  dimmed,
+  active,
+  onFocus,
+}: {
+  role: BeatRole
+  label: string
+  children: ReactNode
+  scale: number
+  opacity?: number
+  collapsed?: boolean
+  fullText?: string
+  /** Spotlight: non-focused beats soft-dim (text still fully present) */
+  dimmed?: boolean
+  active?: boolean
+  onFocus?: () => void
+}) {
+  const shell = orbitalShell(role)
+  return (
+    <li
+      className={cn(
+        'speak-beat speak-orbit rounded-[12px] px-3.5 py-2.5 list-none transition-[opacity,box-shadow] duration-200',
+        `speak-orbit-${shell}`,
+        role === 'hook' && 'speak-beat-hook',
+        role === 'proof' && 'speak-beat-peak',
+        role === 'close' && 'speak-beat-close',
+        role === 'support' && 'speak-beat-support',
+        active && 'speak-beat-active',
+        dimmed && 'speak-beat-dimmed',
       )}
-    </span>
-  )
-}
-
-/** Attention mass bar — visual softmax a_i */
-function AttentionBar({ a }: { a: number }) {
-  const pct = Math.round(Math.min(1, Math.max(0, a)) * 100)
-  return (
-    <span
-      className="speak-attn-bar"
-      title={`Attention aᵢ = ${(a * 100).toFixed(0)}% (softmax)`}
-      style={{ width: `${Math.max(8, pct)}%` }}
-    />
-  )
-}
-
-function IntentionStrip({ text }: { text: string }) {
-  return (
-    <div className="speak-intention" title="Implementation intention (Gollwitzer)">
-      <span className="speak-intention-tag">When → Then</span>
-      <span className="min-w-0 truncate">{text}</span>
-    </div>
-  )
-}
-
-function EngineStrip({ stats }: { stats: SpeakCanvasStats }) {
-  const [open, setOpen] = useState(false)
-  const loadTone =
-    stats.cognitiveLoad > 1.05
-      ? 'high'
-      : stats.cognitiveLoad > 0.75
-        ? 'mid'
-        : 'ok'
-  return (
-    <div className="speak-engine">
-      <button
-        type="button"
-        className="speak-engine-toggle"
-        onClick={() => setOpen((v) => !v)}
-        title="Psych-math engine (softmax, serial position, load, Zipf budget)"
+      style={{
+        opacity:
+          dimmed
+            ? 0.38
+            : opacity != null && opacity < 0.99
+              ? opacity
+              : undefined,
+      }}
+      title={collapsed && fullText ? fullText : undefined}
+      onClick={onFocus}
+    >
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="speak-rail-label">{label}</span>
+        {collapsed ? (
+          <span className="text-[10px] text-white/25">expand for full</span>
+        ) : active ? (
+          <span className="text-[10px] text-[#5DD5E3]/70">speak</span>
+        ) : null}
+      </div>
+      <div
+        className={cn(
+          'speak-body min-w-0 leading-[1.65] text-white/90',
+          collapsed && 'line-clamp-2',
+        )}
+        style={{ fontSize: `${15.5 * scale}px` }}
       >
-        <span>
-          L={stats.cognitiveLoad.toFixed(2)} · B={stats.highlightBudget} · U=
-          {stats.timeUtility.toFixed(2)}
+        {children}
+      </div>
+    </li>
+  )
+}
+
+function ImpactChipStrip({
+  chips,
+}: {
+  chips: Array<{ text: string; kind: string }>
+}) {
+  if (!chips.length) return null
+  return (
+    <div className="speak-impact-strip" aria-label="Impact words">
+      {chips.map((c, i) => (
+        <span
+          key={`${c.text}-${i}`}
+          className={cn('speak-impact-chip', `speak-impact-${c.kind}`)}
+        >
+          {c.text}
         </span>
-        <span className={cn('speak-load-dot', `is-${loadTone}`)} />
-        <span className="text-white/30">{open ? 'Hide math' : 'Psych-math'}</span>
-      </button>
-      {open && (
-        <ul className="speak-engine-formulas">
-          {stats.formulas.map((f) => (
-            <li key={f}>
-              <code>{f}</code>
-            </li>
-          ))}
-          <li className="text-white/35">
-            Techniques: primacy · recency · peak-end · isolation · chunking ·
-            implementation intentions · cognitive load
-          </li>
-        </ul>
-      )}
+      ))}
     </div>
   )
 }
+
+function PathRail({
+  spotlight,
+  onSpot,
+  completeness,
+}: {
+  spotlight: Spotlight
+  onSpot: (s: Spotlight) => void
+  completeness: number
+}) {
+  const items: { id: Spotlight; label: string; key: string }[] = [
+    { id: 'hook', label: 'Hook', key: '1' },
+    { id: 'proof', label: 'Proof', key: '2' },
+    { id: 'close', label: 'Close', key: '3' },
+  ]
+  return (
+    <div className="speak-path-rail">
+      <div className="speak-path-steps">
+        {items.map((it, i) => (
+          <button
+            key={it.id}
+            type="button"
+            className={cn(
+              'speak-path-step',
+              spotlight === it.id && 'is-active',
+              spotlight === 'all' && 'is-idle',
+            )}
+            onClick={() => onSpot(spotlight === it.id ? 'all' : it.id)}
+            title={`Focus ${it.label} (key ${it.key})`}
+          >
+            <span className="speak-path-key">{it.key}</span>
+            {it.label}
+            {i < items.length - 1 ? (
+              <span className="speak-path-arrow" aria-hidden>
+                →
+              </span>
+            ) : null}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={cn('speak-path-step', spotlight === 'all' && 'is-active')}
+          onClick={() => onSpot('all')}
+          title="Show all beats (key 0)"
+        >
+          All
+        </button>
+      </div>
+      <div
+        className="speak-complete-track"
+        title={`Scaffold ${Math.round(completeness * 100)}%`}
+      >
+        <div
+          className="speak-complete-fill"
+          style={{ width: `${Math.round(completeness * 100)}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// Speak surface stays clean: layout math runs in speak-canvas-engine for
+// highlight budgets / type scale only — no psych/ML "skills" UI while reading.
 
 function SpeakRailsSkeleton({ compact }: { compact?: boolean }) {
   return (
@@ -232,11 +416,11 @@ function useFrozenHighlights(
       return getSpeakHighlightsBudgeted(parts, {
         freeze: true,
         frozenParts: frozenPartsRef.current,
-        max: 8,
+        max: 10,
       })
     }
 
-    const next = getSpeakHighlightsBudgeted(parts, { max: 8 })
+    const next = getSpeakHighlightsBudgeted(parts, { max: 10 })
     if (streaming) {
       // Keep scanning until first hits, then freeze; empty freeze is not sticky.
       if (next.some((p) => p.length > 0)) {
@@ -279,6 +463,68 @@ export const WhisperStream = memo(function WhisperStream({
   const answer = card?.answer
   const bullets = answer?.bullets?.filter(Boolean) ?? []
   const metrics = answer?.metrics?.filter(Boolean) ?? []
+  /** OpenAI bar: progressive disclosure never permanently loses answer text */
+  const [expandFull, setExpandFull] = useState(false)
+  const [spotlight, setSpotlight] = useState<Spotlight>('all')
+  const [copied, setCopied] = useState(false)
+  /** Commitment lock: first atomic punch token freezes for the card */
+  const punchLockRef = useRef<{ cardId: string; token: string } | null>(null)
+
+  useEffect(() => {
+    setExpandFull(false)
+    setSpotlight('all')
+    setCopied(false)
+    punchLockRef.current = null
+  }, [card?.id])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const t = e.target as HTMLElement | null
+      if (
+        t &&
+        (t.tagName === 'INPUT' ||
+          t.tagName === 'TEXTAREA' ||
+          t.isContentEditable)
+      ) {
+        return
+      }
+      // P0: 1 / 2 / 3 focus Hook / Proof / Close; 0 or Esc = all
+      if (e.key === '1') {
+        e.preventDefault()
+        setSpotlight((s) => (s === 'hook' ? 'all' : 'hook'))
+      } else if (e.key === '2') {
+        e.preventDefault()
+        setSpotlight((s) => (s === 'proof' ? 'all' : 'proof'))
+      } else if (e.key === '3') {
+        e.preventDefault()
+        setSpotlight((s) => (s === 'close' ? 'all' : 'close'))
+      } else if (e.key === '0' || e.key === 'Escape') {
+        setSpotlight('all')
+      } else if ((e.key === 'c' || e.key === 'C') && !e.shiftKey) {
+        // optional: C copies when not in an input (P0 speak-sheet)
+        // only if user holds nothing special — skip if they might type
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const copySpeakSheet = useCallback(async () => {
+    if (!card?.answer) return
+    const sheet = buildSpeakSheetFromAnswer({
+      star: card.answer.star,
+      bullets: card.answer.bullets,
+    })
+    if (!sheet) return
+    try {
+      await navigator.clipboard.writeText(sheet)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
+    } catch {
+      /* ignore */
+    }
+  }, [card])
   const streaming = Boolean(answer?.streaming)
 
   const hasStarBody = Boolean(
@@ -313,7 +559,7 @@ export const WhisperStream = memo(function WhisperStream({
 
   let speakBody: ReactNode = null
 
-  // Psych-math plan for multi-beat bullets (primacy / peak / recency)
+  // Layout plan only (no psych chrome) — adaptive load / dual-process
   const canvasStats = useMemo(() => {
     const parts = useStarLayout
       ? [starAction, starResult].filter(Boolean)
@@ -321,84 +567,102 @@ export const WhisperStream = memo(function WhisperStream({
         ? bullets
         : []
     const hits = highlightSets.reduce((n, s) => n + s.length, 0)
-    return planSpeakCanvas(parts, { highlightHits: hits })
+    return planSpeakCanvas(parts, {
+      highlightHits: hits,
+      streaming,
+    })
+  }, [useStarLayout, starAction, starResult, bulletsKey, highlightSets, streaming])
+
+  const impactChips = useMemo(() => {
+    const parts = useStarLayout
+      ? [starAction, starResult].filter(Boolean)
+      : bullets.length
+        ? bullets
+        : []
+    return chipsFromSpans(parts, highlightSets, 6)
   }, [useStarLayout, starAction, starResult, bulletsKey, highlightSets])
+
+  const isDim = (role: BeatRole) =>
+    spotlight !== 'all' && role !== spotlight && role !== 'support'
+      ? true
+      : spotlight !== 'all' && role === 'support'
+        ? true
+        : false
 
   if (card && hasBody) {
     if (useStarLayout && answer?.star) {
       const starFields = starFieldWeights().filter(
         (f) => Boolean(answer.star?.[f.key]),
       )
+      const proofIdx = 2 // Action peak in STAR order S T A R
 
       speakBody = (
-        <div className="speak-measure grid gap-2.5">
-          {starFields.map((f) => {
-            const t = answer.star![f.key]
-            const isAction = f.weight === 'primary'
-            const isMuted = f.weight === 'muted'
-            const hlIndex =
-              f.key === 'action' ? 0 : f.key === 'result' ? 1 : -1
-            const spans = hlIndex >= 0 ? highlightSets[hlIndex] ?? [] : []
-            return (
-              <div
-                key={f.key}
-                className={cn(
-                  'speak-beat rounded-[14px] px-4',
-                  isAction && 'speak-beat-peak',
-                  isMuted && 'speak-beat-muted',
-                  !isAction && !isMuted && 'speak-beat-close',
-                )}
-              >
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <div
-                    className={cn(
-                      'speak-rail-label',
-                      isAction && 'text-[#5DD5E3]/70',
-                    )}
-                  >
-                    {f.label}
-                  </div>
-                  <span className="speak-tech-hint">{f.technique}</span>
-                </div>
-                {isMuted ? (
-                  <p
-                    className="line-clamp-1 text-[13px] leading-snug text-white/40"
-                    title={t}
-                  >
-                    {t}
-                  </p>
-                ) : (
-                  <p
-                    className={cn(
-                      'speak-body',
-                      isAction
-                        ? 'text-[17px] font-medium leading-[1.65] text-white/92'
-                        : 'text-[16px] leading-[1.6] text-white/82',
-                    )}
-                    style={
-                      isAction
-                        ? { fontSize: `${17 * 1.06}px` }
-                        : undefined
-                    }
-                  >
-                    <HighlightedText text={t!} spans={spans} />
-                  </p>
-                )}
-              </div>
-            )
-          })}
+        <div className="speak-measure space-y-3">
+          <ImpactChipStrip chips={impactChips} />
+          <ul className="grid gap-2.5">
+            {starFields.map((f, i) => {
+              const t = answer.star![f.key]!
+              const isAction = f.weight === 'primary'
+              const isMuted = f.weight === 'muted' && !expandFull
+              const hlIndex =
+                f.key === 'action' ? 0 : f.key === 'result' ? 1 : -1
+              const spans = hlIndex >= 0 ? highlightSets[hlIndex] ?? [] : []
+              const scale = lensedDisplayScale(
+                isAction ? 1.08 : f.key === 'result' ? 1.02 : 0.92,
+                f.role,
+                proofIdx,
+                i,
+              )
+              // Peak-end: Result never permanently muted when spotlight is close/all
+              const collapsed =
+                isMuted && spotlight !== 'close' && spotlight !== 'all'
+              return (
+                <OrbitBeat
+                  key={f.key}
+                  role={f.role}
+                  label={f.label}
+                  scale={scale}
+                  collapsed={collapsed}
+                  fullText={t}
+                  dimmed={isDim(f.role)}
+                  active={spotlight === f.role}
+                  onFocus={() => {
+                    const r = f.role
+                    if (r !== 'hook' && r !== 'proof' && r !== 'close') return
+                    setSpotlight((s) => (s === r ? 'all' : r))
+                  }}
+                >
+                  <HighlightedText text={t} spans={spans} />
+                </OrbitBeat>
+              )
+            })}
+          </ul>
         </div>
       )
     } else if (bullets.length <= 1) {
       // Single growing stream — primacy surface (anti-flicker)
-      // One-word rule: if Hook is "Token." show huge punch then explain
       const text = bullets[0] || answer?.bullets?.join('\n') || ''
-      const punch = extractAtomicPunchline(text)
+      let punch = extractAtomicPunchline(text)
+      // Commitment lock: freeze first punch token for this card
+      if (punch && card.id) {
+        if (
+          !punchLockRef.current ||
+          punchLockRef.current.cardId !== card.id
+        ) {
+          punchLockRef.current = { cardId: card.id, token: punch.token }
+        } else if (streaming) {
+          punch = {
+            token: punchLockRef.current.token,
+            rest: punch.rest,
+          }
+        }
+      }
       const beat = canvasStats.beats[0]
       if (punch && (punch.rest || !streaming)) {
         speakBody = (
           <div className="speak-measure space-y-3">
-            <div className="speak-punch">
+            <ImpactChipStrip chips={impactChips} />
+            <div className="speak-punch speak-orbit-core">
               <span className="speak-rail-label text-[#5DD5E3]/80">
                 Answer
               </span>
@@ -406,12 +670,9 @@ export const WhisperStream = memo(function WhisperStream({
                 {punch.token}
                 <span className="speak-punch-period">.</span>
               </p>
-              <p className="speak-tech-hint mt-1">
-                One word. Period. Then explain.
-              </p>
             </div>
             {punch.rest ? (
-              <div className="speak-beat speak-beat-peak rounded-[14px] px-4 py-3">
+              <div className="speak-beat speak-beat-peak speak-orbit-planet rounded-[14px] px-4 py-3">
                 <div className="speak-rail-label mb-1">Explain</div>
                 <p className="speak-body whitespace-pre-wrap text-[16px]">
                   <HighlightedText
@@ -430,39 +691,58 @@ export const WhisperStream = memo(function WhisperStream({
         )
       } else {
         speakBody = (
-          <div className="speak-measure speak-beat speak-beat-hook rounded-[14px] px-4 py-3.5">
-            <div className="mb-1.5 flex items-center justify-between gap-2">
-              <span className="speak-rail-label text-[#5DD5E3]/70">
-                {beat?.label ?? 'HOOK'}
-              </span>
-              <span className="speak-tech-hint">
-                {beat?.technique ?? 'Primacy · open here'}
-              </span>
-            </div>
-            <p
-              className="speak-body whitespace-pre-wrap"
-              style={{
-                fontSize: `${17 * (beat?.displayScale ?? 1)}px`,
-              }}
-            >
-              <HighlightedText text={text} spans={highlightSets[0] ?? []} />
-              {streaming ? <span className="stream-caret" aria-hidden /> : null}
-            </p>
-            {beat ? (
-              <div className="mt-2.5">
-                <AttentionBar a={beat.attention} />
+          <div className="speak-measure space-y-3">
+            <ImpactChipStrip chips={impactChips} />
+            <div className="speak-beat speak-beat-hook speak-orbit-core rounded-[14px] px-4 py-3.5">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <span className="speak-rail-label text-[#5DD5E3]/70">
+                  {beat?.label ?? 'HOOK'}
+                </span>
               </div>
-            ) : null}
+              <p
+                className="speak-body whitespace-pre-wrap"
+                style={{
+                  fontSize: `${17 * (beat?.displayScale ?? 1)}px`,
+                }}
+              >
+                <HighlightedText text={text} spans={highlightSets[0] ?? []} />
+                {streaming ? (
+                  <span className="stream-caret" aria-hidden />
+                ) : null}
+              </p>
+            </div>
           </div>
         )
       }
     } else {
-      // Multi-beat: first bullet may be atomic "Word." punch
-      const firstPunch = extractAtomicPunchline(bullets[0] || '')
+      // Multi-beat rails
+      let firstPunch = extractAtomicPunchline(bullets[0] || '')
+      if (firstPunch && card.id) {
+        if (
+          !punchLockRef.current ||
+          punchLockRef.current.cardId !== card.id
+        ) {
+          punchLockRef.current = {
+            cardId: card.id,
+            token: firstPunch.token,
+          }
+        } else if (streaming) {
+          firstPunch = {
+            token: punchLockRef.current.token,
+            rest: firstPunch.rest,
+          }
+        }
+      }
+      const proofIdx = canvasStats.beats.findIndex((b) => b.role === 'proof')
+      const glance =
+        canvasStats.processMode === 'glance' && !expandFull
       speakBody = (
         <ul className="speak-measure space-y-2.5">
+          <li className="list-none">
+            <ImpactChipStrip chips={impactChips} />
+          </li>
           {firstPunch ? (
-            <li className="speak-punch list-none">
+            <li className="speak-punch speak-orbit-core list-none">
               <span className="speak-rail-label text-[#5DD5E3]/80">
                 Answer
               </span>
@@ -474,70 +754,89 @@ export const WhisperStream = memo(function WhisperStream({
           ) : null}
           {bullets.map((b, i) => {
             if (i === 0 && firstPunch) {
-              // Rest of first line already shown as punch; skip if only token
-              if (!firstPunch.rest && bullets.length > 1) return null
               if (!firstPunch.rest) return null
               const beat = canvasStats.beats[i]
+              const scale = lensedDisplayScale(
+                beat?.displayScale ?? 1,
+                beat?.role ?? 'proof',
+                proofIdx,
+                i,
+              )
               return (
-                <li
+                <OrbitBeat
                   key={`${card.id}-b-${i}`}
-                  className="speak-beat speak-beat-peak rounded-[12px] px-3.5 py-2.5"
+                  role="proof"
+                  label="Explain"
+                  scale={scale}
+                  opacity={beat?.opacity}
+                  dimmed={isDim('proof')}
+                  active={spotlight === 'proof'}
+                  onFocus={() =>
+                    setSpotlight((s) => (s === 'proof' ? 'all' : 'proof'))
+                  }
                 >
-                  <div className="speak-rail-label mb-1">Explain</div>
-                  <p className="speak-body min-w-0 text-[16px] leading-[1.6]">
-                    <HighlightedText
-                      text={firstPunch.rest}
-                      spans={highlightSets[i] ?? []}
-                    />
-                  </p>
-                  {beat ? (
-                    <div className="mt-2">
-                      <AttentionBar a={beat.attention} />
-                    </div>
-                  ) : null}
-                </li>
+                  <HighlightedText
+                    text={firstPunch.rest}
+                    spans={highlightSets[i] ?? []}
+                  />
+                </OrbitBeat>
               )
             }
             const beat = canvasStats.beats[i]
             const role = beat?.role ?? 'support'
+            // Glance: collapse support only — Close always full (peak-end)
+            const collapsed =
+              glance &&
+              role !== 'close' &&
+              role !== 'hook' &&
+              (Boolean(beat?.collapsible) ||
+                (beat != null &&
+                  beat.index >= canvasStats.visibleBeatCap &&
+                  role === 'support'))
+            const scale = lensedDisplayScale(
+              beat?.displayScale ?? 1,
+              role,
+              proofIdx,
+              i,
+            )
             return (
-              <li
+              <OrbitBeat
                 key={`${card.id}-b-${i}`}
-                className={cn(
-                  'speak-beat rounded-[12px] px-3.5 py-2.5',
-                  role === 'hook' && 'speak-beat-hook',
-                  role === 'proof' && 'speak-beat-peak',
-                  role === 'close' && 'speak-beat-close',
-                  role === 'support' && 'speak-beat-support',
-                )}
+                role={role}
+                label={beat?.label ?? `BEAT ${i + 1}`}
+                scale={scale}
+                opacity={
+                  collapsed
+                    ? Math.min(beat?.opacity ?? 0.7, 0.62)
+                    : beat?.opacity
+                }
+                collapsed={collapsed}
+                fullText={b}
+                dimmed={isDim(role)}
+                active={spotlight === role}
+                onFocus={() => {
+                  if (role !== 'hook' && role !== 'proof' && role !== 'close')
+                    return
+                  setSpotlight((s) => (s === role ? 'all' : role))
+                }}
               >
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="speak-rail-label">
-                    {beat?.label ?? `BEAT ${i + 1}`}
-                  </span>
-                  <span className="speak-tech-hint">
-                    {beat?.technique ?? 'Chunk'}
-                    {beat
-                      ? ` · a=${(beat.attention * 100).toFixed(0)}%`
-                      : ''}
-                  </span>
-                </div>
-                <p
-                  className="speak-body min-w-0 leading-[1.6] text-white/90"
-                  style={{
-                    fontSize: `${15.5 * (beat?.displayScale ?? 1)}px`,
-                  }}
-                >
-                  <HighlightedText text={b} spans={highlightSets[i] ?? []} />
-                </p>
-                {beat ? (
-                  <div className="mt-2">
-                    <AttentionBar a={beat.attention} />
-                  </div>
-                ) : null}
-              </li>
+                <HighlightedText text={b} spans={highlightSets[i] ?? []} />
+              </OrbitBeat>
             )
           })}
+          {canvasStats.processMode === 'glance' && bullets.length > 2 ? (
+            <li className="list-none pt-1">
+              <button
+                type="button"
+                className="speak-expand-btn"
+                onClick={() => setExpandFull((v) => !v)}
+              >
+                {expandFull
+                  ? 'Glance mode — focus rails'
+                  : 'Show full answer — nothing hidden'}
+              </button>
+            </li>
+          ) : null}
         </ul>
       )
     }
@@ -556,18 +855,33 @@ export const WhisperStream = memo(function WhisperStream({
         compact && 'min-h-0 rounded-[20px] p-4 sm:rounded-[24px] sm:p-5',
       )}
     >
-      <div className="mb-5 flex shrink-0 items-start justify-between gap-4">
+      <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
         <div>
           <h2 className="text-[17px] font-medium tracking-tight text-white/95">
             Speak this
           </h2>
           <p className="mt-1 text-[13px] text-white/40">
             {compact
-              ? 'Primacy · peak · end · glance only'
-              : 'HOOK → PROOF → CLOSE · isolation highlights · glance, don’t read'}
+              ? 'Bold = impact · keys 1–2–3 focus rails'
+              : 'Hook → Proof → Close · bold carries the answer · 1 2 3 to focus'}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {card && hasBody ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              title="Copy full speak sheet"
+              onClick={() => void copySpeakSheet()}
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5" strokeWidth={2} />
+              ) : (
+                <Copy className="h-3.5 w-3.5" strokeWidth={1.75} />
+              )}
+              <span className="ml-1.5">{copied ? 'Copied' : 'Copy'}</span>
+            </Button>
+          ) : null}
           {(preparing || regenerating) && (
             <Badge tone="amber">
               <Loader2 className="mr-1 h-3 w-3 animate-spin" />
@@ -581,6 +895,16 @@ export const WhisperStream = memo(function WhisperStream({
           )}
         </div>
       </div>
+
+      {card && hasBody ? (
+        <div className="mb-4 shrink-0">
+          <PathRail
+            spotlight={spotlight}
+            onSpot={setSpotlight}
+            completeness={canvasStats.completeness}
+          />
+        </div>
+      ) : null}
 
       <div className="mb-5 flex shrink-0 flex-wrap gap-2">
         {modes.map((m) => (
@@ -629,11 +953,6 @@ export const WhisperStream = memo(function WhisperStream({
                 <Badge tone="default">{answer?.mode ?? mode}</Badge>
               </div>
 
-              {/* Implementation intention (Gollwitzer) */}
-              {hasBody && (
-                <IntentionStrip text={canvasStats.intention} />
-              )}
-
               {showPreparingSkeleton && (
                 <SpeakRailsSkeleton compact={compact} />
               )}
@@ -653,9 +972,6 @@ export const WhisperStream = memo(function WhisperStream({
               ) : null}
 
               <MetricsChips metrics={metrics} />
-
-              {/* Psych-math strip: softmax, load L, Zipf B, utility U */}
-              {hasBody && !compact && <EngineStrip stats={canvasStats} />}
             </div>
           </div>
         )}

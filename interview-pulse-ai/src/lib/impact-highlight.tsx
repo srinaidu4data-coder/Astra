@@ -41,15 +41,16 @@ export function renderHighlightedText(
       )
     }
     const slice = text.slice(s.start, s.end)
+    const kindClass =
+      s.kind === 'metric'
+        ? 'speak-keyword speak-keyword-metric'
+        : s.kind === 'punch' || s.kind === 'decision'
+          ? 'speak-keyword speak-keyword-punch'
+          : s.kind === 'buzz' || s.kind === 'term'
+            ? 'speak-keyword speak-keyword-buzz'
+            : 'speak-keyword'
     nodes.push(
-      <strong
-        key={`h-${i}-${s.start}`}
-        className={
-          s.kind === 'metric'
-            ? 'font-semibold tabular-nums text-[#5DD5E3]'
-            : 'font-semibold text-white'
-        }
-      >
+      <strong key={`h-${i}-${s.start}`} className={kindClass}>
         {slice}
       </strong>,
     )
