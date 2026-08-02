@@ -29,8 +29,10 @@ import { cn } from '@/lib/utils'
 import type { AnswerMode, QACard } from '@/types'
 import {
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Copy,
   Expand,
   Loader2,
@@ -44,6 +46,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
 
@@ -170,6 +173,10 @@ function HighlightedText({
   return <span className={className}>{nodes}</span>
 }
 
+/**
+ * HOOK / PROOF / CLOSE card — expand/collapse + drag-resize height.
+ * Auto glance collapse can be overridden by the user at any time.
+ */
 function OrbitBeat({
   role,
   label,
@@ -181,6 +188,7 @@ function OrbitBeat({
   dimmed,
   active,
   onFocus,
+  wide,
 }: {
   role: BeatRole
   label: string
@@ -193,12 +201,66 @@ function OrbitBeat({
   dimmed?: boolean
   active?: boolean
   onFocus?: () => void
+  /** Stretch card across the Speak panel (not 66ch) */
+  wide?: boolean
 }) {
   const shell = orbitalShell(role)
+  /** null = follow engine collapsed; true/false = user override */
+  const [manualOpen, setManualOpen] = useState<boolean | null>(null)
+  const [bodyHeight, setBodyHeight] = useState<number | null>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const resizeRef = useRef<{ startY: number; startH: number } | null>(null)
+
+  // New card text → reset user size overrides (spotlight collapse stays free to override)
+  useEffect(() => {
+    setManualOpen(null)
+    setBodyHeight(null)
+  }, [fullText])
+
+  const isOpen = manualOpen !== null ? manualOpen : !collapsed
+
+  const onResizePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const h = bodyRef.current?.offsetHeight ?? 72
+    resizeRef.current = { startY: e.clientY, startH: h }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const onResizePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!resizeRef.current) return
+    const next = Math.max(
+      48,
+      Math.min(560, resizeRef.current.startH + (e.clientY - resizeRef.current.startY)),
+    )
+    setBodyHeight(next)
+    if (!isOpen) setManualOpen(true)
+  }
+
+  const onResizePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!resizeRef.current) return
+    resizeRef.current = null
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const toggleOpen = (e: { stopPropagation: () => void }) => {
+    e.stopPropagation()
+    setManualOpen((prev) => {
+      const currentlyOpen = prev !== null ? prev : !collapsed
+      return !currentlyOpen
+    })
+    // Clear fixed height when expanding so content can size naturally
+    setBodyHeight(null)
+  }
+
   return (
     <li
       className={cn(
-        'speak-beat speak-orbit rounded-[12px] px-3.5 py-2.5 list-none transition-[opacity,box-shadow] duration-200',
+        'speak-beat speak-orbit speak-rail-card relative list-none rounded-[14px] px-3.5 py-2.5 transition-[opacity,box-shadow] duration-200',
         `speak-orbit-${shell}`,
         role === 'hook' && 'speak-beat-hook',
         role === 'proof' && 'speak-beat-peak',
@@ -206,6 +268,8 @@ function OrbitBeat({
         role === 'support' && 'speak-beat-support',
         active && 'speak-beat-active',
         dimmed && 'speak-beat-dimmed',
+        wide && 'w-full',
+        isOpen && 'speak-rail-card-open',
       )}
       style={{
         opacity:
@@ -215,10 +279,13 @@ function OrbitBeat({
               ? opacity
               : undefined,
       }}
-      title={collapsed && fullText ? fullText : undefined}
+      title={
+        !isOpen && fullText
+          ? fullText
+          : 'Click label to focus · chevron expands · drag bottom edge to resize'
+      }
       onClick={onFocus}
       onMouseEnter={(e) => {
-        // Hover undim — devil's fix: dim must not make text unusable
         if (dimmed) (e.currentTarget as HTMLElement).style.opacity = '1'
       }}
       onMouseLeave={(e) => {
@@ -228,22 +295,175 @@ function OrbitBeat({
     >
       <div className="mb-1 flex items-center justify-between gap-2">
         <span className="speak-rail-label">{label}</span>
-        {collapsed ? (
-          <span className="text-[10px] text-white/25">expand for full</span>
-        ) : active ? (
-          <span className="text-[10px] text-[#5DD5E3]/70">speak</span>
-        ) : null}
+        <div className="flex items-center gap-1.5">
+          {active && isOpen ? (
+            <span className="text-[10px] text-[#5DD5E3]/70">speak</span>
+          ) : null}
+          {!isOpen ? (
+            <span className="text-[10px] text-white/30">collapsed</span>
+          ) : null}
+          <button
+            type="button"
+            className="speak-rail-toggle"
+            title={isOpen ? 'Collapse card' : 'Expand card'}
+            aria-expanded={isOpen}
+            onClick={toggleOpen}
+          >
+            {isOpen ? (
+              <ChevronUp className="h-3.5 w-3.5" strokeWidth={2} />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
+            )}
+          </button>
+        </div>
       </div>
       <div
+        ref={bodyRef}
         className={cn(
           'speak-body min-w-0 leading-[1.65] text-white/90',
-          collapsed && 'line-clamp-2',
+          !isOpen && 'line-clamp-2',
+          isOpen && bodyHeight != null && 'speak-rail-body-scroll',
         )}
-        style={{ fontSize: `${15.5 * scale}px` }}
+        style={{
+          fontSize: `${15.5 * scale}px`,
+          height: isOpen && bodyHeight != null ? bodyHeight : undefined,
+          maxHeight: !isOpen ? undefined : bodyHeight != null ? bodyHeight : undefined,
+        }}
       >
         {children}
       </div>
+      {/* Drag bottom edge to grow/shrink card height */}
+      {isOpen ? (
+        <div
+          className="speak-rail-resize"
+          title="Drag to adjust card height"
+          onPointerDown={onResizePointerDown}
+          onPointerMove={onResizePointerMove}
+          onPointerUp={onResizePointerUp}
+          onPointerCancel={onResizePointerUp}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : null}
     </li>
+  )
+}
+
+/** Empty scaffold rails — same expand/resize affordance before answer lands */
+function ReadyRails({ compact }: { compact?: boolean }) {
+  return (
+    <div className={cn('w-full space-y-3', compact ? 'py-2' : 'py-4')}>
+      <div className="mb-1">
+        <p className="text-[15px] font-medium tracking-tight text-white/80">
+          Ready to speak
+        </p>
+        <p className="speak-body-secondary mt-1">
+          {compact
+            ? 'Answers stream here from the main window.'
+            : 'Type a question and press Answer — scaffold fills as you go. Expand or drag card edges to fit your screen.'}
+        </p>
+      </div>
+      {READY_RAILS.map((rail) => (
+        <ReadyRailCard key={rail.id} rail={rail} compact={compact} />
+      ))}
+    </div>
+  )
+}
+
+function ReadyRailCard({
+  rail,
+  compact,
+}: {
+  rail: (typeof READY_RAILS)[number]
+  compact?: boolean
+}) {
+  const [open, setOpen] = useState(true)
+  const [height, setHeight] = useState<number | null>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const resizeRef = useRef<{ startY: number; startH: number } | null>(null)
+
+  const onResizePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const h = bodyRef.current?.offsetHeight ?? (compact ? 40 : 56)
+    resizeRef.current = { startY: e.clientY, startH: h }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const onResizePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!resizeRef.current) return
+    setHeight(
+      Math.max(
+        36,
+        Math.min(320, resizeRef.current.startH + (e.clientY - resizeRef.current.startY)),
+      ),
+    )
+    if (!open) setOpen(true)
+  }
+  const onResizePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!resizeRef.current) return
+    resizeRef.current = null
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return (
+    <div
+      className={cn(
+        'speak-rail-card relative w-full rounded-[14px] border border-dashed border-white/[0.1] bg-white/[0.02] px-4 py-3',
+        compact && 'px-3 py-2.5',
+        open && 'speak-rail-card-open',
+      )}
+    >
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="speak-rail-label">{rail.label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-white/25">{rail.hint}</span>
+          <button
+            type="button"
+            className="speak-rail-toggle"
+            title={open ? 'Collapse' : 'Expand'}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? (
+              <ChevronUp className="h-3.5 w-3.5" strokeWidth={2} />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
+            )}
+          </button>
+        </div>
+      </div>
+      {open ? (
+        <>
+          <div
+            ref={bodyRef}
+            className="mt-2.5 space-y-1.5 opacity-40"
+            style={{
+              height: height ?? undefined,
+              minHeight: height ? undefined : compact ? 28 : 36,
+            }}
+          >
+            <div className="h-2 w-[70%] max-w-full rounded bg-white/[0.08]" />
+            <div className="h-2 w-[45%] max-w-full rounded bg-white/[0.05]" />
+            {!compact && height && height > 64 ? (
+              <div className="h-2 w-[55%] max-w-full rounded bg-white/[0.04]" />
+            ) : null}
+          </div>
+          <div
+            className="speak-rail-resize"
+            title="Drag to adjust card height"
+            onPointerDown={onResizePointerDown}
+            onPointerMove={onResizePointerMove}
+            onPointerUp={onResizePointerUp}
+            onPointerCancel={onResizePointerUp}
+          />
+        </>
+      ) : (
+        <p className="mt-1.5 text-[11px] text-white/25">Collapsed — expand when ready</p>
+      )}
+    </div>
   )
 }
 
@@ -254,7 +474,7 @@ function ImpactChipStrip({
 }) {
   if (!chips.length) return null
   return (
-    <div className="speak-impact-strip" aria-label="Impact words">
+    <div className="speak-impact-strip w-full" aria-label="Impact words">
       {chips.map((c, i) => (
         <span
           key={`${c.text}-${i}`}
@@ -332,12 +552,12 @@ function PathRail({
 
 function SpeakRailsSkeleton({ compact }: { compact?: boolean }) {
   return (
-    <div className={cn('speak-measure space-y-3', compact ? 'space-y-2.5' : 'space-y-3')}>
+    <div className={cn('w-full space-y-3', compact ? 'space-y-2.5' : 'space-y-3')}>
       {READY_RAILS.map((rail, i) => (
         <div
           key={rail.id}
           className={cn(
-            'rounded-[14px] border border-white/[0.06] bg-white/[0.02] px-4 py-3',
+            'speak-rail-card w-full rounded-[14px] border border-white/[0.06] bg-white/[0.02] px-4 py-3',
             compact && 'px-3 py-2.5',
           )}
         >
@@ -350,41 +570,6 @@ function SpeakRailsSkeleton({ compact }: { compact?: boolean }) {
             {i === 1 && !compact && (
               <div className="speak-skeleton-line" style={{ width: '54%' }} />
             )}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ReadyRails({ compact }: { compact?: boolean }) {
-  return (
-    <div className={cn('speak-measure w-full space-y-3', compact ? 'py-2' : 'py-4')}>
-      <div className="mb-1">
-        <p className="text-[15px] font-medium tracking-tight text-white/80">
-          Ready to speak
-        </p>
-        <p className="speak-body-secondary mt-1">
-          {compact
-            ? 'Answers stream here from the main window.'
-            : 'Type a question and press Answer — scaffold fills as you go.'}
-        </p>
-      </div>
-      {READY_RAILS.map((rail) => (
-        <div
-          key={rail.id}
-          className={cn(
-            'rounded-[14px] border border-dashed border-white/[0.08] bg-white/[0.015] px-4 py-3',
-            compact && 'px-3 py-2.5',
-          )}
-        >
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="speak-rail-label">{rail.label}</span>
-            <span className="text-[11px] text-white/25">{rail.hint}</span>
-          </div>
-          <div className="mt-2.5 space-y-1.5 opacity-40">
-            <div className="h-2 w-[70%] rounded bg-white/[0.06]" />
-            <div className="h-2 w-[45%] rounded bg-white/[0.04]" />
           </div>
         </div>
       ))}
@@ -702,9 +887,9 @@ export const WhisperStream = memo(function WhisperStream({
       const proofIdx = 2 // Action peak in STAR order S T A R
 
       speakBody = (
-        <div className="speak-measure space-y-3">
+        <div className="w-full space-y-3">
           <ImpactChipStrip chips={impactChips} />
-          <ul className="grid gap-2.5">
+          <ul className="grid w-full gap-2.5">
             {starFields.map((f, i) => {
               const t = answer.star![f.key]!
               const isAction = f.weight === 'primary'
@@ -730,6 +915,7 @@ export const WhisperStream = memo(function WhisperStream({
                   collapsed={collapsed}
                   fullText={t}
                   dimmed={isDim(f.role)}
+                  wide
                   active={
                     spotlight === f.role ||
                     (landPulse && f.role === 'close')
@@ -769,9 +955,9 @@ export const WhisperStream = memo(function WhisperStream({
       const beat = canvasStats.beats[0]
       if (punch && (punch.rest || !streaming)) {
         speakBody = (
-          <div className="speak-measure space-y-3">
+          <div className="w-full space-y-3">
             <ImpactChipStrip chips={impactChips} />
-            <div className="speak-punch speak-orbit-core">
+            <div className="speak-punch speak-orbit-core w-full">
               <span className="speak-rail-label text-[#5DD5E3]/80">
                 Answer
               </span>
@@ -781,9 +967,18 @@ export const WhisperStream = memo(function WhisperStream({
               </p>
             </div>
             {punch.rest ? (
-              <div className="speak-beat speak-beat-peak speak-orbit-planet rounded-[14px] px-4 py-3">
-                <div className="speak-rail-label mb-1">Explain</div>
-                <p className="speak-body whitespace-pre-wrap text-[16px]">
+              <OrbitBeat
+                role="proof"
+                label="Explain"
+                scale={1}
+                wide
+                fullText={punch.rest}
+                active={spotlight === 'proof'}
+                onFocus={() =>
+                  setSpotlight((s) => (s === 'proof' ? 'all' : 'proof'))
+                }
+              >
+                <span className="whitespace-pre-wrap">
                   <HighlightedText
                     text={punch.rest}
                     spans={highlightSets[0] ?? []}
@@ -791,8 +986,8 @@ export const WhisperStream = memo(function WhisperStream({
                   {streaming ? (
                     <span className="stream-caret" aria-hidden />
                   ) : null}
-                </p>
-              </div>
+                </span>
+              </OrbitBeat>
             ) : streaming ? (
               <p className="text-[13px] text-white/35">Explaining…</p>
             ) : null}
@@ -800,26 +995,26 @@ export const WhisperStream = memo(function WhisperStream({
         )
       } else {
         speakBody = (
-          <div className="speak-measure space-y-3">
+          <div className="w-full space-y-3">
             <ImpactChipStrip chips={impactChips} />
-            <div className="speak-beat speak-beat-hook speak-orbit-core rounded-[14px] px-4 py-3.5">
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <span className="speak-rail-label text-[#5DD5E3]/70">
-                  {beat?.label ?? 'HOOK'}
-                </span>
-              </div>
-              <p
-                className="speak-body whitespace-pre-wrap"
-                style={{
-                  fontSize: `${17 * (beat?.displayScale ?? 1)}px`,
-                }}
-              >
+            <OrbitBeat
+              role="hook"
+              label={beat?.label ?? 'HOOK'}
+              scale={beat?.displayScale ?? 1.1}
+              wide
+              fullText={text}
+              active={spotlight === 'hook' || spotlight === 'all'}
+              onFocus={() =>
+                setSpotlight((s) => (s === 'hook' ? 'all' : 'hook'))
+              }
+            >
+              <span className="whitespace-pre-wrap">
                 <HighlightedText text={text} spans={highlightSets[0] ?? []} />
                 {streaming ? (
                   <span className="stream-caret" aria-hidden />
                 ) : null}
-              </p>
-            </div>
+              </span>
+            </OrbitBeat>
           </div>
         )
       }
@@ -846,12 +1041,12 @@ export const WhisperStream = memo(function WhisperStream({
       const glance =
         canvasStats.processMode === 'glance' && !expandFull
       speakBody = (
-        <ul className="speak-measure space-y-2.5">
+        <ul className="w-full space-y-2.5">
           <li className="list-none">
             <ImpactChipStrip chips={impactChips} />
           </li>
           {firstPunch ? (
-            <li className="speak-punch speak-orbit-core list-none">
+            <li className="speak-punch speak-orbit-core list-none w-full">
               <span className="speak-rail-label text-[#5DD5E3]/80">
                 Answer
               </span>
@@ -879,6 +1074,8 @@ export const WhisperStream = memo(function WhisperStream({
                   scale={scale}
                   opacity={beat?.opacity}
                   dimmed={isDim('proof')}
+                  wide
+                  fullText={firstPunch.rest}
                   active={spotlight === 'proof'}
                   onFocus={() =>
                     setSpotlight((s) => (s === 'proof' ? 'all' : 'proof'))
@@ -922,6 +1119,7 @@ export const WhisperStream = memo(function WhisperStream({
                 collapsed={collapsed}
                 fullText={b}
                 dimmed={isDim(role)}
+                wide
                 active={
                   spotlight === role || (landPulse && role === 'close')
                 }
