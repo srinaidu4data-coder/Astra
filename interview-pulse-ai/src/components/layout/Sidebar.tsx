@@ -21,7 +21,7 @@ const baseItems: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
   { id: 'settings', label: 'Settings', icon: Settings2 },
 ]
 
-export function Sidebar() {
+export function Sidebar({ compact = false }: { compact?: boolean }) {
   const route = useAppStore((s) => s.route)
   const setRoute = useAppStore((s) => s.setRoute)
   const listening = useAppStore((s) => s.listening)
@@ -44,14 +44,27 @@ export function Sidebar() {
     return list
   }, [isAdmin, jobLab])
 
+  // compact = copilot full-width answer mode: icon rail only (~56px)
   return (
-    <aside className="flex h-full w-[88px] shrink-0 flex-col items-center py-8 lg:w-[220px] lg:items-stretch lg:px-5">
+    <aside
+      className={cn(
+        'flex h-full shrink-0 flex-col items-center transition-[width] duration-200',
+        compact
+          ? 'w-[56px] py-4'
+          : 'w-[88px] py-8 lg:w-[220px] lg:items-stretch lg:px-5',
+      )}
+    >
       {/* Mark */}
-      <div className="mb-10 flex items-center gap-3 px-1 lg:px-2">
+      <div
+        className={cn(
+          'mb-10 flex items-center gap-3 px-1',
+          !compact && 'lg:px-2',
+        )}
+      >
         <div className="flex h-11 w-11 items-center justify-center rounded-sm border border-[#20B8CD]/30 bg-[#141414]">
           <div className="h-3 w-3 rounded-none bg-[#20B8CD]" />
         </div>
-        <div className="hidden min-w-0 lg:block">
+        <div className={cn('min-w-0', compact ? 'hidden' : 'hidden lg:block')}>
           <div className="truncate text-[13px] font-medium tracking-tight text-white/90">
             InterviewPulse
           </div>
@@ -72,7 +85,8 @@ export function Sidebar() {
               onClick={() => setRoute(item.id)}
               title={item.label}
               className={cn(
-                'group flex cursor-pointer items-center justify-center gap-3 rounded-sm px-0 py-3 transition-colors duration-150 lg:justify-start lg:px-3.5',
+                'group flex cursor-pointer items-center justify-center gap-3 rounded-sm px-0 py-3 transition-colors duration-150',
+                !compact && 'lg:justify-start lg:px-3.5',
                 active
                   ? 'bg-[#20B8CD]/15 text-white ring-1 ring-[#20B8CD]/35'
                   : 'text-white/40 hover:bg-white/[0.05] hover:text-white/80',
@@ -85,7 +99,12 @@ export function Sidebar() {
                 )}
                 strokeWidth={1.75}
               />
-              <span className="hidden truncate text-[13px] font-medium tracking-tight lg:inline">
+              <span
+                className={cn(
+                  'truncate text-[13px] font-medium tracking-tight',
+                  compact ? 'hidden' : 'hidden lg:inline',
+                )}
+              >
                 {item.label}
               </span>
             </button>
@@ -93,7 +112,13 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-6 flex flex-col items-center gap-2 lg:items-start lg:rounded-[20px] lg:bg-white/[0.04] lg:px-3.5 lg:py-3.5 lg:ring-1 lg:ring-white/[0.06]">
+      <div
+        className={cn(
+          'mt-6 flex flex-col items-center gap-2',
+          !compact &&
+            'lg:items-start lg:rounded-[20px] lg:bg-white/[0.04] lg:px-3.5 lg:py-3.5 lg:ring-1 lg:ring-white/[0.06]',
+        )}
+      >
         <div className="flex items-center gap-2.5">
           <span
             className={cn(
@@ -101,7 +126,12 @@ export function Sidebar() {
               listening ? 'listening-pulse bg-[#20B8CD]' : 'bg-white/25',
             )}
           />
-          <span className="hidden text-[12px] text-white/45 lg:inline">
+          <span
+            className={cn(
+              'text-[12px] text-white/45',
+              compact ? 'hidden' : 'hidden lg:inline',
+            )}
+          >
             {listening ? 'Listening' : 'Idle'}
           </span>
         </div>

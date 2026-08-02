@@ -119,6 +119,10 @@ function MobileDashboardShell() {
 /** Desktop / tablet shell: sidebar + glass card. */
 function DesktopDashboardShell() {
   const stealth = useAppStore((s) => s.stealth)
+  const route = useAppStore((s) => s.route)
+  const copilotWideAnswer = useAppStore((s) => s.copilotWideAnswer)
+  // Full-bleed answer mode: only when Copilot has Hide controls on
+  const wide = route === 'copilot' && copilotWideAnswer
 
   useEffect(() => {
     void window.interviewPulse?.setContentProtection(stealth.contentProtection)
@@ -126,14 +130,34 @@ function DesktopDashboardShell() {
 
   return (
     <div className="app-mesh flex h-full">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col pr-3 pt-2 pb-3 md:pr-6 md:pb-5">
+      <Sidebar compact={wide} />
+      <div
+        className={
+          wide
+            ? 'flex min-w-0 flex-1 flex-col pr-1 pt-1 pb-1 md:pr-2 md:pb-2'
+            : 'flex min-w-0 flex-1 flex-col pr-3 pt-2 pb-3 md:pr-6 md:pb-5'
+        }
+      >
         <div className="glass flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px]">
-          <div className="shrink-0 border-b border-white/[0.06] px-5 md:px-8">
-            <TopBar />
-          </div>
-          <main className="min-h-0 flex-1 overflow-auto px-5 py-8 md:px-10 md:py-10">
-            <div className="page-shell">
+          {!wide && (
+            <div className="shrink-0 border-b border-white/[0.06] px-5 md:px-8">
+              <TopBar />
+            </div>
+          )}
+          <main
+            className={
+              wide
+                ? 'min-h-0 flex-1 overflow-auto px-2 py-3 md:px-4 md:py-4'
+                : 'min-h-0 flex-1 overflow-auto px-5 py-8 md:px-10 md:py-10'
+            }
+          >
+            <div
+              className={
+                wide
+                  ? 'w-full max-w-none'
+                  : 'page-shell'
+              }
+            >
               <PageBody />
             </div>
           </main>

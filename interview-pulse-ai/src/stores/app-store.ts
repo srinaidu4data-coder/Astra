@@ -31,6 +31,13 @@ interface AppState {
   route: NavRoute
   setRoute: (r: NavRoute) => void
 
+  /**
+   * Copilot "Hide" focus mode: answer panel goes full width,
+   * app sidebar collapses to icons, page shell max-width lifts.
+   */
+  copilotWideAnswer: boolean
+  setCopilotWideAnswer: (v: boolean) => void
+
   /** Auth / billing gate */
   authReady: boolean
   authConfig: AuthConfig | null
@@ -105,7 +112,31 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       route: 'copilot',
-      setRoute: (route) => set({ route }),
+      setRoute: (route) => {
+        // Leaving copilot ends wide-answer focus so other pages keep normal chrome
+        set((s) => ({
+          route,
+          copilotWideAnswer: route === 'copilot' ? s.copilotWideAnswer : false,
+        }))
+      },
+      copilotWideAnswer: (() => {
+        try {
+          return localStorage.getItem('ip_copilot_left_collapsed') === '1'
+        } catch {
+          return false
+        }
+      })(),
+      setCopilotWideAnswer: (copilotWideAnswer) => {
+        try {
+          localStorage.setItem(
+            'ip_copilot_left_collapsed',
+            copilotWideAnswer ? '1' : '0',
+          )
+        } catch {
+          /* ignore */
+        }
+        set({ copilotWideAnswer })
+      },
 
       authReady: false,
       authConfig: null,
