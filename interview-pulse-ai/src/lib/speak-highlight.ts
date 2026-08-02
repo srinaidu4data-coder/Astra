@@ -19,6 +19,7 @@ import {
   softmax,
   zipfHighlightBudget,
 } from '@/lib/speak-canvas-engine'
+import { applyQuestionOverlapBoost } from '@/lib/speak-psych-hacks'
 
 export const HIGHLIGHT_BUDGET = 8
 /** Reject spans longer than this (anti full-sentence bold) */
@@ -111,6 +112,8 @@ export type SpeakHighlightsBudgetedOptions = {
   max?: number
   freeze?: boolean
   frozenParts?: SpeakHighlightSpan[][]
+  /** Interviewer question — boost terms that also appear in the Q */
+  question?: string
 }
 
 function baseKindScore(kind: SpeakHighlightKind): number {
@@ -357,8 +360,13 @@ export function getSpeakHighlightsBudgeted(
 
   type Indexed = SpeakHighlightSpan & { part: number }
   const pool: Indexed[] = []
+  const q = (options.question || '').trim()
+
   for (let i = 0; i < n; i++) {
-    for (const s of collectSpeakCandidates(parts[i] ?? '')) {
+    const part = parts[i] ?? ''
+    let cands = collectSpeakCandidates(part)
+    if (q) cands = applyQuestionOverlapBoost(cands, part, q)
+    for (const s of cands) {
       // Primacy: early beats get slight boost (speak first)
       const beatBoost = 1 + 0.15 * Math.exp(-0.45 * i)
       // Punch/decision on any beat always priority

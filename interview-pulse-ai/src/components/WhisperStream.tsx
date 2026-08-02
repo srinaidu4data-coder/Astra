@@ -17,6 +17,14 @@ import {
   segmentForNeuro,
 } from '@/lib/speak-neuro-astro'
 import { buildSpeakSheetFromAnswer, chipsFromSpans } from '@/lib/speak-impact'
+import {
+  advanceSpeakLadder,
+  chipBudget,
+  ladderCue,
+  SOFT_DIM_OPACITY,
+  shouldLandPulse,
+  type SpeakLadderStep,
+} from '@/lib/speak-psych-hacks'
 import { cn } from '@/lib/utils'
 import type { AnswerMode, QACard } from '@/types'
 import { Check, ChevronLeft, ChevronRight, Copy, Loader2 } from 'lucide-react'
@@ -193,13 +201,21 @@ function OrbitBeat({
       style={{
         opacity:
           dimmed
-            ? 0.38
+            ? SOFT_DIM_OPACITY
             : opacity != null && opacity < 0.99
               ? opacity
               : undefined,
       }}
       title={collapsed && fullText ? fullText : undefined}
       onClick={onFocus}
+      onMouseEnter={(e) => {
+        // Hover undim — devil's fix: dim must not make text unusable
+        if (dimmed) (e.currentTarget as HTMLElement).style.opacity = '1'
+      }}
+      onMouseLeave={(e) => {
+        if (dimmed)
+          (e.currentTarget as HTMLElement).style.opacity = String(SOFT_DIM_OPACITY)
+      }}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
         <span className="speak-rail-label">{label}</span>
@@ -386,6 +402,7 @@ function useFrozenHighlights(
   cardId: string | undefined,
   parts: string[],
   streaming: boolean,
+  question?: string,
 ): SpeakHighlightSpan[][] {
   const freezeKeyRef = useRef<string>('')
   const frozenPartsRef = useRef<SpeakHighlightSpan[][] | null>(null)
@@ -417,10 +434,11 @@ function useFrozenHighlights(
         freeze: true,
         frozenParts: frozenPartsRef.current,
         max: 10,
+        question,
       })
     }
 
-    const next = getSpeakHighlightsBudgeted(parts, { max: 10 })
+    const next = getSpeakHighlightsBudgeted(parts, { max: 10, question })
     if (streaming) {
       // Keep scanning until first hits, then freeze; empty freeze is not sticky.
       if (next.some((p) => p.length > 0)) {
@@ -434,7 +452,7 @@ function useFrozenHighlights(
     return next
     // partsKey tracks text content; parts used for values
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardId, partsKey, streaming])
+  }, [cardId, partsKey, streaming, question])
 }
 
 export const WhisperStream = memo(function WhisperStream({
@@ -467,14 +485,21 @@ export const WhisperStream = memo(function WhisperStream({
   const [expandFull, setExpandFull] = useState(false)
   const [spotlight, setSpotlight] = useState<Spotlight>('all')
   const [copied, setCopied] = useState(false)
+  /** Focus mode: hide chips after settle (reduce choice overload) */
+  const [focusMode, setFocusMode] = useState(false)
+  const [landPulse, setLandPulse] = useState(false)
   /** Commitment lock: first atomic punch token freezes for the card */
   const punchLockRef = useRef<{ cardId: string; token: string } | null>(null)
+  const wasStreamingRef = useRef(false)
 
   useEffect(() => {
     setExpandFull(false)
     setSpotlight('all')
     setCopied(false)
+    setFocusMode(false)
+    setLandPulse(false)
     punchLockRef.current = null
+    wasStreamingRef.current = false
   }, [card?.id])
 
   useEffect(() => {
@@ -493,17 +518,33 @@ export const WhisperStream = memo(function WhisperStream({
       if (e.key === '1') {
         e.preventDefault()
         setSpotlight((s) => (s === 'hook' ? 'all' : 'hook'))
+        setFocusMode(true)
       } else if (e.key === '2') {
         e.preventDefault()
         setSpotlight((s) => (s === 'proof' ? 'all' : 'proof'))
+        setFocusMode(true)
       } else if (e.key === '3') {
         e.preventDefault()
         setSpotlight((s) => (s === 'close' ? 'all' : 'close'))
+        setFocusMode(true)
       } else if (e.key === '0' || e.key === 'Escape') {
         setSpotlight('all')
-      } else if ((e.key === 'c' || e.key === 'C') && !e.shiftKey) {
-        // optional: C copies when not in an input (P0 speak-sheet)
-        // only if user holds nothing special — skip if they might type
+        setFocusMode(false)
+      } else if (e.key === ' ' || e.code === 'Space') {
+        // Speak ladder: Space advances Hook → Proof → Close (implementation intention)
+        e.preventDefault()
+        setSpotlight((s) => {
+          const step = (s === 'all' ? 'all' : s) as SpeakLadderStep | 'all'
+          const next = advanceSpeakLadder(step === 'all' ? 'all' : step)
+          if (next === 'done') {
+            setFocusMode(false)
+            return 'all'
+          }
+          setFocusMode(true)
+          return next as Spotlight
+        })
+      } else if (e.key === 'f' || e.key === 'F') {
+        setFocusMode((v) => !v)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -527,6 +568,26 @@ export const WhisperStream = memo(function WhisperStream({
   }, [card])
   const streaming = Boolean(answer?.streaming)
 
+  // Peak-end land pulse when stream finishes
+  useEffect(() => {
+    const was = wasStreamingRef.current
+    if (
+      shouldLandPulse(was, streaming, true) &&
+      card?.id
+    ) {
+      setLandPulse(true)
+      // Focus mode after settle — fewer affordances under cortisol
+      const t = window.setTimeout(() => setFocusMode(true), 1200)
+      const t2 = window.setTimeout(() => setLandPulse(false), 1600)
+      wasStreamingRef.current = streaming
+      return () => {
+        window.clearTimeout(t)
+        window.clearTimeout(t2)
+      }
+    }
+    wasStreamingRef.current = streaming
+  }, [streaming, card?.id])
+
   const hasStarBody = Boolean(
     answer?.star?.situation ||
       answer?.star?.task ||
@@ -543,6 +604,7 @@ export const WhisperStream = memo(function WhisperStream({
     answer?.mode === 'star' && answer.star && hasStarBody
 
   const bulletsKey = bullets.join('\u0001')
+  const questionText = card?.question ?? ''
   const highlightParts = useMemo(() => {
     if (useStarLayout) {
       return [starAction, starResult]
@@ -555,7 +617,12 @@ export const WhisperStream = memo(function WhisperStream({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useStarLayout, starAction, starResult, bulletsKey])
 
-  const highlightSets = useFrozenHighlights(card?.id, highlightParts, streaming)
+  const highlightSets = useFrozenHighlights(
+    card?.id,
+    highlightParts,
+    streaming,
+    questionText,
+  )
 
   let speakBody: ReactNode = null
 
@@ -579,8 +646,27 @@ export const WhisperStream = memo(function WhisperStream({
       : bullets.length
         ? bullets
         : []
-    return chipsFromSpans(parts, highlightSets, 6)
-  }, [useStarLayout, starAction, starResult, bulletsKey, highlightSets])
+    const max = chipBudget({
+      spotlightActive: spotlight !== 'all',
+      focusMode,
+      expanded: expandFull,
+    })
+    if (max <= 0) return []
+    return chipsFromSpans(parts, highlightSets, max)
+  }, [
+    useStarLayout,
+    starAction,
+    starResult,
+    bulletsKey,
+    highlightSets,
+    spotlight,
+    focusMode,
+    expandFull,
+  ])
+
+  const ladderHint = ladderCue(
+    spotlight === 'all' ? 'all' : (spotlight as SpeakLadderStep),
+  )
 
   const isDim = (role: BeatRole) =>
     spotlight !== 'all' && role !== spotlight && role !== 'support'
@@ -625,11 +711,15 @@ export const WhisperStream = memo(function WhisperStream({
                   collapsed={collapsed}
                   fullText={t}
                   dimmed={isDim(f.role)}
-                  active={spotlight === f.role}
+                  active={
+                    spotlight === f.role ||
+                    (landPulse && f.role === 'close')
+                  }
                   onFocus={() => {
                     const r = f.role
                     if (r !== 'hook' && r !== 'proof' && r !== 'close') return
                     setSpotlight((s) => (s === r ? 'all' : r))
+                    setFocusMode(true)
                   }}
                 >
                   <HighlightedText text={t} spans={spans} />
@@ -813,11 +903,14 @@ export const WhisperStream = memo(function WhisperStream({
                 collapsed={collapsed}
                 fullText={b}
                 dimmed={isDim(role)}
-                active={spotlight === role}
+                active={
+                  spotlight === role || (landPulse && role === 'close')
+                }
                 onFocus={() => {
                   if (role !== 'hook' && role !== 'proof' && role !== 'close')
                     return
                   setSpotlight((s) => (s === role ? 'all' : role))
+                  setFocusMode(true)
                 }}
               >
                 <HighlightedText text={b} spans={highlightSets[i] ?? []} />
@@ -862,8 +955,8 @@ export const WhisperStream = memo(function WhisperStream({
           </h2>
           <p className="mt-1 text-[13px] text-white/40">
             {compact
-              ? 'Bold = impact · keys 1–2–3 focus rails'
-              : 'Hook → Proof → Close · bold carries the answer · 1 2 3 to focus'}
+              ? `${ladderHint} · F focus`
+              : `${ladderHint} · 1 2 3 focus · F hides chips`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -900,8 +993,11 @@ export const WhisperStream = memo(function WhisperStream({
         <div className="mb-4 shrink-0">
           <PathRail
             spotlight={spotlight}
-            onSpot={setSpotlight}
-            completeness={canvasStats.completeness}
+            onSpot={(s) => {
+              setSpotlight(s)
+              setFocusMode(s !== 'all')
+            }}
+            completeness={streaming ? canvasStats.completeness : 1}
           />
         </div>
       ) : null}

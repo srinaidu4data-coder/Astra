@@ -909,6 +909,34 @@
   }
 
   .speak-beat-dimmed {
-    filter: saturate(0.7);
+    filter: saturate(0.75);
+  }
+
+  .speak-beat-dimmed:hover {
+    filter: none;
+  }
+
+  /* Peak-end land pulse when stream completes */
+  .speak-beat-active.speak-beat-close,
+  .speak-beat-close.speak-beat-active {
+    animation: speak-land-pulse 1.4s ease-out 1;
+  }
+
+  @keyframes speak-land-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(93, 213, 227, 0.45);
+    }
+    40% {
+      box-shadow: 0 0 0 6px rgba(93, 213, 227, 0.18);
+    }
+    100% {
+      box-shadow: 0 0 0 1px rgba(93, 213, 227, 0.25);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .speak-beat-active.speak-beat-close {
+      animation: none;
+    }
   }
 }

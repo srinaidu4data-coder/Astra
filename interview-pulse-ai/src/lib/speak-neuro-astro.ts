@@ -28,8 +28,9 @@
 
 import type { BeatRole } from '@/lib/speak-canvas-engine'
 import type { SpeakHighlightKind, SpeakHighlightSpan } from '@/lib/speak-highlight'
+import { firstClauseWordCount } from '@/lib/speak-psych-hacks'
 
-/** ~foveal window: first N words get full luminance (saccade landing) */
+/** Fallback foveal window if clause detect fails */
 export const FOVEAL_WORD_COUNT = 11
 
 /** Phrase length for motor speech chunks (~2.5–3.5s at interview pace) */
@@ -119,6 +120,9 @@ export function segmentForNeuro(text: string): PhraseSegment[] {
   const raw = text || ''
   if (!raw.trim()) return []
 
+  // First-clause fovea (speech planning unit) — not a fixed 11-word fiction
+  const fovealWords = firstClauseWordCount(raw, FOVEAL_WORD_COUNT)
+
   // Tokenize preserving whitespace so we can reassemble losslessly
   const tokens = raw.split(/(\s+)/)
   const wordsOnly = tokens.filter((t) => t.trim().length > 0)
@@ -130,8 +134,10 @@ export function segmentForNeuro(text: string): PhraseSegment[] {
   let buf = ''
   let wordsInPhrase = 0
 
-  const flush = (foveal: boolean) => {
+  const flush = () => {
     if (!buf) return
+    const startWords = wordIdx - wordsInPhrase
+    const foveal = startWords < fovealWords
     segments.push({ text: buf, foveal, phraseIndex })
     buf = ''
     wordsInPhrase = 0
@@ -142,30 +148,31 @@ export function segmentForNeuro(text: string): PhraseSegment[] {
     const isWord = tok.trim().length > 0
     buf += tok
     if (!isWord) continue
-    const foveal = wordIdx < FOVEAL_WORD_COUNT
     wordIdx += 1
     wordsInPhrase += 1
     // Break phrase on punctuation end or target length
     const endsClause = /[.!?;:]\s*$/.test(tok) || /[.!?;:]$/.test(tok)
     if (endsClause || wordsInPhrase >= PHRASE_WORD_TARGET) {
-      flush(foveal || wordIdx <= FOVEAL_WORD_COUNT)
+      flush()
     }
   }
   if (buf) {
-    flush(wordIdx <= FOVEAL_WORD_COUNT)
+    flush()
   }
 
-  // Fix foveal flag by absolute word position rebuild (more accurate)
-  return recomputeFoveal(segments)
+  return recomputeFoveal(segments, fovealWords)
 }
 
-function recomputeFoveal(segments: PhraseSegment[]): PhraseSegment[] {
+function recomputeFoveal(
+  segments: PhraseSegment[],
+  fovealWords: number,
+): PhraseSegment[] {
   let words = 0
   return segments.map((seg) => {
     const w = seg.text.trim().split(/\s+/).filter(Boolean).length
     const startWords = words
     words += w
-    const foveal = startWords < FOVEAL_WORD_COUNT
+    const foveal = startWords < fovealWords
     return { ...seg, foveal }
   })
 }
