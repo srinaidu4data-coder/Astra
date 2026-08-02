@@ -448,7 +448,9 @@ export class LiveInterviewClient {
 
     // Chromium: systemAudio + prefer tab surface. Video track is required by the
     // API but stopped immediately — we only keep audio (interviewer / meeting).
-    const constraints: DisplayMediaStreamOptions = {
+    // Chromium-only getDisplayMedia fields (systemAudio, preferCurrentTab, etc.)
+    // are not in lib.dom yet — cast once so tsc does not fail on unused @ts-expect-error.
+    const constraints = {
       video: {
         // Prefer sharing a browser tab (Teams/Meet in Chrome)
         displaySurface: 'browser',
@@ -463,15 +465,11 @@ export class LiveInterviewClient {
         autoGainControl: false,
         channelCount: 1,
       } as MediaTrackConstraints,
-      // @ts-expect-error Chromium extensions
       systemAudio: 'include',
-      // @ts-expect-error Chromium
       preferCurrentTab: false,
-      // @ts-expect-error Chromium
       selfBrowserSurface: 'exclude',
-      // @ts-expect-error Chromium
       monitorTypeSurfaces: 'include',
-    }
+    } as DisplayMediaStreamOptions
 
     let stream: MediaStream
     try {
