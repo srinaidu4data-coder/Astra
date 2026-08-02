@@ -662,6 +662,8 @@ export const WhisperStream = memo(function WhisperStream({
   onToggleExpand,
   onDetach,
   detaching,
+  /** Overlay Hide: strip Speak chrome so answer body pulls to top (red-mark line) */
+  chromeHidden,
 }: {
   cards: QACard[]
   cardIndex: number
@@ -677,6 +679,11 @@ export const WhisperStream = memo(function WhisperStream({
   /** Pop out to overlay / browser popup */
   onDetach?: () => void
   detaching?: boolean
+  /**
+   * Hide Speak chrome (title, path rail, modes, Q, scaffold label, footer)
+   * so ANSWER / PROOF rails sit under the floating Show pill.
+   */
+  chromeHidden?: boolean
 }) {
   const card = cards[cardIndex] ?? null
   const total = cards.length
@@ -1164,89 +1171,94 @@ export const WhisperStream = memo(function WhisperStream({
         // Overlay: drop fixed min-height so the window can shrink/grow freely
         compact && 'min-h-0 rounded-[20px] p-4 sm:rounded-[24px] sm:p-5',
         expanded && 'min-h-0 rounded-[24px] p-5 md:p-7',
+        // Hide chrome: pull answer body to top (under floating Show pill)
+        chromeHidden &&
+          'min-h-0 rounded-[16px] border-white/[0.06] p-3 pt-2 sm:rounded-[18px] sm:p-3.5',
       )}
     >
-      <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
-        <div>
-          <h2 className="text-[17px] font-medium tracking-tight text-white/95">
-            Speak this
-          </h2>
-          <p className="mt-1 text-[13px] text-white/40">
-            {compact
-              ? `${ladderHint} · F focus`
-              : `${ladderHint} · 1 2 3 focus · F hides chips`}
-          </p>
+      {!chromeHidden && (
+        <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
+          <div>
+            <h2 className="text-[17px] font-medium tracking-tight text-white/95">
+              Speak this
+            </h2>
+            <p className="mt-1 text-[13px] text-white/40">
+              {compact
+                ? `${ladderHint} · F focus`
+                : `${ladderHint} · 1 2 3 focus · F hides chips`}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+            {onToggleExpand ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                title={
+                  expanded
+                    ? 'Exit full-pane expand'
+                    : 'Expand answer to fill the main pane'
+                }
+                onClick={onToggleExpand}
+              >
+                {expanded ? (
+                  <Minimize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                ) : (
+                  <Expand className="h-3.5 w-3.5" strokeWidth={1.75} />
+                )}
+                <span className="ml-1.5 hidden sm:inline">
+                  {expanded ? 'Exit' : 'Expand'}
+                </span>
+              </Button>
+            ) : null}
+            {onDetach ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                title="Detach answer into a resizable popup window"
+                disabled={detaching}
+                onClick={onDetach}
+              >
+                {detaching ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.75} />
+                ) : (
+                  <PictureInPicture2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                )}
+                <span className="ml-1.5 hidden sm:inline">
+                  {detaching ? 'Opening…' : 'Detach'}
+                </span>
+              </Button>
+            ) : null}
+            {card && hasBody ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                title="Copy full speak sheet"
+                onClick={() => void copySpeakSheet()}
+              >
+                {copied ? (
+                  <Check className="h-3.5 w-3.5" strokeWidth={2} />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" strokeWidth={1.75} />
+                )}
+                <span className="ml-1.5">{copied ? 'Copied' : 'Copy'}</span>
+              </Button>
+            ) : null}
+            {(preparing || regenerating) && (
+              <Badge tone="amber">
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                {regenerating ? 'Rewriting…' : 'Working…'}
+              </Badge>
+            )}
+            {total > 0 && (
+              <Badge tone="indigo">
+                {cardIndex + 1} / {total}
+              </Badge>
+            )}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
-          {onToggleExpand ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              title={
-                expanded
-                  ? 'Exit full-pane expand'
-                  : 'Expand answer to fill the main pane'
-              }
-              onClick={onToggleExpand}
-            >
-              {expanded ? (
-                <Minimize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-              ) : (
-                <Expand className="h-3.5 w-3.5" strokeWidth={1.75} />
-              )}
-              <span className="ml-1.5 hidden sm:inline">
-                {expanded ? 'Exit' : 'Expand'}
-              </span>
-            </Button>
-          ) : null}
-          {onDetach ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              title="Detach answer into a resizable popup window"
-              disabled={detaching}
-              onClick={onDetach}
-            >
-              {detaching ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.75} />
-              ) : (
-                <PictureInPicture2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-              )}
-              <span className="ml-1.5 hidden sm:inline">
-                {detaching ? 'Opening…' : 'Detach'}
-              </span>
-            </Button>
-          ) : null}
-          {card && hasBody ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              title="Copy full speak sheet"
-              onClick={() => void copySpeakSheet()}
-            >
-              {copied ? (
-                <Check className="h-3.5 w-3.5" strokeWidth={2} />
-              ) : (
-                <Copy className="h-3.5 w-3.5" strokeWidth={1.75} />
-              )}
-              <span className="ml-1.5">{copied ? 'Copied' : 'Copy'}</span>
-            </Button>
-          ) : null}
-          {(preparing || regenerating) && (
-            <Badge tone="amber">
-              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-              {regenerating ? 'Rewriting…' : 'Working…'}
-            </Badge>
-          )}
-          {total > 0 && (
-            <Badge tone="indigo">
-              {cardIndex + 1} / {total}
-            </Badge>
-          )}
-        </div>
-      </div>
+      )}
 
-      {card && hasBody ? (
+      {!chromeHidden && card && hasBody ? (
         <div className="mb-4 shrink-0">
           <PathRail
             spotlight={spotlight}
@@ -1259,55 +1271,79 @@ export const WhisperStream = memo(function WhisperStream({
         </div>
       ) : null}
 
-      <div className="mb-5 flex shrink-0 flex-wrap gap-2">
-        {modes.map((m) => (
-          <Button
-            key={m.id}
-            size="sm"
-            variant={mode === m.id ? 'default' : 'secondary'}
-            title={m.hint}
-            disabled={regenerating}
-            onClick={() => onMode(m.id)}
-          >
-            {m.label}
-          </Button>
-        ))}
-      </div>
+      {!chromeHidden && (
+        <div className="mb-5 flex shrink-0 flex-wrap gap-2">
+          {modes.map((m) => (
+            <Button
+              key={m.id}
+              size="sm"
+              variant={mode === m.id ? 'default' : 'secondary'}
+              title={m.hint}
+              disabled={regenerating}
+              onClick={() => onMode(m.id)}
+            >
+              {m.label}
+            </Button>
+          ))}
+        </div>
+      )}
 
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-2 scrollbar-thin">
-        {showReadyRails && <ReadyRails compact={compact} />}
+      {/* Minimal status when chrome hidden (modes/path gone) */}
+      {chromeHidden && (preparing || regenerating) && (
+        <div className="mb-2 flex shrink-0 items-center gap-2">
+          <Badge tone="amber">
+            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            {regenerating ? 'Rewriting…' : 'Working…'}
+          </Badge>
+        </div>
+      )}
+
+      <div
+        className={cn(
+          'min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2 scrollbar-thin',
+          chromeHidden ? 'space-y-2' : 'space-y-4',
+        )}
+      >
+        {showReadyRails && <ReadyRails compact={compact || chromeHidden} />}
 
         {showPreparingSkeleton && !card && (
           <div className="space-y-3">
-            <SpeakRailsSkeleton compact={compact} />
+            <SpeakRailsSkeleton compact={compact || chromeHidden} />
           </div>
         )}
 
         {card && (
           // Stable key: do NOT remount on every streaming token (was causing heavy flicker).
           // Only remount when the card identity changes (new question).
-          <div key={card.id} className="space-y-3.5 pb-2">
-            {/* Demoted question: single muted line, not large glass-inset card */}
-            <p
-              className="line-clamp-1 max-w-[66ch] text-[13px] leading-snug text-white/40"
-              title={card.question}
-            >
-              <span className="mr-1.5 text-[11px] font-medium uppercase tracking-wide text-white/28">
-                Q
-              </span>
-              {card.question}
-            </p>
+          <div
+            key={card.id}
+            className={cn('pb-2', chromeHidden ? 'space-y-2' : 'space-y-3.5')}
+          >
+            {/* Q + Scaffold chrome — hidden so answer pulls up to red-mark line */}
+            {!chromeHidden && (
+              <p
+                className="line-clamp-1 max-w-[66ch] text-[13px] leading-snug text-white/40"
+                title={card.question}
+              >
+                <span className="mr-1.5 text-[11px] font-medium uppercase tracking-wide text-white/28">
+                  Q
+                </span>
+                {card.question}
+              </p>
+            )}
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium uppercase tracking-tight text-white/35">
-                  Scaffold
-                </p>
-                <Badge tone="default">{answer?.mode ?? mode}</Badge>
-              </div>
+            <div className={cn(chromeHidden ? 'space-y-2' : 'space-y-3')}>
+              {!chromeHidden && (
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium uppercase tracking-tight text-white/35">
+                    Scaffold
+                  </p>
+                  <Badge tone="default">{answer?.mode ?? mode}</Badge>
+                </div>
+              )}
 
               {showPreparingSkeleton && (
-                <SpeakRailsSkeleton compact={compact} />
+                <SpeakRailsSkeleton compact={compact || chromeHidden} />
               )}
 
               {showEmptyCardBody && (
@@ -1324,13 +1360,13 @@ export const WhisperStream = memo(function WhisperStream({
                 </pre>
               ) : null}
 
-              <MetricsChips metrics={metrics} />
+              {!chromeHidden && <MetricsChips metrics={metrics} />}
             </div>
           </div>
         )}
       </div>
 
-      {total > 0 && (
+      {total > 0 && !chromeHidden && (
         <div className="mt-6 flex shrink-0 items-center justify-between gap-3 border-t border-white/[0.06] pt-5">
           <Button
             variant="secondary"

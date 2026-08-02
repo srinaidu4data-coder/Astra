@@ -553,12 +553,14 @@ export function OverlayPage() {
         className={cn(
           'min-h-0 flex-1 overflow-hidden',
           chromeCollapsed
-            ? 'rounded-[16px] pt-11 sm:rounded-[18px] sm:pt-12'
+            ? // Room for floating Show pill only — Speak chrome stripped via chromeHidden
+              'rounded-[16px] pt-10 sm:rounded-[18px] sm:pt-11'
             : 'rounded-[20px] sm:rounded-[24px]',
         )}
       >
         <WhisperStream
           compact
+          chromeHidden={chromeCollapsed}
           cards={cards}
           cardIndex={cardIndex}
           onCardIndex={setCardIndex}
