@@ -69,3 +69,24 @@ Thumbs.db
 # Local audio caches / chroma if huge
 **/chroma_db/
 src/localhost_*.log
+
+# Agent / test artifact dumps (keep code, not local result blobs)
+src/_lifecycle_*.json
+src/_long_interview_loop_result.json
+src/_stt_accuracy_result.json
+src/_verify_latency_quality_result.json
+src/jobsearch_supervisor.heartbeat
+src/data/*.db
+src/data/*.db-*
+tmp-ai-job-search/
+.grok/
+
+# Large generated practice audio (regenerate via scripts)
+src/test_audio/*.mp3
+src/test_audio/*.wav
+src/jd and resume/*.mp3
+src/jd and resume/*.wav
+# Keep JD text + resume PDF + question banks
+!src/jd and resume/*.txt
+!src/jd and resume/*.pdf
+!src/jd and resume/*.json

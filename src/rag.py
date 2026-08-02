@@ -454,9 +454,31 @@ def search_context(query: str, top_k: int = 5, use_hybrid: bool = None) -> list[
     hybrid = use_hybrid if use_hybrid is not None else HYBRID_SEARCH_ENABLED
 
     if hybrid:
-        return search_context_hybrid(query, top_k)
+        results = search_context_hybrid(query, top_k)
     else:
-        return search_context_dense(query, top_k)
+        results = search_context_dense(query, top_k)
+
+    # Common-sense: drop robotics/ML/etc. chunks when the question is another domain
+    try:
+        from common_sense import filter_context_chunks, resolve_pack_blob
+        from session_context import effective_job_context
+
+        job = effective_job_context("") or ""
+        results = filter_context_chunks(
+            results or [],
+            question=query,
+            job_context=job,
+            lock=None,
+        )
+        # If pack has a strong domain and query is thin, re-filter with pack blob
+        pack = resolve_pack_blob()
+        if pack and results is not None:
+            results = filter_context_chunks(
+                results, question=query or pack[:200], job_context=job + " " + pack[:400]
+            )
+    except Exception:
+        pass
+    return results or []
 
 
 def search_context_dense(query: str, top_k: int = 5) -> list[dict]:

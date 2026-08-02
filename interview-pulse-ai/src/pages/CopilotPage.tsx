@@ -9,6 +9,7 @@ import {
   checkCopilotHealth,
   fetchAnswer,
   fetchLatencyMetrics,
+  getSessionContext,
   setSessionContext,
   warmCopilotApi,
 } from '@/services/real-api'
@@ -54,7 +55,9 @@ export function CopilotPage() {
   const metrics = useAppStore((s) => s.metrics)
   const setMetrics = useAppStore((s) => s.setMetrics)
   const settings = useAppStore((s) => s.settings)
+  const updateSettings = useAppStore((s) => s.updateSettings)
   const activeJobTitle = useAppStore((s) => s.activeJobTitle)
+  const setActiveJobTitle = useAppStore((s) => s.setActiveJobTitle)
   const clearTranscript = useAppStore((s) => s.clearTranscript)
   const pushTranscript = useAppStore((s) => s.pushTranscript)
   const setListening = useAppStore((s) => s.setListening)
@@ -174,6 +177,35 @@ export function CopilotPage() {
     const c = cards[cardIndex]
     if (c) setAnswer(c.answer)
   }, [cards, cardIndex, setAnswer])
+
+  // Audit P1: pull server JD bootstrap role into Job context when empty
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const data = await getSessionContext()
+      if (cancelled || !data?.pack) return
+      const role = (data.pack.role || '').trim()
+      if (!role) return
+      const jc = (useAppStore.getState().settings.jobContext || '').trim()
+      const title = (useAppStore.getState().activeJobTitle || '').trim()
+      if (!jc) {
+        updateSettings({ jobContext: role })
+      }
+      if (!title) {
+        setActiveJobTitle(role)
+      }
+      // Keep server pack warm with UI role
+      void setSessionContext({
+        role: jc || role,
+        job_description: data.pack.job_description,
+        resume_text: data.pack.resume_text,
+        keywords: data.pack.keywords,
+      })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [updateSettings, setActiveJobTitle])
 
   // Wire live WebSocket for the lifetime of this page
   useEffect(() => {

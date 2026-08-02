@@ -231,6 +231,64 @@ export async function setSessionContext(pack: {
   }
 }
 
+/** Fetch server session pack (JD bootstrap role, etc.). */
+export async function getSessionContext(): Promise<{
+  ok?: boolean
+  pack?: {
+    role?: string
+    company?: string
+    job_description?: string
+    resume_text?: string
+    keywords?: string[]
+    depth?: string
+  }
+} | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/session/context`, {
+      headers: { ...authHeaders() },
+      signal: AbortSignal.timeout(6000),
+      mode: 'cors',
+    })
+    if (!res.ok) return null
+    return (await res.json()) as {
+      ok?: boolean
+      pack?: {
+        role?: string
+        company?: string
+        job_description?: string
+        resume_text?: string
+        keywords?: string[]
+        depth?: string
+      }
+    }
+  } catch {
+    return null
+  }
+}
+
+/** Fire AI latency diagnose (post-deploy / ops). */
+export async function runLatencyAiDiagnose(opts?: {
+  quick?: boolean
+  includeStt?: boolean
+}): Promise<Record<string, unknown> | null> {
+  try {
+    const q = new URLSearchParams({
+      quick: String(opts?.quick ?? true),
+      include_stt: String(opts?.includeStt ?? false),
+    })
+    const res = await fetch(`${API_BASE}/api/latency/ai-diagnose?${q}`, {
+      method: 'POST',
+      headers: { ...authHeaders() },
+      signal: AbortSignal.timeout(180000),
+      mode: 'cors',
+    })
+    if (!res.ok) return null
+    return (await res.json()) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
 export async function injectAnswer(
   question: string,
   opts: {

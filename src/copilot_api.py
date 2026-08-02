@@ -49,6 +49,18 @@ from transcriber import get_whisper_model, transcribe_audio, transcribe_best  # 
 
 app = FastAPI(title="InterviewPulse Copilot API", version="1.0.0")
 
+
+@app.on_event("startup")
+def _bootstrap_jd_grounding() -> None:
+    """Load JD + resume into session pack so answers stop free-associating buzzwords."""
+    try:
+        from jd_grounding import bootstrap_session_from_jd_resume
+
+        info = bootstrap_session_from_jd_resume(force=False)
+        print(f"[jd_grounding] startup bootstrap: {info}", flush=True)
+    except Exception as e:
+        print(f"[jd_grounding] startup skip: {e}", flush=True)
+
 # Auth (Google) + Stripe billing share this process so the UI hits one origin.
 # Mock interview is core product — mount even if auth/billing deps fail
 try:
@@ -338,6 +350,24 @@ def health():
         }
     except Exception:
         pass
+    jd_info: dict[str, Any] = {"loaded": False}
+    try:
+        from jd_grounding import load_jd_text, load_resume_text
+        from session_context import get_pack
+
+        jd = load_jd_text()
+        pack = get_pack()
+        jd_info = {
+            "loaded": bool(jd),
+            "jd_chars": len(jd or ""),
+            "resume_chars": len(load_resume_text(500) or ""),
+            "pack_role": pack.role or None,
+            "pack_has_jd": bool(pack.job_description),
+            "latency_ai_agent": True,
+            "latency_ai_diagnose": "POST /api/latency/ai-diagnose?quick=true",
+        }
+    except Exception as e:
+        jd_info = {"loaded": False, "error": str(e), "latency_ai_agent": False}
     return {
         "ok": True,
         "openai_key": key_ok,
@@ -352,6 +382,7 @@ def health():
         "default_audio_wav": str(DEFAULT_AUDIO) if audio_wav else None,
         "default_audio_mp3": str(DEFAULT_AUDIO_MP3) if audio_mp3 else None,
         "latency": latency_brief,
+        "jd_grounding": jd_info,
         "stt": _stt_health(),
         "hint": (
             None
@@ -412,6 +443,31 @@ def latency_reset():
 
     get_registry().reset()
     return {"ok": True, "message": "Latency samples cleared"}
+
+
+@app.post("/api/latency/ai-diagnose")
+def latency_ai_diagnose(
+    quick: bool = True,
+    include_stt: bool = True,
+):
+    """
+    AI Latency Agent — ms-level pipeline breakdown + LLM recommendation.
+
+    Tells you whether to invest in STT, model, network, prompt, or other.
+    Can take 30–180s (STT load + multi LLM probes). Use quick=true for a faster run.
+    """
+    from latency_ai_agent import run_agent
+
+    report = run_agent(quick=bool(quick), include_stt=bool(include_stt))
+    return report
+
+
+@app.get("/api/latency/ai-diagnose/last")
+def latency_ai_diagnose_last():
+    """Last AI latency report from this process (if any)."""
+    from latency_ai_agent import get_last_report
+
+    return get_last_report()
 
 
 @app.get("/api/session/context")

@@ -255,6 +255,19 @@ def template_answer(question: str, *, job_context: str = "", mode: str = "star")
     pid, _ = classify_pattern(question)
     q_short = re.sub(r"\s+", " ", (question or "").strip())[:140]
 
+    # Common-sense: never paint SWE/ML reliability templates for specialized domains
+    try:
+        from common_sense import lock_for_turn
+
+        lock = lock_for_turn(question, job_context)
+        if lock.confidence >= 0.35 and lock.domain not in ("software", "general", "ml_ai"):
+            return _template_domain_locked(lock.domain, lock.label, role, q_short, mode)
+        if lock.domain == "ml_ai" and lock.confidence >= 0.4:
+            # ML is fine when the question IS ML — still avoid robotics/SAP bleed
+            pass
+    except Exception:
+        pass
+
     if mode == "shorter":
         return _template_shorter(pid, role, q_short)
     if mode == "code":
@@ -262,6 +275,39 @@ def template_answer(question: str, *, job_context: str = "", mode: str = "star")
     if mode == "technical":
         return _template_technical(pid, role, q_short)
     return _template_star(pid, role, q_short)
+
+
+def _template_domain_locked(
+    domain: str, label: str, role: str, q: str, mode: str
+) -> str:
+    """Sharp Musk+Jobs scaffold locked to the active domain."""
+    role_s = role or "candidate"
+    if mode == "shorter":
+        return (
+            f"Hook: One decision. One control. No theater — {label}.\n"
+            f"Approach: Name the constraint, then the move I own as a {role_s}.\n"
+            f"Tradeoff: What I refuse to fake to hit a date.\n"
+            f"Close: The proof I would put in front of leadership.\n"
+            f"(Domain lock: {domain} · Q: {q})"
+        )
+    if mode == "technical":
+        return (
+            f"Hook: The design is inevitable once you respect the domain physics of {label}.\n"
+            f"Approach: Object, flow, ownership — nothing else first.\n"
+            f"Mechanism: End-to-end path with the real artifacts, not a slide.\n"
+            f"Tradeoff: What I delete when partners push for convenience.\n"
+            f"Close: Validation that fails closed.\n"
+            f"(Domain lock: {domain} · Q: {q})"
+        )
+    return (
+        f"Hook: I do not negotiate the non-negotiable in {label}.\n"
+        f"Situation: Constraint that actually hurt — scale, partner, or control gap.\n"
+        f"Task: Done meant a measurable bar, not activity.\n"
+        f"Action: I owned design, config, integration, and the refuse line.\n"
+        f"Result: Outcome I can defend without inventing tools.\n"
+        f"Close: The tradeoff I would take again.\n"
+        f"(Domain lock: {domain} · Q: {q})"
+    )
 
 
 def outline_skeleton(
@@ -279,19 +325,19 @@ def outline_skeleton(
     mode = (mode or "star").strip().lower()
 
     hooks = {
-        "behavioral": f"I'll answer this with a concrete ownership story as a {role}.",
-        "conflict": f"I'll frame this as a metric-aligned disagreement, not an ego fight.",
-        "failure": f"I'll own the failure, the RCA, and the permanent control.",
-        "leadership": f"I'll show how I set frame, unblock, and measure progress.",
-        "system_design": f"I'll start from SLOs and failure modes, then the design.",
-        "performance": f"I'll optimize from measurement on the hot path.",
-        "debug": f"I'll walk a hypothesis tree with evidence at each layer.",
-        "coding": f"I'll clarify I/O and complexity, then the simplest correct structure.",
-        "tradeoff": f"I'll score options on criteria that matter for this decision.",
-        "explain": f"Mechanism first, then tradeoffs, then how I'd validate.",
-        "self": f"I'll map a real strength to the work of a {role}.",
-        "why_us": f"I'll connect their problems to work I've already done.",
-        "general": f"Clear frame → mechanism → metric I can defend.",
+        "behavioral": f"One ownership story. No fog. As a {role}.",
+        "conflict": f"Disagree on the metric — not the ego.",
+        "failure": f"I own the miss, the RCA, and the permanent control.",
+        "leadership": f"Set the frame. Unblock. Measure. Leave.",
+        "system_design": f"Constraints first. Failure modes second. Design third.",
+        "performance": f"Measure the hot path. Cut what does not move it.",
+        "debug": f"Hypothesis tree. Evidence at each layer. No guessing.",
+        "coding": f"Clarify I/O. Simplest correct structure. Complexity said out loud.",
+        "tradeoff": f"Two options. One delete. Pick by the real constraint.",
+        "explain": f"Mechanism. Tradeoff. Proof. Stop.",
+        "self": f"Strength maps to the work of a {role} — not a slogan.",
+        "why_us": f"Your hardest problem is work I have already done.",
+        "general": f"Claim → mechanism → metric. Nothing else first.",
     }
     hook = hooks.get(pid, hooks["general"])
 
@@ -339,36 +385,36 @@ def outline_skeleton(
 def _template_star(pid: str, role: str, q: str) -> str:
     bank = {
         "behavioral": (
-            "I treat this as a ownership story with a measurable outcome.",
-            "In a prior role as a {role}, a high-stakes delivery had a clear risk of missing a reliability or timeline bar.",
-            "Success meant shipping without regressions, with clear SLOs and stakeholder trust.",
-            "I framed the problem, instrumented the critical path, cut scope to the highest-leverage fix, aligned stakeholders on tradeoffs, and owned validation end-to-end.",
-            "We hit the target with roughly 30–40% better signal on the key metric and zero sev-1 fallout in the following week.",
-            "I default to mechanism + metrics over narratives when the interview pressure is on.",
+            "One story. One metric. No fog.",
+            "As a {role}, the constraint was real — miss the bar and the system or the timeline fails.",
+            "Done meant a hard outcome, not activity.",
+            "I cut scope to the lever that moved the metric, owned the path end-to-end, and deleted process theater.",
+            "We cleared the bar; the metric moved and the failure mode did not come back.",
+            "Mechanism over narrative. Always.",
         ),
         "conflict": (
-            "I handle conflict by aligning on the user/system metric, not egos.",
-            "As a {role}, I disagreed with a proposed approach that would have increased operational risk.",
-            "The bar was a decision we could reverse cheaply with data within one cycle.",
-            "I restated their goals, proposed a spike with success criteria, shared data, and offered a reversible path that protected both velocity and reliability.",
-            "We chose the lower-risk path, shipped, and the metric moved the right way within two sprints.",
-            "I keep disagreements technical and time-boxed.",
+            "We disagree on the metric — not the ego.",
+            "As a {role}, the proposed path raised risk I would not ship.",
+            "Done meant a reversible decision with data in one cycle.",
+            "I restated their goal, proposed a spike with a kill line, and protected the non-negotiable.",
+            "We picked the lower-risk path. The metric moved. No drama theater.",
+            "Keep it technical. Time-box it. Ship.",
         ),
         "failure": (
-            "I own failures with a blameless RCA and a permanent control.",
-            "As a {role}, an incident hit customer-facing latency/error budgets.",
-            "Success was restore service fast, then prevent class-of-bug recurrence.",
-            "I led triage, mitigated blast radius, wrote the timeline, fixed the root cause, and added monitors + regression tests.",
-            "MTTR dropped on the next similar event; we closed the action items within a week.",
-            "I treat incidents as system design feedback.",
+            "I own the miss. Then I fix the class of bug.",
+            "As a {role}, production told the truth — error or latency budget blown.",
+            "Done meant restore fast, then a permanent control.",
+            "Triage, blast-radius cut, root cause, monitor, regression. No heroes, no hand-waving.",
+            "MTTR dropped next time. The precursor has an alert.",
+            "Incidents are design feedback.",
         ),
         "leadership": (
-            "I lead by setting a crisp problem frame and unblocking others.",
-            "As a {role}, the team needed direction under ambiguous requirements.",
-            "Success meant a shared plan, clear owners, and a measurable milestone.",
-            "I decomposed work, paired on the hardest interface, wrote the decision record, and removed cross-team blockers daily.",
-            "We delivered the milestone with fewer handoff defects and higher review throughput.",
-            "Influence without authority is mostly clarity + follow-through.",
+            "Set the frame. Unblock. Measure. Leave.",
+            "As a {role}, ambiguity was the enemy — not the people.",
+            "Done meant owners, a milestone, and a number.",
+            "I decomposed the hard interface, wrote the decision, removed blockers daily.",
+            "Milestone hit. Fewer handoff defects.",
+            "Clarity is the product.",
         ),
         "system_design": (
             "I design for failure modes and measurable SLOs first.",

@@ -1,11 +1,14 @@
 # Astra / InterviewPulse AI
 
-Desktop interview copilot suite:
+**Primary product:** live interview copilot for [jobinterviewcracker.com](https://jobinterviewcracker.com)  
+**Source of truth:** React UI + FastAPI API (not the legacy Tk GUI).
 
 | Path | What |
 |------|------|
-| `src/` | Python backend: Whisper STT, OpenAI answers, Stereo Mix live session, FastAPI + WebSocket |
-| `interview-pulse-ai/` | React UI (Vite + TypeScript + Tailwind) |
+| `interview-pulse-ai/` | React UI (Vite + TypeScript + Tailwind) — SpeakCanvas, Copilot, auth |
+| `src/` | FastAPI copilot API: STT, answers, WebSocket, JD grounding, auth/billing |
+| `src/jd and resume/` | Active JD + resume for answer grounding (ATTP) |
+| `career-ops/` | Separate toolkit (not required for live interviews; often gitignored) |
 
 ## Quick start
 

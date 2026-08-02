@@ -38,12 +38,16 @@ const OWNERSHIP_RE =
  * Standalone power verbs / decision words — the few that can replace a paragraph.
  * Matched as whole words; scored as `buzz`.
  */
+/**
+ * Power / process verbs — JD-leaning (serialization / integration / validation).
+ * Avoid pure SWE theater (invariant, idempotent, p99) unless question uses them.
+ */
 const POWER_BUZZ_RE =
-  /\b(block|blocked|blocking|reject|rejected|approve|approved|refuse|refused|enforce|enforced|fail-closed|fail closed|hard stop|hard-stop|must|never|always|only|non-negotiable|go-live|cutover|hypercare|trade-?off|tradeoff|invariant|idempotent|reconcile|reconciliation|commission|commissioning|aggregate|aggregation|deaggregation|serialize|serialization|traceability|compliance|audit(?:able)?|validated|validation|authorize|authorized|authentication|master data|golden record|system of record|ship-block|ship block)\b/gi
+  /\b(block|blocked|blocking|reject|rejected|approve|approved|refuse|refused|enforce|enforced|hard stop|hard-stop|non-negotiable|go-live|cutover|hypercare|trade-?off|tradeoff|reconcile|reconciliation|commission|commissioning|aggregate|aggregation|deaggregation|serialize|serialization|serialisation|traceability|compliance|audit(?:able)?|validated|validation|authorize|authorized|authentication|master data|trading partner|business partner|ship-block|ship block|onboard(?:ing)?|mapping|repository)\b/gi
 
-/** Outcomes that land the close — one noun = the result of the whole answer */
+/** Outcomes that land the close — prefer domain outcomes over generic SaaS metrics */
 const OUTCOME_RE =
-  /\b(uptime|conversion|revenue|latency|throughput|retention|nps|sla|accuracy|savings|reduction|growth|compliance|audit|go-live|cutover|hypercare|orphan serials|patient safety|traceability|integrity)\b/gi
+  /\b(compliance|audit|go-live|cutover|hypercare|orphan serials|patient safety|traceability|integrity|throughput|accuracy|savings|reduction|aggregation|commissioning)\b/gi
 
 /**
  * Yes / No / Conditional atomic decisions (often the entire answer)

@@ -1,0 +1,30 @@
+Role :- SAP ATTP Techno-Functional Consultant
+
+Job Description :-
+
+Lead functional design, implementation, and optimization for ATTP-related programs and initiatives
+Collaborate with business stakeholders & external partners (3PL, CMOs) to gather, analyze, and document functional requirements. Identify AS-IS process and design TO-BE process flows
+Translate business needs into functional specifications and solution designs.
+Act as the primary point of contact between business, IT, and operations teams.
+Define and document how serial number requests, commissioning, packing, shipping, and receiving events flow between the pharmaceutical company (MAH - Marketing Authorization Holder), CMOs, and 3PLs.
+Identify gaps between standard SAP ATTP capabilities and the specific operational capabilities of external partners (e.g., handling partial pallets, aggregations, or returns).
+Ensure the integration design complies with global regulations such as US DSCSA, EU FMD, Etc.
+Configure ATTP repository systems, business partners (CMOs/3PLs), locations (GLNs), and master data (GTINs, SSCCs).
+Design and map standard GS1 EPCIS messages for 3PLs and CMOs.
+Configure ATTP rules, system schemas, and authentication settings to ensure only authorized data exchanges occur with specific partners.
+Collaborate with middleware teams (Dell BOOMI) to establish secure connections (AS2, SFTP, Web Services) with partners.
+Author and distribute Implementation Guidelines (IGs) or Mapping Specifications to CMOs/3PLs, aligning on required EPCIS event fields, business steps, and dispositions.
+Act as the primary technical point of contact to guide external partner IT teams through the testing and onboarding pipeline.
+Conduct End-to-End (E2E) integration testing. This includes simulating automated production runs from CMOs and fulfillment scenarios from 3PLs.
+Author and execute validation deliverables in compliance with GAMP 5 and 21 CFR Part 11, including Functional Specifications (FS), Configuration Specification (CS), and User Acceptance Testing (UAT) scripts.
+Hands-on experience with RISE with SAP
+Ability to perform discovery phase with RISE upgrade and advise on impacts and solution to leadership teams
+Qualifications & Experience :
+ 
+
+Bachelor’s degree in Business, IT, Engineering, or a related field.
+10+ years of functional SAP consulting experience with at least 1-2 end-to-end full life-cycle implementations of SAP ATTP as functional consultant
+Proven experience in leading functional workstreams in large-scale SAP transformation programs.
+Deep understanding of pharmaceutical supply chains, packaging, and aggregation processes
+Strong knowledge of business process design and system implementation.
+Hands-on expertise in GS1 standards (GTIN, GLN, SSCC), EPCIS messaging, and SAP integration architectures (EDI/ALE)

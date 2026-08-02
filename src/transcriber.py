@@ -144,13 +144,24 @@ def transcribe_audio(
 
     model = get_whisper_model()
     beam = max(1, int(WHISPER_BEAM_SIZE or 2))
-    # Domain vocabulary reduces "SAPS slash for HANA" style errors
+    # Domain vocabulary — only the active interview domain (common_sense lock).
+    # Never kitchen-sink ML + FICO + robotics into every session.
     prompt = (initial_prompt or os.environ.get("ASTRA_STT_PROMPT") or "").strip()
     if not prompt:
-        prompt = (
-            "Interview questions about software engineering, AI, machine learning, "
-            "SAP S/4HANA Finance, FICO, Vertex O Series tax, GL, cost centers."
-        )
+        try:
+            from common_sense import resolve_pack_blob, stt_initial_prompt
+            from session_context import effective_job_context
+
+            job = effective_job_context("") or ""
+            prompt = stt_initial_prompt(
+                job_context=job,
+                resume_or_pack=resolve_pack_blob(),
+            )
+        except Exception:
+            prompt = (
+                "Professional job interview. Transcribe the interviewer's question "
+                "accurately. Do not invent jargon from unrelated fields."
+            )
 
     # Skip Whisper internal VAD — we already edge-trim; Silero often chops starts.
     segments, _ = model.transcribe(
