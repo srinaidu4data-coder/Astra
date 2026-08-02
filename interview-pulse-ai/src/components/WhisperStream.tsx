@@ -27,7 +27,16 @@ import {
 } from '@/lib/speak-psych-hacks'
 import { cn } from '@/lib/utils'
 import type { AnswerMode, QACard } from '@/types'
-import { Check, ChevronLeft, ChevronRight, Copy, Loader2 } from 'lucide-react'
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Expand,
+  Loader2,
+  Minimize2,
+  PictureInPicture2,
+} from 'lucide-react'
 import {
   memo,
   useCallback,
@@ -464,6 +473,10 @@ export const WhisperStream = memo(function WhisperStream({
   preparing,
   regenerating,
   compact,
+  expanded,
+  onToggleExpand,
+  onDetach,
+  detaching,
 }: {
   cards: QACard[]
   cardIndex: number
@@ -473,6 +486,12 @@ export const WhisperStream = memo(function WhisperStream({
   preparing?: boolean
   regenerating?: boolean
   compact?: boolean
+  /** In-app full-pane expand (main window) */
+  expanded?: boolean
+  onToggleExpand?: () => void
+  /** Pop out to overlay / browser popup */
+  onDetach?: () => void
+  detaching?: boolean
 }) {
   const card = cards[cardIndex] ?? null
   const total = cards.length
@@ -946,6 +965,7 @@ export const WhisperStream = memo(function WhisperStream({
         'glass flex h-full min-h-[min(78vh,900px)] flex-col rounded-[28px] p-7 md:p-9',
         // Overlay: drop fixed min-height so the window can shrink/grow freely
         compact && 'min-h-0 rounded-[20px] p-4 sm:rounded-[24px] sm:p-5',
+        expanded && 'min-h-0 rounded-[24px] p-5 md:p-7',
       )}
     >
       <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
@@ -959,7 +979,46 @@ export const WhisperStream = memo(function WhisperStream({
               : `${ladderHint} · 1 2 3 focus · F hides chips`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+          {onToggleExpand ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              title={
+                expanded
+                  ? 'Exit full-pane expand'
+                  : 'Expand answer to fill the main pane'
+              }
+              onClick={onToggleExpand}
+            >
+              {expanded ? (
+                <Minimize2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+              ) : (
+                <Expand className="h-3.5 w-3.5" strokeWidth={1.75} />
+              )}
+              <span className="ml-1.5 hidden sm:inline">
+                {expanded ? 'Exit' : 'Expand'}
+              </span>
+            </Button>
+          ) : null}
+          {onDetach ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              title="Detach answer into a resizable popup window"
+              disabled={detaching}
+              onClick={onDetach}
+            >
+              {detaching ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.75} />
+              ) : (
+                <PictureInPicture2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+              )}
+              <span className="ml-1.5 hidden sm:inline">
+                {detaching ? 'Opening…' : 'Detach'}
+              </span>
+            </Button>
+          ) : null}
           {card && hasBody ? (
             <Button
               size="sm"

@@ -2,6 +2,11 @@ import { Waveform } from '@/components/Waveform'
 import { WhisperStream } from '@/components/WhisperStream'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  applyBrowserWindowPreset,
+  toggleBrowserWindowMaximize,
+} from '@/lib/answer-popout'
+import { isDesktopApp } from '@/lib/desktop'
 import { cn } from '@/lib/utils'
 import { subscribeLiveSync } from '@/lib/window-sync'
 import { useAppStore } from '@/stores/app-store'
@@ -46,6 +51,7 @@ export function OverlayPage() {
     updateStealth,
   } = useAppStore()
 
+  const desktop = isDesktopApp()
   const [cardIndex, setCardIndex] = useState(0)
   const [chromeCollapsed, setChromeCollapsed] = useState(false)
   const [sizeLabel, setSizeLabel] = useState('')
@@ -73,31 +79,37 @@ export function OverlayPage() {
   }, [answer])
 
   const refreshBounds = useCallback(async () => {
-    const b = await window.interviewPulse?.getOverlayBounds?.()
-    if (!b?.ok && b?.width == null) return
-    if (b.width != null && b.height != null) {
-      setSizeLabel(`${b.width}×${b.height}`)
+    if (window.interviewPulse?.getOverlayBounds) {
+      const b = await window.interviewPulse.getOverlayBounds()
+      if (b?.width != null && b?.height != null) {
+        setSizeLabel(`${b.width}×${b.height}`)
+      }
+      if (typeof b?.maximized === 'boolean') setMaximized(b.maximized)
+      return
     }
-    if (typeof b.maximized === 'boolean') setMaximized(b.maximized)
+    // Browser popup: report viewport size
+    setSizeLabel(`${window.innerWidth}×${window.innerHeight}`)
   }, [])
 
   useEffect(() => {
-    document.body.style.background = 'transparent'
+    // Electron: transparent for always-on-top glass; browser popup needs solid chrome
+    document.body.style.background = desktop ? 'transparent' : '#131314'
+    document.documentElement.style.background = desktop ? 'transparent' : '#131314'
     // Opening the overlay always restores mouse interaction so drag/move works.
     // Click-through can be re-enabled via the eye button after you're positioned.
     updateStealth({ clickThrough: false })
-    void window.interviewPulse?.setClickThrough(false)
-    void window.interviewPulse?.setOverlayOpacity(stealth.opacity)
-    void window.interviewPulse?.setContentProtection(stealth.contentProtection)
+    void window.interviewPulse?.setClickThrough?.(false)
+    void window.interviewPulse?.setOverlayOpacity?.(stealth.opacity)
+    void window.interviewPulse?.setContentProtection?.(stealth.contentProtection)
     void refreshBounds()
 
     const unsub = window.interviewPulse?.onToggleClickThrough?.(() => {
       const next = !useAppStore.getState().stealth.clickThrough
       updateStealth({ clickThrough: next })
-      void window.interviewPulse?.setClickThrough(next)
+      void window.interviewPulse?.setClickThrough?.(next)
     })
 
-    // Receive answers from the main copilot window (separate Electron heap).
+    // Receive answers from the main copilot window (separate Electron heap / popup).
     // Use setState (not setAnswer/setLevels) so we don't re-publish and loop.
     const unsubLive = subscribeLiveSync((payload) => {
       const patch: {
@@ -128,16 +140,17 @@ export function OverlayPage() {
       unsubLive()
       window.removeEventListener('resize', onResize)
       document.body.style.background = ''
+      document.documentElement.style.background = ''
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only on mount
   }, [])
 
   useEffect(() => {
-    void window.interviewPulse?.setOverlayOpacity(stealth.opacity)
+    void window.interviewPulse?.setOverlayOpacity?.(stealth.opacity)
   }, [stealth.opacity])
 
   useEffect(() => {
-    void window.interviewPulse?.setContentProtection(stealth.contentProtection)
+    void window.interviewPulse?.setContentProtection?.(stealth.contentProtection)
   }, [stealth.contentProtection])
 
   useEffect(() => {
@@ -146,33 +159,71 @@ export function OverlayPage() {
 
   const applyPreset = async (preset: OverlaySizePreset) => {
     setActivePreset(preset)
-    const res = await window.interviewPulse?.setOverlayPreset?.(preset)
-    if (res?.width != null && res?.height != null) {
-      setSizeLabel(`${res.width}×${res.height}`)
+    if (window.interviewPulse?.setOverlayPreset) {
+      const res = await window.interviewPulse.setOverlayPreset(preset)
+      if (res?.width != null && res?.height != null) {
+        setSizeLabel(`${res.width}×${res.height}`)
+      }
+      setMaximized(preset === 'max')
+      return
     }
+    const dims = applyBrowserWindowPreset(preset)
+    if (dims) setSizeLabel(`${dims.width}×${dims.height}`)
     setMaximized(preset === 'max')
   }
 
   const toggleMaximize = async () => {
-    const res = await window.interviewPulse?.toggleOverlayMaximize?.()
-    if (res?.width != null && res?.height != null) {
-      setSizeLabel(`${res.width}×${res.height}`)
+    if (window.interviewPulse?.toggleOverlayMaximize) {
+      const res = await window.interviewPulse.toggleOverlayMaximize()
+      if (res?.width != null && res?.height != null) {
+        setSizeLabel(`${res.width}×${res.height}`)
+      }
+      if (typeof res?.maximized === 'boolean') {
+        setMaximized(res.maximized)
+        setActivePreset(res.maximized ? 'max' : null)
+      }
+      return
     }
-    if (typeof res?.maximized === 'boolean') {
-      setMaximized(res.maximized)
-      setActivePreset(res.maximized ? 'max' : null)
-    }
+    const res = toggleBrowserWindowMaximize(maximized)
+    setSizeLabel(`${res.width}×${res.height}`)
+    setMaximized(res.maximized)
+    setActivePreset(res.maximized ? 'max' : 'medium')
   }
 
   const resetPosition = async () => {
     updateStealth({ clickThrough: false })
-    void window.interviewPulse?.setClickThrough(false)
-    const res = await window.interviewPulse?.resetOverlayPosition?.()
-    if (res?.width != null) {
-      setSizeLabel(`${res.width}×${res.height}`)
-      setMaximized(false)
-      setActivePreset('medium')
+    void window.interviewPulse?.setClickThrough?.(false)
+    if (window.interviewPulse?.resetOverlayPosition) {
+      const res = await window.interviewPulse.resetOverlayPosition()
+      if (res?.width != null) {
+        setSizeLabel(`${res.width}×${res.height}`)
+        setMaximized(false)
+        setActivePreset('medium')
+      }
+      return
     }
+    const dims = applyBrowserWindowPreset('medium')
+    if (dims) setSizeLabel(`${dims.width}×${dims.height}`)
+    setMaximized(false)
+    setActivePreset('medium')
+  }
+
+  const closeWindow = () => {
+    if (window.interviewPulse?.closeOverlay) {
+      void window.interviewPulse.closeOverlay()
+      return
+    }
+    try {
+      window.close()
+    } catch {
+      /* ignore */
+    }
+    // If the browser blocked window.close (tab not opened by script), go home
+    window.setTimeout(() => {
+      if (!window.closed) {
+        window.location.hash = '#/'
+      }
+    }, 80)
   }
 
   // --- Move (manual pointer drag — works when -webkit-app-region fails on Win) ---
@@ -194,7 +245,15 @@ export function OverlayPage() {
     const dy = e.screenY - lastPointerRef.current.y
     lastPointerRef.current = { x: e.screenX, y: e.screenY }
     if (dx === 0 && dy === 0) return
-    void window.interviewPulse?.moveOverlayBy?.({ x: dx, y: dy })
+    if (window.interviewPulse?.moveOverlayBy) {
+      void window.interviewPulse.moveOverlayBy({ x: dx, y: dy })
+      return
+    }
+    try {
+      window.moveBy(dx, dy)
+    } catch {
+      /* some browsers restrict moveBy */
+    }
   }
 
   const onMovePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -209,9 +268,8 @@ export function OverlayPage() {
     void refreshBounds()
   }
 
-  // --- Resize handle ---
+  // --- Resize handle (Electron bounds API or browser window.resizeTo) ---
   const onResizePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!window.interviewPulse?.setOverlayBounds) return
     e.preventDefault()
     e.stopPropagation()
     resizingRef.current = true
@@ -229,10 +287,17 @@ export function OverlayPage() {
     const start = resizeStartRef.current
     const dw = e.screenX - start.x
     const dh = e.screenY - start.y
-    void window.interviewPulse?.setOverlayBounds?.({
-      width: Math.round(start.w + dw),
-      height: Math.round(start.h + dh),
-    })
+    const width = Math.max(360, Math.round(start.w + dw))
+    const height = Math.max(420, Math.round(start.h + dh))
+    if (window.interviewPulse?.setOverlayBounds) {
+      void window.interviewPulse.setOverlayBounds({ width, height })
+      return
+    }
+    try {
+      window.resizeTo(width, height)
+    } catch {
+      /* ignore */
+    }
   }
 
   const onResizePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -249,8 +314,13 @@ export function OverlayPage() {
   }
 
   return (
-    <div className="relative flex h-screen flex-col bg-transparent p-2.5 text-white sm:p-3">
-      {stealth.clickThrough && (
+    <div
+      className={cn(
+        'relative flex h-screen flex-col p-2.5 text-white sm:p-3',
+        desktop ? 'bg-transparent' : 'bg-[#131314]',
+      )}
+    >
+      {desktop && stealth.clickThrough && (
         <div
           className="mb-2 rounded-[14px] border border-[#E8C547]/40 bg-[#E8C547]/15 px-3 py-2 text-[11px] text-[#E8C547]"
           style={{ WebkitAppRegion: 'no-drag' } as CSSProperties}
@@ -272,11 +342,13 @@ export function OverlayPage() {
         onPointerUp={onMovePointerUp}
         onPointerCancel={onMovePointerUp}
         onDoubleClick={() => void toggleMaximize()}
-        title="Drag this bar to move the overlay · double-click to expand"
+        title="Drag this bar to move · double-click to expand"
       >
         <div className="flex min-w-0 items-center gap-2 text-[12px] text-white/55">
           <GripHorizontal className="h-4 w-4 shrink-0 text-[#5DD5E3]" strokeWidth={1.5} />
-          <span className="truncate font-medium text-white/70">Drag to move</span>
+          <span className="truncate font-medium text-white/70">
+            {desktop ? 'Drag to move' : 'Answer · drag to move'}
+          </span>
           <Badge tone={listening ? 'emerald' : 'default'}>
             {listening ? 'live' : 'idle'}
           </Badge>
@@ -294,7 +366,7 @@ export function OverlayPage() {
           <Button
             size="icon"
             variant="ghost"
-            title="Reset position (if stuck)"
+            title="Reset size & position"
             onClick={() => void resetPosition()}
           >
             <span className="text-[10px] font-semibold text-white/50">⌂</span>
@@ -323,30 +395,33 @@ export function OverlayPage() {
               <Maximize2 className="h-4 w-4" strokeWidth={1.5} />
             )}
           </Button>
+          {desktop && (
+            <Button
+              size="icon"
+              variant="ghost"
+              title={
+                stealth.clickThrough
+                  ? 'Click-through ON — click to interact again'
+                  : 'Click-through OFF — click so mouse passes through'
+              }
+              onClick={() => {
+                const next = !stealth.clickThrough
+                updateStealth({ clickThrough: next })
+                void window.interviewPulse?.setClickThrough?.(next)
+              }}
+            >
+              {stealth.clickThrough ? (
+                <EyeOff className="h-4 w-4 text-[#E8C547]" strokeWidth={1.5} />
+              ) : (
+                <Eye className="h-4 w-4" strokeWidth={1.5} />
+              )}
+            </Button>
+          )}
           <Button
             size="icon"
             variant="ghost"
-            title={
-              stealth.clickThrough
-                ? 'Click-through ON — click to interact again'
-                : 'Click-through OFF — click so mouse passes through'
-            }
-            onClick={() => {
-              const next = !stealth.clickThrough
-              updateStealth({ clickThrough: next })
-              void window.interviewPulse?.setClickThrough(next)
-            }}
-          >
-            {stealth.clickThrough ? (
-              <EyeOff className="h-4 w-4 text-[#E8C547]" strokeWidth={1.5} />
-            ) : (
-              <Eye className="h-4 w-4" strokeWidth={1.5} />
-            )}
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => void window.interviewPulse?.closeOverlay()}
+            title="Close detached answer"
+            onClick={closeWindow}
           >
             <X className="h-4 w-4" strokeWidth={1.5} />
           </Button>

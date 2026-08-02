@@ -1,6 +1,7 @@
 import { ApiStatusBadge } from '@/components/ApiStatusBadge'
 import { DesktopOption } from '@/components/DesktopOption'
 import { Button } from '@/components/ui/button'
+import { openAnswerPopout } from '@/lib/answer-popout'
 import { formatMs } from '@/lib/utils'
 import { useAppStore } from '@/stores/app-store'
 import { MonitorSmartphone, Shield } from 'lucide-react'
@@ -54,15 +55,14 @@ export function TopBar() {
   }
 
   const openOverlay = async () => {
-    if (!window.interviewPulse) {
+    // Electron native overlay or browser popup to #/overlay (live-synced)
+    const res = await openAnswerPopout()
+    if (!res.ok) {
       window.alert(
-        'Overlay only works in the desktop app.\n\nRun: npm run dev:electron\n\nBrowser mode still supports Start interview + Answer.',
+        res.message ||
+          'Could not open the answer overlay. Allow popups, or use the desktop app.',
       )
-      return
     }
-    await window.interviewPulse.openOverlay()
-    await window.interviewPulse.setOverlayOpacity(stealth.opacity)
-    await window.interviewPulse.setContentProtection(stealth.contentProtection)
   }
 
   return (
@@ -133,10 +133,14 @@ export function TopBar() {
           variant="secondary"
           size="sm"
           onClick={() => void openOverlay()}
-          title={hasDesktop ? 'Open whisper overlay' : 'Requires Electron desktop app'}
+          title={
+            hasDesktop
+              ? 'Open whisper overlay (always-on-top)'
+              : 'Detach answer into a resizable popup window'
+          }
         >
           <MonitorSmartphone className="h-3.5 w-3.5" strokeWidth={1.75} />
-          Overlay
+          {hasDesktop ? 'Overlay' : 'Detach'}
         </Button>
       </div>
     </header>

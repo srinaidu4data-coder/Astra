@@ -2,6 +2,7 @@ import { ApiStatusBadge } from '@/components/ApiStatusBadge'
 import { LiveWaveform } from '@/components/LiveWaveform'
 import { WhisperStream } from '@/components/WhisperStream'
 import { Button } from '@/components/ui/button'
+import { openAnswerPopout } from '@/lib/answer-popout'
 import { formatMs } from '@/lib/utils'
 import { liveInterview } from '@/services/live-interview'
 import { pipeline } from '@/services/pipeline'
@@ -90,6 +91,35 @@ export function CopilotPage() {
   const toggleLeftPanel = useCallback(() => {
     setCopilotWideAnswer(!leftCollapsed)
   }, [leftCollapsed, setCopilotWideAnswer])
+  /** In-app expand: answer fills the viewport over chrome */
+  const [answerExpanded, setAnswerExpanded] = useState(false)
+  const [detaching, setDetaching] = useState(false)
+
+  const toggleAnswerExpand = useCallback(() => {
+    setAnswerExpanded((v) => !v)
+  }, [])
+
+  const handleDetachAnswer = useCallback(async () => {
+    setDetaching(true)
+    try {
+      const res = await openAnswerPopout()
+      if (!res.ok) {
+        window.alert(res.message || 'Could not open detached answer window.')
+      }
+    } finally {
+      setDetaching(false)
+    }
+  }, [])
+
+  // Esc exits in-app expand
+  useEffect(() => {
+    if (!answerExpanded) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAnswerExpanded(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [answerExpanded])
 
   const pushStatus = useCallback((msg: string) => {
     if (!msg) return
@@ -869,16 +899,38 @@ export function CopilotPage() {
               : 'flex min-h-[720px] flex-col gap-5 xl:col-span-8 xl:min-h-0'
           }
         >
-        <div className="min-h-0 flex-1">
-          <WhisperStream
-            cards={cards}
-            cardIndex={cardIndex}
-            onCardIndex={updateCardIndex}
-            mode={answerMode}
-            onMode={(m) => void handleModeChange(m)}
-            preparing={sessionOn && phase === 'processing'}
-            regenerating={regenerating}
-          />
+        {/*
+          Single Speak surface: inline or full-viewport expand (same mount).
+          Detach opens a separate #/overlay window (Electron or browser popup).
+        */}
+        <div
+          className={
+            answerExpanded
+              ? 'fixed inset-0 z-[80] flex flex-col bg-[#0f0f10]/92 p-3 backdrop-blur-md sm:p-5'
+              : 'min-h-0 flex-1'
+          }
+        >
+          <div
+            className={
+              answerExpanded
+                ? 'mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col'
+                : 'h-full min-h-0'
+            }
+          >
+            <WhisperStream
+              cards={cards}
+              cardIndex={cardIndex}
+              onCardIndex={updateCardIndex}
+              mode={answerMode}
+              onMode={(m) => void handleModeChange(m)}
+              preparing={sessionOn && phase === 'processing'}
+              regenerating={regenerating}
+              expanded={answerExpanded}
+              onToggleExpand={toggleAnswerExpand}
+              onDetach={() => void handleDetachAnswer()}
+              detaching={detaching}
+            />
+          </div>
         </div>
 
         {/* Metrics strip — compact in wide mode so answer keeps vertical room */}
