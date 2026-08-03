@@ -426,17 +426,21 @@ def analyze_question_strategy(
     data.setdefault("pitfalls", [])
     data.setdefault("evidence_style", "framework")
     data.setdefault("depth_target", "high")
-    # Merge JD lexicon into jargon (never empty when JD exists)
+    # Merge JD lexicon only when the question matches the stored JD domain
     try:
-        from jd_grounding import extract_lexicon, load_jd_text
+        from jd_grounding import extract_lexicon, jd_grounding_applies, load_jd_text
 
-        jd_lex = extract_lexicon(load_jd_text(), q, job_context, max_terms=16)
         bank = [str(x) for x in (data.get("jargon_bank") or []) if x]
-        seen = {b.lower() for b in bank}
-        for t in jd_lex:
-            if t.lower() not in seen:
-                bank.append(t)
-                seen.add(t.lower())
+        if jd_grounding_applies(q, job_context):
+            jd_lex = extract_lexicon(load_jd_text(), q, job_context, max_terms=16)
+            seen = {b.lower() for b in bank}
+            for t in jd_lex:
+                if t.lower() not in seen:
+                    bank.append(t)
+                    seen.add(t.lower())
+        else:
+            # Question-only lexicon — no ATTP bleed from disk JD
+            bank = extract_lexicon(q, job_context, max_terms=16) or bank
         data["jargon_bank"] = bank[:20]
     except Exception:
         pass
@@ -491,11 +495,14 @@ def _fallback_strategy(question: str, job_context: str) -> dict[str, Any]:
 
     jargon: list[str] = []
     try:
-        from jd_grounding import extract_lexicon, load_jd_text
+        from jd_grounding import extract_lexicon, jd_grounding_applies, load_jd_text
 
-        jargon = extract_lexicon(
-            load_jd_text(), question or "", job_context or "", max_terms=18
-        )
+        if jd_grounding_applies(question or "", job_context or ""):
+            jargon = extract_lexicon(
+                load_jd_text(), question or "", job_context or "", max_terms=18
+            )
+        else:
+            jargon = extract_lexicon(question or "", job_context or "", max_terms=18)
     except Exception:
         jargon = []
 
@@ -808,11 +815,11 @@ def _max_tokens_for_mode(mode: str, *, question: str = "") -> int:
     )
 
 
-def _prepare_job(job_context: str) -> str:
+def _prepare_job(job_context: str, question: str = "") -> str:
     try:
         from jd_grounding import ensure_grounded_job_context
 
-        return ensure_grounded_job_context(job_context)
+        return ensure_grounded_job_context(job_context, question=question)
     except Exception:
         return (job_context or "").strip()
 
@@ -828,38 +835,60 @@ def _build_user_prompt(
     strict_regen: bool = False,
 ) -> str:
     q = (question or "").strip()
-    job = _prepare_job(job_context)
+    job = _prepare_job(job_context, question=q)
 
     lock = None
     guard = ""
+    apply_jd = False
     try:
         from common_sense import (
             filter_context_chunks,
             lock_for_turn,
             prompt_guardrails,
         )
+        from jd_grounding import jd_grounding_applies
 
-        lock = lock_for_turn(q, job)
+        # Gate on original user job_context — not pack role filled in by _prepare_job
+        apply_jd = jd_grounding_applies(q, (job_context or "").strip())
+        # Domain lock: pass job only when grounding applies
+        lock = lock_for_turn(q, job if apply_jd else (job_context or "").strip())
         guard = prompt_guardrails(lock)
         if context_chunks:
             context_chunks = filter_context_chunks(
-                context_chunks, question=q, job_context=job, lock=lock
+                context_chunks,
+                question=q,
+                job_context=job if apply_jd else (job_context or "").strip(),
+                lock=lock,
             )
     except Exception:
         guard = (
             "Stay on the asked topic. No ML/robotics/other-domain substitution. "
-            "No meta coaching labels."
+            "No meta coaching labels. Do not force SAP ATTP unless asked."
         )
 
+    pre = ""
     try:
         from session_context import effective_job_context, format_for_prompt
 
-        job = effective_job_context(job) or job
-        pre = format_for_prompt(1600)
+        if apply_jd:
+            job = effective_job_context(job) or job
+            pre = format_for_prompt(1600)
+        else:
+            # Explicit job_context only — never overwrite with ATTP pack
+            job = (job_context or "").strip()
+            pre = ""
     except Exception:
         pre = ""
 
     jargon = [str(j) for j in (strategy.get("jargon_bank") or []) if j][:14]
+    # Drop pack/JD jargon when off-domain — rebuild from question only
+    if not apply_jd:
+        try:
+            from jd_grounding import extract_lexicon
+
+            jargon = extract_lexicon(q, job_context or "", max_terms=14)
+        except Exception:
+            jargon = []
     must = [str(m) for m in (strategy.get("must_cover") or []) if m][:5]
     long_q = _is_long_or_multipart_question(q)
     depth = _answer_depth()
@@ -873,7 +902,7 @@ def _build_user_prompt(
     if _is_fast_profile() and not strict_regen:
         q_budget = 1800 if long_q else 900
         parts = [
-            f"Role: {job[:180] if job else '(use only the question)'}",
+            f"Role: {job[:180] if job else '(use only the question — do not invent a job title)'}",
             f"Q: {q[:q_budget]}",
             f"Domain: {domain}",
             f"Depth: {depth}",
@@ -886,6 +915,12 @@ def _build_user_prompt(
             parts.append("Must cover: " + "; ".join(must))
         if guard:
             parts.append(guard)
+        if not apply_jd:
+            parts.append(
+                "TOPIC RULE: Answer this question on its own terms. "
+                "Do NOT reframe as SAP ATTP, EPCIS, serialization, or any role "
+                "not present in Role/Q above."
+            )
         if long_q:
             parts.append(
                 "MULTI-PART: answer every clause in order. Do not stop after the first."
@@ -944,7 +979,7 @@ def _build_user_prompt(
     }.get(mode, "Write the interview answer now.")
 
     parts = [
-        f"ROLE: {job}",
+        f"ROLE: {job or '(answer the question only — do not invent a job title)'}",
         f"TONE: {tone_line}",
         f"STRATEGY: {strat_blob}",
         guard,
@@ -953,6 +988,12 @@ def _build_user_prompt(
         f"QUESTION:\n{q}",
         instruct,
     ]
+    if not apply_jd:
+        parts.append(
+            "TOPIC RULE: Answer this question on its own terms. "
+            "Do NOT reframe as SAP ATTP, EPCIS, serialization, FICO, or any "
+            "domain not present in ROLE/QUESTION above."
+        )
     if strict_regen:
         parts.append(REGEN_STRICT_SUFFIX)
     return "\n\n".join(p for p in parts if p)
@@ -1138,7 +1179,7 @@ def generate_answer(
     mode = (mode or "star").strip().lower()
     if mode not in ("star", "shorter", "technical", "code"):
         mode = "star"
-    job_context = _prepare_job(job_context)
+    job_context = _prepare_job(job_context, question=question)
     strategy = _fallback_strategy(question, job_context)
     mode = _prefer_mode_for_question(mode, strategy, question)
     accuracy = _needs_accuracy_model(strategy, question, job_context)
@@ -1293,7 +1334,7 @@ def iter_answer_tokens(
     mode = (mode or "star").strip().lower()
     if mode not in ("star", "shorter", "technical", "code"):
         mode = "star"
-    job_context = _prepare_job(job_context)
+    job_context = _prepare_job(job_context, question=question)
 
     if _use_strategy_llm():
         strategy = analyze_question_strategy(question, job_context=job_context)

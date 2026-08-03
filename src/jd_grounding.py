@@ -288,6 +288,96 @@ def strip_off_domain_filler(answer: str, *, question: str = "", job_context: str
     return cleaned.strip()
 
 
+def role_from_jd(jd: str = "") -> str:
+    """Parse Role line from JD text; empty if not present."""
+    text = (jd or "").strip() or load_jd_text()
+    if not text:
+        return ""
+    m = re.search(r"Role\s*[:-]+\s*(.+)", text, re.I)
+    if not m:
+        return ""
+    return m.group(1).strip().split("\n")[0].strip(" -\t")
+
+
+def pack_domain_blob() -> str:
+    """Compact pack/JD text used only for domain compatibility checks."""
+    bits: list[str] = []
+    try:
+        from session_context import get_pack
+
+        pack = get_pack()
+        bits.extend(
+            [
+                pack.role or "",
+                pack.job_description[:1200] if pack.job_description else "",
+                " ".join(pack.keywords[:25]),
+            ]
+        )
+    except Exception:
+        pass
+    jd = load_jd_text()
+    if jd:
+        bits.append(jd[:1200])
+    return " ".join(b for b in bits if b)
+
+
+def jd_grounding_applies(question: str = "", job_context: str = "") -> bool:
+    """
+    True when disk JD / session pack should bias this answer.
+
+    Rules:
+      - Question clearly in the same domain as pack/JD → yes
+      - Question clearly in a *different* domain → no
+      - Soft/behavioral/general questions → yes ONLY if the user passed an
+        explicit job_context (not merely a leftover bootstrap pack)
+      - Empty everything → no
+    """
+    q = (question or "").strip()
+    # Explicit = caller-provided role only. Do not treat pack.role as explicit.
+    job = (job_context or "").strip()
+    pack_blob = pack_domain_blob()
+    if not pack_blob and not job:
+        return False
+
+    try:
+        from common_sense import domains_compatible, infer_domain
+
+        q_lock = infer_domain(q, "", "")
+        pack_lock = infer_domain("", job, pack_blob)
+
+        # Strong off-domain question beats stored pack / role
+        if (
+            q_lock.domain not in ("general",)
+            and q_lock.confidence >= 0.28
+            and pack_lock.domain not in ("general",)
+            and not domains_compatible(q_lock.domain, pack_lock.domain)
+        ):
+            return False
+
+        # Question clearly in pack/JD domain → ground (even without UI role)
+        if (
+            q_lock.domain != "general"
+            and pack_lock.domain != "general"
+            and domains_compatible(q_lock.domain, pack_lock.domain)
+        ):
+            return True
+
+        # Soft/behavioral/general: only if user explicitly set a role
+        if job and q_lock.domain == "general":
+            job_lock = infer_domain("", job, "")
+            if job_lock.domain == "general":
+                return True  # custom title, still user-chosen
+            if pack_lock.domain == "general" or domains_compatible(
+                job_lock.domain, pack_lock.domain
+            ):
+                return True
+
+        # Pack alone + soft/off-topic question → do not force ATTP framing
+        return False
+    except Exception:
+        return bool(job)
+
+
 def bootstrap_session_from_jd_resume(
     *,
     force: bool = False,
@@ -295,7 +385,9 @@ def bootstrap_session_from_jd_resume(
 ) -> dict[str, Any]:
     """
     Load JD + resume into session_context if empty (or force=True).
-    Call on API start and before answer if pack empty.
+
+    Role is taken from the JD Role: line or role_hint — never a hard-coded title.
+    Callers must still gate prompt injection with jd_grounding_applies().
     """
     try:
         from session_context import get_pack, update_pack
@@ -306,13 +398,11 @@ def bootstrap_session_from_jd_resume(
 
         jd = load_jd_text()
         resume = load_resume_text(3500)
-        role = role_hint.strip()
-        if not role and jd:
-            m = re.search(r"Role\s*[:-]+\s*(.+)", jd, re.I)
-            if m:
-                role = m.group(1).strip().split("\n")[0].strip(" -\t")
-        if not role:
-            role = "SAP ATTP Techno-Functional Consultant"
+        if not jd and not resume and not role_hint.strip():
+            return {"ok": True, "skipped": True, "role": "", "empty_sources": True}
+
+        role = role_hint.strip() or role_from_jd(jd)
+        # No hard-coded "SAP ATTP…" — empty role is valid
 
         lex = extract_lexicon(jd, resume, max_terms=40)
         update_pack(
@@ -335,24 +425,34 @@ def bootstrap_session_from_jd_resume(
         return {"ok": False, "error": f"{type(e).__name__}: {e}"}
 
 
-def ensure_grounded_job_context(job_context: str = "") -> str:
-    """If job_context empty, bootstrap pack and return effective role."""
-    job = (job_context or "").strip()
-    try:
-        from session_context import effective_job_context, get_pack
+def ensure_grounded_job_context(
+    job_context: str = "",
+    *,
+    question: str = "",
+) -> str:
+    """
+    Resolve role for this turn.
 
-        if not job:
+    - Explicit job_context always wins.
+    - Pack/JD role is used only when grounding applies to the question.
+    - Never invent a hard-coded role when sources are empty or off-topic.
+    """
+    job = (job_context or "").strip()
+    if job:
+        # Explicit role always returned; callers still gate pack injection via
+        # jd_grounding_applies(question, job) so off-domain Qs drop the pack.
+        return job
+    try:
+        from session_context import get_pack
+
+        pack = get_pack()
+        # Warm pack from disk only if completely empty (optional sources)
+        if pack.is_empty():
+            bootstrap_session_from_jd_resume()
             pack = get_pack()
-            if pack.is_empty() or not pack.job_description:
-                bootstrap_session_from_jd_resume()
-            job = effective_job_context(job) or job
-        if not job:
-            jd = load_jd_text()
-            m = re.search(r"Role\s*[:-]\s*(.+)", jd, re.I) if jd else None
-            job = (m.group(1).strip().split("\n")[0] if m else "") or (
-                "SAP ATTP Techno-Functional Consultant"
-            )
+        # No explicit job: only surface pack role when the *question* is on-domain
+        if not jd_grounding_applies(question, ""):
+            return ""
+        return (pack.role or "").strip()
     except Exception:
-        if not job:
-            job = "SAP ATTP Techno-Functional Consultant"
-    return job
+        return ""

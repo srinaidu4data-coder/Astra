@@ -311,6 +311,23 @@ def _score_domain(blob: str) -> dict[str, tuple[float, list[str]]]:
     return out
 
 
+def domains_compatible(a: str, b: str) -> bool:
+    """True when two domain ids can share one answer without cross-wiring."""
+    if not a or not b:
+        return True
+    if a == b:
+        return True
+    if a == "general" or b == "general":
+        return True
+    # SAP family is compatible with itself (ATTP/FICO/general)
+    if a.startswith("sap_") and b.startswith("sap_"):
+        # ATTP vs FICO are different product families — not compatible
+        if {a, b} == {"sap_attp", "sap_fico"}:
+            return False
+        return True
+    return False
+
+
 def infer_domain(
     question: str = "",
     job_context: str = "",
@@ -319,16 +336,45 @@ def infer_domain(
     """
     Infer the active interview domain from question + role context only.
 
-    Question signals outweigh job title; job/resume break ties.
+    Question signals dominate. Pack/JD must not re-label a clear off-topic
+    question as SAP ATTP (or any other stored role domain).
     """
     q = _norm(question)
     job = _norm(job_context)
     pack = _norm(resume_or_pack)
-    # Weight: question 1.0, job 0.85, pack 0.55
+
+    q_scores = _score_domain(q) if q.strip() else {}
+    # Strong question-only signal → ignore pack/job for domain choice
+    if q_scores:
+        q_ranked = sorted(q_scores.items(), key=lambda x: -x[1][0])
+        q_top_dom, (q_top_sc, q_hits) = q_ranked[0]
+        q_second = q_ranked[1][1][0] if len(q_ranked) > 1 else 0.0
+        exclusive_hit = any(
+            t in _DOMAIN_LEXICONS.get(q_top_dom, {}).get("exclusive", frozenset())
+            for t in q_hits
+        )
+        # Clear topical question (e.g. ML terms) wins over stored ATTP pack
+        if exclusive_hit or (q_top_sc >= 2.5 and q_top_sc >= q_second + 1.0):
+            conf = min(1.0, q_top_sc / 6.0)
+            if q_top_dom == "sap_general":
+                for specialized in ("sap_attp", "sap_fico"):
+                    if specialized in q_scores and q_scores[specialized][0] >= q_top_sc * 0.45:
+                        q_top_dom = specialized
+                        q_hits = q_scores[specialized][1]
+                        break
+            return DomainLock(
+                domain=q_top_dom,
+                confidence=conf,
+                signals=q_hits[:12],
+                secondary=[d for d, _ in q_ranked[1:4]],
+                label=_DOMAIN_LABELS.get(q_top_dom, _DOMAIN_LABELS["general"]),
+            )
+
+    # Weight: question 1.2, job 0.75, pack 0.35 (pack is weakest — bootstrap residue)
     combined_scores: dict[str, float] = {}
     all_hits: dict[str, list[str]] = {}
 
-    for weight, blob in ((1.0, q), (0.85, job), (0.55, pack)):
+    for weight, blob in ((1.2, q), (0.75, job), (0.35, pack)):
         if not blob.strip():
             continue
         for dom, (sc, hits) in _score_domain(blob).items():
@@ -574,10 +620,12 @@ def prompt_guardrails(lock: DomainLock) -> str:
             "COMMON SENSE DOMAIN LOCK:\n"
             "- Answer ONLY the topic in the interviewer's question.\n"
             "- Do NOT drag in machine learning, robotics, random SAP modules, "
-            "or other domains that were not asked.\n"
+            "SAP ATTP/EPCIS/serialization, FICO, or other domains that were not asked.\n"
+            "- If Role/context is for a different job than the question, IGNORE that Role "
+            "and answer the question on its own terms.\n"
             "- Do NOT mention psychology techniques, softmax, Zipf, peak-end, "
             "or coaching meta-commentary — only speakable interview content.\n"
-            "- Use jargon only when it appears in the question or Role/job context."
+            "- Use jargon only when it appears in the question or a matching Role."
         )
 
     foreign_names = {
@@ -642,6 +690,25 @@ def lock_for_turn(
     job_context: str = "",
     extra_context: str = "",
 ) -> DomainLock:
-    """One-call helper used by answer_engine / rag / STT."""
-    pack = extra_context or resolve_pack_blob()
+    """
+    One-call helper used by answer_engine / rag / STT.
+
+    Pack context is only attached when the question is compatible with the
+    stored role/JD — prevents leftover ATTP bootstrap from locking ML questions.
+    """
+    q_only = infer_domain(question, "", "")
+    pack = extra_context if extra_context is not None and extra_context != "" else resolve_pack_blob()
+    if not pack:
+        return infer_domain(question, job_context, "")
+
+    pack_lock = infer_domain("", job_context, pack)
+    if (
+        q_only.domain not in ("general",)
+        and q_only.confidence >= 0.28
+        and pack_lock.domain not in ("general",)
+        and not domains_compatible(q_only.domain, pack_lock.domain)
+    ):
+        # Off-topic for stored pack: answer the question domain only
+        return q_only
+
     return infer_domain(question, job_context, pack)

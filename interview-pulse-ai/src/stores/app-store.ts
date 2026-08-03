@@ -417,11 +417,14 @@ export const useAppStore = create<AppState>()(
           'Staff Frontend / AI Copilot Engineer',
           'Staff Frontend / AI Copilot Engineer ',
         ])
-        // Former hard-coded defaults — clear so field is empty until user enters
+        // Former hard-coded / auto-bootstrapped defaults — clear so answers
+        // follow the question domain until the user explicitly sets a role.
         const defaultJobContexts = new Set([
           'Senior Full-Stack Engineer',
           'AI/ML Engineer',
           'Software Engineer',
+          'SAP ATTP Techno-Functional Consultant',
+          'SAP ATTP Consultant',
         ])
         const title = (p.activeJobTitle || '').trim()
         const mergedSettings = {

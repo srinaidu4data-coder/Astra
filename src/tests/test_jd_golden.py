@@ -53,8 +53,42 @@ class TestJdLexicon:
         info = bootstrap_session_from_jd_resume(force=True)
         assert info.get("ok")
         pack = get_pack()
+        # Role comes from JD Role: line, not a hard-coded constant
         assert "ATTP" in (pack.role or "").upper() or "SAP" in (pack.role or "").upper()
         assert pack.job_description
+
+    def test_off_domain_question_does_not_apply_attp_grounding(self):
+        from jd_grounding import bootstrap_session_from_jd_resume, jd_grounding_applies
+        from session_context import clear_pack
+
+        clear_pack()
+        bootstrap_session_from_jd_resume(force=True)
+        assert not jd_grounding_applies(
+            "Explain overfitting and how gradient descent can make it worse.",
+            "",
+        )
+        assert not jd_grounding_applies(
+            "What is the time complexity of binary search?",
+            "",
+        )
+        # On-domain ATTP questions still ground
+        assert jd_grounding_applies(
+            "How do you configure EPCIS commissioning for CMO partners?",
+            "SAP ATTP Techno-Functional Consultant",
+        )
+
+    def test_ensure_grounded_empty_for_off_domain(self):
+        from jd_grounding import bootstrap_session_from_jd_resume, ensure_grounded_job_context
+        from session_context import clear_pack
+
+        clear_pack()
+        bootstrap_session_from_jd_resume(force=True)
+        job = ensure_grounded_job_context(
+            "",
+            question="Explain overfitting and regularization in neural networks.",
+        )
+        assert job == ""
+        assert "ATTP" not in job.upper()
 
 
 class TestJdPromptConstruction:
@@ -80,6 +114,39 @@ class TestJdPromptConstruction:
         # Jargon bank should surface ATTP family terms when JD present
         jar = " ".join(strategy.get("jargon_bank") or []).upper()
         assert any(t in jar for t in ("ATTP", "EPCIS", "GTIN", "SAP"))
+
+    def test_ml_question_prompt_does_not_force_attp_role(self):
+        from answer_engine import _build_user_prompt, _fallback_strategy
+        from jd_grounding import bootstrap_session_from_jd_resume
+        from session_context import clear_pack
+
+        clear_pack()
+        bootstrap_session_from_jd_resume(force=True)
+        q = "Explain overfitting and how you detect it in production models."
+        strategy = _fallback_strategy(q, "")
+        user = _build_user_prompt(
+            q,
+            job_context="",
+            tone="confident",
+            mode="technical",
+            strategy=strategy,
+            context_chunks=[],
+        )
+        low = user.lower()
+        assert "overfitting" in low
+        # Must not inject ATTP session pack / role as the answer persona
+        assert "pre-session context" not in low
+        assert "sap attp techno-functional" not in low
+        assert "role: (use only the question" in low or "do not invent a job title" in low
+        assert "topic rule" in low or "do not reframe as sap attp" in low
+        # Ban-list may name EPCIS as forbidden; it must not appear as preferred jargon
+        jar = " ".join(strategy.get("jargon_bank") or []).upper()
+        assert "EPCIS" not in jar
+        assert "ATTP" not in jar
+        # Prefer-terms line must not push ATTP vocabulary
+        if "prefer these role terms" in low:
+            pref = low.split("prefer these role terms")[1].split("\n")[0]
+            assert "epcis" not in pref and "attp" not in pref
 
     def test_normalize_strips_banned_from_model_output(self):
         from answer_engine import _normalize_answer_text

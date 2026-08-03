@@ -53,9 +53,12 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 ## JD grounding
 
-- Files: `src/jd and resume/jd.txt` + resume PDF
-- API startup bootstraps pack → role **SAP ATTP Techno-Functional Consultant**
-- UI Copilot page pulls pack role into Job context when empty
+- Files: `src/jd and resume/jd.txt` + resume PDF (optional practice pack)
+- API may bootstrap pack from disk, but answers **do not force that role** unless:
+  - the question is clearly in the same domain (e.g. ATTP/EPCIS), or
+  - the user explicitly set Job context
+- Off-domain questions (ML, coding, generic behavioral with empty Job context) answer the question only — no SAP ATTP bleed
+- UI does **not** auto-fill Job context from bootstrap
 - Health: `GET /api/health` → `jd_grounding` object
 
 ## LLM provider rule

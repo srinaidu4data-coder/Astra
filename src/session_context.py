@@ -133,12 +133,21 @@ def format_for_prompt(max_chars: int = 1800) -> str:
 
 
 def effective_job_context(fallback: str = "") -> str:
-    """Prefer pack.role (+ company) over bare job_context string."""
+    """
+    Resolve display role for prompts.
+
+    Explicit job_context (fallback) always wins when provided so a user-set
+    role or per-turn context is never overwritten by a stale session pack
+    (e.g. leftover SAP ATTP bootstrap).
+    """
+    explicit = (fallback or "").strip()
+    if explicit:
+        return explicit[:120]
     pack = get_pack()
     bits = [b for b in (pack.role, pack.company, pack.seniority) if b]
     if bits:
         return " · ".join(bits)[:120]
-    return (fallback or "").strip()
+    return ""
 
 
 def get_depth() -> str:

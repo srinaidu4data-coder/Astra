@@ -29,6 +29,28 @@ def test_ml_question_locks_ml():
     assert lock.domain == "ml_ai"
 
 
+def test_ml_question_beats_attp_pack():
+    """Stored ATTP pack must not re-label a clear ML question."""
+    from common_sense import lock_for_turn
+
+    lock = lock_for_turn(
+        "Explain overfitting and how gradient descent can make it worse.",
+        "SAP ATTP Techno-Functional Consultant",
+        "SAP ATTP EPCIS GTIN GLN SSCC DSCSA serialization commissioning aggregation",
+    )
+    assert lock.domain == "ml_ai"
+    assert lock.confidence >= 0.28
+
+
+def test_domains_compatible_sap_family():
+    from common_sense import domains_compatible
+
+    assert domains_compatible("sap_attp", "sap_general")
+    assert not domains_compatible("sap_attp", "sap_fico")
+    assert not domains_compatible("sap_attp", "ml_ai")
+    assert domains_compatible("ml_ai", "general")
+
+
 def test_stt_prompt_not_kitchen_sink():
     p = stt_initial_prompt(
         job_context="SAP ATTP Serialization Consultant",

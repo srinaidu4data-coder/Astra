@@ -99,6 +99,16 @@ export function CopilotPage() {
     setAnswerExpanded((v) => !v)
   }, [])
 
+  /** Role title + Job context for answer prompts (both fields from Live interview UI). */
+  const effectiveJobContext = useCallback(() => {
+    const role = (activeJobTitle || '').trim()
+    const jc = (settings.jobContext || '').trim()
+    if (role && jc && role.toLowerCase() !== jc.toLowerCase()) {
+      return `${role} · ${jc}`
+    }
+    return role || jc || ''
+  }, [activeJobTitle, settings.jobContext])
+
   const handleDetachAnswer = useCallback(async () => {
     setDetaching(true)
     try {
@@ -193,29 +203,29 @@ export function CopilotPage() {
     if (c) setAnswer(c.answer)
   }, [cards, cardIndex, setAnswer])
 
-  // Audit P1: pull server JD bootstrap role into Job context when empty
+  // Warm server pack from disk JD when available, but do NOT auto-fill Job context.
+  // Auto-filling forced every answer into the bootstrapped role (e.g. SAP ATTP)
+  // even when the interviewer asked about a different domain.
   useEffect(() => {
     let cancelled = false
     void (async () => {
       const data = await getSessionContext()
       if (cancelled || !data?.pack) return
       const role = (data.pack.role || '').trim()
-      if (!role) return
       const jc = (useAppStore.getState().settings.jobContext || '').trim()
-      const title = (useAppStore.getState().activeJobTitle || '').trim()
-      if (!jc) {
-        updateSettings({ jobContext: role })
+      // Only sync pack with an *explicit* user-set job context — never invent one
+      if (jc) {
+        void setSessionContext({
+          role: jc,
+          job_description: data.pack.job_description,
+          resume_text: data.pack.resume_text,
+          keywords: data.pack.keywords,
+        })
+      } else if (role) {
+        // Pack may hold a practice JD; leave UI Job context empty so answers
+        // follow the question domain unless the user sets a role.
+        console.debug('[copilot] session pack role available but not auto-applied:', role)
       }
-      if (!title) {
-        setActiveJobTitle(role)
-      }
-      // Keep server pack warm with UI role
-      void setSessionContext({
-        role: jc || role,
-        job_description: data.pack.job_description,
-        resume_text: data.pack.resume_text,
-        keywords: data.pack.keywords,
-      })
     })()
     return () => {
       cancelled = true
@@ -442,8 +452,14 @@ export function CopilotPage() {
       pushStatus(
         `Starting interview — ${modeHint}. Prefer speakers so only the interviewer is heard…`,
       )
+      const jobCtx = effectiveJobContext()
+      void setSessionContext({
+        role: jobCtx || undefined,
+        depth,
+        outline_first: true,
+      })
       await liveInterview.start({
-        jobContext: settings.jobContext || activeJobTitle,
+        jobContext: jobCtx,
         tone: settings.tone,
         mode: answerMode,
         // Speakers / loopback only unless Settings explicitly set mic
@@ -500,7 +516,7 @@ export function CopilotPage() {
     try {
       pushStatus(`Rewriting as ${mode}…`)
       const ans = await fetchAnswer(current.question, {
-        jobContext: settings.jobContext || activeJobTitle,
+        jobContext: effectiveJobContext(),
         tone: settings.tone,
         mode,
       })
@@ -537,7 +553,7 @@ export function CopilotPage() {
     try {
       // Pre-load context pack so answers are resume/JD grounded (latency amortization)
       void setSessionContext({
-        role: settings.jobContext || activeJobTitle || undefined,
+        role: effectiveJobContext() || undefined,
         depth,
         outline_first: true,
       })
@@ -546,12 +562,12 @@ export function CopilotPage() {
         showPending(q)
         liveInterview.injectQuestion(q, {
           depth,
-          jobContext: settings.jobContext || activeJobTitle,
+          jobContext: effectiveJobContext(),
         })
         setManualQ('')
       } else if (apiOk) {
         const ans = await fetchAnswer(q, {
-          jobContext: settings.jobContext || activeJobTitle,
+          jobContext: effectiveJobContext(),
           tone: settings.tone,
           mode: answerMode,
           depth,
@@ -743,6 +759,68 @@ export function CopilotPage() {
             <span className="line-clamp-2">
               {statusLine || (sessionOn ? 'Listening…' : 'Ready')}
             </span>
+          </div>
+
+          {/* Role + Job context — same store as Settings / Knowledge; editable before Start */}
+          <div className="mb-5 space-y-3">
+            <label className="block">
+              <span className="label-quiet">Role</span>
+              <input
+                className="field mt-1.5"
+                value={activeJobTitle}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setActiveJobTitle(v)
+                  const jc = (settings.jobContext || '').trim()
+                  const role = v.trim()
+                  const combined =
+                    role && jc && role.toLowerCase() !== jc.toLowerCase()
+                      ? `${role} · ${jc}`
+                      : role || jc
+                  void setSessionContext({
+                    role: combined || undefined,
+                  })
+                }}
+                placeholder="e.g. SAP BRIM Data Analysis & Migration Support"
+                autoComplete="off"
+              />
+            </label>
+            <label className="block">
+              <span className="label-quiet">Job context</span>
+              <input
+                className="field mt-1.5"
+                value={settings.jobContext}
+                onChange={(e) => {
+                  const v = e.target.value
+                  updateSettings({ jobContext: v })
+                  const role = (activeJobTitle || '').trim()
+                  const jc = v.trim()
+                  const combined =
+                    role && jc && role.toLowerCase() !== jc.toLowerCase()
+                      ? `${role} · ${jc}`
+                      : role || jc
+                  void setSessionContext({
+                    role: combined || undefined,
+                  })
+                }}
+                placeholder="e.g. SAP RAR — domain / stack notes for answers"
+                autoComplete="off"
+              />
+            </label>
+            <label className="block">
+              <span className="label-quiet">Answer depth</span>
+              <select
+                className="field mt-1.5"
+                value={depth}
+                onChange={(e) =>
+                  setDepth(e.target.value as 'fast' | 'balanced' | 'deep')
+                }
+              >
+                <option value="fast">Fast</option>
+                <option value="balanced">Balanced</option>
+                <option value="deep">Deep</option>
+              </select>
+            </label>
           </div>
 
           <div className="mb-6 flex flex-wrap gap-3">
