@@ -50,7 +50,7 @@ export const MAX_BEATS_CALM = 5
 /** Seconds assumed for a full spoken answer (time-utility horizon) */
 export const DEFAULT_TIME_BUDGET_SEC = 40
 
-export type BeatRole = 'hook' | 'proof' | 'close' | 'support'
+export type BeatRole = 'hook' | 'proof' | 'close' | 'cool' | 'support'
 
 /** Dual-process surface mode */
 export type SpeakProcessMode = 'glance' | 'depth'
@@ -219,6 +219,8 @@ export function timeUtility(
     hook: 1.05,
     proof: 1.2,
     close: 1.0,
+    // Peak–end: last warm beat is memorable but never louder than proof
+    cool: 0.95,
     support: 0.45,
   }
   let t = 0
@@ -261,7 +263,15 @@ export function displayScaleFromAttention(
   loadPenalty: number,
 ): number {
   const roleBoost =
-    role === 'proof' ? 0.06 : role === 'hook' ? 0.04 : role === 'close' ? 0.02 : 0
+    role === 'proof'
+      ? 0.06
+      : role === 'hook'
+        ? 0.04
+        : role === 'close'
+          ? 0.02
+          : role === 'cool'
+            ? 0.03
+            : 0
   const base = 0.82 + 0.4 * attention + roleBoost
   return clamp(base * loadPenalty, 0.78, 1.28)
 }

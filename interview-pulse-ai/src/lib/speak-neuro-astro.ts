@@ -61,6 +61,7 @@ export function orbitalShell(role: BeatRole): OrbitalShell {
   if (role === 'hook') return 'core'
   if (role === 'proof') return 'planet'
   if (role === 'close') return 'rim'
+  if (role === 'cool') return 'rim'
   return 'moon'
 }
 

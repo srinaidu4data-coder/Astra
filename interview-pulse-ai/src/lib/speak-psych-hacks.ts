@@ -90,13 +90,15 @@ export function firstClauseWordCount(text: string, fallback = 11): number {
   return Math.max(4, Math.min(16, n || fallback))
 }
 
-export type SpeakLadderStep = 'hook' | 'proof' | 'close' | 'done'
+export type SpeakLadderStep = 'hook' | 'proof' | 'close' | 'cool' | 'done'
 
-/** Advance speak ladder: all → hook → proof → close → done → all */
+/** Advance speak ladder: all → hook → proof → close → cool → done → all */
 export function advanceSpeakLadder(current: SpeakLadderStep | 'all'): SpeakLadderStep | 'all' {
   if (current === 'all' || current === 'done') return 'hook'
   if (current === 'hook') return 'proof'
   if (current === 'proof') return 'close'
+  if (current === 'close') return 'cool'
+  if (current === 'cool') return 'done'
   return 'done'
 }
 
@@ -104,7 +106,8 @@ export function ladderCue(step: SpeakLadderStep | 'all'): string {
   if (step === 'all') return 'Space: start at Hook'
   if (step === 'hook') return 'Speak Hook · Space → Proof'
   if (step === 'proof') return 'Speak Proof · Space → Close'
-  if (step === 'close') return 'Land Close · Space → done'
+  if (step === 'close') return 'Land Close · Space → Cool'
+  if (step === 'cool') return 'Cool sign-off · Space → done'
   return 'Sealed · Space restarts ladder'
 }
 
@@ -142,4 +145,13 @@ export function shouldLandPulse(
   hasClose: boolean,
 ): boolean {
   return wasStreaming && !isStreaming && hasClose
+}
+
+/** Soft land pulse for the Cool rail (after Close). */
+export function shouldCoolPulse(
+  wasStreaming: boolean,
+  isStreaming: boolean,
+  hasCool: boolean,
+): boolean {
+  return wasStreaming && !isStreaming && hasCool
 }

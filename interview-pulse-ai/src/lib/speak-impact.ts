@@ -111,16 +111,17 @@ export function buildSpeakSheetFromAnswer(answer: {
       rows.push({ label: i === 0 ? 'Proof' : i === bullets.length - 2 ? 'Close' : `Beat ${i + 2}`, text: b })
     })
   } else {
-    const labels = ['Hook', 'Proof', 'Close']
     bullets.forEach((b, i) => {
       const lab =
-        i === 0
-          ? 'Hook'
-          : i === bullets.length - 1 && bullets.length > 1
-            ? 'Close'
-            : i === 1 && bullets.length >= 3
-              ? 'Proof'
-              : labels[i] || `Beat ${i + 1}`
+        /^(?:Cool|Wit|Spark)\s*[:—–-]/i.test(b.trim())
+          ? 'Cool'
+          : i === 0
+            ? 'Hook'
+            : i === bullets.length - 1 && bullets.length > 1
+              ? 'Close'
+              : i === 1 && bullets.length >= 3
+                ? 'Proof'
+                : `Beat ${i + 1}`
       rows.push({ label: lab, text: b })
     })
   }

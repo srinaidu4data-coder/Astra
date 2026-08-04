@@ -128,6 +128,10 @@ _CORE = (
     "going forward, best practice as empty praise, world-class, passionate.\n"
     "ONE-WORD RULE: if the Q wants yes/no or a single term, Hook: is ONLY that "
     "token + period (Hook: Yes. / Hook: EPCIS.). Then explain.\n"
+    "COOL LINE (optional last): after Close, one short Cool: line — calm, dry, "
+    "affiliative (warmth after competence). 8–18 words. No roasting the interviewer, "
+    "no self-sabotage, no slang memes. Example: Cool: That's the short version — "
+    "longer war stories on request.\n"
 )
 
 FAST_STAR_SYSTEM = (

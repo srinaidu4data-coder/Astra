@@ -25,6 +25,7 @@ import {
   shouldLandPulse,
   type SpeakLadderStep,
 } from '@/lib/speak-psych-hacks'
+import { craftCoolSignoff } from '@/lib/speak-cool-line'
 import { cn } from '@/lib/utils'
 import type { AnswerMode, QACard } from '@/types'
 import {
@@ -50,7 +51,7 @@ import {
   type ReactNode,
 } from 'react'
 
-type Spotlight = 'all' | 'hook' | 'proof' | 'close'
+type Spotlight = 'all' | 'hook' | 'proof' | 'close' | 'cool'
 
 const modes: { id: AnswerMode; label: string; hint: string }[] = [
   { id: 'shorter', label: 'Shorter', hint: '3 tight lines' },
@@ -63,6 +64,11 @@ const READY_RAILS = [
   { id: 'hook', label: 'Hook', hint: 'Open with the claim' },
   { id: 'proof', label: 'Proof', hint: 'Action + evidence' },
   { id: 'close', label: 'Close', hint: 'Land the result' },
+  {
+    id: 'cool',
+    label: 'Cool',
+    hint: 'One calm sign-off — warmth after competence',
+  },
 ] as const
 
 /**
@@ -265,6 +271,7 @@ function OrbitBeat({
         role === 'hook' && 'speak-beat-hook',
         role === 'proof' && 'speak-beat-peak',
         role === 'close' && 'speak-beat-close',
+        role === 'cool' && 'speak-beat-cool',
         role === 'support' && 'speak-beat-support',
         active && 'speak-beat-active',
         dimmed && 'speak-beat-dimmed',
@@ -500,6 +507,7 @@ function PathRail({
     { id: 'hook', label: 'Hook', key: '1' },
     { id: 'proof', label: 'Proof', key: '2' },
     { id: 'close', label: 'Close', key: '3' },
+    { id: 'cool', label: 'Cool', key: '4' },
   ]
   return (
     <div className="speak-path-rail">
@@ -725,7 +733,7 @@ export const WhisperStream = memo(function WhisperStream({
       ) {
         return
       }
-      // P0: 1 / 2 / 3 focus Hook / Proof / Close; 0 or Esc = all
+      // 1–4: Hook / Proof / Close / Cool; 0 or Esc = all
       if (e.key === '1') {
         e.preventDefault()
         setSpotlight((s) => (s === 'hook' ? 'all' : 'hook'))
@@ -738,11 +746,15 @@ export const WhisperStream = memo(function WhisperStream({
         e.preventDefault()
         setSpotlight((s) => (s === 'close' ? 'all' : 'close'))
         setFocusMode(true)
+      } else if (e.key === '4') {
+        e.preventDefault()
+        setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
+        setFocusMode(true)
       } else if (e.key === '0' || e.key === 'Escape') {
         setSpotlight('all')
         setFocusMode(false)
       } else if (e.key === ' ' || e.code === 'Space') {
-        // Speak ladder: Space advances Hook → Proof → Close (implementation intention)
+        // Speak ladder: Space advances Hook → Proof → Close → Cool
         e.preventDefault()
         setSpotlight((s) => {
           const step = (s === 'all' ? 'all' : s) as SpeakLadderStep | 'all'
@@ -762,12 +774,35 @@ export const WhisperStream = memo(function WhisperStream({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  const coolLine = useMemo(() => {
+    if (!card?.answer) return ''
+    const body =
+      (card.answer.bullets || []).join('\n') ||
+      [
+        card.answer.star?.situation,
+        card.answer.star?.task,
+        card.answer.star?.action,
+        card.answer.star?.result,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    if (!body.trim() || card.answer.streaming) return ''
+    return craftCoolSignoff({
+      answerText: body,
+      question: card.question || card.answer.question,
+      mode: card.answer.mode,
+    })
+  }, [card])
+
   const copySpeakSheet = useCallback(async () => {
     if (!card?.answer) return
-    const sheet = buildSpeakSheetFromAnswer({
+    let sheet = buildSpeakSheetFromAnswer({
       star: card.answer.star,
       bullets: card.answer.bullets,
     })
+    if (coolLine) {
+      sheet = sheet ? `${sheet}\n\nCool\n${coolLine}` : `Cool\n${coolLine}`
+    }
     if (!sheet) return
     try {
       await navigator.clipboard.writeText(sheet)
@@ -776,7 +811,7 @@ export const WhisperStream = memo(function WhisperStream({
     } catch {
       /* ignore */
     }
-  }, [card])
+  }, [card, coolLine])
   const streaming = Boolean(answer?.streaming)
 
   // Peak-end land pulse when stream finishes
@@ -929,7 +964,13 @@ export const WhisperStream = memo(function WhisperStream({
                   }
                   onFocus={() => {
                     const r = f.role
-                    if (r !== 'hook' && r !== 'proof' && r !== 'close') return
+                    if (
+                      r !== 'hook' &&
+                      r !== 'proof' &&
+                      r !== 'close' &&
+                      r !== 'cool'
+                    )
+                      return
                     setSpotlight((s) => (s === r ? 'all' : r))
                     setFocusMode(true)
                   }}
@@ -938,6 +979,27 @@ export const WhisperStream = memo(function WhisperStream({
                 </OrbitBeat>
               )
             })}
+            {coolLine && !streaming ? (
+              <li className="list-none w-full">
+                <OrbitBeat
+                  role="cool"
+                  label="COOL"
+                  scale={1.05}
+                  wide
+                  fullText={coolLine}
+                  dimmed={isDim('cool')}
+                  active={spotlight === 'cool' || landPulse}
+                  onFocus={() => {
+                    setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
+                    setFocusMode(true)
+                  }}
+                >
+                  <p className="speak-cool-line text-[15px] leading-snug text-[#E8C547]/95">
+                    {coolLine}
+                  </p>
+                </OrbitBeat>
+              </li>
+            ) : null}
           </ul>
         </div>
       )
@@ -998,6 +1060,25 @@ export const WhisperStream = memo(function WhisperStream({
             ) : streaming ? (
               <p className="text-[13px] text-white/35">Explaining…</p>
             ) : null}
+            {coolLine && !streaming ? (
+              <OrbitBeat
+                role="cool"
+                label="COOL"
+                scale={1.05}
+                wide
+                fullText={coolLine}
+                dimmed={isDim('cool')}
+                active={spotlight === 'cool' || landPulse}
+                onFocus={() => {
+                  setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
+                  setFocusMode(true)
+                }}
+              >
+                <p className="speak-cool-line text-[15px] leading-snug text-[#E8C547]/95">
+                  {coolLine}
+                </p>
+              </OrbitBeat>
+            ) : null}
           </div>
         )
       } else {
@@ -1022,6 +1103,25 @@ export const WhisperStream = memo(function WhisperStream({
                 ) : null}
               </span>
             </OrbitBeat>
+            {coolLine && !streaming ? (
+              <OrbitBeat
+                role="cool"
+                label="COOL"
+                scale={1.05}
+                wide
+                fullText={coolLine}
+                dimmed={isDim('cool')}
+                active={spotlight === 'cool' || landPulse}
+                onFocus={() => {
+                  setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
+                  setFocusMode(true)
+                }}
+              >
+                <p className="speak-cool-line text-[15px] leading-snug text-[#E8C547]/95">
+                  {coolLine}
+                </p>
+              </OrbitBeat>
+            ) : null}
           </div>
         )
       }
@@ -1131,7 +1231,12 @@ export const WhisperStream = memo(function WhisperStream({
                   spotlight === role || (landPulse && role === 'close')
                 }
                 onFocus={() => {
-                  if (role !== 'hook' && role !== 'proof' && role !== 'close')
+                  if (
+                    role !== 'hook' &&
+                    role !== 'proof' &&
+                    role !== 'close' &&
+                    role !== 'cool'
+                  )
                     return
                   setSpotlight((s) => (s === role ? 'all' : role))
                   setFocusMode(true)
@@ -1141,6 +1246,28 @@ export const WhisperStream = memo(function WhisperStream({
               </OrbitBeat>
             )
           })}
+          {/* Cool: last peak–end beat — warmth after competence (key 4) */}
+          {coolLine && !streaming ? (
+            <li className="list-none w-full">
+              <OrbitBeat
+                role="cool"
+                label="COOL"
+                scale={1.05}
+                wide
+                fullText={coolLine}
+                dimmed={isDim('cool')}
+                active={spotlight === 'cool' || landPulse}
+                onFocus={() => {
+                  setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
+                  setFocusMode(true)
+                }}
+              >
+                <p className="speak-cool-line text-[15px] leading-snug text-[#E8C547]/95">
+                  {coolLine}
+                </p>
+              </OrbitBeat>
+            </li>
+          ) : null}
           {canvasStats.processMode === 'glance' && bullets.length > 2 ? (
             <li className="list-none pt-1">
               <button
