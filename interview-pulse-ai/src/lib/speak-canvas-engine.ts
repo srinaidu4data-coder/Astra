@@ -130,37 +130,56 @@ export function serialPositionScores(n: number): number[] {
   return out
 }
 
+/** Detect model Cool: / Wit: lines so last beat is peak–end warmth, not CLOSE. */
+const COOL_LINE_RE = /^(?:Cool|Wit|Spark|Charm|Sign[- ]?off)\s*[:—–-]/i
+
 /**
  * Role assignment under working-memory chunking.
- * Labels stay plain English (HOOK/PROOF/CLOSE) — Anthropic quiet chrome.
+ * Labels stay plain English (HOOK/PROOF/CLOSE/COOL) — Anthropic quiet chrome.
+ * Never invent psych jargon for the candidate.
  */
-export function assignBeatRoles(n: number): Array<{
+export function assignBeatRoles(
+  n: number,
+  parts?: string[],
+): Array<{
   role: BeatRole
   label: string
   technique: string
 }> {
   if (n <= 0) return []
+  const lastIsCool = Boolean(
+    parts?.[n - 1] && COOL_LINE_RE.test((parts[n - 1] || '').trim()),
+  )
   if (n === 1) {
+    if (lastIsCool) {
+      return [{ role: 'cool', label: 'COOL', technique: '' }]
+    }
     return [{ role: 'hook', label: 'HOOK', technique: '' }]
   }
   if (n === 2) {
     return [
       { role: 'hook', label: 'HOOK', technique: '' },
-      { role: 'close', label: 'CLOSE', technique: '' },
+      lastIsCool
+        ? { role: 'cool', label: 'COOL', technique: '' }
+        : { role: 'close', label: 'CLOSE', technique: '' },
     ]
   }
   const roles: Array<{ role: BeatRole; label: string; technique: string }> = []
+  // When last beat is Cool, CLOSE is second-to-last (peak–end: competence then warmth)
+  const closeIdx = lastIsCool ? n - 2 : n - 1
   for (let i = 0; i < n; i++) {
-    if (i === 0) {
+    if (lastIsCool && i === n - 1) {
+      roles.push({ role: 'cool', label: 'COOL', technique: '' })
+    } else if (i === 0) {
       roles.push({ role: 'hook', label: 'HOOK', technique: '' })
-    } else if (i === n - 1) {
+    } else if (i === closeIdx) {
       roles.push({ role: 'close', label: 'CLOSE', technique: '' })
-    } else if (i === 1 || (n === 3 && i === 1)) {
+    } else if (i === 1) {
       roles.push({ role: 'proof', label: 'PROOF', technique: '' })
     } else {
       roles.push({
         role: 'support',
-        label: n <= 4 ? 'DETAIL' : `BEAT ${i + 1}`,
+        label: n <= 5 ? 'DETAIL' : `BEAT ${i + 1}`,
         technique: '',
       })
     }
@@ -307,7 +326,7 @@ export function planSpeakCanvas(
   opts?: PlanSpeakCanvasOptions,
 ): SpeakCanvasStats {
   const n = parts.length
-  const rolesMeta = assignBeatRoles(n)
+  const rolesMeta = assignBeatRoles(n, parts)
   const wordCounts = parts.map((p) =>
     (p || '').trim().split(/\s+/).filter(Boolean).length,
   )
@@ -324,16 +343,22 @@ export function planSpeakCanvas(
   const serial = serialPositionScores(n)
   const attention = softmax(serial, tau)
 
-  // Dual-process: high load / few parts → glance (System 1)
+  // Dual-process under interview cortisol: prefer System 1 glance
+  // when multi-beat, long, or loaded — depth only when calm + short.
   const autoMode: SpeakProcessMode =
-    load >= 0.9 || totalWords > 160 || n >= 5 ? 'glance' : 'depth'
+    load >= 0.75 || totalWords > 120 || n >= 4 ? 'glance' : 'depth'
   const processMode = opts?.processMode ?? autoMode
 
+  // Glance: Hook + Proof + Close (+ Cool if present) — Cowan ~3–4 chunks
   const visibleBeatCap =
-    processMode === 'glance' ? MAX_BEATS_STRESS : MAX_BEATS_CALM
+    processMode === 'glance' ? MAX_BEATS_STRESS + 1 : MAX_BEATS_CALM
 
   // Extraneous load control — shrink type slightly when overloaded
   const loadPenalty = load > 1 ? 0.9 : load > 0.85 ? 0.95 : 1
+
+  /** Peak-end + serial position: never collapse Hook / Close / Cool */
+  const isPeakRole = (role: BeatRole) =>
+    role === 'hook' || role === 'proof' || role === 'close' || role === 'cool'
 
   const beats: BeatPlan[] = rolesMeta.map((r, i) => {
     const a = attention[i] ?? 1 / Math.max(1, n)
@@ -347,27 +372,33 @@ export function planSpeakCanvas(
           ? 1.15
           : r.role === 'close'
             ? 0.7
-            : processMode === 'glance'
-              ? 0.45
-              : 0.75
+            : r.role === 'cool'
+              ? 0.5
+              : processMode === 'glance'
+                ? 0.45
+                : 0.75
     const wordBudget = Math.max(
-      r.role === 'hook' ? 8 : 12,
+      r.role === 'hook' || r.role === 'cool' ? 8 : 12,
       Math.round((wordCounts[i] || 18) * roleWordMul * (0.75 + 0.5 * a)),
     )
 
-    // Support collapses under stress (progressive disclosure)
+    // Support (and only support) collapses under stress — progressive disclosure
     const collapsible =
-      r.role === 'support' || (processMode === 'glance' && r.role !== 'hook' && r.role !== 'proof')
+      !isPeakRole(r.role) &&
+      (r.role === 'support' ||
+        (processMode === 'glance' && r.role === 'support'))
     const opacity =
       r.role === 'support'
         ? processMode === 'glance'
           ? 0.48
           : 0.72
-        : r.role === 'hook'
+        : r.role === 'hook' || r.role === 'proof'
           ? 1
-          : r.role === 'proof'
-            ? 1
-            : 0.92
+          : r.role === 'close'
+            ? 0.96
+            : r.role === 'cool'
+              ? 0.94
+              : 0.92
 
     return {
       index: i,
@@ -396,8 +427,8 @@ export function planSpeakCanvas(
   // Internal only — WhisperStream must not render this by default
   const intention =
     processMode === 'glance'
-      ? 'Open on the claim. One proof. Land the close.'
-      : 'Claim → mechanism → proof → land.'
+      ? 'Hook → Proof → Close → Cool'
+      : 'Claim → mechanism → proof → land → cool'
 
   return {
     tau,

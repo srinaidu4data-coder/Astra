@@ -22,6 +22,7 @@ import {
   chipBudget,
   ladderCue,
   SOFT_DIM_OPACITY,
+  shouldCoolPulse,
   shouldLandPulse,
   type SpeakLadderStep,
 } from '@/lib/speak-psych-hacks'
@@ -498,10 +499,16 @@ function PathRail({
   spotlight,
   onSpot,
   completeness,
+  streaming,
+  focusMode,
+  processMode,
 }: {
   spotlight: Spotlight
   onSpot: (s: Spotlight) => void
   completeness: number
+  streaming?: boolean
+  focusMode?: boolean
+  processMode?: 'glance' | 'depth'
 }) {
   const items: { id: Spotlight; label: string; key: string }[] = [
     { id: 'hook', label: 'Hook', key: '1' },
@@ -509,6 +516,28 @@ function PathRail({
     { id: 'close', label: 'Close', key: '3' },
     { id: 'cool', label: 'Cool', key: '4' },
   ]
+  // Focus mode: show only active step + ladder cue (choice overload / Iyengar)
+  if (focusMode && spotlight !== 'all') {
+    const active = items.find((it) => it.id === spotlight)
+    return (
+      <div className="speak-path-rail speak-path-rail-focus">
+        <div className="speak-path-steps">
+          <button
+            type="button"
+            className="speak-path-step is-active"
+            onClick={() => onSpot('all')}
+            title="Show all (0 / Esc)"
+          >
+            <span className="speak-path-key">{active?.key ?? '·'}</span>
+            {active?.label ?? 'Speak'}
+          </button>
+          <span className="speak-path-focus-cue" aria-live="polite">
+            Space advances · Esc all
+          </span>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="speak-path-rail">
       <div className="speak-path-steps">
@@ -541,16 +570,34 @@ function PathRail({
         >
           All
         </button>
+        {processMode ? (
+          <span
+            className={cn(
+              'speak-path-mode',
+              processMode === 'glance' && 'is-glance',
+            )}
+            title={
+              processMode === 'glance'
+                ? 'Glance: Hook + Proof + Close (+ Cool)'
+                : 'Depth: full rails'
+            }
+          >
+            {processMode === 'glance' ? 'Glance' : 'Depth'}
+          </span>
+        ) : null}
       </div>
-      <div
-        className="speak-complete-track"
-        title={`Scaffold ${Math.round(completeness * 100)}%`}
-      >
+      {/* Completeness only while streaming — sealed bar is theater */}
+      {streaming ? (
         <div
-          className="speak-complete-fill"
-          style={{ width: `${Math.round(completeness * 100)}%` }}
-        />
-      </div>
+          className="speak-complete-track"
+          title={`Streaming ${Math.round(completeness * 100)}%`}
+        >
+          <div
+            className="speak-complete-fill"
+            style={{ width: `${Math.round(completeness * 100)}%` }}
+          />
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -707,6 +754,8 @@ export const WhisperStream = memo(function WhisperStream({
   /** Focus mode: hide chips after settle (reduce choice overload) */
   const [focusMode, setFocusMode] = useState(false)
   const [landPulse, setLandPulse] = useState(false)
+  /** Cool peak–end pulse (warmth after competence land) */
+  const [coolPulse, setCoolPulse] = useState(false)
   /** Commitment lock: first atomic punch token freezes for the card */
   const punchLockRef = useRef<{ cardId: string; token: string } | null>(null)
   const wasStreamingRef = useRef(false)
@@ -717,6 +766,7 @@ export const WhisperStream = memo(function WhisperStream({
     setCopied(false)
     setFocusMode(false)
     setLandPulse(false)
+    setCoolPulse(false)
     punchLockRef.current = null
     wasStreamingRef.current = false
   }, [card?.id])
@@ -814,21 +864,26 @@ export const WhisperStream = memo(function WhisperStream({
   }, [card, coolLine])
   const streaming = Boolean(answer?.streaming)
 
-  // Peak-end land pulse when stream finishes
+  // Peak-end: Close land pulse, then Cool warmth pulse, then focus mode
   useEffect(() => {
     const was = wasStreamingRef.current
-    if (
-      shouldLandPulse(was, streaming, true) &&
-      card?.id
-    ) {
+    if (shouldLandPulse(was, streaming, true) && card?.id) {
       setLandPulse(true)
+      // Cool pulse slightly after Close (warmth after competence)
+      const tCool = window.setTimeout(() => {
+        if (shouldCoolPulse(true, false, true)) {
+          setCoolPulse(true)
+          window.setTimeout(() => setCoolPulse(false), 1400)
+        }
+      }, 700)
       // Focus mode after settle — fewer affordances under cortisol
-      const t = window.setTimeout(() => setFocusMode(true), 1200)
+      const t = window.setTimeout(() => setFocusMode(true), 1400)
       const t2 = window.setTimeout(() => setLandPulse(false), 1600)
       wasStreamingRef.current = streaming
       return () => {
         window.clearTimeout(t)
         window.clearTimeout(t2)
+        window.clearTimeout(tCool)
       }
     }
     wasStreamingRef.current = streaming
@@ -988,7 +1043,7 @@ export const WhisperStream = memo(function WhisperStream({
                   wide
                   fullText={coolLine}
                   dimmed={isDim('cool')}
-                  active={spotlight === 'cool' || landPulse}
+                  active={spotlight === 'cool' || coolPulse}
                   onFocus={() => {
                     setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
                     setFocusMode(true)
@@ -1068,7 +1123,7 @@ export const WhisperStream = memo(function WhisperStream({
                 wide
                 fullText={coolLine}
                 dimmed={isDim('cool')}
-                active={spotlight === 'cool' || landPulse}
+                active={spotlight === 'cool' || coolPulse}
                 onFocus={() => {
                   setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
                   setFocusMode(true)
@@ -1111,7 +1166,7 @@ export const WhisperStream = memo(function WhisperStream({
                 wide
                 fullText={coolLine}
                 dimmed={isDim('cool')}
-                active={spotlight === 'cool' || landPulse}
+                active={spotlight === 'cool' || coolPulse}
                 onFocus={() => {
                   setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
                   setFocusMode(true)
@@ -1197,11 +1252,15 @@ export const WhisperStream = memo(function WhisperStream({
             }
             const beat = canvasStats.beats[i]
             const role = beat?.role ?? 'support'
-            // Glance: collapse support only — Close always full (peak-end)
+            // Peak-end / serial position: Hook, Proof, Close, Cool never collapse
+            const isPeak =
+              role === 'hook' ||
+              role === 'proof' ||
+              role === 'close' ||
+              role === 'cool'
             const collapsed =
               glance &&
-              role !== 'close' &&
-              role !== 'hook' &&
+              !isPeak &&
               (Boolean(beat?.collapsible) ||
                 (beat != null &&
                   beat.index >= canvasStats.visibleBeatCap &&
@@ -1228,7 +1287,9 @@ export const WhisperStream = memo(function WhisperStream({
                 dimmed={isDim(role)}
                 wide
                 active={
-                  spotlight === role || (landPulse && role === 'close')
+                  spotlight === role ||
+                  (landPulse && role === 'close') ||
+                  (coolPulse && role === 'cool')
                 }
                 onFocus={() => {
                   if (
@@ -1256,7 +1317,7 @@ export const WhisperStream = memo(function WhisperStream({
                 wide
                 fullText={coolLine}
                 dimmed={isDim('cool')}
-                active={spotlight === 'cool' || landPulse}
+                active={spotlight === 'cool' || coolPulse}
                 onFocus={() => {
                   setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
                   setFocusMode(true)
@@ -1276,8 +1337,8 @@ export const WhisperStream = memo(function WhisperStream({
                 onClick={() => setExpandFull((v) => !v)}
               >
                 {expandFull
-                  ? 'Glance mode — focus rails'
-                  : 'Show full answer — nothing hidden'}
+                  ? 'Glance — Hook · Proof · Close · Cool'
+                  : 'Depth — expand support rails'}
               </button>
             </li>
           ) : null}
@@ -1312,7 +1373,7 @@ export const WhisperStream = memo(function WhisperStream({
             <p className="mt-1 text-[13px] text-white/40">
               {compact
                 ? `${ladderHint} · F focus`
-                : `${ladderHint} · 1 2 3 focus · F hides chips`}
+                : `${ladderHint} · 1–4 rails · Space ladder · F focus`}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
@@ -1394,11 +1455,15 @@ export const WhisperStream = memo(function WhisperStream({
               setFocusMode(s !== 'all')
             }}
             completeness={streaming ? canvasStats.completeness : 1}
+            streaming={streaming}
+            focusMode={focusMode}
+            processMode={canvasStats.processMode}
           />
         </div>
       ) : null}
 
-      {!chromeHidden && (
+      {/* Format modes — hide under focus to cut choice overload (Iyengar) */}
+      {!chromeHidden && !focusMode && (
         <div className="mb-5 flex shrink-0 flex-wrap gap-2">
           {modes.map((m) => (
             <Button
@@ -1459,15 +1524,28 @@ export const WhisperStream = memo(function WhisperStream({
               </p>
             )}
 
-            <div className={cn(chromeHidden ? 'space-y-2' : 'space-y-3')}>
-              {!chromeHidden && (
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-medium uppercase tracking-tight text-white/35">
-                    Scaffold
-                  </p>
-                  <Badge tone="default">{answer?.mode ?? mode}</Badge>
-                </div>
+            <div
+              className={cn(
+                chromeHidden ? 'space-y-2' : 'space-y-3',
+                !chromeHidden &&
+                  canvasStats.processMode === 'glance' &&
+                  !expandFull &&
+                  'speak-glance-surface',
               )}
+            >
+              {/* Quiet chrome: no "Scaffold" / formula labels under stress */}
+              {!chromeHidden && !focusMode && hasBody ? (
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-medium tracking-wide text-white/30">
+                    {canvasStats.processMode === 'glance'
+                      ? 'Hook · Proof · Close · Cool'
+                      : 'Full rails'}
+                  </p>
+                  <span className="text-[10px] uppercase tracking-wide text-white/25">
+                    {answer?.mode ?? mode}
+                  </span>
+                </div>
+              ) : null}
 
               {showPreparingSkeleton && (
                 <SpeakRailsSkeleton compact={compact || chromeHidden} />

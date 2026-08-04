@@ -136,15 +136,17 @@ _CORE = (
 
 FAST_STAR_SYSTEM = (
     _CORE
-    + "Labels: Hook: / Situation: / Task: / Action: / Result: / Close:\n"
+    + "Labels: Hook: / Situation: / Task: / Action: / Result: / Close: / Cool:\n"
     "Short Qs 100–180 words; multi-part 180–280. Hook is a punchline. "
-    "Action = concrete moves only. Address every clause of multi-part questions."
+    "Action = concrete moves only. Address every clause of multi-part questions. "
+    "End with one Cool: line (warmth after competence)."
 )
 FAST_TECH_SYSTEM = (
     _CORE
-    + "Labels: Hook: / Approach: / Mechanism: / Tradeoff: / Close:\n"
+    + "Labels: Hook: / Approach: / Mechanism: / Tradeoff: / Close: / Cool:\n"
     "Short 120–200 words; multi-part 200–320. Hook = the design choice. "
-    "Mechanism = how it works. Tradeoff = what you refuse and why."
+    "Mechanism = how it works. Tradeoff = what you refuse and why. "
+    "End with one Cool: line (calm sign-off)."
 )
 FAST_SHORTER_SYSTEM = (
     _CORE
@@ -159,15 +161,17 @@ FAST_CODE_SYSTEM = (
 
 RICH_STAR_SYSTEM = (
     _CORE
-    + "Labels: Hook: / Situation: / Task: / Action: / Result: / Depth: / Close:\n"
+    + "Labels: Hook: / Situation: / Task: / Action: / Result: / Depth: / Close: / Cool:\n"
     "Short ~140–220 words; multi-part ~200–300. Density over length. "
-    "Mechanisms over adjectives. One real number only if defensible from context."
+    "Mechanisms over adjectives. One real number only if defensible from context. "
+    "End with one Cool: line."
 )
 RICH_TECHNICAL_SYSTEM = (
     _CORE
-    + "Labels: Hook: / Approach: / Mechanism: / Tradeoffs: / Validation: / Close:\n"
+    + "Labels: Hook: / Approach: / Mechanism: / Tradeoffs: / Validation: / Close: / Cool:\n"
     "Short ~150–250; multi-part ~220–340. Two real tradeoffs. "
-    "Validation = how you prove it (test, audit, partner trial)."
+    "Validation = how you prove it (test, audit, partner trial). "
+    "End with one Cool: line."
 )
 RICH_SHORTER_SYSTEM = (
     _CORE
