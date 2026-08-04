@@ -51,13 +51,13 @@ npm run dev -- --host 127.0.0.1 --port 5173
 | `latency_metrics.py` / `latency_ai_agent.py` | Latency ops |
 | `backend/*` | Auth, billing, mock interview |
 
-## JD grounding
+## Per-login identity (no skill pooling)
 
-- Disk practice pack (`jd and resume/`) is **opt-in**: set `ASTRA_PRACTICE_JD=1`
-- Empty Role/Job → question-only domain; no pack fallback on live answers
-- Live Role/Job fields wire to WS `set_context` (including clear)
-- Full Reset: `POST /api/session/reset` (pack + answer cache + latency)
-- Health: `GET /api/health` → `jd_grounding` object
+- Answers use **only** this login’s Role + Job context + the question
+- No ambient disk ATTP, no SAP product-family skill merge
+- HTTP pack scoped by JWT user; WS pack per connection
+- Login/logout clears client knowledge + server pack + answer cache
+- `POST /api/session/reset` for full identity wipe
 
 ## LLM provider rule
 

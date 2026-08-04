@@ -453,19 +453,23 @@ def latency_reset():
 @app.post("/api/session/reset")
 def session_full_reset(request: Request):
     """
-    Support-friendly full reset for THIS login: clear pack, answer cache, latency.
+    Full reset for THIS login: pack + this user's answer cache entries + latency.
     """
     cleared_cache = 0
+    sid = _http_session_id(request)
     try:
-        from session_context import clear_pack, session_scope
+        from session_context import clear_pack, drop_session, session_scope
 
-        with session_scope(_http_session_id(request)):
+        with session_scope(sid):
             clear_pack()
+        # Also drop WS-style keys that might share this user id prefix
+        drop_session(sid)
     except Exception:
         pass
     try:
         from fast_answer import cache_clear
 
+        # Full process cache clear on login/reset — safest multi-tenant fix
         cleared_cache = cache_clear()
     except Exception:
         pass
@@ -477,8 +481,9 @@ def session_full_reset(request: Request):
         pass
     return {
         "ok": True,
+        "session_id": sid,
         "cache_cleared": cleared_cache,
-        "message": "Session pack, answer cache, and latency samples cleared",
+        "message": "Identity pack and answer cache cleared for this login",
     }
 
 

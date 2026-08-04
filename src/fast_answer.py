@@ -70,10 +70,25 @@ def normalize_question(q: str) -> str:
     return t
 
 
+def _job_key_part(job: str = "") -> str:
+    return re.sub(r"\s+", " ", (job or "").lower())[:80]
+
+
+def _user_scope() -> str:
+    """Isolate cache by WS/HTTP session so users never share answers."""
+    try:
+        from session_context import get_session_id
+
+        return (get_session_id() or "default")[:64]
+    except Exception:
+        return "default"
+
+
 def question_key(q: str, mode: str = "star", job: str = "") -> str:
     base = normalize_question(q)
-    job_n = re.sub(r"\s+", " ", (job or "").lower())[:60]
-    return f"{mode}|{job_n}|{base}"
+    job_n = _job_key_part(job)
+    scope = _user_scope()
+    return f"{scope}|{mode}|{job_n}|{base}"
 
 
 def _tokens(q: str) -> list[str]:
@@ -157,7 +172,16 @@ class _AnswerCache:
             self._exact.move_to_end(key)
             return self._exact[key]
 
-    def put(self, key: str, answer: str, question: str, mode: str) -> None:
+    def put(
+        self,
+        key: str,
+        answer: str,
+        question: str,
+        mode: str,
+        *,
+        job: str = "",
+        scope: str = "",
+    ) -> None:
         ans = (answer or "").strip()
         if not ans or not key:
             return
@@ -168,26 +192,37 @@ class _AnswerCache:
                 self._exact.popitem(last=False)
             nq = normalize_question(question)
             sh = simhash64(nq)
-            self._approx.append((nq, sh, ans, mode))
+            # scope + job isolate approx hits across logins / roles
+            self._approx.append((nq, sh, ans, mode, _job_key_part(job), scope or "default"))
             if len(self._approx) > self._approx_max:
                 self._approx = self._approx[-self._approx_max :]
 
-    def get_similar(self, question: str, mode: str) -> Optional[tuple[str, float, str]]:
-        """Return (answer, score, method) if near-dup found."""
+    def get_similar(
+        self,
+        question: str,
+        mode: str,
+        *,
+        job: str = "",
+        scope: str = "",
+    ) -> Optional[tuple[str, float, str]]:
+        """Return (answer, score, method) if near-dup found for same user+role."""
         nq = normalize_question(question)
         if len(nq) < 8:
             return None
         sh = simhash64(nq)
+        job_n = _job_key_part(job)
+        scope_n = scope or "default"
         best: Optional[tuple[str, float, str]] = None
         with _lock:
-            # Reverse: newest first
-            for prev_q, prev_sh, ans, m in reversed(self._approx):
-                if m != mode:
+            for row in reversed(self._approx):
+                # Back-compat: old 4-tuples never match (force miss)
+                if len(row) < 6:
                     continue
-                # Fast band: SimHash
+                prev_q, prev_sh, ans, m, prev_job, prev_scope = row
+                if m != mode or prev_job != job_n or prev_scope != scope_n:
+                    continue
                 dist = hamming64(sh, prev_sh)
                 if dist <= SIMHASH_MAX_DIST:
-                    # Confirm with n-gram cosine
                     sim = cosine_ngram(nq, prev_q)
                     if sim >= NGRAM_SIM_THRESHOLD:
                         score = sim * (1.0 - dist / 64.0)
@@ -544,12 +579,12 @@ def cache_lookup(
     *,
     mode: str = "star",
     job_context: str = "",
-    allow_approx: bool = True,
+    allow_approx: bool = False,
 ) -> Optional[tuple[str, str]]:
     """Return (answer, source) if cache hit.
 
-    allow_approx=False for live interviews: near-dup cache was reusing answers
-    from earlier questions in the same session (wrong output mid-interview).
+    Default allow_approx=False — approx reuse across roles/users was a
+    multi-tenant leak (old skills on new logins).
     """
     key = question_key(question, mode, job_context)
     hit = _CACHE.get_exact(key)
@@ -557,9 +592,10 @@ def cache_lookup(
         return hit, "exact_cache"
     if not allow_approx:
         return None
-    sim = _CACHE.get_similar(question, mode)
+    sim = _CACHE.get_similar(
+        question, mode, job=job_context, scope=_user_scope()
+    )
     if sim:
-        # Extra-strict: require near-identical text for approx hits
         if sim[1] < 0.95:
             return None
         return sim[0], f"approx_cache:{sim[2]}"
@@ -568,7 +604,14 @@ def cache_lookup(
 
 def cache_store(question: str, answer: str, *, mode: str = "star", job_context: str = "") -> None:
     key = question_key(question, mode, job_context)
-    _CACHE.put(key, answer, question, mode)
+    _CACHE.put(
+        key,
+        answer,
+        question,
+        mode,
+        job=job_context,
+        scope=_user_scope(),
+    )
 
 
 def cache_clear() -> int:

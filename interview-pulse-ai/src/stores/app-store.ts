@@ -144,7 +144,35 @@ export const useAppStore = create<AppState>()(
       authToken: getToken(),
       setAuth: ({ user, token }) => {
         setToken(token)
-        set({ user, authToken: token })
+        const prevId = useAppStore.getState().user?.id || useAppStore.getState().user?.email
+        const nextId = user?.id || user?.email
+        // New login → wipe prior user's role, knowledge, and interview state
+        const switched = Boolean(prevId && nextId && String(prevId) !== String(nextId))
+        const clearIdentity = !prevId || switched
+        set({
+          user,
+          authToken: token,
+          ...(clearIdentity
+            ? {
+                activeJobTitle: '',
+                settings: {
+                  ...useAppStore.getState().settings,
+                  jobContext: '',
+                },
+                documents: [],
+                memories: [],
+                jobMatch: null,
+                sessions: [],
+                answer: null,
+                transcript: [],
+              }
+            : {}),
+        })
+        if (clearIdentity) {
+          void import('@/services/real-api')
+            .then((m) => m.fullSessionReset())
+            .catch(() => {})
+        }
       },
       setAuthFromUser: (user) => {
         set((s) => {
@@ -153,15 +181,52 @@ export const useAppStore = create<AppState>()(
             subscription_active: Boolean(user.subscription_active),
             is_admin: Boolean(user.is_admin),
           }
-          // Drop admin route if user lost admin access
           const route =
             s.route === 'admin' && !nextUser.is_admin ? 'copilot' : s.route
+          const prevId = s.user?.id || s.user?.email
+          const nextId = nextUser.id || nextUser.email
+          const switched =
+            Boolean(prevId && nextId && String(prevId) !== String(nextId))
+          if (switched) {
+            void import('@/services/real-api')
+              .then((m) => m.fullSessionReset())
+              .catch(() => {})
+            return {
+              user: nextUser,
+              route,
+              activeJobTitle: '',
+              settings: { ...s.settings, jobContext: '' },
+              documents: [],
+              memories: [],
+              jobMatch: null,
+              sessions: [],
+              answer: null,
+              transcript: [],
+            }
+          }
           return { user: nextUser, route }
         })
       },
       clearAuth: () => {
         setToken(null)
-        set({ user: null, authToken: null })
+        void import('@/services/real-api')
+          .then((m) => m.fullSessionReset())
+          .catch(() => {})
+        set({
+          user: null,
+          authToken: null,
+          activeJobTitle: '',
+          settings: {
+            ...useAppStore.getState().settings,
+            jobContext: '',
+          },
+          documents: [],
+          memories: [],
+          jobMatch: null,
+          sessions: [],
+          answer: null,
+          transcript: [],
+        })
       },
       refreshAuth: async () => {
         const me = await fetchMe()
@@ -398,24 +463,22 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'interview-pulse-ai',
-      // Role + Job context are intentionally NOT persisted — always start clear.
+      // Never persist identity / knowledge across logins (old skills leak).
       partialize: (s) => {
         const { jobContext: _jc, ...settingsRest } = s.settings
         return {
           settings: { ...settingsRest, jobContext: '' },
           stealth: s.stealth,
-          documents: s.documents,
-          memories: s.memories,
-          // never restore activeJobTitle
-          sessions: s.sessions,
+          // documents / memories / sessions / activeJobTitle NOT persisted
           answerMode: s.answerMode,
         }
       },
-      // Role / Job context always rehydrate empty (no defaults, no sticky leftovers)
       merge: (persisted, current) => {
         const p = (persisted || {}) as Partial<typeof current> & {
           activeJobTitle?: string
           settings?: Partial<typeof current.settings>
+          documents?: unknown
+          memories?: unknown
         }
         const mergedSettings = {
           ...current.settings,
@@ -426,7 +489,12 @@ export const useAppStore = create<AppState>()(
           ...current,
           ...p,
           settings: mergedSettings,
+          // Always empty identity + knowledge on rehydrate
           activeJobTitle: '',
+          documents: [],
+          memories: [],
+          jobMatch: null,
+          sessions: [],
         }
       },
     },
