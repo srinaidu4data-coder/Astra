@@ -10,7 +10,6 @@ import {
   checkCopilotHealth,
   fetchAnswer,
   fetchLatencyMetrics,
-  getSessionContext,
   setSessionContext,
   warmCopilotApi,
 } from '@/services/real-api'
@@ -203,34 +202,8 @@ export function CopilotPage() {
     if (c) setAnswer(c.answer)
   }, [cards, cardIndex, setAnswer])
 
-  // Warm server pack from disk JD when available, but do NOT auto-fill Job context.
-  // Auto-filling forced every answer into the bootstrapped role (e.g. SAP ATTP)
-  // even when the interviewer asked about a different domain.
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      const data = await getSessionContext()
-      if (cancelled || !data?.pack) return
-      const role = (data.pack.role || '').trim()
-      const jc = (useAppStore.getState().settings.jobContext || '').trim()
-      // Only sync pack with an *explicit* user-set job context — never invent one
-      if (jc) {
-        void setSessionContext({
-          role: jc,
-          job_description: data.pack.job_description,
-          resume_text: data.pack.resume_text,
-          keywords: data.pack.keywords,
-        })
-      } else if (role) {
-        // Pack may hold a practice JD; leave UI Job context empty so answers
-        // follow the question domain unless the user sets a role.
-        console.debug('[copilot] session pack role available but not auto-applied:', role)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [updateSettings, setActiveJobTitle])
+  // Never auto-fill Role / Job context from server pack or JD bootstrap.
+  // Fields stay empty until the user types (and are not restored from storage).
 
   // Wire live WebSocket for the lifetime of this page
   useEffect(() => {
@@ -778,10 +751,10 @@ export function CopilotPage() {
                       ? `${role} · ${jc}`
                       : role || jc
                   void setSessionContext({
-                    role: combined || undefined,
+                    role: combined,
                   })
                 }}
-                placeholder="e.g. SAP BRIM Data Analysis & Migration Support"
+                placeholder="Optional — type the target role"
                 autoComplete="off"
               />
             </label>
@@ -800,10 +773,10 @@ export function CopilotPage() {
                       ? `${role} · ${jc}`
                       : role || jc
                   void setSessionContext({
-                    role: combined || undefined,
+                    role: combined,
                   })
                 }}
-                placeholder="e.g. SAP RAR — domain / stack notes for answers"
+                placeholder="Optional — domain or stack notes"
                 autoComplete="off"
               />
             </label>
@@ -857,6 +830,10 @@ export function CopilotPage() {
                 setStatusLine('')
                 setLevels(Array.from({ length: 16 }, () => 0.08))
                 setPhase('idle')
+                // Role + Job context always return to empty
+                setActiveJobTitle('')
+                updateSettings({ jobContext: '' })
+                void setSessionContext({ clear: true }).catch(() => {})
               }}
             >
               <RefreshCw className="h-4 w-4" strokeWidth={1.75} />

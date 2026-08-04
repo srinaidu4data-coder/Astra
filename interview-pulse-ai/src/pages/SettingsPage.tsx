@@ -311,7 +311,7 @@ export function SettingsPage() {
               className="field"
               value={settings.jobContext}
               onChange={(e) => updateSettings({ jobContext: e.target.value })}
-              placeholder="e.g. SAP ATTP Consultant — leave blank if unused"
+              placeholder="Optional — leave blank if unused"
             />
           </label>
           <label>

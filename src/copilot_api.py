@@ -52,12 +52,18 @@ app = FastAPI(title="InterviewPulse Copilot API", version="1.0.0")
 
 @app.on_event("startup")
 def _bootstrap_jd_grounding() -> None:
-    """Load JD + resume into session pack so answers stop free-associating buzzwords."""
-    try:
-        from jd_grounding import bootstrap_session_from_jd_resume
+    """
+    Start with an empty session role/job context.
 
-        info = bootstrap_session_from_jd_resume(force=False)
-        print(f"[jd_grounding] startup bootstrap: {info}", flush=True)
+    Disk JD/resume may still exist for on-domain grounding when a question
+    matches, but we never pre-fill pack.role — UI Role/Job context stay clear
+    until the user sets them.
+    """
+    try:
+        from session_context import clear_pack
+
+        clear_pack()
+        print("[jd_grounding] startup: session pack cleared (no default role)", flush=True)
     except Exception as e:
         print(f"[jd_grounding] startup skip: {e}", flush=True)
 

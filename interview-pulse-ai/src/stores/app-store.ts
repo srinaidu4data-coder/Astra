@@ -398,49 +398,35 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'interview-pulse-ai',
-      partialize: (s) => ({
-        settings: s.settings,
-        stealth: s.stealth,
-        documents: s.documents,
-        memories: s.memories,
-        activeJobTitle: s.activeJobTitle,
-        sessions: s.sessions,
-        answerMode: s.answerMode,
-      }),
-      // Drop old demo / default titles so Job context & Knowledge stay blank
+      // Role + Job context are intentionally NOT persisted — always start clear.
+      partialize: (s) => {
+        const { jobContext: _jc, ...settingsRest } = s.settings
+        return {
+          settings: { ...settingsRest, jobContext: '' },
+          stealth: s.stealth,
+          documents: s.documents,
+          memories: s.memories,
+          // never restore activeJobTitle
+          sessions: s.sessions,
+          answerMode: s.answerMode,
+        }
+      },
+      // Role / Job context always rehydrate empty (no defaults, no sticky leftovers)
       merge: (persisted, current) => {
         const p = (persisted || {}) as Partial<typeof current> & {
           activeJobTitle?: string
           settings?: Partial<typeof current.settings>
         }
-        const demoTitles = new Set([
-          'Staff Frontend / AI Copilot Engineer',
-          'Staff Frontend / AI Copilot Engineer ',
-        ])
-        // Former hard-coded / auto-bootstrapped defaults — clear so answers
-        // follow the question domain until the user explicitly sets a role.
-        const defaultJobContexts = new Set([
-          'Senior Full-Stack Engineer',
-          'AI/ML Engineer',
-          'Software Engineer',
-          'SAP ATTP Techno-Functional Consultant',
-          'SAP ATTP Consultant',
-        ])
-        const title = (p.activeJobTitle || '').trim()
         const mergedSettings = {
           ...current.settings,
           ...(p.settings || {}),
-        }
-        const jc = (mergedSettings.jobContext || '').trim()
-        if (!jc || defaultJobContexts.has(jc)) {
-          mergedSettings.jobContext = ''
+          jobContext: '',
         }
         return {
           ...current,
           ...p,
           settings: mergedSettings,
-          activeJobTitle:
-            !title || demoTitles.has(title) ? '' : p.activeJobTitle || '',
+          activeJobTitle: '',
         }
       },
     },

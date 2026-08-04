@@ -401,18 +401,21 @@ def bootstrap_session_from_jd_resume(
         if not jd and not resume and not role_hint.strip():
             return {"ok": True, "skipped": True, "role": "", "empty_sources": True}
 
-        role = role_hint.strip() or role_from_jd(jd)
-        # No hard-coded "SAP ATTP…" — empty role is valid
+        # Role only from explicit hint — never default from JD Role: line.
+        # UI Role / Job context stay clear until the user types them.
+        role = role_hint.strip()
 
         lex = extract_lexicon(jd, resume, max_terms=40)
-        update_pack(
-            role=role,
-            job_description=jd[:4000] if jd else "",
-            resume_text=resume[:3500] if resume else "",
-            keywords=lex[:40],
-            interview_type="technical",
-            depth="balanced",
-        )
+        kwargs: dict[str, Any] = {
+            "job_description": jd[:4000] if jd else "",
+            "resume_text": resume[:3500] if resume else "",
+            "keywords": lex[:40],
+            "interview_type": "technical",
+            "depth": "balanced",
+        }
+        if role:
+            kwargs["role"] = role
+        update_pack(**kwargs)
         return {
             "ok": True,
             "skipped": False,

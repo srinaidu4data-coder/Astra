@@ -85,6 +85,9 @@ def update_pack(**kwargs: Any) -> SessionContextPack:
                     if d == "quality":
                         d = "deep"
                     _PACK.depth = d
+            elif k in ("role", "company", "seniority", "interview_type") and v is not None:
+                # Allow empty string so UI can clear Role / Job context defaults
+                setattr(_PACK, k, str(v).strip() if isinstance(v, str) else v)
             elif v is not None and str(v).strip():
                 setattr(_PACK, k, str(v).strip() if isinstance(v, str) else v)
         _PACK.updated_at = time.time()

@@ -45,7 +45,7 @@ class TestJdLexicon:
         # Domain terms may remain
         assert "commissioning" in out.lower() or "aggregation" in out.lower() or "Yes" in out
 
-    def test_bootstrap_sets_role(self):
+    def test_bootstrap_loads_jd_without_default_role(self):
         from jd_grounding import bootstrap_session_from_jd_resume
         from session_context import clear_pack, get_pack
 
@@ -53,8 +53,8 @@ class TestJdLexicon:
         info = bootstrap_session_from_jd_resume(force=True)
         assert info.get("ok")
         pack = get_pack()
-        # Role comes from JD Role: line, not a hard-coded constant
-        assert "ATTP" in (pack.role or "").upper() or "SAP" in (pack.role or "").upper()
+        # Role stays empty unless explicitly hinted — no JD Role: auto-fill
+        assert (pack.role or "") == ""
         assert pack.job_description
 
     def test_off_domain_question_does_not_apply_attp_grounding(self):
