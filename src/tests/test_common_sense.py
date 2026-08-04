@@ -67,14 +67,20 @@ def test_empty_job_soft_question_not_attp():
     assert lock2.domain == "general" or lock2.confidence < 0.28
 
 
-def test_domains_compatible_sap_family():
+def test_domains_compatible_no_sap_skill_pooling():
+    """Sharing the word SAP must never pool product-line skills."""
     from common_sense import domains_compatible
 
-    assert domains_compatible("sap_attp", "sap_general")
+    # Specialized lines never combine with each other or with generic SAP
+    assert not domains_compatible("sap_attp", "sap_general")
+    assert not domains_compatible("sap_brim", "sap_general")
+    assert not domains_compatible("sap_fico", "sap_general")
     assert not domains_compatible("sap_attp", "sap_fico")
     assert not domains_compatible("sap_attp", "sap_brim")
     assert not domains_compatible("sap_brim", "sap_fico")
     assert not domains_compatible("sap_attp", "ml_ai")
+    # Exact match / general only
+    assert domains_compatible("sap_brim", "sap_brim")
     assert domains_compatible("ml_ai", "general")
 
 

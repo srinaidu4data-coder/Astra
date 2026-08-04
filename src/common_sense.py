@@ -303,8 +303,9 @@ _DOMAIN_LABELS = {
     "general": "general professional (use only the question + job context)",
 }
 
-# Distinct SAP product families — never cross-wire (ATTP ≠ BRIM ≠ FICO)
-_SAP_SPECIALIZED = frozenset({"sap_attp", "sap_fico", "sap_brim"})
+# Every SAP product line is its own skill set — never pool/combine them.
+# Sharing the brand "SAP" does NOT make ATTP, BRIM, FICO, or generic SAP one family.
+_SAP_PRODUCT_LINES = frozenset({"sap_attp", "sap_fico", "sap_brim", "sap_general"})
 
 
 @dataclass
@@ -357,21 +358,25 @@ def _score_domain(blob: str) -> dict[str, tuple[float, list[str]]]:
 
 
 def domains_compatible(a: str, b: str) -> bool:
-    """True when two domain ids can share one answer without cross-wiring."""
+    """
+    True only when two domain ids may share one answer.
+
+    Rule: different product lines never combine — including all SAP lines.
+    "SAP" branding is not a skill family. ATTP, BRIM, FICO, and generic SAP
+    are separate; only exact domain match (or general) is compatible.
+    """
     if not a or not b:
         return True
     if a == b:
         return True
+    # Non-product "general" is neutral (no skill pooling)
     if a == "general" or b == "general":
         return True
-    # Specialized SAP products are mutually exclusive (BRIM interview ≠ ATTP JD)
-    if a in _SAP_SPECIALIZED and b in _SAP_SPECIALIZED and a != b:
+    # Any two distinct SAP product lines are incompatible (including sap_general)
+    if a in _SAP_PRODUCT_LINES and b in _SAP_PRODUCT_LINES:
         return False
     if a.startswith("sap_") and b.startswith("sap_"):
-        # sap_general is soft-compatible with specialized SAP
-        if a == "sap_general" or b == "sap_general":
-            return True
-        return a == b
+        return False
     return False
 
 
@@ -403,6 +408,8 @@ def infer_domain(
         # Clear topical question (e.g. ML terms) wins over stored ATTP pack
         if exclusive_hit or (q_top_sc >= 2.5 and q_top_sc >= q_second + 1.0):
             conf = min(1.0, q_top_sc / 6.0)
+            # Prefer a specific product line over bare "sap" token — not combining skills,
+            # choosing the narrowest matching line for THIS text only.
             if q_top_dom == "sap_general":
                 for specialized in ("sap_attp", "sap_fico", "sap_brim"):
                     if specialized in q_scores and q_scores[specialized][0] >= q_top_sc * 0.45:
@@ -440,7 +447,7 @@ def infer_domain(
     # Confidence: absolute signal + separation from runner-up
     conf = min(1.0, top_sc / 8.0) * (0.55 + 0.45 * min(1.0, (top_sc - second_sc + 0.5) / 4.0))
 
-    # Prefer specialized SAP family over generic sap when both fire
+    # Prefer specific product line over bare "sap" when both fire (pick one line, don't merge)
     if top_dom == "sap_general":
         for specialized in ("sap_attp", "sap_fico", "sap_brim"):
             if specialized in combined_scores and combined_scores[specialized] >= top_sc * 0.45:
@@ -448,7 +455,13 @@ def infer_domain(
                 top_sc = combined_scores[specialized]
                 break
 
-    secondary = [d for d, _ in ranked[1:4] if combined_scores[d] >= top_sc * 0.35]
+    # Do not list other SAP product lines as "secondary" companions
+    secondary = [
+        d
+        for d, _ in ranked[1:4]
+        if combined_scores[d] >= top_sc * 0.35
+        and domains_compatible(top_dom, d)
+    ]
     return DomainLock(
         domain=top_dom,
         confidence=conf,
@@ -465,11 +478,8 @@ def _foreign_exclusive_hits(text: str, active: str) -> list[tuple[str, str]]:
     for dom, packs in _DOMAIN_LEXICONS.items():
         if dom == active:
             continue
-        # sap_general is soft when active is sap_attp/fico
-        if active.startswith("sap_") and dom == "sap_general":
-            continue
-        if active == "sap_general" and dom.startswith("sap_"):
-            continue
+        # No soft merging of SAP lines — foreign exclusive terms always flag
+        # (sap_general exclusive is rare; still treat specialized cross-hits as foreign)
         for term in packs["exclusive"]:
             if term in blob:
                 bad.append((dom, term))
@@ -692,7 +702,11 @@ def prompt_guardrails(lock: DomainLock, *, role: str = "") -> str:
             "unrelated track-and-trace/serialization stacks, pure tax-engine deep-dives, "
             "ML, or non-billing modules"
         ),
-        "sap_general": "unrelated ML training, robotics/ROS, or product lines not in Role/Q",
+        "sap_general": (
+            "specific product-line deep-dives not named in Role/Q "
+            "(do not invent track-and-trace, subscription-billing, or tax modules), "
+            "ML training, or robotics"
+        ),
         "ml_ai": "unrelated ERP modules, robotics hardware, or enterprise tax stacks",
         "robotics": "unrelated ML interview clichés or ERP modules",
         "software": "unrelated ML paper jargon or ERP modules",
@@ -706,7 +720,9 @@ def prompt_guardrails(lock: DomainLock, *, role: str = "") -> str:
         "- Do NOT mention psychology techniques, softmax, Zipf, von Restorff, "
         "peak-end, primacy/recency labels, or 'psych-math' — those are UI internals, "
         "not interview answers.\n"
-        "- Do NOT switch SAP product families mid-answer; stay on the Role's product line.\n"
+        "- Do NOT combine SAP product skills. One Role = one product line. "
+        "Never mix track-and-trace, subscription billing, and finance tax in one answer "
+        "unless the question explicitly asks for a comparison.\n"
         "- Prefer precise terms from the question + Role context only.\n"
         f"- Domain signals seen: {', '.join(lock.signals[:8]) or 'context-derived'}."
     )

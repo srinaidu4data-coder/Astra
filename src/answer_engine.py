@@ -927,8 +927,9 @@ def _build_user_prompt(
         if user_job:
             parts.append(
                 "ROLE RULE: Answer strictly as the stated Role and question. "
-                "Use only product/module names that appear in Role or Q — "
-                "never import another SAP product family's terminology."
+                "One Role = one skill set. Do not combine or import terminology from "
+                "other SAP products just because they share the SAP brand. "
+                "Only names that appear in Role or Q."
             )
         elif not apply_jd:
             parts.append(
