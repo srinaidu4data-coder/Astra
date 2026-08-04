@@ -354,21 +354,52 @@ def pack_domain_blob(*, include_disk_jd: bool = False) -> str:
     return " ".join(b for b in bits if b)
 
 
+def disk_jd_matches_role(job_context: str = "") -> bool:
+    """True only when practice disk JD is same product family as the user Role."""
+    job = (job_context or "").strip()
+    jd = load_jd_text()
+    if not job or not jd:
+        return False
+    try:
+        from common_sense import domains_compatible, infer_domain
+
+        job_lock = infer_domain("", job, "")
+        jd_lock = infer_domain("", "", jd[:2000])
+        if job_lock.domain == "general" or jd_lock.domain == "general":
+            # Ambiguous role — do not force disk ATTP onto BRIM-like titles
+            if "attp" in jd.lower() and "attp" not in job.lower():
+                return False
+            if "brim" in job.lower() and "attp" in jd.lower():
+                return False
+            return "attp" not in jd.lower() or "attp" in job.lower()
+        return domains_compatible(job_lock.domain, jd_lock.domain)
+    except Exception:
+        return False
+
+
+def lexicon_for_turn(question: str = "", job_context: str = "", max_terms: int = 18) -> list[str]:
+    """
+    Lexicon for prompts: question + role only, unless disk JD matches the role.
+    Never merges ATTP disk terms into a BRIM Role interview.
+    """
+    q = question or ""
+    job = job_context or ""
+    if disk_jd_matches_role(job):
+        return extract_lexicon(load_jd_text(), q, job, max_terms=max_terms)
+    return extract_lexicon(q, job, max_terms=max_terms)
+
+
 def jd_grounding_applies(question: str = "", job_context: str = "") -> bool:
     """
-    True when disk JD / session pack should bias this answer.
+    True when session pack *matching the role* should bias this answer.
 
-    Rules:
-      - Question clearly in the same domain as pack/JD → yes
-      - Question clearly in a *different* domain → no
-      - Soft/behavioral/general questions → yes ONLY if the user passed an
-        explicit job_context (not merely a leftover bootstrap pack)
-      - Empty everything → no
+    Never grounds an ATTP practice JD into a BRIM (or other non-ATTP) Role.
+    Disk JD only participates when disk_jd_matches_role(job).
     """
     q = (question or "").strip()
-    # Explicit = caller-provided role only. Do not treat pack.role as explicit.
     job = (job_context or "").strip()
     pack_blob = pack_domain_blob()
+    # Strip disk-incompatible pack JD from consideration
     if not pack_blob and not job:
         return False
 
@@ -376,7 +407,26 @@ def jd_grounding_applies(question: str = "", job_context: str = "") -> bool:
         from common_sense import domains_compatible, infer_domain
 
         q_lock = infer_domain(q, "", "")
-        pack_lock = infer_domain("", job, pack_blob)
+        job_lock = infer_domain("", job, "") if job else None
+        # Pack domain from role + pack text — but if pack JD is ATTP and role is BRIM, ignore pack JD
+        pack_for_lock = pack_blob
+        if job and pack_blob:
+            jd_part = ""
+            try:
+                from session_context import get_pack
+
+                jd_part = (get_pack().job_description or "")[:800]
+            except Exception:
+                pass
+            if jd_part and job_lock and job_lock.domain not in ("general",):
+                jd_lock = infer_domain("", "", jd_part)
+                if (
+                    jd_lock.domain not in ("general",)
+                    and not domains_compatible(job_lock.domain, jd_lock.domain)
+                ):
+                    # Use role only — drop conflicting practice JD from pack blob
+                    pack_for_lock = job
+        pack_lock = infer_domain("", job, pack_for_lock)
 
         # Strong off-domain question beats stored pack / role
         if (
@@ -387,7 +437,7 @@ def jd_grounding_applies(question: str = "", job_context: str = "") -> bool:
         ):
             return False
 
-        # Question clearly in pack/JD domain → ground (even without UI role)
+        # Question clearly in role domain → ground lightly with role (not foreign JD)
         if (
             q_lock.domain != "general"
             and pack_lock.domain != "general"
@@ -395,17 +445,15 @@ def jd_grounding_applies(question: str = "", job_context: str = "") -> bool:
         ):
             return True
 
-        # Soft/behavioral/general: only if user explicitly set a role
+        # Soft/behavioral: user set role → allow role context, not foreign disk JD
         if job and q_lock.domain == "general":
-            job_lock = infer_domain("", job, "")
-            if job_lock.domain == "general":
-                return True  # custom title, still user-chosen
+            if job_lock is None or job_lock.domain == "general":
+                return True
             if pack_lock.domain == "general" or domains_compatible(
                 job_lock.domain, pack_lock.domain
             ):
                 return True
 
-        # Pack alone + soft/off-topic question → do not force ATTP framing
         return False
     except Exception:
         return bool(job)
@@ -469,24 +517,8 @@ def ensure_grounded_job_context(
     """
     Resolve role for this turn.
 
-    - Explicit job_context always wins.
-    - Empty job_context stays empty — never bootstrap disk JD on the answer path
-      and never invent a role from a leftover pack.
-    - Optional pack role only if caller left job empty AND grounding applies
-      AND pack already has a user-set role (no silent disk load).
+    Explicit job_context is the only source. Empty string stays empty —
+    never invent pack.role or disk JD (that reintroduced ATTP under BRIM).
     """
-    job = (job_context or "").strip()
-    if job:
-        return job
-    # Answer path: empty means empty. Do not bootstrap jd.txt here.
-    try:
-        from session_context import get_pack
-
-        pack = get_pack()
-        if not (pack.role or "").strip():
-            return ""
-        if not jd_grounding_applies(question, pack.role):
-            return ""
-        return (pack.role or "").strip()
-    except Exception:
-        return ""
+    _ = question  # kept for API compat with callers
+    return (job_context or "").strip()

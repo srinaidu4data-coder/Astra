@@ -122,6 +122,49 @@ class TestJdLexicon:
 
         assert load_jd_text() == ""
 
+    def test_brim_role_never_gets_attp_lexicon(self):
+        from answer_engine import _build_user_prompt, _fallback_strategy
+        from jd_grounding import lexicon_for_turn
+        from session_context import clear_pack, session_scope, update_pack, drop_session
+
+        role = "SAP BRIM Data Analysis & Migration Support"
+        q = "How do you design subscription billing and revenue recognition in BRIM?"
+        drop_session("brim_test")
+        with session_scope("brim_test"):
+            clear_pack()
+            # Poison pack with ATTP practice JD text
+            update_pack(
+                role=role,
+                job_description=(
+                    "SAP ATTP Techno-Functional EPCIS GTIN SSCC DSCSA "
+                    "serialization commissioning aggregation"
+                ),
+                keywords=["ATTP", "EPCIS", "GTIN", "SSCC"],
+            )
+            lex = " ".join(lexicon_for_turn(q, role)).upper()
+            assert "ATTP" not in lex and "EPCIS" not in lex
+            assert "BRIM" in lex or "BILLING" in lex or "SUBSCRIPTION" in lex
+            strategy = _fallback_strategy(q, role)
+            user = _build_user_prompt(
+                q,
+                job_context=role,
+                tone="confident",
+                mode="technical",
+                strategy=strategy,
+                context_chunks=[],
+            )
+            low = user.lower()
+            # Practice ATTP JD must not appear as source material
+            assert "job description excerpt" not in low
+            assert "prefer these role terms" in low
+            pref = low.split("prefer these role terms")[1].split("\n")[0]
+            assert "attp" not in pref and "epcis" not in pref and "gtin" not in pref
+            assert "brim" in low
+            # Domain must be BRIM, not ATTP serialization
+            assert "sap brim" in low or "subscription billing" in low
+            assert "track-and-trace serialization" not in low
+        drop_session("brim_test")
+
     def test_soft_empty_prompt_not_attp_locked(self):
         from answer_engine import _build_user_prompt, _fallback_strategy
         from jd_grounding import bootstrap_session_from_jd_resume

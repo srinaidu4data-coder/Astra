@@ -321,12 +321,14 @@ class LiveInterviewSession:
             self.tone = tone
 
     def _sync_pack_role(self, job_context: str) -> None:
-        """Keep session pack.role aligned with live job_context (empty clears role)."""
+        """Keep session pack.role aligned; scrub foreign ATTP JD under BRIM role."""
         try:
-            from session_context import update_pack
+            from session_context import scrub_pack_for_role, update_pack
 
             role = (job_context or "").strip()
             update_pack(role=role)
+            if role:
+                scrub_pack_for_role(role)
         except Exception:
             pass
 

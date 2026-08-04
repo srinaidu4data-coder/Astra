@@ -72,8 +72,28 @@ def test_domains_compatible_sap_family():
 
     assert domains_compatible("sap_attp", "sap_general")
     assert not domains_compatible("sap_attp", "sap_fico")
+    assert not domains_compatible("sap_attp", "sap_brim")
+    assert not domains_compatible("sap_brim", "sap_fico")
     assert not domains_compatible("sap_attp", "ml_ai")
     assert domains_compatible("ml_ai", "general")
+
+
+def test_brim_role_locks_brim_not_attp():
+    from common_sense import infer_domain, lock_for_turn
+
+    lock = infer_domain(
+        "How do you model subscription billing in BRIM?",
+        "SAP BRIM Data Analysis & Migration Support",
+        "",
+    )
+    assert lock.domain == "sap_brim"
+    # Leftover ATTP pack must not win over BRIM role + BRIM question
+    lock2 = lock_for_turn(
+        "Explain convergent invoicing and provider contracts in BRIM.",
+        "SAP BRIM Data Analysis & Migration Support",
+        "SAP ATTP EPCIS GTIN SSCC DSCSA serialization commissioning",
+    )
+    assert lock2.domain == "sap_brim"
 
 
 def test_stt_prompt_not_kitchen_sink():

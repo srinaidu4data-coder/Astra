@@ -100,6 +100,47 @@ _DOMAIN_LEXICONS: dict[str, dict[str, frozenset[str]]] = {
             {"fico", "copa", "vertex o", "document splitting", "new gl"}
         ),
     },
+    "sap_brim": {
+        "detect": frozenset(
+            {
+                "brim",
+                "subscription billing",
+                "subscription order",
+                "provider contract",
+                "contributing order",
+                "billing plan",
+                "recurring fee",
+                "usage charge",
+                "revenue recognition",
+                "rev rec",
+                "som",
+                "cc module",
+                "ci module",
+                "convergent invoicing",
+                "convergent charging",
+                "bit class",
+                "billing item",
+                "invoice request",
+                "open item management",
+                "rar",
+                "revenue accounting",
+                "contract account",
+                "fica",
+                "media product",
+            }
+        ),
+        "exclusive": frozenset(
+            {
+                "brim",
+                "convergent invoicing",
+                "convergent charging",
+                "provider contract",
+                "subscription order",
+                "bit class",
+                "som",
+            }
+        ),
+    },
     "sap_general": {
         "detect": frozenset(
             {
@@ -254,12 +295,16 @@ _PSYCH_ML_THEATER = frozenset(
 _DOMAIN_LABELS = {
     "sap_attp": "SAP ATTP / pharmaceutical track-and-trace serialization",
     "sap_fico": "SAP Finance / FICO / tax",
+    "sap_brim": "SAP BRIM / subscription billing / convergent charging & invoicing",
     "sap_general": "SAP techno-functional / enterprise ERP",
     "ml_ai": "machine learning / AI engineering",
     "robotics": "robotics / ROS / autonomy",
     "software": "software engineering / systems",
     "general": "general professional (use only the question + job context)",
 }
+
+# Distinct SAP product families — never cross-wire (ATTP ≠ BRIM ≠ FICO)
+_SAP_SPECIALIZED = frozenset({"sap_attp", "sap_fico", "sap_brim"})
 
 
 @dataclass
@@ -319,12 +364,14 @@ def domains_compatible(a: str, b: str) -> bool:
         return True
     if a == "general" or b == "general":
         return True
-    # SAP family is compatible with itself (ATTP/FICO/general)
+    # Specialized SAP products are mutually exclusive (BRIM interview ≠ ATTP JD)
+    if a in _SAP_SPECIALIZED and b in _SAP_SPECIALIZED and a != b:
+        return False
     if a.startswith("sap_") and b.startswith("sap_"):
-        # ATTP vs FICO are different product families — not compatible
-        if {a, b} == {"sap_attp", "sap_fico"}:
-            return False
-        return True
+        # sap_general is soft-compatible with specialized SAP
+        if a == "sap_general" or b == "sap_general":
+            return True
+        return a == b
     return False
 
 
@@ -357,7 +404,7 @@ def infer_domain(
         if exclusive_hit or (q_top_sc >= 2.5 and q_top_sc >= q_second + 1.0):
             conf = min(1.0, q_top_sc / 6.0)
             if q_top_dom == "sap_general":
-                for specialized in ("sap_attp", "sap_fico"):
+                for specialized in ("sap_attp", "sap_fico", "sap_brim"):
                     if specialized in q_scores and q_scores[specialized][0] >= q_top_sc * 0.45:
                         q_top_dom = specialized
                         q_hits = q_scores[specialized][1]
@@ -395,7 +442,7 @@ def infer_domain(
 
     # Prefer specialized SAP family over generic sap when both fire
     if top_dom == "sap_general":
-        for specialized in ("sap_attp", "sap_fico"):
+        for specialized in ("sap_attp", "sap_fico", "sap_brim"):
             if specialized in combined_scores and combined_scores[specialized] >= top_sc * 0.45:
                 top_dom = specialized
                 top_sc = combined_scores[specialized]
@@ -591,6 +638,10 @@ def stt_initial_prompt(
             "Interview about SAP S/4HANA Finance, FICO, general ledger, cost centers, "
             "profit centers, controlling, Vertex tax, accounts payable and receivable."
         ),
+        "sap_brim": (
+            "Interview about SAP BRIM, subscription billing, provider contracts, "
+            "convergent charging, convergent invoicing, revenue recognition, FI-CA."
+        ),
         "sap_general": (
             "Interview about SAP consulting, S/4HANA, integration, IDoc, AIF, "
             "master data, validation, and business process design."
@@ -613,39 +664,49 @@ def stt_initial_prompt(
     return prompts.get(lock.domain, prompts["general"])[:224]
 
 
-def prompt_guardrails(lock: DomainLock) -> str:
+def prompt_guardrails(lock: DomainLock, *, role: str = "") -> str:
     """Block of rules injected into the answer LLM user prompt."""
+    role_s = (role or "").strip()
+    role_line = (
+        f"- Stay inside the stated Role ({role_s[:80]}). "
+        "Only use module/product names that appear in Role or the question.\n"
+        if role_s
+        else ""
+    )
     if lock.domain == "general" or lock.confidence < 0.25:
         return (
             "COMMON SENSE DOMAIN LOCK:\n"
             "- Answer ONLY the topic in the interviewer's question.\n"
-            "- Do NOT drag in machine learning, robotics, random SAP modules, "
-            "SAP ATTP/EPCIS/serialization, FICO, or other domains that were not asked.\n"
-            "- If Role/context is for a different job than the question, IGNORE that Role "
-            "and answer the question on its own terms.\n"
+            f"{role_line}"
+            "- Do NOT invent product families or modules that are not in the Role or question.\n"
+            "- If Role and question conflict, prefer the question wording.\n"
             "- Do NOT mention psychology techniques, softmax, Zipf, peak-end, "
             "or coaching meta-commentary — only speakable interview content.\n"
-            "- Use jargon only when it appears in the question or a matching Role."
+            "- Use jargon only when it appears in the question or Role."
         )
 
     foreign_names = {
-        "sap_attp": "ML, robotics, pure FICO tax deep-dives, or unrelated cloud slang",
-        "sap_fico": "ML, robotics, ATTP serialization, or unrelated SWE frameworks",
-        "sap_general": "ML model training, robotics/ROS, or non-SAP consumer app stacks",
-        "ml_ai": "SAP modules, robotics hardware stacks, or unrelated ERP jargon",
-        "robotics": "ML interview clichés, SAP, or web-app stacks unless asked",
-        "software": "ML paper jargon, SAP modules, or robotics unless asked",
+        "sap_attp": "unrelated finance tax stacks, subscription-billing modules, ML, or robotics",
+        "sap_fico": "unrelated track-and-trace stacks, subscription-billing modules, ML, or robotics",
+        "sap_brim": (
+            "unrelated track-and-trace/serialization stacks, pure tax-engine deep-dives, "
+            "ML, or non-billing modules"
+        ),
+        "sap_general": "unrelated ML training, robotics/ROS, or product lines not in Role/Q",
+        "ml_ai": "unrelated ERP modules, robotics hardware, or enterprise tax stacks",
+        "robotics": "unrelated ML interview clichés or ERP modules",
+        "software": "unrelated ML paper jargon or ERP modules",
     }
-    ban = foreign_names.get(lock.domain, "unrelated domains")
+    ban = foreign_names.get(lock.domain, "unrelated domains not in Role or question")
     return (
         f"COMMON SENSE DOMAIN LOCK (active: {lock.label}; confidence={lock.confidence:.2f}):\n"
         f"- Stay strictly inside {lock.label}.\n"
+        f"{role_line}"
         f"- FORBIDDEN unless the question explicitly asks: {ban}.\n"
         "- Do NOT mention psychology techniques, softmax, Zipf, von Restorff, "
         "peak-end, primacy/recency labels, or 'psych-math' — those are UI internals, "
         "not interview answers.\n"
-        "- Do NOT switch product families mid-answer (e.g. answering ATTP with FICO "
-        "or ML with Kubernetes fluff).\n"
+        "- Do NOT switch SAP product families mid-answer; stay on the Role's product line.\n"
         "- Prefer precise terms from the question + Role context only.\n"
         f"- Domain signals seen: {', '.join(lock.signals[:8]) or 'context-derived'}."
     )

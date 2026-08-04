@@ -430,21 +430,17 @@ def analyze_question_strategy(
     data.setdefault("pitfalls", [])
     data.setdefault("evidence_style", "framework")
     data.setdefault("depth_target", "high")
-    # Merge JD lexicon only when the question matches the stored JD domain
+    # Lexicon from question + role only (disk ATTP JD never bleeds into BRIM)
     try:
-        from jd_grounding import extract_lexicon, jd_grounding_applies, load_jd_text
+        from jd_grounding import lexicon_for_turn
 
         bank = [str(x) for x in (data.get("jargon_bank") or []) if x]
-        if jd_grounding_applies(q, job_context):
-            jd_lex = extract_lexicon(load_jd_text(), q, job_context, max_terms=16)
-            seen = {b.lower() for b in bank}
-            for t in jd_lex:
-                if t.lower() not in seen:
-                    bank.append(t)
-                    seen.add(t.lower())
-        else:
-            # Question-only lexicon — no ATTP bleed from disk JD
-            bank = extract_lexicon(q, job_context, max_terms=16) or bank
+        jd_lex = lexicon_for_turn(q, job_context, max_terms=16)
+        seen = {b.lower() for b in bank}
+        for t in jd_lex:
+            if t.lower() not in seen:
+                bank.append(t)
+                seen.add(t.lower())
         data["jargon_bank"] = bank[:20]
     except Exception:
         pass
@@ -499,14 +495,9 @@ def _fallback_strategy(question: str, job_context: str) -> dict[str, Any]:
 
     jargon: list[str] = []
     try:
-        from jd_grounding import extract_lexicon, jd_grounding_applies, load_jd_text
+        from jd_grounding import lexicon_for_turn
 
-        if jd_grounding_applies(question or "", job_context or ""):
-            jargon = extract_lexicon(
-                load_jd_text(), question or "", job_context or "", max_terms=18
-            )
-        else:
-            jargon = extract_lexicon(question or "", job_context or "", max_terms=18)
+        jargon = lexicon_for_turn(question or "", job_context or "", max_terms=18)
     except Exception:
         jargon = []
 
@@ -867,7 +858,8 @@ def _build_user_prompt(
             lock = lock_for_turn(q, job or user_job)
         else:
             lock = lock_for_turn(q, user_job, extra_context="")
-        guard = prompt_guardrails(lock)
+        # Guardrails role = explicit user job only (never pack-invented ATTP)
+        guard = prompt_guardrails(lock, role=user_job)
         if context_chunks:
             context_chunks = filter_context_chunks(
                 context_chunks,
@@ -878,8 +870,9 @@ def _build_user_prompt(
 
     except Exception:
         guard = (
-            "Stay on the asked topic. No ML/robotics/other-domain substitution. "
-            "No meta coaching labels. Do not force SAP ATTP unless asked."
+            "Stay on the asked topic and the stated Role only. "
+            "No cross-product SAP bleed (ATTP vs BRIM vs FICO). "
+            "No meta coaching labels."
         )
 
     pre = ""
@@ -888,22 +881,22 @@ def _build_user_prompt(
 
         if apply_jd:
             job = (job or user_job or "").strip()
-            pre = format_for_prompt(1600)
+            # PRE-SESSION without foreign practice JD (ATTP text when Role is BRIM)
+            pre = format_for_prompt(1600, role_hint=user_job or job)
         else:
-            # Explicit job_context only — never overwrite with ATTP pack
             job = user_job
             pre = ""
     except Exception:
         pre = ""
 
     jargon = [str(j) for j in (strategy.get("jargon_bank") or []) if j][:14]
-    # Drop pack/JD jargon when off-domain — rebuild from question only
-    if not apply_jd:
-        try:
-            from jd_grounding import extract_lexicon
+    # Always rebuild lexicon from role+question (never trust stale ATTP jargon bank)
+    try:
+        from jd_grounding import lexicon_for_turn
 
-            jargon = extract_lexicon(q, job_context or "", max_terms=14)
-        except Exception:
+        jargon = lexicon_for_turn(q, user_job or job, max_terms=14)
+    except Exception:
+        if not apply_jd:
             jargon = []
     must = [str(m) for m in (strategy.get("must_cover") or []) if m][:5]
     long_q = _is_long_or_multipart_question(q)
@@ -931,11 +924,16 @@ def _build_user_prompt(
             parts.append("Must cover: " + "; ".join(must))
         if guard:
             parts.append(guard)
-        if not apply_jd:
+        if user_job:
+            parts.append(
+                "ROLE RULE: Answer strictly as the stated Role and question. "
+                "Use only product/module names that appear in Role or Q — "
+                "never import another SAP product family's terminology."
+            )
+        elif not apply_jd:
             parts.append(
                 "TOPIC RULE: Answer this question on its own terms. "
-                "Do NOT reframe as SAP ATTP, EPCIS, serialization, or any role "
-                "not present in Role/Q above."
+                "Do not invent a job title or product family not in Role/Q."
             )
         if long_q:
             parts.append(
