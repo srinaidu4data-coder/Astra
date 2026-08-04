@@ -358,17 +358,16 @@ def health():
         pass
     jd_info: dict[str, Any] = {"loaded": False}
     try:
-        from jd_grounding import load_jd_text, load_resume_text
         from session_context import get_pack
 
-        jd = load_jd_text()
+        # Do not surface ambient practice JD as global "loaded" identity
         pack = get_pack()
         jd_info = {
-            "loaded": bool(jd),
-            "jd_chars": len(jd or ""),
-            "resume_chars": len(load_resume_text(500) or ""),
+            "loaded": False,
+            "practice_jd_env": False,
             "pack_role": pack.role or None,
             "pack_has_jd": bool(pack.job_description),
+            "grounding": "per_login_role_job_context_only",
             "latency_ai_agent": True,
             "latency_ai_diagnose": "POST /api/latency/ai-diagnose?quick=true",
         }
@@ -452,16 +451,16 @@ def latency_reset():
 
 
 @app.post("/api/session/reset")
-def session_full_reset():
+def session_full_reset(request: Request):
     """
-    Support-friendly full reset: clear pack role/JD, answer cache, latency samples.
-    Call from UI Reset so sticky answers / wrong role cannot survive.
+    Support-friendly full reset for THIS login: clear pack, answer cache, latency.
     """
     cleared_cache = 0
     try:
-        from session_context import clear_pack
+        from session_context import clear_pack, session_scope
 
-        clear_pack()
+        with session_scope(_http_session_id(request)):
+            clear_pack()
     except Exception:
         pass
     try:
@@ -508,24 +507,48 @@ def latency_ai_diagnose_last():
     return get_last_report()
 
 
-@app.get("/api/session/context")
-def get_session_context():
-    from session_context import get_pack
+def _http_session_id(request: Request) -> str:
+    """
+    Scope HTTP pack by authenticated user (or explicit X-Session-Id).
+    Prevents one login's ATTP role bleeding into another user's HTTP pack.
+    """
+    try:
+        sid = (request.headers.get("x-session-id") or "").strip()
+        if sid:
+            return f"http_{sid[:64]}"
+        auth = request.headers.get("authorization") or request.headers.get("Authorization") or ""
+        if auth.lower().startswith("bearer "):
+            token = auth.split(" ", 1)[1].strip()
+            from backend.jwt_auth import decode_access_token
 
-    return {"ok": True, "pack": get_pack().to_dict()}
+            payload = decode_access_token(token) or {}
+            sub = str(payload.get("sub") or payload.get("email") or "").strip()
+            if sub:
+                return f"user_{sub[:80]}"
+    except Exception:
+        pass
+    return "http_anon"
+
+
+@app.get("/api/session/context")
+def get_session_context(request: Request):
+    from session_context import get_pack, session_scope
+
+    with session_scope(_http_session_id(request)):
+        return {"ok": True, "pack": get_pack().to_dict()}
 
 
 @app.post("/api/session/context")
-def set_session_context(req: SessionContextRequest):
+def set_session_context(req: SessionContextRequest, request: Request):
     """
-    Pre-session context pack (resume, JD, stories, depth).
-    Market pattern: amortize latency by loading context before the call.
+    Pre-session context pack for THIS login only (scoped by JWT / session id).
     """
-    from session_context import get_pack, update_pack
+    from session_context import get_pack, session_scope, update_pack
 
-    kwargs = req.model_dump(exclude_none=True)
-    pack = update_pack(**kwargs)
-    return {"ok": True, "pack": pack.to_dict(), "empty": pack.is_empty()}
+    with session_scope(_http_session_id(request)):
+        kwargs = req.model_dump(exclude_none=True)
+        pack = update_pack(**kwargs)
+        return {"ok": True, "pack": pack.to_dict(), "empty": pack.is_empty()}
 
 
 @app.post("/api/answer/inject")

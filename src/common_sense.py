@@ -768,40 +768,18 @@ def lock_for_turn(
     extra_context: str | None = None,
 ) -> DomainLock:
     """
-    One-call helper used by answer_engine / rag / STT.
+    Domain for THIS interview only: question + Role/job_context.
 
-    - extra_context=""  → question (+ job) only; never attach session pack
-    - extra_context=None → may attach pack when job is set and compatible
-    - empty job_context → never attach pack (blank Role stays domain-neutral
-      unless the question itself has domain signals)
+    Session pack / other users' JD are NEVER attached (multi-tenant safety).
+    extra_context is ignored unless it is a non-empty explicit string from
+    the caller (still not auto-loaded from pack).
     """
-    q_only = infer_domain(question, "", "")
     job = (job_context or "").strip()
-
-    # Explicit empty string: caller forbids pack (empty Role / off-domain gate)
-    if extra_context is not None and not str(extra_context).strip():
-        return infer_domain(question, job, "")
-
-    # No role typed: question-only domain — pack must not invent ATTP
+    # Never auto-resolve pack blob — that was the cross-login ATTP leak
+    pack = ""
+    if extra_context is not None and str(extra_context).strip():
+        pack = str(extra_context).strip()
     if not job:
         return infer_domain(question, "", "")
-
-    pack = (
-        str(extra_context)
-        if extra_context is not None
-        else resolve_pack_blob()
-    )
-    if not pack:
-        return infer_domain(question, job, "")
-
-    pack_lock = infer_domain("", job, pack)
-    if (
-        q_only.domain not in ("general",)
-        and q_only.confidence >= 0.28
-        and pack_lock.domain not in ("general",)
-        and not domains_compatible(q_only.domain, pack_lock.domain)
-    ):
-        # Off-topic for stored pack: answer the question domain only
-        return q_only
-
+    # Role + question only (pack empty by default)
     return infer_domain(question, job, pack)

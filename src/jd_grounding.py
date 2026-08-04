@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
 """
-JD-grounded vocabulary + reasoning for interview answers.
+JD / role grounding for interview answers.
 
-Why irrelevant buzzwords appear (reasoning):
-  1) Job context / session pack often empty → model free-associates elite English
-  2) VOCAB_PSYCH listed generic power words (invariant, fail closed, land…) → model plants them
-  3) No explicit ALLOWED-TERM bank from the actual JD/resume
-  4) SpeakCanvas bold lists amplified generic verbs even when answer was SAP ATTP
-
-Fix:
-  - Load JD + resume from disk (jd and resume/)
-  - Extract a lexicon of high-signal terms from JD/resume/question
-  - Inject GROUNDING + REASONING block into every answer prompt
-  - Soft-strip known off-domain filler when domain lock is SAP ATTP
-  - Bootstrap session_context pack so live sessions stay grounded
+Policy (multi-tenant, per-login):
+  - Ground ONLY from the Role + Job context the user set for THIS interview.
+  - Never pull ambient disk practice JD into another user's answers.
+  - No "SAP family" compatibility — product lines do not share skills.
 """
 from __future__ import annotations
 
+import os
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -25,7 +18,6 @@ from typing import Any, Optional
 _SRC = Path(__file__).resolve().parent
 _JD_DIR = _SRC / "jd and resume"
 
-# Soft strip when ATTP-locked: SWE/ML theater that sneaks in
 _OFF_DOMAIN_FILLER = re.compile(
     r"\b("
     r"p99|qps|kubernetes|k8s|microservice|microservices|serverless|"
@@ -38,11 +30,12 @@ _OFF_DOMAIN_FILLER = re.compile(
     re.I,
 )
 
-# Prefer keeping these when present in JD (never strip)
 _JD_KEEP = re.compile(
     r"\b("
     r"ATTP|EPCIS|GS1|GTIN|GLN|SSCC|SGTIN|DSCSA|FMD|EMVS|MAH|CMO|3PL|"
+    r"BRIM|CI|CC|SOM|RAR|FICA|FI-CA|"
     r"commissioning|aggregation|deaggregation|serialization|seriali[sz]ation|"
+    r"subscription|billing|provider contract|convergent|"
     r"BOOMI|AS2|SFTP|GAMP|Part\s*11|21\s*CFR|RISE|S/?4HANA|AIF|IDoc|ALE|"
     r"Implementation Guidelines?|mapping|repository|trading partner|"
     r"saleable returns|VRS|DataMatrix|UAT|IQ|OQ|PQ"
@@ -62,14 +55,7 @@ _STOP = frozenset(
 
 
 def _practice_jd_enabled() -> bool:
-    """
-    Disk practice JD/resume under jd and resume/ is opt-in.
-
-    Default OFF so multi-tenant / empty-Role sessions never inherit ambient ATTP.
-    Set ASTRA_PRACTICE_JD=1 for local single-candidate practice packs.
-    """
-    import os
-
+    """Disk practice pack is local-dev only; never auto for multi-user prod."""
     raw = (os.environ.get("ASTRA_PRACTICE_JD") or "").strip().lower()
     return raw in ("1", "true", "yes", "on")
 
@@ -86,7 +72,7 @@ def _load_jd_text_disk() -> str:
 
 
 def load_jd_text() -> str:
-    """Practice JD from disk only when ASTRA_PRACTICE_JD=1."""
+    """Practice JD from disk only when ASTRA_PRACTICE_JD=1 (not used in answer path)."""
     if not _practice_jd_enabled():
         return ""
     return _load_jd_text_disk()
@@ -112,7 +98,6 @@ def _load_resume_text_disk(max_chars: int = 6000) -> str:
 
 
 def load_resume_text(max_chars: int = 6000) -> str:
-    """Best-effort PDF text from jd and resume folder (opt-in practice pack)."""
     if not _practice_jd_enabled():
         return ""
     return _load_resume_text_disk(max_chars)
@@ -126,26 +111,19 @@ def extract_lexicon(
     *blobs: str,
     max_terms: int = 80,
 ) -> list[str]:
-    """
-    High-signal terms from JD/resume/question:
-    - ALL-CAPS / Camel / multi-digit codes
-    - multi-word technical phrases already in source
-    - repeated content words length ≥ 4
-    """
+    """High-signal terms from provided text only (role / question / user JD)."""
     joined = "\n".join(b for b in blobs if b)
     if not joined.strip():
         return []
 
     scores: dict[str, float] = {}
 
-    # Acronyms / codes
     for m in re.finditer(r"\b[A-Z][A-Z0-9]{1,7}\b", joined):
         t = m.group(0)
         if t.lower() in _STOP:
             continue
         scores[t] = scores.get(t, 0) + 3.0
 
-    # Important multi-word phrases from JD (capture common patterns)
     phrases = [
         r"serial number requests?",
         r"partial pallets?",
@@ -153,34 +131,28 @@ def extract_lexicon(
         r"business partners?",
         r"master data",
         r"functional specifications?",
-        r"configuration specifications?",
-        r"implementation guidelines?",
-        r"mapping specifications?",
+        r"subscription billing",
+        r"provider contracts?",
+        r"convergent invoicing",
+        r"convergent charging",
+        r"revenue recognition",
         r"end-to-end",
         r"E2E integration",
         r"saleable returns?",
         r"RISE with SAP",
         r"contract manufacturers?",
         r"third-party logistics",
-        r"packaging and aggregation",
-        r"system of record",
-        r"fail closed",
     ]
-    low = joined.lower()
     for pat in phrases:
-        if re.search(pat, low, re.I):
-            # normalize display form from match
-            mm = re.search(pat, joined, re.I)
-            if mm:
-                term = re.sub(r"\s+", " ", mm.group(0)).strip()
-                scores[term] = scores.get(term, 0) + 4.0
+        mm = re.search(pat, joined, re.I)
+        if mm:
+            term = re.sub(r"\s+", " ", mm.group(0)).strip()
+            scores[term] = scores.get(term, 0) + 4.0
 
-    # Content words
     for tok in _tokens(joined):
         low_t = tok.lower()
         if low_t in _STOP or len(low_t) < 4:
             continue
-        # prefer technical-looking
         w = 1.0
         if any(c.isupper() for c in tok[1:]):
             w += 0.5
@@ -202,121 +174,36 @@ def extract_lexicon(
     return out
 
 
-def build_grounding_block(
+def lexicon_for_turn(
     question: str = "",
     job_context: str = "",
     *,
-    include_jd_excerpt: bool = True,
-    max_jd_chars: int = 1400,
-    max_resume_chars: int = 900,
-) -> str:
+    job_description: str = "",
+    max_terms: int = 18,
+) -> list[str]:
     """
-    Prompt block: JD + resume + allowed lexicon + reasoning rules.
+    Lexicon for THIS interview only: question + Role/job_context + optional
+    user-supplied job description. Never ambient disk ATTP.
     """
-    jd = load_jd_text()
-    resume = load_resume_text(max_resume_chars + 500)
-    job = (job_context or "").strip()
-    q = (question or "").strip()
-
-    # Prefer pack from session if richer
-    try:
-        from session_context import get_pack
-
-        pack = get_pack()
-        if pack.job_description and len(pack.job_description) > len(jd):
-            jd = pack.job_description
-        if pack.resume_text and len(pack.resume_text) > len(resume):
-            resume = pack.resume_text
-        if pack.role and not job:
-            job = pack.role
-    except Exception:
-        pass
-
-    lexicon = extract_lexicon(jd, resume, job, q, max_terms=70)
-    parts: list[str] = [
-        "=== JD GROUNDING (REASONING — MANDATORY) ===",
-        "You must answer as if a hiring panel for THIS role is listening.",
-        "Every technical noun/verb must earn its place from the sources below.",
-        "",
-        "REASONING STEPS (do these silently, then write the answer):",
-        "1) Identify what the interviewer asked (decision / mechanism / tradeoff / story).",
-        "2) Map the answer onto the JD's process objects (events, partners, master data,",
-        "   integration, validation) — not onto generic software-engineering slang.",
-        "3) Pick vocabulary ONLY from: (a) the question, (b) ALLOWED TERMS, (c) JD/resume",
-        "   excerpts. If a concept is not in those sources, use plain English — do NOT",
-        "   invent elite buzzwords (invariant, p99, microservice, paradigm, synergy,",
-        "   thought leadership, land the narrative, etc.).",
-        "4) Prefer JD nouns: EPCIS, GTIN, GLN, SSCC, MAH, CMO, 3PL, commissioning,",
-        "   aggregation, DSCSA, FMD, GAMP 5, BOOMI, AS2, IG/mapping, UAT, RISE.",
-        "5) Reject filler upgrades that are not in the JD (e.g. 'fail closed' only if",
-        "   you mean a real control in this process — name the control in domain words).",
-        "",
-    ]
-    if job:
-        parts.append(f"TARGET ROLE: {job[:160]}")
-    if include_jd_excerpt and jd:
-        excerpt = jd if len(jd) <= max_jd_chars else jd[: max_jd_chars - 1] + "…"
-        parts.append("JOB DESCRIPTION (source of truth):\n" + excerpt)
-    if resume:
-        rv = resume if len(resume) <= max_resume_chars else resume[: max_resume_chars - 1] + "…"
-        parts.append("RESUME EXCERPT (use only real experience; never invent):\n" + rv)
-    if lexicon:
-        parts.append(
-            "ALLOWED TERMS (prefer these; do not force all of them):\n"
-            + ", ".join(lexicon[:60])
-        )
-    else:
-        parts.append(
-            "ALLOWED TERMS: none loaded — stay strictly on the question wording; "
-            "no imported buzzword banks."
-        )
-    parts.append(
-        "BANNED unless in question/JD: p99, QPS, kubernetes, microservice, neural/ML slang, "
-        "synergy, leverage, paradigm, thought leadership, world-class, passionate."
+    return extract_lexicon(
+        question or "",
+        job_context or "",
+        job_description or "",
+        max_terms=max_terms,
     )
-    parts.append("=== END JD GROUNDING ===")
-    return "\n".join(parts)
 
 
-def strip_off_domain_filler(answer: str, *, question: str = "", job_context: str = "") -> str:
-    """Remove known off-domain filler tokens when answer is JD/SAP-domain."""
-    text = (answer or "").strip()
-    if not text:
-        return text
-    try:
-        from common_sense import lock_for_turn
+def jd_grounding_applies(question: str = "", job_context: str = "") -> bool:
+    """
+    True when the user set a Role/Job for this interview.
 
-        lock = lock_for_turn(question, job_context, load_jd_text() + " " + load_resume_text(400))
-        if lock.domain not in ("sap_attp", "sap_fico", "sap_general") and lock.confidence < 0.3:
-            # Still strip universal corporate fog lightly
-            return _OFF_DOMAIN_FILLER.sub(
-                lambda m: m.group(0)
-                if _JD_KEEP.search(m.group(0) or "")
-                else "",
-                text,
-            )
-    except Exception:
-        pass
-
-    def repl(m: re.Match[str]) -> str:
-        w = m.group(0)
-        if _JD_KEEP.search(w):
-            return w
-        # keep if question explicitly contains it
-        if w.lower() in (question or "").lower():
-            return w
-        return ""
-
-    cleaned = _OFF_DOMAIN_FILLER.sub(repl, text)
-    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
-    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
-    cleaned = re.sub(r"\s+([,.;:])", r"\1", cleaned)
-    return cleaned.strip()
+    No domain-compatibility matrix. No disk JD. No cross-user pack.
+    """
+    return bool((job_context or "").strip())
 
 
 def role_from_jd(jd: str = "") -> str:
-    """Parse Role line from JD text; empty if not present."""
-    text = (jd or "").strip() or load_jd_text()
+    text = (jd or "").strip()
     if not text:
         return ""
     m = re.search(r"Role\s*[:-]+\s*(.+)", text, re.I)
@@ -326,13 +213,7 @@ def role_from_jd(jd: str = "") -> str:
 
 
 def pack_domain_blob(*, include_disk_jd: bool = False) -> str:
-    """
-    Compact pack text for domain compatibility checks.
-
-    Disk jd.txt is NOT included by default — empty Role must not inherit
-    ambient practice-JD domain scores. Pass include_disk_jd=True only for
-    explicit practice-pack flows.
-    """
+    """Role + user pack text only (disk JD never for multi-tenant)."""
     bits: list[str] = []
     try:
         from session_context import get_pack
@@ -347,7 +228,7 @@ def pack_domain_blob(*, include_disk_jd: bool = False) -> str:
         )
     except Exception:
         pass
-    if include_disk_jd:
+    if include_disk_jd and _practice_jd_enabled():
         jd = load_jd_text()
         if jd:
             bits.append(jd[:1200])
@@ -355,108 +236,8 @@ def pack_domain_blob(*, include_disk_jd: bool = False) -> str:
 
 
 def disk_jd_matches_role(job_context: str = "") -> bool:
-    """True only when practice disk JD is same product family as the user Role."""
-    job = (job_context or "").strip()
-    jd = load_jd_text()
-    if not job or not jd:
-        return False
-    try:
-        from common_sense import domains_compatible, infer_domain
-
-        job_lock = infer_domain("", job, "")
-        jd_lock = infer_domain("", "", jd[:2000])
-        if job_lock.domain == "general" or jd_lock.domain == "general":
-            # Ambiguous role — do not force disk ATTP onto BRIM-like titles
-            if "attp" in jd.lower() and "attp" not in job.lower():
-                return False
-            if "brim" in job.lower() and "attp" in jd.lower():
-                return False
-            return "attp" not in jd.lower() or "attp" in job.lower()
-        return domains_compatible(job_lock.domain, jd_lock.domain)
-    except Exception:
-        return False
-
-
-def lexicon_for_turn(question: str = "", job_context: str = "", max_terms: int = 18) -> list[str]:
-    """
-    Lexicon for prompts: question + role only, unless disk JD matches the role.
-    Never merges ATTP disk terms into a BRIM Role interview.
-    """
-    q = question or ""
-    job = job_context or ""
-    if disk_jd_matches_role(job):
-        return extract_lexicon(load_jd_text(), q, job, max_terms=max_terms)
-    return extract_lexicon(q, job, max_terms=max_terms)
-
-
-def jd_grounding_applies(question: str = "", job_context: str = "") -> bool:
-    """
-    True when session pack *matching the role* should bias this answer.
-
-    Never grounds an ATTP practice JD into a BRIM (or other non-ATTP) Role.
-    Disk JD only participates when disk_jd_matches_role(job).
-    """
-    q = (question or "").strip()
-    job = (job_context or "").strip()
-    pack_blob = pack_domain_blob()
-    # Strip disk-incompatible pack JD from consideration
-    if not pack_blob and not job:
-        return False
-
-    try:
-        from common_sense import domains_compatible, infer_domain
-
-        q_lock = infer_domain(q, "", "")
-        job_lock = infer_domain("", job, "") if job else None
-        # Pack domain from role + pack text — but if pack JD is ATTP and role is BRIM, ignore pack JD
-        pack_for_lock = pack_blob
-        if job and pack_blob:
-            jd_part = ""
-            try:
-                from session_context import get_pack
-
-                jd_part = (get_pack().job_description or "")[:800]
-            except Exception:
-                pass
-            if jd_part and job_lock and job_lock.domain not in ("general",):
-                jd_lock = infer_domain("", "", jd_part)
-                if (
-                    jd_lock.domain not in ("general",)
-                    and not domains_compatible(job_lock.domain, jd_lock.domain)
-                ):
-                    # Use role only — drop conflicting practice JD from pack blob
-                    pack_for_lock = job
-        pack_lock = infer_domain("", job, pack_for_lock)
-
-        # Strong off-domain question beats stored pack / role
-        if (
-            q_lock.domain not in ("general",)
-            and q_lock.confidence >= 0.28
-            and pack_lock.domain not in ("general",)
-            and not domains_compatible(q_lock.domain, pack_lock.domain)
-        ):
-            return False
-
-        # Question clearly in role domain → ground lightly with role (not foreign JD)
-        if (
-            q_lock.domain != "general"
-            and pack_lock.domain != "general"
-            and domains_compatible(q_lock.domain, pack_lock.domain)
-        ):
-            return True
-
-        # Soft/behavioral: user set role → allow role context, not foreign disk JD
-        if job and q_lock.domain == "general":
-            if job_lock is None or job_lock.domain == "general":
-                return True
-            if pack_lock.domain == "general" or domains_compatible(
-                job_lock.domain, pack_lock.domain
-            ):
-                return True
-
-        return False
-    except Exception:
-        return bool(job)
+    """Disk practice JD is never used for multi-tenant answer grounding."""
+    return False
 
 
 def bootstrap_session_from_jd_resume(
@@ -465,45 +246,40 @@ def bootstrap_session_from_jd_resume(
     role_hint: str = "",
 ) -> dict[str, Any]:
     """
-    Load JD + resume into session_context if empty (or force=True).
-
-    Role is taken from the JD Role: line or role_hint — never a hard-coded title.
-    Callers must still gate prompt injection with jd_grounding_applies().
+    Disabled for multi-user: does not load ambient ATTP into the session.
+    Local practice only when ASTRA_PRACTICE_JD=1 and force=True with role_hint.
     """
+    if not _practice_jd_enabled() or not force:
+        return {
+            "ok": True,
+            "skipped": True,
+            "role": "",
+            "reason": "practice_jd_disabled_or_not_forced",
+        }
+    # Explicit local practice only
     try:
-        from session_context import get_pack, update_pack
-
-        pack = get_pack()
-        if not force and not pack.is_empty() and pack.job_description:
-            return {"ok": True, "skipped": True, "role": pack.role}
+        from session_context import update_pack
 
         jd = load_jd_text()
         resume = load_resume_text(3500)
-        if not jd and not resume and not role_hint.strip():
-            return {"ok": True, "skipped": True, "role": "", "empty_sources": True}
-
-        # Role only from explicit hint — never default from JD Role: line.
-        # UI Role / Job context stay clear until the user types them.
-        role = role_hint.strip()
-
-        lex = extract_lexicon(jd, resume, max_terms=40)
-        kwargs: dict[str, Any] = {
-            "job_description": jd[:4000] if jd else "",
-            "resume_text": resume[:3500] if resume else "",
-            "keywords": lex[:40],
-            "interview_type": "technical",
-            "depth": "balanced",
-        }
-        if role:
-            kwargs["role"] = role
-        update_pack(**kwargs)
+        role = (role_hint or "").strip() or role_from_jd(jd)
+        if not role:
+            return {"ok": True, "skipped": True, "role": "", "empty": True}
+        lex = extract_lexicon(jd, resume, role, max_terms=40)
+        update_pack(
+            role=role,
+            job_description=jd[:4000] if jd else "",
+            resume_text=resume[:3500] if resume else "",
+            keywords=lex[:40],
+            interview_type="technical",
+            depth="balanced",
+        )
         return {
             "ok": True,
             "skipped": False,
             "role": role,
             "jd_chars": len(jd),
             "resume_chars": len(resume),
-            "lexicon_n": len(lex),
         }
     except Exception as e:
         return {"ok": False, "error": f"{type(e).__name__}: {e}"}
@@ -514,11 +290,31 @@ def ensure_grounded_job_context(
     *,
     question: str = "",
 ) -> str:
-    """
-    Resolve role for this turn.
-
-    Explicit job_context is the only source. Empty string stays empty —
-    never invent pack.role or disk JD (that reintroduced ATTP under BRIM).
-    """
-    _ = question  # kept for API compat with callers
+    """Role string is only what the caller passed (per interview)."""
+    _ = question
     return (job_context or "").strip()
+
+
+def strip_off_domain_filler(
+    answer: str, *, question: str = "", job_context: str = ""
+) -> str:
+    """Light strip of universal corporate fog; keep role/JD terms."""
+    text = (answer or "").strip()
+    if not text:
+        return text
+
+    def repl(m: re.Match[str]) -> str:
+        w = m.group(0)
+        if _JD_KEEP.search(w):
+            return w
+        if w.lower() in (question or "").lower():
+            return w
+        if w.lower() in (job_context or "").lower():
+            return w
+        return ""
+
+    cleaned = _OFF_DOMAIN_FILLER.sub(repl, text)
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    cleaned = re.sub(r"\s+([,.;:])", r"\1", cleaned)
+    return cleaned.strip()

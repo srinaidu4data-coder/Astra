@@ -761,15 +761,18 @@ def _system_with_domain(
     base = _system_for_mode(mode)
     try:
         from common_sense import lock_for_turn, system_suffix
-        from jd_grounding import jd_grounding_applies
 
         job = (job_context or "").strip()
-        # Empty role / off-domain: question-only domain — no pack bleed into system prompt
-        if not job or not jd_grounding_applies(question, job):
-            lock = lock_for_turn(question, job, extra_context="")
-        else:
-            lock = lock_for_turn(question, job)
-        return base + system_suffix(lock)
+        # Domain from question + this interview's Role only — never session pack / disk JD
+        lock = lock_for_turn(question, job, extra_context="")
+        suffix = system_suffix(lock)
+        if job:
+            suffix += (
+                f" Interview Role for this user: {job[:120]}. "
+                "Answer only with skills for that Role and the question — "
+                "never borrow other SAP product lines."
+            )
+        return base + suffix
     except Exception:
         return base
 
@@ -837,67 +840,53 @@ def _build_user_prompt(
     strict_regen: bool = False,
 ) -> str:
     q = (question or "").strip()
-    job = _prepare_job(job_context, question=q)
+    # Per-login Role/Job only — never invent from pack or disk practice JD
+    user_job = (job_context or "").strip()
+    job = user_job
 
     lock = None
     guard = ""
-    apply_jd = False
     try:
         from common_sense import (
             filter_context_chunks,
             lock_for_turn,
             prompt_guardrails,
         )
-        from jd_grounding import jd_grounding_applies
 
-        # Gate on original user job_context — not pack role filled in by _prepare_job
-        user_job = (job_context or "").strip()
-        apply_jd = bool(user_job) and jd_grounding_applies(q, user_job)
-        # Empty role or off-domain: question-only domain lock (no pack/JD blob)
-        if apply_jd:
-            lock = lock_for_turn(q, job or user_job)
-        else:
-            lock = lock_for_turn(q, user_job, extra_context="")
-        # Guardrails role = explicit user job only (never pack-invented ATTP)
+        # Domain from THIS interview's Role + question only (extra_context empty)
+        lock = lock_for_turn(q, user_job, extra_context="")
         guard = prompt_guardrails(lock, role=user_job)
         if context_chunks:
             context_chunks = filter_context_chunks(
                 context_chunks,
                 question=q,
-                job_context=job if apply_jd else user_job,
+                job_context=user_job,
                 lock=lock,
             )
 
     except Exception:
         guard = (
             "Stay on the asked topic and the stated Role only. "
-            "No cross-product SAP bleed (ATTP vs BRIM vs FICO). "
+            "Do not import other product-line skills. "
             "No meta coaching labels."
         )
 
+    # No PRE-SESSION pack injection — multi-user pack was the ATTP bleed source
     pre = ""
-    try:
-        from session_context import format_for_prompt
+    if user_job:
+        pre = (
+            "INTERVIEW IDENTITY (this login / this interview only):\n"
+            f"Role / Job context: {user_job[:400]}\n"
+            "Use only this identity. Do not use any other user's role or practice pack."
+        )
 
-        if apply_jd:
-            job = (job or user_job or "").strip()
-            # PRE-SESSION without foreign practice JD (ATTP text when Role is BRIM)
-            pre = format_for_prompt(1600, role_hint=user_job or job)
-        else:
-            job = user_job
-            pre = ""
-    except Exception:
-        pre = ""
-
-    jargon = [str(j) for j in (strategy.get("jargon_bank") or []) if j][:14]
-    # Always rebuild lexicon from role+question (never trust stale ATTP jargon bank)
+    jargon: list[str] = []
     try:
         from jd_grounding import lexicon_for_turn
 
-        jargon = lexicon_for_turn(q, user_job or job, max_terms=14)
+        jargon = lexicon_for_turn(q, user_job, max_terms=14)
     except Exception:
-        if not apply_jd:
-            jargon = []
+        jargon = [str(j) for j in (strategy.get("jargon_bank") or []) if j][:14]
     must = [str(m) for m in (strategy.get("must_cover") or []) if m][:5]
     long_q = _is_long_or_multipart_question(q)
     depth = _answer_depth()
@@ -926,15 +915,14 @@ def _build_user_prompt(
             parts.append(guard)
         if user_job:
             parts.append(
-                "ROLE RULE: Answer strictly as the stated Role and question. "
-                "One Role = one skill set. Do not combine or import terminology from "
-                "other SAP products just because they share the SAP brand. "
-                "Only names that appear in Role or Q."
+                "ROLE RULE: Answer strictly as THIS Role and question only. "
+                "One login = one Role. Do not combine skills from other SAP products "
+                "or other users. Only terms in Role or Q."
             )
-        elif not apply_jd:
+        else:
             parts.append(
-                "TOPIC RULE: Answer this question on its own terms. "
-                "Do not invent a job title or product family not in Role/Q."
+                "TOPIC RULE: No Role set — answer the question only. "
+                "Do not invent a job title or product family."
             )
         if long_q:
             parts.append(
@@ -1003,11 +991,15 @@ def _build_user_prompt(
         f"QUESTION:\n{q}",
         instruct,
     ]
-    if not apply_jd:
+    if user_job:
         parts.append(
-            "TOPIC RULE: Answer this question on its own terms. "
-            "Do NOT reframe as SAP ATTP, EPCIS, serialization, FICO, or any "
-            "domain not present in ROLE/QUESTION above."
+            "ROLE RULE: Answer strictly as THIS Role and question only. "
+            "One login = one Role. Do not import other product-line skills."
+        )
+    else:
+        parts.append(
+            "TOPIC RULE: No Role set — answer the question only. "
+            "Do not invent a job title or product family."
         )
     if strict_regen:
         parts.append(REGEN_STRICT_SUFFIX)

@@ -131,6 +131,13 @@ export function AuthPage({
         setAuth({ user, token })
         stripAuthTokenFromUrl()
         setStatus('Signed in — opening app…')
+        // Clear any prior user's role/JD cache (prevents ATTP bleed across logins)
+        try {
+          const { fullSessionReset } = await import('@/services/real-api')
+          await fullSessionReset()
+        } catch {
+          /* ignore */
+        }
         await bootstrapAuth()
         navigate('/', { replace: true })
       } catch (e) {
@@ -155,6 +162,12 @@ export function AuthPage({
     try {
       const data = await devBypassLogin()
       setAuth({ user: data.user, token: data.token })
+      try {
+        const { fullSessionReset } = await import('@/services/real-api')
+        await fullSessionReset()
+      } catch {
+        /* ignore */
+      }
       navigate('/', { replace: true })
     } catch (e) {
       setError((e as Error).message)
@@ -169,6 +182,12 @@ export function AuthPage({
     try {
       const data = await loginWithEmail({ email: email.trim(), password })
       setAuth({ user: data.user, token: data.token })
+      try {
+        const { fullSessionReset } = await import('@/services/real-api')
+        await fullSessionReset()
+      } catch {
+        /* ignore */
+      }
       navigate('/', { replace: true })
     } catch (e) {
       setError((e as Error).message)
