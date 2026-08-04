@@ -766,8 +766,15 @@ def _system_with_domain(
     base = _system_for_mode(mode)
     try:
         from common_sense import lock_for_turn, system_suffix
+        from jd_grounding import jd_grounding_applies
 
-        return base + system_suffix(lock_for_turn(question, job_context))
+        job = (job_context or "").strip()
+        # Empty role / off-domain: question-only domain — no pack bleed into system prompt
+        if not job or not jd_grounding_applies(question, job):
+            lock = lock_for_turn(question, job, extra_context="")
+        else:
+            lock = lock_for_turn(question, job)
+        return base + system_suffix(lock)
     except Exception:
         return base
 
@@ -849,17 +856,22 @@ def _build_user_prompt(
         from jd_grounding import jd_grounding_applies
 
         # Gate on original user job_context — not pack role filled in by _prepare_job
-        apply_jd = jd_grounding_applies(q, (job_context or "").strip())
-        # Domain lock: pass job only when grounding applies
-        lock = lock_for_turn(q, job if apply_jd else (job_context or "").strip())
+        user_job = (job_context or "").strip()
+        apply_jd = bool(user_job) and jd_grounding_applies(q, user_job)
+        # Empty role or off-domain: question-only domain lock (no pack/JD blob)
+        if apply_jd:
+            lock = lock_for_turn(q, job or user_job)
+        else:
+            lock = lock_for_turn(q, user_job, extra_context="")
         guard = prompt_guardrails(lock)
         if context_chunks:
             context_chunks = filter_context_chunks(
                 context_chunks,
                 question=q,
-                job_context=job if apply_jd else (job_context or "").strip(),
+                job_context=job if apply_jd else user_job,
                 lock=lock,
             )
+
     except Exception:
         guard = (
             "Stay on the asked topic. No ML/robotics/other-domain substitution. "
@@ -868,14 +880,14 @@ def _build_user_prompt(
 
     pre = ""
     try:
-        from session_context import effective_job_context, format_for_prompt
+        from session_context import format_for_prompt
 
         if apply_jd:
-            job = effective_job_context(job) or job
+            job = (job or user_job or "").strip()
             pre = format_for_prompt(1600)
         else:
             # Explicit job_context only — never overwrite with ATTP pack
-            job = (job_context or "").strip()
+            job = user_job
             pre = ""
     except Exception:
         pre = ""

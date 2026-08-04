@@ -6,6 +6,7 @@ import {
   rankMemories,
   vectorizeToMemories,
 } from '@/services/parser'
+import { setSessionContext } from '@/services/real-api'
 import { useAppStore } from '@/stores/app-store'
 import type { JobMatch, KnowledgeDocType } from '@/types'
 import { uid } from '@/lib/utils'
@@ -75,6 +76,25 @@ export function KnowledgePage() {
         if (type === 'job') {
           setJdText(doc.text.slice(0, 4000))
           setActiveJobTitle(file.name.replace(/\.[^.]+$/, ''))
+          // Wire into live answer pack (support #9)
+          void setSessionContext({
+            job_description: doc.text.slice(0, 4000),
+            role: file.name.replace(/\.[^.]+$/, ''),
+          })
+        }
+        if (type === 'resume') {
+          void setSessionContext({
+            resume_text: doc.text.slice(0, 3500),
+          })
+        }
+        if (type === 'notes' || type === 'reference') {
+          void setSessionContext({
+            stories: [doc.text.slice(0, 800)],
+            keywords: doc.text
+              .split(/\W+/)
+              .filter((w) => w.length > 4)
+              .slice(0, 20),
+          })
         }
         added += 1
       }
@@ -82,8 +102,10 @@ export function KnowledgePage() {
         setLastOk(
           `Added ${added} file${added > 1 ? 's' : ''} as ${DOC_LABELS[type]}. ` +
             (type === 'job'
-              ? 'Paste/edit the JD below and press Match.'
-              : 'Knowledge chunks are ready for retrieval.'),
+              ? 'JD sent to live answers — paste/edit below and press Match if needed.'
+              : type === 'resume'
+                ? 'Resume sent to live answer context.'
+                : 'Knowledge chunks ready; notes pushed to live session pack.'),
         )
       }
     } catch (e) {
@@ -108,6 +130,14 @@ export function KnowledgePage() {
       ),
     }
     setJobMatch(match)
+    // Push JD + role into live interview pack
+    void setSessionContext({
+      role: (activeJobTitle || '').trim() || undefined,
+      job_description: text.slice(0, 4000),
+      keywords: matched
+        .flatMap((m) => (m.action || '').split(/\W+/).filter((w) => w.length > 4))
+        .slice(0, 24),
+    })
   }
 
   return (

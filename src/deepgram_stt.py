@@ -362,20 +362,41 @@ class DeepgramLiveStream:
             self._connected.clear()
             self._ws = None
 
-        try:
-            self._ws_app = websocket.WebSocketApp(
-                url,
-                header=[f"Authorization: Token {key}"],
-                on_open=on_open,
-                on_message=on_message,
-                on_error=on_error,
-                on_close=on_close,
-            )
-            # run_forever blocks this thread
-            self._ws_app.run_forever(ping_interval=20, ping_timeout=10)
-        except Exception as e:
-            self._error = f"{type(e).__name__}: {e}"
-            self._connected.clear()
+        # Reconnect loop until stop() — support ticket: mid-interview STT death
+        attempt = 0
+        while not self._stop.is_set():
+            try:
+                self._ws_app = websocket.WebSocketApp(
+                    url,
+                    header=[f"Authorization: Token {key}"],
+                    on_open=on_open,
+                    on_message=on_message,
+                    on_error=on_error,
+                    on_close=on_close,
+                )
+                self._ws_app.run_forever(ping_interval=20, ping_timeout=10)
+            except Exception as e:
+                self._error = f"{type(e).__name__}: {e}"
+                self._connected.clear()
+            if self._stop.is_set():
+                break
+            attempt += 1
+            delay = min(8.0, 0.8 * attempt)
+            if self._emit:
+                try:
+                    self._emit(
+                        "status",
+                        {
+                            "message": f"Deepgram disconnected — reconnecting in {delay:.0f}s…",
+                            "stt_provider": "deepgram",
+                            "listening": True,
+                        },
+                    )
+                except Exception:
+                    pass
+            # Wait for delay or stop
+            if self._stop.wait(delay):
+                break
 
 
 def transcribe_pcm_nova3(

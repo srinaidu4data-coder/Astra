@@ -94,6 +94,8 @@ export class LiveInterviewClient {
     userFallbackModel?: string | null
     answerModel?: string | null
     fallbackModel?: string | null
+    deepgramKey?: string | null
+    sttProvider?: 'auto' | 'deepgram' | 'whisper' | null
   } | null = null
 
   // Client-side PCM capture (display/system audio or explicit mic fallback)
@@ -183,24 +185,43 @@ export class LiveInterviewClient {
   private async resumeAfterReconnect() {
     if (!this.lastStartOpts) return
     try {
+      const opts = this.lastStartOpts
+      const models = this.modelPayload(opts)
+      const sttPayload = {
+        ...(opts.deepgramKey
+          ? { deepgram_api_key: opts.deepgramKey, deepgram_key: opts.deepgramKey }
+          : {}),
+        ...(opts.sttProvider && opts.sttProvider !== 'auto'
+          ? { stt_provider: opts.sttProvider }
+          : {}),
+      }
       this.send({
         type: 'start',
-        job_context: this.lastStartOpts.jobContext ?? '',
-        tone: this.lastStartOpts.tone ?? 'confident',
-        mode: this.lastStartOpts.mode ?? this.mode,
-        source: this.lastStartOpts.source ?? 'browser',
-        ...this.modelPayload(this.lastStartOpts),
+        job_context: opts.jobContext ?? '',
+        tone: opts.tone ?? 'confident',
+        mode: opts.mode ?? this.mode,
+        source: opts.source ?? 'browser',
+        ...models,
+        ...sttPayload,
       })
       // Re-open client capture only for display/mic paths (not pure server system)
-      const mode = this.lastStartOpts.audioMode ?? resolveInterviewAudioSource()
+      const mode = opts.audioMode ?? resolveInterviewAudioSource()
       if (mode !== 'system' && !this.micActive) {
         if (mode === 'display') await this.startSpeakerCapture()
         else await this.startBrowserMic()
       }
-      this.handlers.onStatus?.('Reconnected — live session resumed')
-    } catch {
-      // ignore
+      this.handlers.onStatus?.('Reconnected — live session resumed (STT + role restored)')
+    } catch (e) {
+      this.handlers.onStatus?.(
+        `Reconnect incomplete: ${(e as Error).message || 're-share tab audio and Start again'}`,
+      )
     }
+  }
+
+  /** Clear cached start opts (full UI Reset). */
+  clearStartOpts() {
+    this.lastStartOpts = null
+    this.wasListening = false
   }
 
   private scheduleReconnect() {
@@ -713,12 +734,32 @@ export class LiveInterviewClient {
   injectQuestion(question: string, opts?: { depth?: string; jobContext?: string }) {
     const q = (question || '').trim()
     if (!q) throw new Error('Empty question')
+    // Always send job_context (including "") so empty Role clears server state
+    const job =
+      opts && 'jobContext' in opts
+        ? (opts.jobContext ?? '')
+        : (this.lastStartOpts?.jobContext ?? '')
     this.send({
       type: 'inject',
       question: q,
+      job_context: job,
       ...(opts?.depth ? { depth: opts.depth } : {}),
-      ...(opts?.jobContext ? { job_context: opts.jobContext } : {}),
     })
+  }
+
+  /** Live-update Role / Job context (including empty to clear). */
+  setJobContext(jobContext: string) {
+    const jc = (jobContext || '').trim()
+    if (this.lastStartOpts) {
+      this.lastStartOpts = { ...this.lastStartOpts, jobContext: jc }
+    }
+    try {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.send({ type: 'set_context', job_context: jc })
+      }
+    } catch {
+      // ignore
+    }
   }
 
   setDepth(depth: 'fast' | 'balanced' | 'deep') {

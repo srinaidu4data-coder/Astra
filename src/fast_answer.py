@@ -571,6 +571,15 @@ def cache_store(question: str, answer: str, *, mode: str = "star", job_context: 
     _CACHE.put(key, answer, question, mode)
 
 
+def cache_clear() -> int:
+    """Flush in-process answer cache (Reset / role change). Returns prior size."""
+    with _lock:
+        n = len(_CACHE._exact) + len(_CACHE._approx)
+        _CACHE._exact.clear()
+        _CACHE._approx.clear()
+        return n
+
+
 def instant_answer(
     question: str, *, job_context: str = "", mode: str = "star"
 ) -> tuple[str, str, float]:

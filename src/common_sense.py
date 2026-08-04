@@ -688,20 +688,36 @@ def resolve_pack_blob() -> str:
 def lock_for_turn(
     question: str = "",
     job_context: str = "",
-    extra_context: str = "",
+    extra_context: str | None = None,
 ) -> DomainLock:
     """
     One-call helper used by answer_engine / rag / STT.
 
-    Pack context is only attached when the question is compatible with the
-    stored role/JD — prevents leftover ATTP bootstrap from locking ML questions.
+    - extra_context=""  → question (+ job) only; never attach session pack
+    - extra_context=None → may attach pack when job is set and compatible
+    - empty job_context → never attach pack (blank Role stays domain-neutral
+      unless the question itself has domain signals)
     """
     q_only = infer_domain(question, "", "")
-    pack = extra_context if extra_context is not None and extra_context != "" else resolve_pack_blob()
-    if not pack:
-        return infer_domain(question, job_context, "")
+    job = (job_context or "").strip()
 
-    pack_lock = infer_domain("", job_context, pack)
+    # Explicit empty string: caller forbids pack (empty Role / off-domain gate)
+    if extra_context is not None and not str(extra_context).strip():
+        return infer_domain(question, job, "")
+
+    # No role typed: question-only domain — pack must not invent ATTP
+    if not job:
+        return infer_domain(question, "", "")
+
+    pack = (
+        str(extra_context)
+        if extra_context is not None
+        else resolve_pack_blob()
+    )
+    if not pack:
+        return infer_domain(question, job, "")
+
+    pack_lock = infer_domain("", job, pack)
     if (
         q_only.domain not in ("general",)
         and q_only.confidence >= 0.28
@@ -711,4 +727,4 @@ def lock_for_turn(
         # Off-topic for stored pack: answer the question domain only
         return q_only
 
-    return infer_domain(question, job_context, pack)
+    return infer_domain(question, job, pack)

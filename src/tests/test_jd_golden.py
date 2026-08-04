@@ -6,7 +6,13 @@ Network-free (no live LLM). Validates lexicon, strip, and prompt construction.
 
 from __future__ import annotations
 
+import os
 import re
+
+import pytest
+
+# Practice disk JD is opt-in in production; tests that exercise jd.txt need it on.
+os.environ["ASTRA_PRACTICE_JD"] = "1"
 
 BANNED = re.compile(
     r"\b(p99|kubernetes|k8s|microservice|synergy|pytorch|gradient descent|paradigm)\b",
@@ -14,12 +20,18 @@ BANNED = re.compile(
 )
 
 
+@pytest.fixture(autouse=True)
+def _practice_jd_on():
+    os.environ["ASTRA_PRACTICE_JD"] = "1"
+    yield
+
+
 class TestJdLexicon:
     def test_jd_loads_and_has_attp_terms(self):
         from jd_grounding import extract_lexicon, load_jd_text
 
         jd = load_jd_text()
-        assert jd, "jd and resume/jd.txt must exist"
+        assert jd, "jd and resume/jd.txt must exist (ASTRA_PRACTICE_JD=1)"
         assert "ATTP" in jd.upper() or "attp" in jd.lower()
         lex = extract_lexicon(jd, max_terms=40)
         blob = " ".join(lex).upper()
@@ -89,6 +101,51 @@ class TestJdLexicon:
         )
         assert job == ""
         assert "ATTP" not in job.upper()
+
+    def test_ensure_grounded_does_not_bootstrap_on_answer_path(self):
+        from jd_grounding import ensure_grounded_job_context
+        from session_context import clear_pack, get_pack
+
+        clear_pack()
+        assert get_pack().is_empty()
+        job = ensure_grounded_job_context(
+            "",
+            question="Tell me about a time you handled conflict on a team.",
+        )
+        assert job == ""
+        # Must not silently load disk JD into pack during answer prep
+        assert not (get_pack().job_description or "").strip()
+
+    def test_practice_jd_off_hides_disk(self, monkeypatch):
+        monkeypatch.setenv("ASTRA_PRACTICE_JD", "0")
+        from jd_grounding import load_jd_text
+
+        assert load_jd_text() == ""
+
+    def test_soft_empty_prompt_not_attp_locked(self):
+        from answer_engine import _build_user_prompt, _fallback_strategy
+        from jd_grounding import bootstrap_session_from_jd_resume
+        from session_context import clear_pack, update_pack
+
+        clear_pack()
+        bootstrap_session_from_jd_resume(force=True)
+        update_pack(role="SAP ATTP Techno-Functional Consultant")
+        q = "Tell me about a time you handled conflict on a team."
+        strategy = _fallback_strategy(q, "")
+        user = _build_user_prompt(
+            q,
+            job_context="",
+            tone="confident",
+            mode="star",
+            strategy=strategy,
+            context_chunks=[],
+        )
+        low = user.lower()
+        assert "pre-session context" not in low
+        # Domain lock must not force ATTP when Role is empty
+        assert "stay strictly inside sap attp" not in low
+        assert "domain: sap attp" not in low
+        assert "sap attp techno-functional" not in low
 
 
 class TestJdPromptConstruction:

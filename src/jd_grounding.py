@@ -61,8 +61,21 @@ _STOP = frozenset(
 )
 
 
+def _practice_jd_enabled() -> bool:
+    """
+    Disk practice JD/resume under jd and resume/ is opt-in.
+
+    Default OFF so multi-tenant / empty-Role sessions never inherit ambient ATTP.
+    Set ASTRA_PRACTICE_JD=1 for local single-candidate practice packs.
+    """
+    import os
+
+    raw = (os.environ.get("ASTRA_PRACTICE_JD") or "").strip().lower()
+    return raw in ("1", "true", "yes", "on")
+
+
 @lru_cache(maxsize=1)
-def load_jd_text() -> str:
+def _load_jd_text_disk() -> str:
     p = _JD_DIR / "jd.txt"
     if not p.exists():
         return ""
@@ -72,9 +85,15 @@ def load_jd_text() -> str:
         return ""
 
 
+def load_jd_text() -> str:
+    """Practice JD from disk only when ASTRA_PRACTICE_JD=1."""
+    if not _practice_jd_enabled():
+        return ""
+    return _load_jd_text_disk()
+
+
 @lru_cache(maxsize=1)
-def load_resume_text(max_chars: int = 6000) -> str:
-    """Best-effort PDF text from jd and resume folder."""
+def _load_resume_text_disk(max_chars: int = 6000) -> str:
     pdfs = sorted(_JD_DIR.glob("*.pdf"))
     if not pdfs:
         return ""
@@ -90,6 +109,13 @@ def load_resume_text(max_chars: int = 6000) -> str:
         return "\n".join(chunks)[:max_chars].strip()
     except Exception:
         return ""
+
+
+def load_resume_text(max_chars: int = 6000) -> str:
+    """Best-effort PDF text from jd and resume folder (opt-in practice pack)."""
+    if not _practice_jd_enabled():
+        return ""
+    return _load_resume_text_disk(max_chars)
 
 
 def _tokens(text: str) -> list[str]:
@@ -299,8 +325,14 @@ def role_from_jd(jd: str = "") -> str:
     return m.group(1).strip().split("\n")[0].strip(" -\t")
 
 
-def pack_domain_blob() -> str:
-    """Compact pack/JD text used only for domain compatibility checks."""
+def pack_domain_blob(*, include_disk_jd: bool = False) -> str:
+    """
+    Compact pack text for domain compatibility checks.
+
+    Disk jd.txt is NOT included by default — empty Role must not inherit
+    ambient practice-JD domain scores. Pass include_disk_jd=True only for
+    explicit practice-pack flows.
+    """
     bits: list[str] = []
     try:
         from session_context import get_pack
@@ -315,9 +347,10 @@ def pack_domain_blob() -> str:
         )
     except Exception:
         pass
-    jd = load_jd_text()
-    if jd:
-        bits.append(jd[:1200])
+    if include_disk_jd:
+        jd = load_jd_text()
+        if jd:
+            bits.append(jd[:1200])
     return " ".join(b for b in bits if b)
 
 
@@ -437,24 +470,22 @@ def ensure_grounded_job_context(
     Resolve role for this turn.
 
     - Explicit job_context always wins.
-    - Pack/JD role is used only when grounding applies to the question.
-    - Never invent a hard-coded role when sources are empty or off-topic.
+    - Empty job_context stays empty — never bootstrap disk JD on the answer path
+      and never invent a role from a leftover pack.
+    - Optional pack role only if caller left job empty AND grounding applies
+      AND pack already has a user-set role (no silent disk load).
     """
     job = (job_context or "").strip()
     if job:
-        # Explicit role always returned; callers still gate pack injection via
-        # jd_grounding_applies(question, job) so off-domain Qs drop the pack.
         return job
+    # Answer path: empty means empty. Do not bootstrap jd.txt here.
     try:
         from session_context import get_pack
 
         pack = get_pack()
-        # Warm pack from disk only if completely empty (optional sources)
-        if pack.is_empty():
-            bootstrap_session_from_jd_resume()
-            pack = get_pack()
-        # No explicit job: only surface pack role when the *question* is on-domain
-        if not jd_grounding_applies(question, ""):
+        if not (pack.role or "").strip():
+            return ""
+        if not jd_grounding_applies(question, pack.role):
             return ""
         return (pack.role or "").strip()
     except Exception:

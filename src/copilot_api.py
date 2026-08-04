@@ -451,6 +451,38 @@ def latency_reset():
     return {"ok": True, "message": "Latency samples cleared"}
 
 
+@app.post("/api/session/reset")
+def session_full_reset():
+    """
+    Support-friendly full reset: clear pack role/JD, answer cache, latency samples.
+    Call from UI Reset so sticky answers / wrong role cannot survive.
+    """
+    cleared_cache = 0
+    try:
+        from session_context import clear_pack
+
+        clear_pack()
+    except Exception:
+        pass
+    try:
+        from fast_answer import cache_clear
+
+        cleared_cache = cache_clear()
+    except Exception:
+        pass
+    try:
+        from latency_metrics import get_registry
+
+        get_registry().reset()
+    except Exception:
+        pass
+    return {
+        "ok": True,
+        "cache_cleared": cleared_cache,
+        "message": "Session pack, answer cache, and latency samples cleared",
+    }
+
+
 @app.post("/api/latency/ai-diagnose")
 def latency_ai_diagnose(
     quick: bool = True,
@@ -510,7 +542,7 @@ def answer_inject(req: InjectQuestionRequest, request: Request):
     from answer_engine import ANSWER_PROFILE, looks_like_question
     from fast_answer import iter_cascade_answer
     from latency_metrics import get_registry, record_trace
-    from session_context import effective_job_context, get_depth, update_pack
+    from session_context import get_depth, update_pack
 
     if req.depth:
         update_pack(depth=req.depth)
@@ -518,7 +550,8 @@ def answer_inject(req: InjectQuestionRequest, request: Request):
 
     t0 = time.perf_counter()
     q = req.question.strip()
-    job = effective_job_context(req.job_context) or req.job_context
+    # Request job_context is source of truth — blank stays blank
+    job = (req.job_context or "").strip()
     depth = get_depth()
     u_primary, u_fallback = _user_model_prefs(request)
 
@@ -768,13 +801,13 @@ def answer(req: AnswerRequest, request: Request):
     from answer_engine import ANSWER_PROFILE, looks_like_question
     from fast_answer import cache_lookup, outline_skeleton
     from latency_metrics import record_trace
-    from session_context import effective_job_context, get_depth, update_pack
+    from session_context import get_depth, update_pack
 
     if req.depth:
         update_pack(depth=req.depth)
 
     q = req.question.strip()
-    job = effective_job_context(req.job_context) or req.job_context
+    job = (req.job_context or "").strip()
     depth = get_depth()
     t_cls = time.perf_counter()
     if ANSWER_PROFILE in ("quality", "full"):
@@ -1172,9 +1205,19 @@ async def ws_interview(websocket: WebSocket):
     import asyncio
     import base64
 
+    from session_context import (
+        drop_session,
+        new_session_id,
+        set_session_id,
+        reset_session_id,
+    )
+
     loop = asyncio.get_event_loop()
     out_q: asyncio.Queue = asyncio.Queue(maxsize=256)
-    session_holder: dict[str, Any] = {"session": None}
+    # Per-connection pack isolation (support multi-user sticky role)
+    conn_session_id = new_session_id()
+    _sid_token = set_session_id(conn_session_id)
+    session_holder: dict[str, Any] = {"session": None, "session_id": conn_session_id}
 
     def emit(event: str, data: dict[str, Any]) -> None:
         payload = {"type": event, **(data or {})}
@@ -1206,14 +1249,18 @@ async def ws_interview(websocket: WebSocket):
             sess.push_audio(raw)
 
     try:
-        await _ws_send_json(websocket, 
+        await _ws_send_json(
+            websocket,
             {
                 "type": "status",
                 "message": "Connected to live interview backend",
                 "listening": False,
-            }
+                "session_id": conn_session_id,
+            },
         )
         while True:
+            # Re-bind pack scope each receive (async loop + thread safety)
+            set_session_id(conn_session_id)
             message = await websocket.receive()
             if message.get("type") == "websocket.disconnect":
                 break
@@ -1253,6 +1300,7 @@ async def ws_interview(websocket: WebSocket):
                 if sess is None or not sess.running:
                     sess = LiveInterviewSession(emit)
                     session_holder["session"] = sess
+                sess.session_id = conn_session_id
                 # Default: browser = client PCM (UI sends speaker/tab audio, not mic).
                 # System/Stereo Mix when UI requests source=system (local Windows).
                 source = (msg.get("source") or "").strip().lower()
@@ -1271,8 +1319,44 @@ async def ws_interview(websocket: WebSocket):
                 if dg_key:
                     os.environ["DEEPGRAM_API_KEY"] = dg_key
                 stt_pref = (msg.get("stt_provider") or msg.get("stt") or "").strip().lower() or None
+                job_ctx = (msg.get("job_context") or "").strip()
+                # Optional WS auth when AUTH_REQUIRED (token in start or query)
+                try:
+                    import os
+
+                    if os.environ.get("AUTH_REQUIRED", "").strip().lower() in (
+                        "1",
+                        "true",
+                        "yes",
+                    ):
+                        tok = (
+                            (msg.get("access_token") or msg.get("token") or "")
+                            or (
+                                websocket.query_params.get("token")
+                                if hasattr(websocket, "query_params")
+                                else ""
+                            )
+                            or ""
+                        ).strip()
+                        if tok:
+                            try:
+                                from backend.jwt_auth import decode_access_token
+
+                                decode_access_token(tok)
+                            except Exception:
+                                await _ws_send_json(
+                                    websocket,
+                                    {
+                                        "type": "error",
+                                        "message": "Invalid or expired auth token",
+                                    },
+                                )
+                                continue
+                except Exception:
+                    pass
+                sess.session_id = conn_session_id
                 sess.start(
-                    job_context=(msg.get("job_context") or "").strip(),
+                    job_context=job_ctx,
                     tone=msg.get("tone") or "confident",
                     mode=msg.get("mode") or "star",
                     source=source,
@@ -1283,6 +1367,13 @@ async def ws_interview(websocket: WebSocket):
                     deepgram_api_key=dg_key,
                     stt_provider=stt_pref,
                 )
+                # Align pack.role with Start (empty clears ghost ATTP role)
+                try:
+                    from session_context import update_pack
+
+                    update_pack(role=job_ctx)
+                except Exception:
+                    pass
                 continue
 
             if mtype == "stop":
@@ -1300,12 +1391,17 @@ async def ws_interview(websocket: WebSocket):
 
             if mtype == "set_context":
                 sess = session_holder.get("session")
+                # Always accept job_context key (including empty string to clear)
+                job_in = msg.get("job_context")
                 if sess is not None:
-                    sess.set_context(
-                        job_context=msg.get("job_context") or "",
-                        tone=msg.get("tone") or "",
-                    )
-                # Also merge into pre-session pack when provided
+                    if "job_context" in msg:
+                        sess.set_context(
+                            job_context=job_in if job_in is not None else "",
+                            tone=msg.get("tone") or "",
+                        )
+                    elif msg.get("tone"):
+                        sess.set_context(tone=msg.get("tone") or "")
+                # Keep pack.role in sync (empty clears)
                 try:
                     from session_context import update_pack
 
@@ -1325,8 +1421,8 @@ async def ws_interview(websocket: WebSocket):
                         )
                         if k in msg and msg[k] is not None
                     }
-                    if msg.get("job_context") and "role" not in pack_keys:
-                        pack_keys["role"] = msg["job_context"]
+                    if "job_context" in msg and "role" not in pack_keys:
+                        pack_keys["role"] = (job_in or "").strip()
                     if pack_keys:
                         update_pack(**pack_keys)
                 except Exception:
@@ -1345,13 +1441,17 @@ async def ws_interview(websocket: WebSocket):
                 if sess is None:
                     # One-shot without active listen session
                     sess = LiveInterviewSession(emit)
+                    sess.session_id = conn_session_id
                     session_holder["session"] = sess
-                    if msg.get("job_context"):
-                        sess.job_context = msg["job_context"]
                     if msg.get("mode"):
                         sess.mode = msg["mode"]
                     if msg.get("tone"):
                         sess.tone = msg["tone"]
+                else:
+                    sess.session_id = conn_session_id
+                # Always apply job_context when present (including "" to clear)
+                if "job_context" in msg:
+                    sess.set_context(job_context=msg.get("job_context") or "")
                 if msg.get("depth"):
                     try:
                         from session_context import update_pack
@@ -1411,6 +1511,14 @@ async def ws_interview(websocket: WebSocket):
                 sess.stop()
             except Exception:
                 pass
+        try:
+            drop_session(conn_session_id)
+        except Exception:
+            pass
+        try:
+            reset_session_id(_sid_token)
+        except Exception:
+            pass
         try:
             out_q.put_nowait(None)
         except Exception:

@@ -231,6 +231,22 @@ export async function setSessionContext(pack: {
   }
 }
 
+/** Full server reset: pack + answer cache + latency (UI Reset). */
+export async function fullSessionReset(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/session/reset`, {
+      method: 'POST',
+      headers: { ...authHeaders() },
+      signal: AbortSignal.timeout(8000),
+      mode: 'cors',
+    })
+    return res.ok
+  } catch {
+    // Fallback: clear pack only
+    return setSessionContext({ clear: true, role: '' })
+  }
+}
+
 /** Fetch server session pack (JD bootstrap role, etc.). */
 export async function getSessionContext(): Promise<{
   ok?: boolean

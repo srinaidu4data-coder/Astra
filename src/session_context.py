@@ -2,19 +2,32 @@
 Pre-session context pack for live interviews.
 
 Competitors (Final Round, Sensei) pre-load resume + JD + stories before the call
-so live generation is incremental, not cold. This module stores a process-local
-pack and formats it for answer prompts.
+so live generation is incremental, not cold.
+
+Packs are scoped by session_id (contextvar) so concurrent WebSocket users
+do not share role/JD/resume state.
 """
 
 from __future__ import annotations
 
+import contextvars
 import re
 import threading
 import time
+import uuid
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
-from typing import Any, Optional
+from typing import Any, Generator, Optional
 
 _lock = threading.RLock()
+
+# Active pack key for this thread/async task (WS connection / HTTP request)
+_session_id_var: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "astra_session_id", default="default"
+)
+
+# session_id → pack
+_PACKS: dict[str, SessionContextPack] = {}
 
 
 @dataclass
@@ -47,55 +60,104 @@ class SessionContextPack:
         )
 
 
-_PACK = SessionContextPack()
+def new_session_id() -> str:
+    return uuid.uuid4().hex[:16]
+
+
+def get_session_id() -> str:
+    return _session_id_var.get() or "default"
+
+
+def set_session_id(session_id: str) -> contextvars.Token:
+    """Bind pack scope for this task/thread. Returns token for reset."""
+    sid = (session_id or "").strip() or "default"
+    return _session_id_var.set(sid)
+
+
+def reset_session_id(token: contextvars.Token) -> None:
+    try:
+        _session_id_var.reset(token)
+    except Exception:
+        pass
+
+
+@contextmanager
+def session_scope(session_id: str) -> Generator[str, None, None]:
+    """Context manager: all get_pack/update_pack use this session_id."""
+    token = set_session_id(session_id)
+    try:
+        yield get_session_id()
+    finally:
+        reset_session_id(token)
+
+
+def _pack_ref() -> SessionContextPack:
+    sid = get_session_id()
+    with _lock:
+        if sid not in _PACKS:
+            _PACKS[sid] = SessionContextPack()
+        return _PACKS[sid]
 
 
 def get_pack() -> SessionContextPack:
     with _lock:
-        return SessionContextPack(**asdict(_PACK))
+        p = _pack_ref()
+        return SessionContextPack(**asdict(p))
 
 
 def update_pack(**kwargs: Any) -> SessionContextPack:
-    """Merge fields into the active pack. Empty strings are ignored unless clear=True."""
+    """Merge fields into the active session pack."""
     clear = bool(kwargs.pop("clear", False))
     with _lock:
-        global _PACK
+        sid = get_session_id()
         if clear:
-            _PACK = SessionContextPack()
+            _PACKS[sid] = SessionContextPack()
+        pack = _PACKS.setdefault(sid, SessionContextPack())
         for k, v in kwargs.items():
-            if not hasattr(_PACK, k):
+            if not hasattr(pack, k):
                 continue
             if k == "stories" and v is not None:
                 if isinstance(v, str):
-                    stories = [s.strip() for s in re.split(r"\n{2,}|\|;\|", v) if s.strip()]
+                    stories = [
+                        s.strip() for s in re.split(r"\n{2,}|\|;\|", v) if s.strip()
+                    ]
                 else:
                     stories = [str(s).strip() for s in v if str(s).strip()]
-                _PACK.stories = stories[:12]
+                pack.stories = stories[:12]
             elif k == "keywords" and v is not None:
                 if isinstance(v, str):
                     kws = [x.strip() for x in re.split(r"[,;\n]", v) if x.strip()]
                 else:
                     kws = [str(x).strip() for x in v if str(x).strip()]
-                _PACK.keywords = kws[:40]
+                pack.keywords = kws[:40]
             elif k == "outline_first":
-                _PACK.outline_first = bool(v)
+                pack.outline_first = bool(v)
             elif k == "depth":
                 d = str(v or "balanced").strip().lower()
                 if d in ("fast", "balanced", "deep", "quality"):
                     if d == "quality":
                         d = "deep"
-                    _PACK.depth = d
+                    pack.depth = d
             elif k in ("role", "company", "seniority", "interview_type") and v is not None:
-                # Allow empty string so UI can clear Role / Job context defaults
-                setattr(_PACK, k, str(v).strip() if isinstance(v, str) else v)
+                setattr(pack, k, str(v).strip() if isinstance(v, str) else v)
             elif v is not None and str(v).strip():
-                setattr(_PACK, k, str(v).strip() if isinstance(v, str) else v)
-        _PACK.updated_at = time.time()
-        return SessionContextPack(**asdict(_PACK))
+                setattr(pack, k, str(v).strip() if isinstance(v, str) else v)
+        pack.updated_at = time.time()
+        return SessionContextPack(**asdict(pack))
 
 
 def clear_pack() -> None:
     update_pack(clear=True)
+
+
+def drop_session(session_id: str | None = None) -> None:
+    """Remove a session pack entirely (WS disconnect)."""
+    sid = (session_id or get_session_id() or "").strip() or "default"
+    if sid == "default":
+        clear_pack()
+        return
+    with _lock:
+        _PACKS.pop(sid, None)
 
 
 def format_for_prompt(max_chars: int = 1800) -> str:
@@ -103,7 +165,9 @@ def format_for_prompt(max_chars: int = 1800) -> str:
     pack = get_pack()
     if pack.is_empty() and not pack.role:
         return ""
-    parts: list[str] = ["PRE-SESSION CONTEXT (use only facts here; never invent experience):"]
+    parts: list[str] = [
+        "PRE-SESSION CONTEXT (use only facts here; never invent experience):"
+    ]
     if pack.role:
         parts.append(f"Target role: {pack.role}")
     if pack.company:
@@ -135,17 +199,22 @@ def format_for_prompt(max_chars: int = 1800) -> str:
     return text
 
 
-def effective_job_context(fallback: str = "") -> str:
+def effective_job_context(
+    fallback: str = "",
+    *,
+    allow_pack: bool = False,
+) -> str:
     """
-    Resolve display role for prompts.
+    Resolve role string for prompts.
 
-    Explicit job_context (fallback) always wins when provided so a user-set
-    role or per-turn context is never overwritten by a stale session pack
-    (e.g. leftover SAP ATTP bootstrap).
+    - Non-empty fallback always wins (live session / request job_context).
+    - Empty fallback: do NOT invent a role from pack unless allow_pack=True.
     """
     explicit = (fallback or "").strip()
     if explicit:
         return explicit[:120]
+    if not allow_pack:
+        return ""
     pack = get_pack()
     bits = [b for b in (pack.role, pack.company, pack.seniority) if b]
     if bits:
@@ -161,7 +230,6 @@ def outline_first_enabled() -> bool:
     pack = get_pack()
     if not pack.outline_first:
         return False
-    # Env override
     import os
 
     raw = os.environ.get("ASTRA_OUTLINE_FIRST", "1").strip().lower()

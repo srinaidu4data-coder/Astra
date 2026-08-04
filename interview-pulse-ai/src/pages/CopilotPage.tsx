@@ -10,6 +10,7 @@ import {
   checkCopilotHealth,
   fetchAnswer,
   fetchLatencyMetrics,
+  fullSessionReset,
   setSessionContext,
   warmCopilotApi,
 } from '@/services/real-api'
@@ -23,6 +24,7 @@ import {
   Volume2,
 } from 'lucide-react'
 import {
+  isRemoteCopilotApi,
   resolveInterviewAudioSource,
   type InterviewAudioSource,
 } from '@/lib/api-base'
@@ -166,13 +168,42 @@ export function CopilotPage() {
     [setAnswer],
   )
 
+  const failPending = useCallback(
+    (message: string) => {
+      setCards((prev) => {
+        const next = [...prev]
+        for (let i = next.length - 1; i >= 0; i--) {
+          const c = next[i]
+          if (c?.answer?.streaming || c?.id?.startsWith('pending_')) {
+            next[i] = {
+              ...c,
+              answer: {
+                ...c.answer,
+                streaming: false,
+                bullets: [
+                  message || 'Answer timed out. Type the question below and retry.',
+                ],
+              },
+            }
+            setAnswer(next[i]!.answer)
+            break
+          }
+        }
+        return next
+      })
+      setPhase('idle')
+    },
+    [setAnswer],
+  )
+
   const showPending = useCallback(
     (question: string) => {
+      const pendingId = `pending_${Date.now()}`
       const pending: QACard = {
-        id: `pending_${Date.now()}`,
+        id: pendingId,
         question,
         answer: {
-          id: `pending_${Date.now()}`,
+          id: pendingId,
           mode: answerMode,
           bullets: ['Writing your answer…'],
           metrics: [],
@@ -188,6 +219,27 @@ export function CopilotPage() {
         return next
       })
       setAnswer(pending.answer)
+      // Support #22: never leave "Writing…" forever
+      window.setTimeout(() => {
+        setCards((prev) => {
+          const c = prev.find((x) => x.id === pendingId)
+          if (!c?.answer?.streaming) return prev
+          return prev.map((x) =>
+            x.id === pendingId
+              ? {
+                  ...x,
+                  answer: {
+                    ...x.answer,
+                    streaming: false,
+                    bullets: [
+                      'Still waiting on the model — try typing the question below, or Reset and Start again.',
+                    ],
+                  },
+                }
+              : x,
+          )
+        })
+      }, 45_000)
     },
     [answerMode, setAnswer],
   )
@@ -275,7 +327,19 @@ export function CopilotPage() {
         showPending(question)
       },
       onChatter: (text, reason) => {
-        pushStatus(`Filtered (${reason || 'chatter'}): ${text.slice(0, 60)}…`)
+        const r = reason || 'chatter'
+        pushStatus(`Filtered (${r}): ${text.slice(0, 60)}… — type it below to Answer anyway`)
+        // Keep last filtered line in manual box so user can force-answer
+        if (text?.trim() && text.trim().length > 12) {
+          setManualQ((prev) => (prev.trim() ? prev : text.trim()))
+        }
+      },
+      onError: (message) => {
+        pushStatus(`Error: ${message}`)
+        failPending(`Error: ${message}`)
+        if (/not connected|websocket|offline|closed/i.test(message)) {
+          setApiOk(false)
+        }
       },
       onMetrics: (m) => {
         // Only final / meaningful metric updates — skip identical totals
@@ -361,12 +425,6 @@ export function CopilotPage() {
           })
         }
       },
-      onError: (msg) => {
-        pushStatus(`Error: ${msg}`)
-        if (/not connected|websocket not open|backend connection closed|failed to fetch/i.test(msg)) {
-          setApiOk(false)
-        }
-      },
     })
 
     void warmCopilotApi()
@@ -411,23 +469,44 @@ export function CopilotPage() {
     }
 
     try {
+      // Preflight: health before capture dialog (support #1, #4)
+      const health = await checkCopilotHealth()
+      if (!health.ok) {
+        setApiOk(false)
+        throw new Error(
+          health.error ||
+            'API offline. Start the backend (cd src && python copilot_api.py) or check api.jobinterviewcracker.com',
+        )
+      }
+      if (health.openai_ready === false && health.openai_key === false) {
+        throw new Error(
+          'LLM key missing on the server (OPENAI_API_KEY / GROQ). Keys in Settings → OpenAI are not sent to the API — set them on Railway/local env.',
+        )
+      }
+      setApiOk(true)
+
       const rawSource = settings.audioSource || 'auto'
-      const audioMode: InterviewAudioSource =
+      let audioMode: InterviewAudioSource =
         rawSource === 'auto' || !rawSource
           ? resolveInterviewAudioSource()
           : (rawSource as InterviewAudioSource)
+      // Cloud API cannot capture PC speakers on Railway (support #2)
+      if (audioMode === 'system' && isRemoteCopilotApi()) {
+        audioMode = 'display'
+        pushStatus('Cloud API: using tab share audio (system loopback is local-only)')
+      }
       const modeHint =
         audioMode === 'system'
           ? 'PC speakers (Stereo Mix / loopback)'
           : audioMode === 'mic'
             ? '⚠ microphone (your answers may be transcribed)'
-            : 'shared tab / system audio'
+            : 'shared tab / system audio — enable “Share tab audio”'
       pushStatus(
         `Starting interview — ${modeHint}. Prefer speakers so only the interviewer is heard…`,
       )
       const jobCtx = effectiveJobContext()
       void setSessionContext({
-        role: jobCtx || undefined,
+        role: jobCtx,
         depth,
         outline_first: true,
       })
@@ -435,9 +514,7 @@ export function CopilotPage() {
         jobContext: jobCtx,
         tone: settings.tone,
         mode: answerMode,
-        // Speakers / loopback only unless Settings explicitly set mic
         audioMode,
-        // Admin-assigned models (null → server defaults)
         userAnswerModel: user?.answer_model ?? user?.effective_answer_model ?? null,
         userFallbackModel:
           user?.fallback_model ?? user?.effective_fallback_model ?? null,
@@ -446,30 +523,39 @@ export function CopilotPage() {
       })
       setSessionOn(true)
       setListening(true)
-      setApiOk(true)
-      setDevice(audioMode === 'mic' ? 'microphone' : 'speakers')
+      setDevice(
+        audioMode === 'mic'
+          ? 'microphone'
+          : audioMode === 'system'
+            ? 'system loopback'
+            : 'tab/speakers',
+      )
+      const sttChip = settings.deepgramKey
+        ? 'Deepgram Nova-3'
+        : health.stt_deepgram_ready
+          ? 'Deepgram (server key)'
+          : 'Whisper'
       pushStatus(
         audioMode === 'mic'
-          ? '⚠ Mic mode on — switch to Speakers in Settings so your answers are not transcribed'
-          : settings.deepgramKey
-            ? 'Listening to speakers/tab audio · Deepgram Nova-3 · your mic is off'
-            : 'Listening to speakers/tab audio · your mic is off',
+          ? `⚠ Mic mode · STT ${sttChip} — switch to Speakers so your answers are not transcribed`
+          : `Listening · STT ${sttChip} · your mic is off`,
       )
     } catch (e) {
       const msg = (e as Error).message || 'Could not start'
       pushStatus(`Could not start: ${msg}`)
       setSessionOn(false)
       setListening(false)
-      const offline = /not connected|websocket|failed to fetch|network/i.test(msg)
+      const offline = /not connected|websocket|failed to fetch|network|offline/i.test(msg)
       if (offline) setApiOk(false)
       window.alert(
         `Cannot start interview.\n\n${msg}\n\n` +
           `Tips:\n` +
           `• Share the Teams/Zoom tab with "Share tab audio" (or system audio)\n` +
-          `• Local Windows: enable Stereo Mix / use Speakers mode (Settings)\n` +
-          `• Do NOT use mic mode — your answers would be transcribed\n` +
-          `• On this website the API should be api.jobinterviewcracker.com\n` +
-          `• Local only: cd src && python copilot_api.py`,
+          `• Cloud site: do not use System loopback — use Share tab audio\n` +
+          `• Local Windows: enable Stereo Mix / Speakers mode (Settings)\n` +
+          `• Do NOT use mic mode unless you want your voice transcribed\n` +
+          `• LLM keys must be on the API server env, not only in Settings\n` +
+          `• Local: cd src && python copilot_api.py`,
       )
     }
   }
@@ -525,8 +611,9 @@ export function CopilotPage() {
     })
     try {
       // Pre-load context pack so answers are resume/JD grounded (latency amortization)
+      const jobCtx = effectiveJobContext()
       void setSessionContext({
-        role: effectiveJobContext() || undefined,
+        role: jobCtx,
         depth,
         outline_first: true,
       })
@@ -535,7 +622,7 @@ export function CopilotPage() {
         showPending(q)
         liveInterview.injectQuestion(q, {
           depth,
-          jobContext: effectiveJobContext(),
+          jobContext: jobCtx,
         })
         setManualQ('')
       } else if (apiOk) {
@@ -607,6 +694,15 @@ export function CopilotPage() {
     void setSessionContext({ depth, outline_first: true })
     if (liveInterview.connected) liveInterview.setDepth(depth)
   }, [depth])
+
+  // Live-wire Role + Job context (same pattern as depth) — empty clears server
+  useEffect(() => {
+    const jobCtx = effectiveJobContext()
+    void setSessionContext({ role: jobCtx, outline_first: true })
+    if (liveInterview.connected) {
+      liveInterview.setJobContext(jobCtx)
+    }
+  }, [activeJobTitle, settings.jobContext, effectiveJobContext])
 
   const phaseLabel =
     phase === 'hearing'
@@ -734,26 +830,14 @@ export function CopilotPage() {
             </span>
           </div>
 
-          {/* Role + Job context — same store as Settings / Knowledge; editable before Start */}
+          {/* Role + Job context — live-wired to server; empty = no persona */}
           <div className="mb-5 space-y-3">
             <label className="block">
               <span className="label-quiet">Role</span>
               <input
                 className="field mt-1.5"
                 value={activeJobTitle}
-                onChange={(e) => {
-                  const v = e.target.value
-                  setActiveJobTitle(v)
-                  const jc = (settings.jobContext || '').trim()
-                  const role = v.trim()
-                  const combined =
-                    role && jc && role.toLowerCase() !== jc.toLowerCase()
-                      ? `${role} · ${jc}`
-                      : role || jc
-                  void setSessionContext({
-                    role: combined,
-                  })
-                }}
+                onChange={(e) => setActiveJobTitle(e.target.value)}
                 placeholder="Optional — type the target role"
                 autoComplete="off"
               />
@@ -763,23 +847,18 @@ export function CopilotPage() {
               <input
                 className="field mt-1.5"
                 value={settings.jobContext}
-                onChange={(e) => {
-                  const v = e.target.value
-                  updateSettings({ jobContext: v })
-                  const role = (activeJobTitle || '').trim()
-                  const jc = v.trim()
-                  const combined =
-                    role && jc && role.toLowerCase() !== jc.toLowerCase()
-                      ? `${role} · ${jc}`
-                      : role || jc
-                  void setSessionContext({
-                    role: combined,
-                  })
-                }}
+                onChange={(e) => updateSettings({ jobContext: e.target.value })}
                 placeholder="Optional — domain or stack notes"
                 autoComplete="off"
               />
             </label>
+            <p className="text-[11px] leading-relaxed text-white/35">
+              Sent to answers:{' '}
+              <span className="text-white/55">
+                {effectiveJobContext() || '(none — answers follow the question only)'}
+              </span>
+              {sessionOn ? ' · live' : ''}
+            </p>
             <label className="block">
               <span className="label-quiet">Answer depth</span>
               <select
@@ -794,6 +873,11 @@ export function CopilotPage() {
                 <option value="deep">Deep</option>
               </select>
             </label>
+            {sessionOn && (
+              <p className="text-[11px] text-white/30">
+                Audio source / STT keys apply on next Start. Stop interview first to change capture mode.
+              </p>
+            )}
           </div>
 
           <div className="mb-6 flex flex-wrap gap-3">
@@ -820,6 +904,7 @@ export function CopilotPage() {
               variant="ghost"
               onClick={() => {
                 if (sessionOn) liveInterview.stop()
+                liveInterview.clearStartOpts()
                 setSessionOn(false)
                 setListening(false)
                 clearTranscript()
@@ -830,10 +915,15 @@ export function CopilotPage() {
                 setStatusLine('')
                 setLevels(Array.from({ length: 16 }, () => 0.08))
                 setPhase('idle')
+                setManualQ('')
                 // Role + Job context always return to empty
                 setActiveJobTitle('')
                 updateSettings({ jobContext: '' })
-                void setSessionContext({ clear: true }).catch(() => {})
+                // Full server reset: pack + answer cache + latency (support #25)
+                void fullSessionReset().catch(() =>
+                  setSessionContext({ clear: true, role: '' }),
+                )
+                pushStatus('Reset complete — Role, answers, and server cache cleared')
               }}
             >
               <RefreshCw className="h-4 w-4" strokeWidth={1.75} />

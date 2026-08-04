@@ -42,6 +42,31 @@ def test_ml_question_beats_attp_pack():
     assert lock.confidence >= 0.28
 
 
+def test_empty_job_soft_question_not_attp():
+    """Blank Role: soft/behavioral Q must not lock to pack/JD ATTP."""
+    from common_sense import lock_for_turn
+    from session_context import clear_pack, update_pack
+
+    clear_pack()
+    update_pack(
+        role="SAP ATTP Techno-Functional Consultant",
+        job_description="ATTP EPCIS GTIN GLN SSCC DSCSA commissioning aggregation",
+        keywords=["ATTP", "EPCIS", "GTIN"],
+    )
+    lock = lock_for_turn(
+        "Tell me about a time you handled conflict on a team.",
+        "",
+    )
+    assert lock.domain == "general" or lock.confidence < 0.28
+    # Explicit extra_context="" also stays general
+    lock2 = lock_for_turn(
+        "Tell me about a time you handled conflict on a team.",
+        "",
+        extra_context="",
+    )
+    assert lock2.domain == "general" or lock2.confidence < 0.28
+
+
 def test_domains_compatible_sap_family():
     from common_sense import domains_compatible
 

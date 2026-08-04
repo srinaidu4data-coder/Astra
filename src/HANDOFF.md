@@ -53,12 +53,10 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 ## JD grounding
 
-- Files: `src/jd and resume/jd.txt` + resume PDF (optional practice pack)
-- API may bootstrap pack from disk, but answers **do not force that role** unless:
-  - the question is clearly in the same domain (e.g. ATTP/EPCIS), or
-  - the user explicitly set Job context
-- Off-domain questions (ML, coding, generic behavioral with empty Job context) answer the question only — no SAP ATTP bleed
-- UI does **not** auto-fill Job context from bootstrap
+- Disk practice pack (`jd and resume/`) is **opt-in**: set `ASTRA_PRACTICE_JD=1`
+- Empty Role/Job → question-only domain; no pack fallback on live answers
+- Live Role/Job fields wire to WS `set_context` (including clear)
+- Full Reset: `POST /api/session/reset` (pack + answer cache + latency)
 - Health: `GET /api/health` → `jd_grounding` object
 
 ## LLM provider rule

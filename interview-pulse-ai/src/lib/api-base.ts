@@ -89,16 +89,42 @@ export function resolveCopilotWsUrl(): string {
  */
 export type InterviewAudioSource = 'system' | 'display' | 'mic'
 
+/** True when the copilot API is not on this machine (cloud / remote). */
+export function isRemoteCopilotApi(): boolean {
+  const base = resolveCopilotHttpBase()
+  if (!base) {
+    // Same-origin: only local if page itself is local
+    if (typeof window === 'undefined') return false
+    return !isLocalHostName(window.location.hostname)
+  }
+  try {
+    const u = new URL(base)
+    return !isLocalHostName(u.hostname)
+  } catch {
+    return true
+  }
+}
+
+/**
+ * Resolve capture mode. Cloud API never uses server `system` loopback
+ * (Railway has no Stereo Mix) — support ticket #2.
+ */
 export function resolveInterviewAudioSource(): InterviewAudioSource {
   if (typeof window === 'undefined') return 'display'
+  let forced = ''
   try {
-    const forced = (localStorage.getItem('ip_audio_source') || '').trim().toLowerCase()
-    if (forced === 'system') return 'system'
-    if (forced === 'display' || forced === 'speaker' || forced === 'speakers') return 'display'
-    if (forced === 'mic' || forced === 'browser' || forced === 'microphone') return 'mic'
+    forced = (localStorage.getItem('ip_audio_source') || '').trim().toLowerCase()
   } catch {
     /* ignore */
   }
+  // Remote API: system loopback is on the *server* and will fail — force display
+  if (isRemoteCopilotApi()) {
+    if (forced === 'mic' || forced === 'browser' || forced === 'microphone') return 'mic'
+    return 'display'
+  }
+  if (forced === 'system') return 'system'
+  if (forced === 'display' || forced === 'speaker' || forced === 'speakers') return 'display'
+  if (forced === 'mic' || forced === 'browser' || forced === 'microphone') return 'mic'
   // Localhost → prefer OS loopback on the Python host (no mic)
   if (isLocalHostName(window.location.hostname)) return 'system'
   // Production web → share tab / system audio dialog (no mic)

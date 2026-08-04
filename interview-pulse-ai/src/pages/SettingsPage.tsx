@@ -281,20 +281,28 @@ export function SettingsPage() {
         </label>
 
         <div className="space-y-5">
+          <div className="rounded-[14px] border border-white/10 bg-white/[0.03] px-4 py-3 text-[12px] leading-relaxed text-white/40">
+            <strong className="text-white/60">LLM keys are server-side only.</strong> OpenAI/Anthropic
+            fields below are not sent to the API. Set{' '}
+            <code className="text-[11px] text-white/50">OPENAI_API_KEY</code> or{' '}
+            <code className="text-[11px] text-white/50">GROQ_API_KEY</code> on Railway / local{' '}
+            <code className="text-[11px] text-white/50">.env</code>. Deepgram can be set here (sent on
+            Start) or as <code className="text-[11px] text-white/50">DEEPGRAM_API_KEY</code> on the server.
+          </div>
           <Field
-            label="OpenAI API key"
+            label="OpenAI API key (local reference only — not used by live API)"
             value={settings.openaiKey}
             onChange={(v) => updateSettings({ openaiKey: v })}
-            placeholder="sk-…"
+            placeholder="Set on server env instead"
           />
           <Field
-            label="Anthropic API key"
+            label="Anthropic API key (local reference only — not used by live API)"
             value={settings.anthropicKey}
             onChange={(v) => updateSettings({ anthropicKey: v })}
-            placeholder="sk-ant-…"
+            placeholder="Not wired to live answers"
           />
           <Field
-            label="Deepgram API key (Nova-3 streaming STT)"
+            label="Deepgram API key (Nova-3 streaming STT — sent on Start)"
             value={settings.deepgramKey}
             onChange={(v) => updateSettings({ deepgramKey: v })}
             placeholder="your Deepgram key…"
@@ -303,10 +311,10 @@ export function SettingsPage() {
             When set, live interviews use <strong className="text-white/55">Deepgram Nova-3</strong>{' '}
             streaming speech-to-text (much faster than local Whisper). Also set{' '}
             <code className="text-[11px] text-white/45">DEEPGRAM_API_KEY</code> on the API server.
-            Leave empty to use Whisper only.
+            Leave empty to use Whisper only. Reconnect restores this key.
           </p>
           <label>
-            <span className="label-quiet">Job context</span>
+            <span className="label-quiet">Job context (same as Live interview)</span>
             <input
               className="field"
               value={settings.jobContext}
@@ -331,7 +339,7 @@ export function SettingsPage() {
             </select>
           </label>
           <label>
-            <span className="label-quiet">Interview audio source</span>
+            <span className="label-quiet">Interview audio source (applies on next Start)</span>
             <select
               className="field"
               value={settings.audioSource || 'auto'}

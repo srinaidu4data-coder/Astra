@@ -68,6 +68,8 @@ class LiveInterviewSession:
         self.fallback_model: Optional[str] = None
         self.user_answer_model: Optional[str] = None
         self.user_fallback_model: Optional[str] = None
+        # Isolates session pack (role/JD) per live connection
+        self.session_id: str = ""
 
         self._noise_floor = 0.01
         self._level_ema = 0.0
@@ -117,7 +119,8 @@ class LiveInterviewSession:
             src = "system"
 
         if self.running:
-            self.job_context = job_context or self.job_context
+            # Always accept job_context (including "") so empty Role clears mid-session
+            self.job_context = (job_context or "").strip()
             self.tone = tone or self.tone
             self.mode = mode or self.mode
             if answer_model is not None:
@@ -128,10 +131,12 @@ class LiveInterviewSession:
                 self.user_answer_model = user_answer_model
             if user_fallback_model is not None:
                 self.user_fallback_model = user_fallback_model
+            self._sync_pack_role(self.job_context)
             self._emit("status", {"message": "Already listening", "listening": True})
             return
 
         self.job_context = (job_context or "").strip()
+        self._sync_pack_role(self.job_context)
         self.tone = tone or "confident"
         self.mode = mode or "star"
         self.answer_model = answer_model
@@ -299,15 +304,29 @@ class LiveInterviewSession:
         self._emit("status", {"message": f"Answer format → {self.mode}"})
 
     def set_context(self, job_context: str = "", tone: str = "") -> None:
-        if job_context:
-            self.job_context = job_context
+        # Always apply (including empty) so UI Role clear reaches the answer path
+        if job_context is not None:
+            prev = (self.job_context or "").strip()
+            self.job_context = (job_context or "").strip()
+            self._sync_pack_role(self.job_context)
+            # Role change: drop answer cache so prior persona answers cannot stick
+            if prev != self.job_context:
+                try:
+                    from fast_answer import cache_clear
+
+                    cache_clear()
+                except Exception:
+                    pass
         if tone:
             self.tone = tone
+
+    def _sync_pack_role(self, job_context: str) -> None:
+        """Keep session pack.role aligned with live job_context (empty clears role)."""
         try:
             from session_context import update_pack
 
-            if job_context:
-                update_pack(role=job_context)
+            role = (job_context or "").strip()
+            update_pack(role=role)
         except Exception:
             pass
 
@@ -360,6 +379,49 @@ class LiveInterviewSession:
         vad_ms: float | None = None,
     ) -> None:
         """Core answer cascade + latency trace emit (used by STT path and inject)."""
+        _sess_token = None
+        reset_session_id = None
+        try:
+            from session_context import get_depth, reset_session_id, set_session_id
+
+            if self.session_id:
+                _sess_token = set_session_id(self.session_id)
+            job_ctx = (self.job_context or "").strip()
+            depth = get_depth()
+        except Exception:
+            job_ctx = (self.job_context or "").strip()
+            depth = "balanced"
+
+        try:
+            self._generate_and_emit_body(
+                question,
+                stt_ms=stt_ms,
+                classify_ms=classify_ms,
+                job_id=job_id,
+                gen=gen,
+                vad_ms=vad_ms,
+                job_ctx=job_ctx,
+                depth=depth,
+            )
+        finally:
+            if _sess_token is not None and reset_session_id is not None:
+                try:
+                    reset_session_id(_sess_token)
+                except Exception:
+                    pass
+
+    def _generate_and_emit_body(
+        self,
+        question: str,
+        *,
+        stt_ms: float = 0.0,
+        classify_ms: float | None = None,
+        job_id: int = 0,
+        gen: int = 0,
+        vad_ms: float | None = None,
+        job_ctx: str = "",
+        depth: str = "balanced",
+    ) -> None:
         from answer_engine import (
             generate_answer,
             to_bullets,
@@ -367,15 +429,6 @@ class LiveInterviewSession:
         )
         from answer_engine import iter_answer_tokens
         from fast_answer import iter_cascade_answer
-
-        try:
-            from session_context import effective_job_context, get_depth
-
-            job_ctx = effective_job_context(self.job_context) or self.job_context
-            depth = get_depth()
-        except Exception:
-            job_ctx = self.job_context
-            depth = "balanced"
 
         self._emit(
             "status",
@@ -498,6 +551,19 @@ class LiveInterviewSession:
                     "I'd structure this with a clear situation, what I owned, "
                     "the concrete actions I took, and a measurable result."
                 )
+
+        # Never emit blank final answers (support #23)
+        if not (answer or "").strip():
+            from fast_answer import instant_answer as _ia
+
+            answer, source, _ms = _ia(question, job_context=job_ctx, mode=self.mode)
+            answer = _normalize_answer_text(answer) or (
+                f"Hook: Here's how I'd approach that.\n"
+                f"Situation: {question[:120]}\n"
+                f"Action: I'd clarify constraints, pick a concrete approach, and validate the result.\n"
+                f"Close: Happy to go deeper on any part."
+            )
+            source = source or "empty_guard"
 
         if self._stop.is_set() or gen != self._generation:
             if not answer:
@@ -1035,7 +1101,10 @@ class LiveInterviewSession:
                 if not text or not text.strip():
                     self._emit(
                         "status",
-                        {"message": "Couldn't make out words — still listening"},
+                        {
+                            "message": "Couldn't make out words — still listening. "
+                            "If this repeats: raise volume, re-share tab with audio, or check STT (Deepgram)."
+                        },
                     )
                     return
 
@@ -1089,8 +1158,9 @@ class LiveInterviewSession:
                         "status",
                         {
                             "message": (
-                                f"Fragment only ({len(words)} words) — "
-                                "still listening for full question"
+                                f"Heard a short fragment ({len(words)} words) — "
+                                "still listening for the full question. "
+                                "You can also paste it below and send."
                             ),
                             "listening": True,
                         },
