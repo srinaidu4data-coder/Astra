@@ -50,9 +50,8 @@ export async function extractPdfText(file: File): Promise<string> {
   try {
     doc = await getDocument({
       data,
-      // Text extraction only — skip font face / eval paths that break some PDFs
+      // Text extraction only — keep options minimal for pdfjs 5.x typing
       useSystemFonts: true,
-      isEvalSupported: false,
       disableAutoFetch: true,
       disableStream: true,
     }).promise
