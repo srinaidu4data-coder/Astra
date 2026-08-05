@@ -9,8 +9,9 @@ import {
 import { isDesktopApp } from '@/lib/desktop'
 import { cn } from '@/lib/utils'
 import { subscribeLiveSync } from '@/lib/window-sync'
+import { fetchAnswer } from '@/services/real-api'
 import { useAppStore } from '@/stores/app-store'
-import type { AnswerMode, OverlaySizePreset, QACard } from '@/types'
+import type { AnswerMode, OverlaySizePreset, QACard, SuggestedAnswer } from '@/types'
 import {
   Eye,
   EyeOff,
@@ -45,14 +46,19 @@ export function OverlayPage() {
     answer,
     answerMode,
     setAnswerMode,
+    setAnswer,
     levels,
     listening,
     stealth,
     updateStealth,
+    settings,
+    activeJobTitle,
   } = useAppStore()
 
   const desktop = isDesktopApp()
   const [cardIndex, setCardIndex] = useState(0)
+  const [regenerating, setRegenerating] = useState(false)
+  const modeAbortRef = useRef<AbortController | null>(null)
   /** One Hide: collapses chrome + pulls Speak full height (persists for this popup) */
   const [chromeCollapsed, setChromeCollapsed] = useState(() => {
     try {
@@ -97,6 +103,62 @@ export function OverlayPage() {
       },
     ]
   }, [answer])
+
+  const handleModeChange = useCallback(
+    async (mode: AnswerMode) => {
+      setAnswerMode(mode)
+      const q = (answer?.question || '').trim()
+      if (!q) return
+
+      modeAbortRef.current?.abort()
+      const ac = new AbortController()
+      modeAbortRef.current = ac
+      const timeoutId = window.setTimeout(() => ac.abort(), 55_000)
+      setRegenerating(true)
+      try {
+        const role = (activeJobTitle || '').trim()
+        const jc = (settings.jobContext || '').trim()
+        const jobContext =
+          role && jc && role.toLowerCase() !== jc.toLowerCase()
+            ? `${role} · ${jc}`
+            : role || jc || ''
+        const ans = await fetchAnswer(
+          q,
+          {
+            jobContext,
+            tone: settings.tone,
+            mode,
+          },
+          ac.signal,
+        )
+        if (ac.signal.aborted) return
+        const next: SuggestedAnswer = {
+          ...ans,
+          question: q,
+          mode,
+        }
+        setAnswer(next)
+      } catch (e) {
+        if ((e as Error)?.name === 'AbortError') return
+        // Keep selected mode even if rewrite fails
+        console.warn('[overlay] mode rewrite failed', e)
+      } finally {
+        window.clearTimeout(timeoutId)
+        if (modeAbortRef.current === ac) {
+          modeAbortRef.current = null
+          setRegenerating(false)
+        }
+      }
+    },
+    [
+      answer?.question,
+      activeJobTitle,
+      settings.jobContext,
+      settings.tone,
+      setAnswerMode,
+      setAnswer,
+    ],
+  )
 
   const refreshBounds = useCallback(async () => {
     if (window.interviewPulse?.getOverlayBounds) {
@@ -565,8 +627,9 @@ export function OverlayPage() {
           cardIndex={cardIndex}
           onCardIndex={setCardIndex}
           mode={answerMode}
-          onMode={setAnswerMode}
+          onMode={(m) => void handleModeChange(m)}
           preparing={Boolean(answer?.streaming)}
+          regenerating={regenerating}
         />
       </div>
 

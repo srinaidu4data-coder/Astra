@@ -81,6 +81,8 @@ export function CopilotPage() {
   const [cards, setCards] = useState<QACard[]>([])
   const [cardIndex, setCardIndex] = useState(0)
   const [regenerating, setRegenerating] = useState(false)
+  /** Abort in-flight format rewrite so mode toggles never stick disabled */
+  const modeRewriteAbortRef = useRef<AbortController | null>(null)
   const [manualQ, setManualQ] = useState('')
   const [answering, setAnswering] = useState(false)
   const [depth, setDepth] = useState<'fast' | 'balanced' | 'deep'>('balanced')
@@ -571,8 +573,13 @@ export function CopilotPage() {
   }
 
   const handleModeChange = async (mode: AnswerMode) => {
+    // Always apply mode immediately (selected pill must move even if rewrite fails)
     setAnswerMode(mode)
-    liveInterview.setMode(mode)
+    try {
+      liveInterview.setMode(mode)
+    } catch {
+      /* offline WS — mode still stored for next answers */
+    }
 
     const idx = cardIndexRef.current
     const current = cards[idx]
@@ -581,30 +588,59 @@ export function CopilotPage() {
       return
     }
 
+    // Cancel any prior format rewrite so toggles never stick on "Rewriting…"
+    modeRewriteAbortRef.current?.abort()
+    const ac = new AbortController()
+    modeRewriteAbortRef.current = ac
+    const timeoutId = window.setTimeout(() => ac.abort(), 55_000)
+
     setRegenerating(true)
     try {
       pushStatus(`Rewriting as ${mode}…`)
-      const ans = await fetchAnswer(current.question, {
-        jobContext: effectiveJobContext(),
-        tone: settings.tone,
-        mode,
-      })
+      const ans = await fetchAnswer(
+        current.question,
+        {
+          jobContext: effectiveJobContext(),
+          tone: settings.tone,
+          mode,
+          answerModel: user?.answer_model ?? user?.effective_answer_model ?? null,
+          fallbackModel:
+            user?.fallback_model ?? user?.effective_fallback_model ?? null,
+        },
+        ac.signal,
+      )
+      if (ac.signal.aborted) return
       const card: QACard = {
         id: ans.id,
         question: current.question,
-        answer: { ...ans, question: current.question },
+        answer: { ...ans, question: current.question, mode },
       }
       setCards((prev) => {
         const next = [...prev]
-        next[idx] = card
+        // Card may have scrolled; prefer index, fall back to matching question
+        if (next[idx]?.question === current.question) {
+          next[idx] = card
+        } else {
+          const j = next.findIndex((c) => c.question === current.question)
+          if (j >= 0) next[j] = card
+          else next.push(card)
+        }
         return next
       })
       setAnswer(card.answer)
       pushStatus(`Rewrote as ${mode}`)
     } catch (e) {
+      if ((e as Error)?.name === 'AbortError') {
+        pushStatus(`Format → ${mode}`)
+        return
+      }
       pushStatus(`Rewrite failed: ${(e as Error).message}`)
     } finally {
-      setRegenerating(false)
+      window.clearTimeout(timeoutId)
+      if (modeRewriteAbortRef.current === ac) {
+        modeRewriteAbortRef.current = null
+        setRegenerating(false)
+      }
     }
   }
 

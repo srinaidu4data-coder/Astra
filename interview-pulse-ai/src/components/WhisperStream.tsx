@@ -1574,21 +1574,45 @@ export const WhisperStream = memo(function WhisperStream({
         </div>
       ) : null}
 
-      {/* Format modes — hide under focus to cut choice overload (Iyengar) */}
-      {!chromeHidden && !focusMode && (
-        <div className="mb-5 flex shrink-0 flex-wrap gap-2">
-          {modes.map((m) => (
-            <Button
-              key={m.id}
-              size="sm"
-              variant={mode === m.id ? 'default' : 'secondary'}
-              title={m.hint}
-              disabled={regenerating}
-              onClick={() => onMode(m.id)}
-            >
-              {m.label}
-            </Button>
-          ))}
+      {/* Format modes — always available when chrome shown (focus must not lock format) */}
+      {!chromeHidden && (
+        <div
+          className="mb-5 flex shrink-0 flex-wrap gap-2"
+          role="group"
+          aria-label="Answer format"
+        >
+          {modes.map((m) => {
+            const selected = mode === m.id
+            return (
+              <Button
+                key={m.id}
+                type="button"
+                size="sm"
+                variant={selected ? 'default' : 'secondary'}
+                title={
+                  regenerating && selected
+                    ? `${m.hint} · rewriting…`
+                    : m.hint
+                }
+                aria-pressed={selected}
+                // Keep clickable while rewriting so users can switch modes
+                // (parent aborts the prior rewrite request)
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onMode(m.id)
+                }}
+              >
+                {regenerating && selected ? (
+                  <Loader2
+                    className="mr-1.5 h-3.5 w-3.5 animate-spin"
+                    strokeWidth={2}
+                  />
+                ) : null}
+                {m.label}
+              </Button>
+            )
+          })}
         </div>
       )}
 
