@@ -512,10 +512,27 @@ def latency_ai_diagnose_last():
     return get_last_report()
 
 
+def _session_id_from_token(token: str = "") -> str:
+    """Map JWT → stable pack key so HTTP + WebSocket share Role/JD/Resume."""
+    tok = (token or "").strip()
+    if not tok:
+        return ""
+    try:
+        from backend.jwt_auth import decode_access_token
+
+        payload = decode_access_token(tok) or {}
+        sub = str(payload.get("sub") or payload.get("email") or "").strip()
+        if sub:
+            return f"user_{sub[:80]}"
+    except Exception:
+        pass
+    return ""
+
+
 def _http_session_id(request: Request) -> str:
     """
     Scope HTTP pack by authenticated user (or explicit X-Session-Id).
-    Prevents one login's ATTP role bleeding into another user's HTTP pack.
+    Prevents one login's materials bleeding into another user's pack.
     """
     try:
         sid = (request.headers.get("x-session-id") or "").strip()
@@ -524,12 +541,9 @@ def _http_session_id(request: Request) -> str:
         auth = request.headers.get("authorization") or request.headers.get("Authorization") or ""
         if auth.lower().startswith("bearer "):
             token = auth.split(" ", 1)[1].strip()
-            from backend.jwt_auth import decode_access_token
-
-            payload = decode_access_token(token) or {}
-            sub = str(payload.get("sub") or payload.get("email") or "").strip()
-            if sub:
-                return f"user_{sub[:80]}"
+            keyed = _session_id_from_token(token)
+            if keyed:
+                return keyed
     except Exception:
         pass
     return "http_anon"
@@ -1242,8 +1256,12 @@ async def ws_interview(websocket: WebSocket):
 
     loop = asyncio.get_event_loop()
     out_q: asyncio.Queue = asyncio.Queue(maxsize=256)
-    # Per-connection pack isolation (support multi-user sticky role)
-    conn_session_id = new_session_id()
+    # Prefer JWT user id so WS shares Role/JD/Resume with HTTP /api/session/context
+    ws_tok = (
+        (websocket.query_params.get("token") if hasattr(websocket, "query_params") else "")
+        or ""
+    ).strip()
+    conn_session_id = _session_id_from_token(ws_tok) or new_session_id()
     _sid_token = set_session_id(conn_session_id)
     session_holder: dict[str, Any] = {"session": None, "session_id": conn_session_id}
 
@@ -1328,7 +1346,18 @@ async def ws_interview(websocket: WebSocket):
                 if sess is None or not sess.running:
                     sess = LiveInterviewSession(emit)
                     session_holder["session"] = sess
+                # Re-bind pack to JWT user if token arrives on start
+                start_tok = (
+                    msg.get("access_token") or msg.get("token") or ws_tok or ""
+                ).strip()
+                if start_tok:
+                    keyed = _session_id_from_token(start_tok)
+                    if keyed:
+                        conn_session_id = keyed
+                        session_holder["session_id"] = keyed
+                        set_session_id(keyed)
                 sess.session_id = conn_session_id
+                set_session_id(conn_session_id)
                 # Default: browser = client PCM (UI sends speaker/tab audio, not mic).
                 # System/Stereo Mix when UI requests source=system (local Windows).
                 source = (msg.get("source") or "").strip().lower()
@@ -1357,15 +1386,7 @@ async def ws_interview(websocket: WebSocket):
                         "true",
                         "yes",
                     ):
-                        tok = (
-                            (msg.get("access_token") or msg.get("token") or "")
-                            or (
-                                websocket.query_params.get("token")
-                                if hasattr(websocket, "query_params")
-                                else ""
-                            )
-                            or ""
-                        ).strip()
+                        tok = start_tok
                         if tok:
                             try:
                                 from backend.jwt_auth import decode_access_token
@@ -1382,6 +1403,27 @@ async def ws_interview(websocket: WebSocket):
                                 continue
                 except Exception:
                     pass
+                # New interview: drop cached answers from any prior identity
+                try:
+                    from fast_answer import cache_clear
+
+                    cache_clear()
+                except Exception:
+                    pass
+                # Align pack with THIS interview materials only
+                try:
+                    from session_context import update_pack
+
+                    pack_update: dict[str, Any] = {"role": job_ctx}
+                    if "job_description" in msg:
+                        pack_update["job_description"] = msg.get("job_description") or ""
+                    if "resume_text" in msg:
+                        pack_update["resume_text"] = msg.get("resume_text") or ""
+                    if "company" in msg:
+                        pack_update["company"] = msg.get("company") or ""
+                    update_pack(**pack_update)
+                except Exception:
+                    pass
                 sess.session_id = conn_session_id
                 sess.start(
                     job_context=job_ctx,
@@ -1395,13 +1437,6 @@ async def ws_interview(websocket: WebSocket):
                     deepgram_api_key=dg_key,
                     stt_provider=stt_pref,
                 )
-                # Align pack.role with Start (empty clears ghost ATTP role)
-                try:
-                    from session_context import update_pack
-
-                    update_pack(role=job_ctx)
-                except Exception:
-                    pass
                 continue
 
             if mtype == "stop":

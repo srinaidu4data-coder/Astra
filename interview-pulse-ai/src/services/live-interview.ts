@@ -644,6 +644,10 @@ export class LiveInterviewClient {
     fallbackModel?: string | null
     deepgramKey?: string | null
     sttProvider?: 'auto' | 'deepgram' | 'whisper' | null
+    /** Attached JD / Resume for THIS interview only (no RAG) */
+    jobDescription?: string | null
+    resumeText?: string | null
+    company?: string | null
   }) {
     await this.ensureOpen()
     this.mode = opts.mode ?? 'star'
@@ -668,11 +672,27 @@ export class LiveInterviewClient {
         : {}),
     }
 
+    let accessToken = ''
+    try {
+      accessToken = (localStorage.getItem('astra_auth_token') || '').trim()
+    } catch {
+      accessToken = ''
+    }
+
     const baseStart = {
       type: 'start' as const,
       job_context: opts.jobContext ?? '',
       tone: opts.tone ?? 'confident',
       mode: this.mode,
+      // Materials for THIS interview only
+      ...(opts.jobDescription != null
+        ? { job_description: String(opts.jobDescription).slice(0, 8000) }
+        : {}),
+      ...(opts.resumeText != null
+        ? { resume_text: String(opts.resumeText).slice(0, 6000) }
+        : {}),
+      ...(opts.company ? { company: String(opts.company).slice(0, 200) } : {}),
+      ...(accessToken ? { access_token: accessToken, token: accessToken } : {}),
       ...models,
       ...sttPayload,
     }

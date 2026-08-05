@@ -85,10 +85,21 @@ def _user_scope() -> str:
 
 
 def question_key(q: str, mode: str = "star", job: str = "") -> str:
+    """Cache key: session + identity materials fingerprint + mode + question.
+
+    Never reuses answers across different Role/JD/Resume identities.
+    """
     base = normalize_question(q)
     job_n = _job_key_part(job)
     scope = _user_scope()
-    return f"{scope}|{mode}|{job_n}|{base}"
+    ident = "_"
+    try:
+        from session_context import identity_fingerprint
+
+        ident = identity_fingerprint(job)
+    except Exception:
+        ident = job_n or "_"
+    return f"{scope}|{ident}|{mode}|{job_n}|{base}"
 
 
 def _tokens(q: str) -> list[str]:
@@ -583,22 +594,14 @@ def cache_lookup(
 ) -> Optional[tuple[str, str]]:
     """Return (answer, source) if cache hit.
 
-    Default allow_approx=False — approx reuse across roles/users was a
-    multi-tenant leak (old skills on new logins).
+    Approx cache is always disabled — never reuse answers across interviews
+    or identities (Role/JD/Resume). Exact hits are identity-fingerprinted.
     """
+    _ = allow_approx  # ignored — cross-interview reuse forbidden
     key = question_key(question, mode, job_context)
     hit = _CACHE.get_exact(key)
     if hit:
         return hit, "exact_cache"
-    if not allow_approx:
-        return None
-    sim = _CACHE.get_similar(
-        question, mode, job=job_context, scope=_user_scope()
-    )
-    if sim:
-        if sim[1] < 0.95:
-            return None
-        return sim[0], f"approx_cache:{sim[2]}"
     return None
 
 
@@ -905,23 +908,6 @@ def iter_cascade_answer(
 
 
 def warm_cache_seed(job_context: str = "") -> int:
-    """Seed cache with common interview prompts for instant hits after deploy."""
-    seeds = [
-        "Tell me about yourself",
-        "Tell me about a time you had a conflict",
-        "Tell me about a time you failed",
-        "How would you design a URL shortener",
-        "How do you debug a production outage",
-        "What is your greatest strength",
-        "Explain a hard technical problem you solved",
-        "How do you optimize API latency",
-        "Walk me through a system you designed",
-        "Describe a time you mentored someone",
-    ]
-    n = 0
-    for q in seeds:
-        for mode in ("star", "shorter", "technical"):
-            ans = template_answer(q, job_context=job_context, mode=mode)
-            cache_store(q, ans, mode=mode, job_context=job_context)
-            n += 1
-    return n
+    """Disabled: never pre-store domain-agnostic answers for new interviews."""
+    _ = job_context
+    return 0

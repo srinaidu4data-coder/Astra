@@ -75,11 +75,15 @@ class TestJdLexicon:
         assert "sap attp techno-functional" not in low
         assert "role: sap attp" not in low
         assert "pre-session context" not in low
-        assert "this login / this interview only" in low or "role / job context" in low
+        assert (
+            "interview materials" in low
+            or "role / job context" in low
+            or "this interview only" in low
+        )
         # Jargon bank from BRIM Q must not pull ATTP terms
         jar = " ".join(strategy.get("jargon_bank") or []).lower()
         assert "epcis" not in jar
-        assert "attp" not in jar or "never invent attp" in low
+        assert "attp" not in jar or "never invent" in low
 
     def test_soft_empty_prompt_not_attp_locked(self):
         from answer_engine import _build_user_prompt, _fallback_strategy
@@ -98,6 +102,7 @@ class TestJdLexicon:
         assert "pre-session context" not in low
         assert "stay strictly inside sap attp" not in low
         assert "sap attp techno-functional" not in low
+        assert "no rag" in low or "interview materials" in low
 
 
 class TestJdPromptConstruction:

@@ -505,13 +505,23 @@ export function CopilotPage() {
         `Starting interview — ${modeHint}. Prefer speakers so only the interviewer is heard…`,
       )
       const jobCtx = effectiveJobContext()
+      // THIS interview materials only: Role + attached JD + Resume (no RAG / prior packs)
+      const docs = useAppStore.getState().documents || []
+      const jdDoc = docs.find((d) => d.type === 'job')
+      const resumeDoc = docs.find((d) => d.type === 'resume')
+      const jobDescription = (jdDoc?.text || '').slice(0, 8000)
+      const resumeText = (resumeDoc?.text || '').slice(0, 6000)
       void setSessionContext({
         role: jobCtx,
+        job_description: jobDescription,
+        resume_text: resumeText,
         depth,
         outline_first: true,
       })
       await liveInterview.start({
         jobContext: jobCtx,
+        jobDescription,
+        resumeText,
         tone: settings.tone,
         mode: answerMode,
         audioMode,

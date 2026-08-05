@@ -52,26 +52,42 @@ export function resolveCopilotHttpBase(): string {
 
 export function resolveCopilotWsUrl(): string {
   const fromEnv = (import.meta.env.VITE_COPILOT_WS as string | undefined)?.trim()
+  let base = ''
   if (typeof window !== 'undefined' && isLocalHostName(window.location.hostname)) {
     if (!fromEnv || fromEnv.includes('jobinterviewcracker.com')) {
       const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      return `${proto}//${window.location.host}/ws/interview`
+      base = `${proto}//${window.location.host}/ws/interview`
+    } else {
+      base = fromEnv
     }
-    return fromEnv
-  }
-  if (fromEnv) return fromEnv
-
-  if (typeof window !== 'undefined') {
+  } else if (fromEnv) {
+    base = fromEnv
+  } else if (typeof window !== 'undefined') {
     const host = window.location.hostname
     if (
       host === 'jobinterviewcracker.com' ||
       host === 'www.jobinterviewcracker.com' ||
       host.endsWith('.pages.dev')
     ) {
-      return 'wss://api.jobinterviewcracker.com/ws/interview'
+      base = 'wss://api.jobinterviewcracker.com/ws/interview'
     }
   }
-  return 'ws://127.0.0.1:8787/ws/interview'
+  if (!base) base = 'ws://127.0.0.1:8787/ws/interview'
+
+  // Attach auth token so WS pack = HTTP pack (Role / JD / Resume for this login)
+  try {
+    const tok =
+      typeof localStorage !== 'undefined'
+        ? (localStorage.getItem('astra_auth_token') || '').trim()
+        : ''
+    if (tok) {
+      const sep = base.includes('?') ? '&' : '?'
+      return `${base}${sep}token=${encodeURIComponent(tok)}`
+    }
+  } catch {
+    /* ignore */
+  }
+  return base
 }
 
 /**

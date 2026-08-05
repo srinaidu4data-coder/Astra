@@ -140,6 +140,9 @@ def update_pack(**kwargs: Any) -> SessionContextPack:
                     pack.depth = d
             elif k in ("role", "company", "seniority", "interview_type") and v is not None:
                 setattr(pack, k, str(v).strip() if isinstance(v, str) else v)
+            elif k in ("job_description", "resume_text") and v is not None:
+                # Allow empty string to clear prior interview materials
+                setattr(pack, k, str(v).strip() if isinstance(v, str) else v)
             elif v is not None and str(v).strip():
                 setattr(pack, k, str(v).strip() if isinstance(v, str) else v)
         pack.updated_at = time.time()
@@ -295,6 +298,83 @@ def effective_job_context(
     if bits:
         return " · ".join(bits)[:120]
     return ""
+
+
+def interview_materials(
+    *,
+    job_context: str = "",
+    max_jd: int = 1800,
+    max_resume: int = 1400,
+) -> dict[str, str]:
+    """
+    THIS interview only: Role/Job context + attached JD + Resume from pack.
+
+    Never loads disk practice packs. Never uses other users' materials.
+    """
+    pack = get_pack()
+    role = (job_context or pack.role or "").strip()
+    jd = (pack.job_description or "").strip()
+    resume = (pack.resume_text or "").strip()
+    company = (pack.company or "").strip()
+    return {
+        "role": role[:400],
+        "company": company[:120],
+        "job_description": jd[:max_jd],
+        "resume_text": resume[:max_resume],
+    }
+
+
+def materials_grounding_blob(job_context: str = "") -> str:
+    """Single blob for lexicon / brand gates: Role + Job Context + JD + Resume."""
+    m = interview_materials(job_context=job_context)
+    parts = [
+        m.get("role") or "",
+        m.get("company") or "",
+        m.get("job_description") or "",
+        m.get("resume_text") or "",
+    ]
+    return " ".join(p for p in parts if p).strip()
+
+
+def identity_fingerprint(job_context: str = "") -> str:
+    """Stable short hash of this interview's identity materials (cache isolation)."""
+    import hashlib
+
+    blob = materials_grounding_blob(job_context) or (job_context or "").strip() or "_"
+    return hashlib.sha256(blob.encode("utf-8", errors="replace")).hexdigest()[:16]
+
+
+def format_materials_for_prompt(
+    job_context: str = "",
+    *,
+    max_jd: int = 1600,
+    max_resume: int = 1200,
+) -> str:
+    """
+    Prompt block: only Role, Job Context, JD, Resume for this interview.
+    Empty when user set nothing.
+    """
+    m = interview_materials(
+        job_context=job_context, max_jd=max_jd, max_resume=max_resume
+    )
+    parts: list[str] = [
+        "INTERVIEW MATERIALS (this interview only — use ONLY these facts):",
+        "Do not use RAG, prior interviews, or any stored domain pack.",
+    ]
+    if m.get("role"):
+        parts.append(f"Role / Job context: {m['role']}")
+    if m.get("company"):
+        parts.append(f"Company: {m['company']}")
+    if m.get("job_description"):
+        parts.append(f"Job description (attached):\n{m['job_description']}")
+    if m.get("resume_text"):
+        parts.append(f"Resume (attached):\n{m['resume_text']}")
+    if len(parts) <= 2:
+        return (
+            "INTERVIEW MATERIALS: none set. Answer the question only. "
+            "Do not invent a role, product family, or prior experience."
+        )
+    return "\n".join(parts)
 
 
 def get_depth() -> str:

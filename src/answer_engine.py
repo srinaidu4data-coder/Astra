@@ -100,9 +100,16 @@ def _use_quality_regen() -> bool:
 
 
 def _use_rag() -> bool:
+    """
+    RAG is OFF by default for all profiles.
+
+    Interviews must ground only on Role, Job Context, attached JD, and Resume —
+    never on ambient document stores or prior domain packs.
+    Opt-in only: ASTRA_USE_RAG=1.
+    """
     if _FORCE_RAG:
-        return _env_flag(_FORCE_RAG, True)
-    return ANSWER_PROFILE in ("quality", "full", "balanced")
+        return _env_flag(_FORCE_RAG, False)
+    return False
 
 
 def _is_fast_profile() -> bool:
@@ -120,14 +127,15 @@ def _prefer_fast_models() -> bool:
 _CORE = (
     "You write speakable first-person interview answers.\n"
     "Sharp and decisive (clear claim → mechanism → tradeoff → proof).\n"
-    "Use ONLY terminology from the question, Role, and any context block provided. "
-    "If a term is not there, use plain English — never invent elite buzzwords, "
-    "other domains (ML, random cloud, FICO when asked ATTP, etc.), or fake metrics.\n"
+    "GROUNDING RULE (strict): Use ONLY the interviewer's question plus THIS interview's "
+    "Role, Job Context, attached Job Description, and attached Resume. "
+    "Do NOT use RAG, prior interviews, stored domain packs, or other product families.\n"
+    "If a term is not in those materials, use plain English — never invent elite buzzwords "
+    "or off-role modules (e.g. ATTP when Role is BRIM).\n"
     "PRODUCT-LINE RULE: never invent SAP product modules (ATTP, BRIM, FICO, Vertex) "
-    "unless that exact product name appears in Role or the question. "
-    "Industry words alone (track-and-trace, serialization, billing, master data) do NOT "
-    "license naming SAP ATTP or any other product — stay generic or use only named products. "
-    "Blank Role → answer the question only; do not default to SAP ATTP.\n"
+    "unless that exact product name appears in Role, Job Context, JD, or Resume. "
+    "Industry words alone do NOT license naming a product brand. "
+    "Blank materials → answer the question only; do not invent a role or product family.\n"
     "No markdown #. Labels exactly like Hook: (never /Hook:).\n"
     "Ban filler: basically, just, simply, leverage, synergy, excited to, circle back, "
     "going forward, best practice as empty praise, world-class, passionate.\n"
@@ -206,15 +214,24 @@ REGEN_PRODUCT_BLEED_SUFFIX = (
 
 
 def _product_bleed(answer: str, question: str = "", job_context: str = "") -> bool:
-    """True if answer invents product-line jargon absent from Role/Q."""
+    """True if answer invents product-line jargon absent from Role/Q/JD/Resume."""
     try:
         from common_sense import has_invented_product_bleed
+        from session_context import materials_grounding_blob
 
+        materials = materials_grounding_blob(job_context) or job_context
         return has_invented_product_bleed(
-            answer, question=question, job_context=job_context
+            answer, question=question, job_context=materials
         )
     except Exception:
-        return False
+        try:
+            from common_sense import has_invented_product_bleed
+
+            return has_invented_product_bleed(
+                answer, question=question, job_context=job_context
+            )
+        except Exception:
+            return False
 
 
 def _regen_user_for_bleed(
@@ -896,9 +913,23 @@ def _build_user_prompt(
     strict_regen: bool = False,
 ) -> str:
     q = (question or "").strip()
-    # Per-login Role/Job only — never invent from pack or disk practice JD
+    # Per-interview Role/Job only — never disk practice JD or foreign packs
     user_job = (job_context or "").strip()
     job = user_job
+
+    # Materials: Role + attached JD + Resume for THIS session only (no RAG)
+    materials_blob = ""
+    materials_block = ""
+    try:
+        from session_context import format_materials_for_prompt, materials_grounding_blob
+
+        materials_blob = materials_grounding_blob(user_job)
+        materials_block = format_materials_for_prompt(user_job)
+    except Exception:
+        materials_blob = user_job
+        materials_block = (
+            f"Role / Job context: {user_job}" if user_job else ""
+        )
 
     lock = None
     guard = ""
@@ -909,78 +940,81 @@ def _build_user_prompt(
             prompt_guardrails,
         )
 
-        # Domain from THIS interview's Role + question only (extra_context empty)
-        lock = lock_for_turn(q, user_job, extra_context="")
-        guard = prompt_guardrails(lock, role=user_job)
-        if context_chunks:
-            context_chunks = filter_context_chunks(
-                context_chunks,
-                question=q,
-                job_context=user_job,
-                lock=lock,
-            )
+        # Domain from THIS interview materials only (Role/JD/Resume), never pack bleed
+        lock = lock_for_turn(
+            q,
+            user_job or materials_blob[:400],
+            extra_context=(materials_blob[:2000] if materials_blob else ""),
+        )
+        guard = prompt_guardrails(lock, role=user_job or materials_blob[:200])
+        # Drop any accidental RAG chunks — interviews are materials-only
+        context_chunks = []
 
     except Exception:
         guard = (
-            "Stay on the asked topic and the stated Role only. "
-            "Do not import other product-line skills. "
+            "Stay on the asked topic and the stated Role / JD / Resume only. "
+            "Do not import other product-line skills or prior interviews. "
             "No meta coaching labels."
         )
+        context_chunks = []
 
-    # No PRE-SESSION pack injection — multi-user pack was the ATTP bleed source
-    pre = ""
-    if user_job:
-        pre = (
-            "INTERVIEW IDENTITY (this login / this interview only):\n"
-            f"Role / Job context: {user_job[:400]}\n"
-            "Use only this identity. Do not use any other user's role or practice pack."
-        )
+    pre = materials_block or (
+        "INTERVIEW MATERIALS: none set. Answer the question only."
+    )
 
     jargon: list[str] = []
     try:
         from jd_grounding import lexicon_for_turn
 
-        jargon = lexicon_for_turn(q, user_job, max_terms=14)
+        jargon = lexicon_for_turn(
+            q,
+            user_job,
+            job_description=materials_blob[:2500],
+            max_terms=14,
+        )
     except Exception:
         jargon = [str(j) for j in (strategy.get("jargon_bank") or []) if j][:14]
     must = [str(m) for m in (strategy.get("must_cover") or []) if m][:5]
     long_q = _is_long_or_multipart_question(q)
     depth = _answer_depth()
     one_word = _is_one_word_answer_question(q)
-    domain = (
-        (lock.label if lock and lock.confidence >= 0.28 else None)
-        or strategy.get("accuracy_domain")
-        or "general"
+    # Never paint a stored product domain unless materials named a brand
+    domain = "interview materials only"
+    if lock and lock.confidence >= 0.28 and lock.domain != "general":
+        domain = lock.label
+
+    materials_rule = (
+        "MATERIALS RULE: Answer ONLY from the question + Role/Job Context + "
+        "attached JD + attached Resume above. "
+        "No RAG, no prior interviews, no stored domain answers, no other products."
     )
 
     if _is_fast_profile() and not strict_regen:
         q_budget = 1800 if long_q else 900
         parts = [
-            f"Role: {job[:180] if job else '(use only the question — do not invent a job title)'}",
+            f"Role: {job[:180] if job else '(use only materials / question — do not invent a job title)'}",
             f"Q: {q[:q_budget]}",
-            f"Domain: {domain}",
+            f"Grounding: {domain}",
             f"Depth: {depth}",
         ]
         if pre:
             parts.append(pre)
         if jargon:
-            parts.append("Prefer these role terms when accurate: " + ", ".join(jargon))
+            parts.append("Prefer these materials terms when accurate: " + ", ".join(jargon))
         if must:
             parts.append("Must cover: " + "; ".join(must))
         if guard:
             parts.append(guard)
-        if user_job:
+        parts.append(materials_rule)
+        if user_job or materials_blob:
             parts.append(
-                "ROLE RULE: Answer strictly as THIS Role and question only. "
-                "One login = one Role. Do not combine skills from other SAP products "
-                "or other users. Only terms in Role or Q. "
-                "Never invent ATTP/EPCIS/DSCSA unless those words appear in Role or Q."
+                "ROLE RULE: Answer as THIS Role/materials only. "
+                "Never invent product modules not named in materials."
             )
         else:
             parts.append(
-                "TOPIC RULE: No Role set — answer the question only. "
-                "Do not invent a job title or product family. "
-                "Never default to SAP ATTP, track-and-trace, EPCIS, or DSCSA."
+                "TOPIC RULE: No Role/JD/Resume set — answer the question only. "
+                "Do not invent a job title or product family."
             )
         if long_q:
             parts.append(
@@ -1000,21 +1034,14 @@ def _build_user_prompt(
         elif depth == "deep":
             parts.append("DEEP: 220–340 words. Mechanisms + failure modes.")
         parts.append(
-            "Accuracy: correct for THIS question and role only; "
+            "Accuracy: correct for THIS question and materials only; "
             "no invented APIs/products; finish every section."
         )
         parts.append("Answer now.")
         return "\n".join(parts)
 
-    ctx = ""
-    if context_chunks:
-        bits = [
-            c.get("text", "")[:400]
-            for c in context_chunks[:3]
-            if c.get("text")
-        ]
-        if bits:
-            ctx = "CONTEXT (use only if relevant):\n- " + "\n- ".join(bits)
+    # RAG deliberately unused — materials only
+    _ = context_chunks
 
     strat_blob = json.dumps(
         {
@@ -1040,28 +1067,15 @@ def _build_user_prompt(
     }.get(mode, "Write the interview answer now.")
 
     parts = [
-        f"ROLE: {job or '(answer the question only — do not invent a job title)'}",
+        f"ROLE: {job or '(answer from materials / question only — do not invent a job title)'}",
         f"TONE: {tone_line}",
         f"STRATEGY: {strat_blob}",
         guard,
         pre,
-        ctx,
+        materials_rule,
         f"QUESTION:\n{q}",
         instruct,
     ]
-    if user_job:
-        parts.append(
-            "ROLE RULE: Answer strictly as THIS Role and question only. "
-            "One login = one Role. Do not import other product-line skills. "
-            "Never invent ATTP/EPCIS/DSCSA/track-and-trace unless those words "
-            "appear in Role or the question."
-        )
-    else:
-        parts.append(
-            "TOPIC RULE: No Role set — answer the question only. "
-            "Do not invent a job title or product family. "
-            "Never default to SAP ATTP, track-and-trace, EPCIS, or DSCSA."
-        )
     if strict_regen:
         parts.append(REGEN_STRICT_SUFFIX)
     return "\n\n".join(p for p in parts if p)
