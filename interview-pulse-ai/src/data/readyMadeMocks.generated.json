@@ -1,0 +1,404 @@
+{
+  "categories": [
+    {
+      "id": "sap-fico",
+      "label": "SAP FICO",
+      "description": "Finance & Controlling panel mocks — enterprise structure through ICMR, FSCM, and close.",
+      "packs": [
+        {
+          "id": "sap-fico-final-50",
+          "title": "Final 50 — FICO Panel",
+          "subtitle": "41 hard panel questions · Maya · Daniel · Marcus style",
+          "difficulty": "hard",
+          "focus": "technical",
+          "persona": "strict-tech-lead",
+          "job_title": "SAP FICO Consultant",
+          "company": "",
+          "question_count": 41,
+          "answer_seconds": 90,
+          "tags": [
+            "SAP",
+            "FICO",
+            "S/4HANA",
+            "Panel",
+            "Hard"
+          ],
+          "audio_url": "/mocks/sap-fico/final50fico.mp3",
+          "intro_script": "Good morning. Thanks for joining. This is a panel-style mock for SAP FICO. I'm Daniel, architecture lead. Maya will push process depth, and Marcus will pressure controls and close impact. After each question, answer out loud — we score STAR, depth, and communication. Let's begin.",
+          "closing_script": "That wraps the SAP FICO Final 50 panel set. Review your debrief for strengths, gaps, and a practice plan. You can re-run any ready-made mock from the Mock tab.",
+          "questions": [
+            {
+              "id": "fico_final50_q01",
+              "text": "How will you map the basic enterprise structure of SAP FICO in the system?",
+              "spoken_text": "Maya here. I need a crisp, practical answer — not a theory lecture. First question out of the gate. How will you map the basic enterprise structure of S A P F I C O in the system? Be specific. Name transactions, objects, and ownership.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q02",
+              "text": "What is your understanding of asset accounting in FICO? AUC Capitalization with PS /WBS Integration",
+              "spoken_text": "This is Daniel. Walk me through the system behavior, not the brochure. Building on how you frame fundamentals. What is your understanding of asset accounting in F I C O? assets under construction Capitalization with project system /W B S Integration? If you only give me definitions, I'll push back — give me a real scenario.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q03",
+              "text": "What is your understanding of P2P, O2C and MTO? What is your understanding of FI-MM integration, FI-SD integration?",
+              "spoken_text": "Marcus here. If numbers don't tie, what do you block and what do you escalate? Building on how you frame fundamentals. What is your understanding of procure to pay, order to cash and make to order? What is your understanding of F I M M integration, F I S D integration? Tell me what breaks first if you get this wrong in production.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q04",
+              "text": "What is your understanding of Automatic payment program? Configuration and Run steps.",
+              "spoken_text": "Daniel. Give me the configuration spine and the failure path. I'm not done with you yet. What is your understanding of Automatic payment program? Configuration and Run steps.? I want your recommendation and what you would not accept.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q05",
+              "text": "What is your understanding of special GL indicators? What is Vendor Down payment process flow?",
+              "spoken_text": "Maya here. I need a crisp, practical answer — not a theory lecture. Switching gears. What is your understanding of special G L indicators? What is Vendor Down payment process flow? Ground this in a project you actually owned.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q06",
+              "text": "What do you understand by Document splitting? Explain different types with example? What is New GL concept? Explain different types of ledgers in SAP FICO?",
+              "spoken_text": "Marcus. Pretend finance leadership is in the room — no fluff. Switching gears. What do you understand by Document splitting? Explain different types with example? What is New G L concept? Explain different types of ledgers in S A P F I C O? Clock is on you — structure the answer, then defend it.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q07",
+              "text": "What is your understanding of Custom Interfaces, Enhancement of Inbound Idoc interfaces. (RICEFW)? What is your understanding of Functional specification? How to write Functional specification document? What are the FS you have work on and what was your approach?",
+              "spoken_text": "Daniel here. If this breaks at month-end, who owns it and how do you prove it? Same panel, harder angle. What is your understanding of Custom Interfaces, Enhancement of Inbound I-doc interfaces. (RICEFW)? What is your understanding of Functional specification? How to write Functional specification document? What are the FS you have work on and what was your approach? Don't hide behind 'it depends' without naming the decision criteria.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q08",
+              "text": "What is your understanding of Dunning? What are the configuration and accounting entries in EBS?",
+              "spoken_text": "Maya speaking. I want sequence, ownership, and what you would refuse to sign. Alright, next topic. What is your understanding of Dunning? What are the configuration and accounting entries in electronic bank statement? If audit walks in tomorrow, what evidence do you show?",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q09",
+              "text": "What is your understanding of intercompany transactions in SAP?",
+              "spoken_text": "Marcus from the controller side. I need audit language and close impact. Same panel, harder angle. What is your understanding of intercompany transactions in S A P? Be specific. Name transactions, objects, and ownership.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q10",
+              "text": "What is your understanding of taxation in SAP?",
+              "spoken_text": "This is Daniel. Walk me through the system behavior, not the brochure. I'm not done with you yet. What is your understanding of taxation in S A P? If you only give me definitions, I'll push back — give me a real scenario.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q11",
+              "text": "What do you mean by product costing run? 4 Month end activities in Product Costing(Overhead Cal, Variance calculation, WIP Calc, Settlement? Master Data used in Product Costing? Overhed key vs Orgin key? T-codes and Tables?",
+              "spoken_text": "Maya. Let's make this uncomfortable in a good way — show me how you think under pressure. Switching gears. What do you mean by product costing run? 4 Month end activities in Product Costing(Overhead Cal, Variance calculation, WIP Calc, Settlement? Master Data used in Product Costing? Overhed key vs Orgin key? T-codes and Tables? Tell me what breaks first if you get this wrong in production.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q12",
+              "text": "What is your understanding of Material Ledger? FI - MM integration for ML? Master Data requirements for ML?T-codes/ Tables for ML in ECC vs S4 HANA",
+              "spoken_text": "Daniel. Give me the configuration spine and the failure path. Next. What is your understanding of Material Ledger? FI - MM integration for material ledger? Master Data requirements for material ledger?T-codes/ Tables for material ledger in E C C vs S four HANA? I want your recommendation and what you would not accept.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q13",
+              "text": "What are major ECC to S4hana changes related to SAP FICO.",
+              "spoken_text": "Marcus from the controller side. I need audit language and close impact. Let's pressure-test this area. What are major E C C to S four HANA changes related to S A P F I C O.? Ground this in a project you actually owned.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q14",
+              "text": "What are the year end and month end activities in SAP FICO?",
+              "spoken_text": "This is Daniel. Walk me through the system behavior, not the brochure. Switching gears. What are the year end and month end activities in S A P F I C O? Clock is on you — structure the answer, then defend it.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q15",
+              "text": "What is your understanding of Validations and Substitutions in SAP?",
+              "spoken_text": "Maya. Let's make this uncomfortable in a good way — show me how you think under pressure. Alright, next topic. What is your understanding of Validations and Substitutions in S A P? Don't hide behind 'it depends' without naming the decision criteria.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q16",
+              "text": "COPA Actual flows, Costing vs Account COPA Differences? New features in COPA for S4 HANA? Differences between Assessment, Distributions and Settlement? How to actual values flow into COPA? ACCOUnt based vs Costing based COPA?",
+              "spoken_text": "Marcus. Corner this with controls: detection, prevention, evidence. Same panel, harder angle. C O P A Actual flows, Costing vs Account C O P A Differences? New features in C O P A for S four HANA? Differences between Assessment, Distributions and Settlement? How to actual values flow into C O P A? ACCOUnt based vs Costing based C O P A? If audit walks in tomorrow, what evidence do you show?",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q17",
+              "text": "What are the major types of projects in SAP? What is your knowledge on ASAP vs Activate Methodology? Implementation vs Support?",
+              "spoken_text": "Daniel. Architecture lens — I care about design trade-offs and integration risk. Let's pressure-test this area. What are the major types of projects in S A P? What is your knowledge on A S A P vs Activate Methodology? Implementation vs Support? Be specific. Name transactions, objects, and ownership.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q18",
+              "text": "What is your experience with FI-Concur integration? Fieldglass Integration",
+              "spoken_text": "Maya again. I'm going to hold you to real project evidence. Next. What is your experience with FI-Concur integration? Fieldglass Integration? If you only give me definitions, I'll push back — give me a real scenario.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q19",
+              "text": "What is your experience with Opentext VIM?",
+              "spoken_text": "Marcus here. If numbers don't tie, what do you block and what do you escalate? Alright, next topic. What is your experience with Opentext vendor invoice management? Tell me what breaks first if you get this wrong in production.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q20",
+              "text": "What is your experience with SAP Ariba Integration?",
+              "spoken_text": "Daniel. Give me the configuration spine and the failure path. Switching gears. What is your experience with S A P Ariba Integration? I want your recommendation and what you would not accept.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q21",
+              "text": "What are the Cutover activities in SAP FICO?",
+              "spoken_text": "Maya here. I need a crisp, practical answer — not a theory lecture. We're at the midpoint — don't coast. What are the Cutover activities in S A P F I C O? Ground this in a project you actually owned.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q22",
+              "text": "What is your understanding of Universal Journal in SAP FICO?",
+              "spoken_text": "This is Daniel. Walk me through the system behavior, not the brochure. Next. What is your understanding of Universal Journal in S A P F I C O? Clock is on you — structure the answer, then defend it.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q23",
+              "text": "What is your experience with SAP RAR?",
+              "spoken_text": "Marcus here. If numbers don't tie, what do you block and what do you escalate? Switching gears. What is your experience with S A P revenue accounting and reporting? Don't hide behind 'it depends' without naming the decision criteria.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q24",
+              "text": "What is your experience with SAP CFIN And MDG?",
+              "spoken_text": "Daniel. Give me the configuration spine and the failure path. Switching gears. What is your experience with S A P central finance And master data governance? If audit walks in tomorrow, what evidence do you show?",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q25",
+              "text": "What is your understanding of GR/IR Clearing account?",
+              "spoken_text": "Maya here. I need a crisp, practical answer — not a theory lecture. Alright, next topic. What is your understanding of G R I R Clearing account? Be specific. Name transactions, objects, and ownership.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q26",
+              "text": "What is your experience of foreign currency valuations in SAP?",
+              "spoken_text": "Marcus. Pretend finance leadership is in the room — no fluff. Alright, next topic. What is your experience of foreign currency valuations in S A P? If you only give me definitions, I'll push back — give me a real scenario.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q27",
+              "text": "Can you describe your experience with SAP FICO and highlight key projects where you played a critical role?",
+              "spoken_text": "Daniel here. If this breaks at month-end, who owns it and how do you prove it? Next. Can you describe your experience with S A P F I C O and highlight key projects where you played a critical role? Tell me what breaks first if you get this wrong in production.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q28",
+              "text": "What are the most complex configurations you have handled in SAP FICO, and how did you approach them?",
+              "spoken_text": "Maya speaking. I want sequence, ownership, and what you would refuse to sign. Switching gears. What are the most complex configurations you have handled in S A P F I C O, and how did you approach them? I want your recommendation and what you would not accept.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q29",
+              "text": "How do you ensure data accuracy and integrity within the SAP FICO module?",
+              "spoken_text": "Marcus from the controller side. I need audit language and close impact. Let's pressure-test this area. How do you ensure data accuracy and integrity within the S A P F I C O module? Ground this in a project you actually owned.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q30",
+              "text": "Can you discuss a time when you had to troubleshoot and resolve a significant issue within SAP FICO? What steps did you take?",
+              "spoken_text": "This is Daniel. Walk me through the system behavior, not the brochure. Let's pressure-test this area. Can you discuss a time when you had to troubleshoot and resolve a significant issue within S A P F I C O? What steps did you take? Clock is on you — structure the answer, then defend it.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q31",
+              "text": "How do you stay updated with the latest developments and updates in SAP FICO?",
+              "spoken_text": "Maya. Let's make this uncomfortable in a good way — show me how you think under pressure. I'm not done with you yet. How do you stay updated with the latest developments and updates in S A P F I C O? Don't hide behind 'it depends' without naming the decision criteria.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q32",
+              "text": "What strategies do you use for optimizing the financial processes within SAP FICO?",
+              "spoken_text": "Daniel. Give me the configuration spine and the failure path. Same panel, harder angle. What strategies do you use for optimizing the financial processes within S A P F I C O? If audit walks in tomorrow, what evidence do you show?",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q33",
+              "text": "Can you explain your experience with SAP S/4HANA Finance, and how it differs from the traditional SAP FICO?",
+              "spoken_text": "Marcus from the controller side. I need audit language and close impact. Next. Can you explain your experience with S A P S four HANA Finance, and how it differs from the traditional S A P F I C O? Be specific. Name transactions, objects, and ownership.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q34",
+              "text": "How do you manage change requests and ensure minimal disruption to ongoing processes in SAP FICO?",
+              "spoken_text": "This is Daniel. Walk me through the system behavior, not the brochure. Next. How do you manage change requests and ensure minimal disruption to ongoing processes in S A P F I C O? If you only give me definitions, I'll push back — give me a real scenario.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q35",
+              "text": "What is your approach to managing and executing SAP FICO migrations or upgrades?",
+              "spoken_text": "Maya. Let's make this uncomfortable in a good way — show me how you think under pressure. Same panel, harder angle. What is your approach to managing and executing S A P F I C O migrations or upgrades? Tell me what breaks first if you get this wrong in production.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q36",
+              "text": "Can you describe a time when you had to customize SAP FICO to meet specific business requirements?",
+              "spoken_text": "Marcus. Corner this with controls: detection, prevention, evidence. Let's pressure-test this area. Can you describe a time when you had to customize S A P F I C O to meet specific business requirements? I want your recommendation and what you would not accept.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q37",
+              "text": "How do you ensure compliance with financial regulations and standards within SAP FICO?",
+              "spoken_text": "Daniel. Architecture lens — I care about design trade-offs and integration risk. Switching gears. How do you ensure compliance with financial regulations and standards within S A P F I C O? Ground this in a project you actually owned.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q38",
+              "text": "Can you discuss a situation where you improved financial performance or efficiency through SAP FICO?",
+              "spoken_text": "Maya again. I'm going to hold you to real project evidence. Same panel, harder angle. Can you discuss a situation where you improved financial performance or efficiency through S A P F I C O? Clock is on you — structure the answer, then defend it.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            },
+            {
+              "id": "fico_final50_q39",
+              "text": "How do you handle user training and support for SAP FICO to ensure optimal utilization by end-users?",
+              "spoken_text": "Marcus here. If numbers don't tie, what do you block and what do you escalate? Late-stage panel question — stay sharp. How do you handle user training and support for S A P F I C O to ensure optimal utilization by end-users? Don't hide behind 'it depends' without naming the decision criteria.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Marcus",
+              "bridge": "",
+              "speaker": "Marcus"
+            },
+            {
+              "id": "fico_final50_q40",
+              "text": "What is your experience with Group Reporting and Inter Company Matching Reconciliation(ICMR)?",
+              "spoken_text": "Daniel. Give me the configuration spine and the failure path. Late-stage panel question — stay sharp. What is your experience with Group Reporting and Inter Company Matching Reconciliation(intercompany matching and reconciliation)? If audit walks in tomorrow, what evidence do you show?",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Daniel",
+              "bridge": "",
+              "speaker": "Daniel"
+            },
+            {
+              "id": "fico_final50_q41",
+              "text": "What is your experience with FSCM, TRM and Credit Management?",
+              "spoken_text": "Maya here. I need a crisp, practical answer — not a theory lecture. Late-stage panel question — stay sharp. What is your experience with financial supply chain management, treasury and risk management and Credit Management? Be specific. Name transactions, objects, and ownership.",
+              "category": "sap-fico",
+              "hint": "Panel interviewer: Maya",
+              "bridge": "",
+              "speaker": "Maya"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

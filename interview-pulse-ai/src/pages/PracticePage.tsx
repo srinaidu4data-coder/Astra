@@ -1,6 +1,11 @@
 import { Waveform } from '@/components/Waveform'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  getReadyMadeCategory,
+  READY_MADE_CATEGORIES,
+  type ReadyMadePack,
+} from '@/data/readyMadeMocks'
 import { PERSONA_LABELS } from '@/lib/demo-data'
 import { uid } from '@/lib/utils'
 import { MicDictation } from '@/services/dictation'
@@ -24,9 +29,11 @@ import {
 import { useAppStore } from '@/stores/app-store'
 import type { InterviewerPersona } from '@/types'
 import {
+  BookOpen,
   CheckCircle2,
   ChevronRight,
   Clock,
+  Headphones,
   Lightbulb,
   Mic,
   MicOff,
@@ -51,7 +58,9 @@ const focuses: { id: MockFocus; label: string }[] = [
   { id: 'system-design', label: 'System design' },
 ]
 
-type Phase = 'setup' | 'live' | 'report'
+type Phase = 'setup' | 'live' | 'report' | 'audio'
+
+type SetupTab = 'ready' | 'custom'
 
 type Turn = {
   question: string
@@ -82,6 +91,11 @@ export function PracticePage() {
   } = useAppStore()
 
   const [phase, setPhase] = useState<Phase>('setup')
+  const [setupTab, setSetupTab] = useState<SetupTab>('ready')
+  const [readyCategoryId, setReadyCategoryId] = useState(
+    READY_MADE_CATEGORIES[0]?.id || 'sap-fico',
+  )
+  const [activePack, setActivePack] = useState<ReadyMadePack | null>(null)
   const [jobTitle, setJobTitle] = useState(settings.jobContext || '')
   const [company, setCompany] = useState('')
   const [jd, setJd] = useState('')
@@ -252,9 +266,113 @@ export function PracticePage() {
     }
   }
 
+  const beginLiveSession = async (opts: {
+    sessionId: string
+    questions: MockQuestion[]
+    tips: string[]
+    source: string
+    intro: string
+    closing: string
+  }) => {
+    setSessionId(opts.sessionId)
+    setQuestions(opts.questions)
+    setTips(opts.tips)
+    setSource(opts.source)
+    setIntroScript(opts.intro)
+    setClosingScript(opts.closing)
+    setQIndex(0)
+    setAnswerText('')
+    turnsRef.current = []
+    setTurns([])
+    setLastScore(null)
+    setFollowUpMode(false)
+    setTurnPhase('intro')
+    setInterviewerLine('')
+    setReport(null)
+    setPhase('live')
+    setPracticeActive(true)
+    startedAt.current = new Date().toISOString()
+    setSessionElapsed(0)
+    if (sessionTick.current) clearInterval(sessionTick.current)
+    sessionTick.current = setInterval(() => {
+      setSessionElapsed((s) => s + 1)
+    }, 1000)
+    setLiveFeedback({
+      confidence: 70,
+      fillerWords: 0,
+      starCoverage: 55,
+      technicalDepth: 60,
+    })
+    setBusy(false)
+
+    const first = opts.questions[0]
+    const firstLine = spokenQuestionLine(first) || first?.text || ''
+    await deliverInterviewer(opts.intro, 'intro')
+    if (firstLine) {
+      await deliverInterviewer(firstLine, 'asking', { openMicAfter: true })
+    } else {
+      setTurnPhase('answering')
+      startAnswerTimer()
+      beginMicDictation()
+    }
+  }
+
+  /** Ready-made pack: fixed bank (no API question gen) + scoring still via API. */
+  const startReadyMadePack = async (pack: ReadyMadePack) => {
+    setBusy(true)
+    setError(null)
+    setActivePack(pack)
+    try {
+      setJobTitle(pack.job_title)
+      setCompany(pack.company || '')
+      setDifficulty(pack.difficulty)
+      setFocus(pack.focus)
+      setPracticePersona(pack.persona as InterviewerPersona)
+      setTimeLimit(pack.answer_seconds || 90)
+      setQCount(pack.questions.length)
+
+      const qs: MockQuestion[] = pack.questions.map((q) => ({
+        id: q.id,
+        text: q.text,
+        spoken_text: q.spoken_text || q.text,
+        category: q.category || pack.id,
+        hint: q.hint,
+        bridge: q.bridge,
+      }))
+
+      await beginLiveSession({
+        sessionId: uid('ready'),
+        questions: qs,
+        tips: [
+          'Ready-made panel bank — answer with ownership and transaction codes.',
+          'Use STAR when the question is scenario-based.',
+          'If you hedge, name decision criteria.',
+        ],
+        source: `ready-made · ${pack.id}`,
+        intro: pack.intro_script,
+        closing: pack.closing_script,
+      })
+    } catch (e) {
+      setError((e as Error).message || 'Could not start ready-made mock')
+      setBusy(false)
+    }
+  }
+
+  const openPanelAudio = (pack: ReadyMadePack) => {
+    if (!pack.audio_url) {
+      setError('No panel audio file for this pack yet.')
+      return
+    }
+    setActivePack(pack)
+    setJobTitle(pack.job_title)
+    setError(null)
+    setPhase('audio')
+  }
+
   const startSession = async () => {
     setBusy(true)
     setError(null)
+    setActivePack(null)
     setReport(null)
     setTurns([])
     setLastScore(null)
@@ -276,46 +394,16 @@ export function PracticePage() {
         resume_snippets: resumeBits,
         company,
       })
-      setSessionId(res.session_id)
-      setQuestions(res.questions)
-      setTips(res.tips)
-      setSource(res.source)
-      setIntroScript(res.intro_script || '')
-      setClosingScript(res.closing_script || '')
-      setQIndex(0)
-      setAnswerText('')
-      turnsRef.current = []
-      setTurns([])
-      setPhase('live')
-      setPracticeActive(true)
-      startedAt.current = new Date().toISOString()
-      setSessionElapsed(0)
-      sessionTick.current = setInterval(() => {
-        setSessionElapsed((s) => s + 1)
-      }, 1000)
-      setLiveFeedback({
-        confidence: 70,
-        fillerWords: 0,
-        starCoverage: 55,
-        technicalDepth: 60,
+      await beginLiveSession({
+        sessionId: res.session_id,
+        questions: res.questions,
+        tips: res.tips,
+        source: res.source,
+        intro:
+          res.intro_script ||
+          `Thanks for joining. This is a mock interview for ${jobTitle || 'this role'}. Let's begin.`,
+        closing: res.closing_script || '',
       })
-      setBusy(false)
-
-      const intro =
-        res.intro_script ||
-        `Thanks for joining. This is a mock interview for ${jobTitle || 'this role'}. Let's begin.`
-      const first = res.questions[0]
-      const firstLine = spokenQuestionLine(first) || first?.text || ''
-
-      // Intro, then first question, then open mic
-      await deliverInterviewer(intro, 'intro')
-      if (firstLine) {
-        await deliverInterviewer(firstLine, 'asking', { openMicAfter: true })
-      } else {
-        setTurnPhase('answering')
-        startAnswerTimer()
-        beginMicDictation()
-      }
     } catch (e) {
       setError((e as Error).message || 'Could not start mock session')
       setBusy(false)
@@ -532,6 +620,8 @@ export function PracticePage() {
     stopTimers()
     setPracticeActive(false)
     setPhase('setup')
+    setSetupTab(activePack ? 'ready' : setupTab)
+    setActivePack(null)
     setQuestions([])
     setTurns([])
     setLastScore(null)
@@ -582,6 +672,7 @@ export function PracticePage() {
 
   // --- SETUP ---
   if (phase === 'setup') {
+    const readyCat = getReadyMadeCategory(readyCategoryId)
     return (
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <section className="glass relative overflow-hidden rounded-[28px] p-8 md:p-10">
@@ -594,12 +685,48 @@ export function PracticePage() {
               <Sparkles className="h-4 w-4 text-[#5DD5E3]" strokeWidth={1.75} />
             </span>
             <h2 className="text-[17px] font-medium tracking-tight text-white/95">
-              Mock interview
+              Mock interviews
             </h2>
           </div>
-          <p className="mb-8 max-w-xl text-[13px] leading-relaxed text-white/40">
-            Spoken interviewer · your mic · scores and follow-ups. Practice before the live kit.
+          <p className="mb-6 max-w-xl text-[13px] leading-relaxed text-white/40">
+            Pick a ready-made pack (SAP FICO Final 50) or build a custom mock.
           </p>
+
+          {/* Setup tabs — Ready-made is default */}
+          <div
+            className="mb-8 flex flex-wrap gap-2 rounded-full bg-white/[0.04] p-1 ring-1 ring-white/[0.06]"
+            role="tablist"
+            aria-label="Mock type"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={setupTab === 'ready'}
+              onClick={() => setSetupTab('ready')}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-medium transition-colors ${
+                setupTab === 'ready'
+                  ? 'bg-[#20B8CD]/20 text-[#5DD5E3] ring-1 ring-[#20B8CD]/35'
+                  : 'text-white/45 hover:text-white/75'
+              }`}
+            >
+              <BookOpen className="h-4 w-4" strokeWidth={1.75} />
+              Ready-made mocks
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={setupTab === 'custom'}
+              onClick={() => setSetupTab('custom')}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-medium transition-colors ${
+                setupTab === 'custom'
+                  ? 'bg-[#20B8CD]/20 text-[#5DD5E3] ring-1 ring-[#20B8CD]/35'
+                  : 'text-white/45 hover:text-white/75'
+              }`}
+            >
+              <Sparkles className="h-4 w-4" strokeWidth={1.75} />
+              Custom mock
+            </button>
+          </div>
 
           {error && (
             <div
@@ -610,142 +737,225 @@ export function PracticePage() {
             </div>
           )}
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <label className="sm:col-span-2">
-              <span className="ip-label">Target role</span>
-              <input
-                className="ip-field mt-1.5"
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
-                placeholder="e.g. Senior Backend Engineer"
-              />
-            </label>
-            <label>
-              <span className="ip-label">Company (optional)</span>
-              <input
-                className="ip-field mt-1.5"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="e.g. Stripe"
-              />
-            </label>
-            <label>
-              <span className="ip-label">Questions</span>
-              <select
-                className="ip-field mt-1.5"
-                value={qCount}
-                onChange={(e) => setQCount(Number(e.target.value))}
-              >
-                {[3, 5, 7, 10].map((n) => (
-                  <option key={n} value={n}>
-                    {n} questions
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="sm:col-span-2">
-              <span className="ip-label">Job description (optional)</span>
-              <textarea
-                className="ip-field mt-1.5 min-h-[100px] resize-y py-2.5"
-                value={jd}
-                onChange={(e) => setJd(e.target.value)}
-                placeholder="Paste JD bullets for tailored questions…"
-              />
-            </label>
-          </div>
+          {setupTab === 'ready' ? (
+            <div className="space-y-6">
+              <div>
+                <span className="label-quiet">Category</span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {READY_MADE_CATEGORIES.map((c) => (
+                    <Button
+                      key={c.id}
+                      size="sm"
+                      variant={readyCategoryId === c.id ? 'default' : 'secondary'}
+                      onClick={() => setReadyCategoryId(c.id)}
+                    >
+                      {c.label}
+                    </Button>
+                  ))}
+                </div>
+                {readyCat && (
+                  <p className="mt-2 text-[12px] leading-relaxed text-white/40">
+                    {readyCat.description}
+                  </p>
+                )}
+              </div>
 
-          <div className="mt-6">
-            <span className="label-quiet">Interviewer persona</span>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {personas.map((p) => (
+              <div className="space-y-3">
+                <span className="label-quiet">Packs · {readyCat?.label || '…'}</span>
+                {(readyCat?.packs || []).map((pack) => (
+                  <div
+                    key={pack.id}
+                    className="rounded-[20px] border border-white/[0.08] bg-white/[0.03] p-5"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="text-[15px] font-medium text-white/95">{pack.title}</h3>
+                        <p className="mt-1 text-[12px] text-white/45">{pack.subtitle}</p>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          <Badge tone="indigo">{pack.question_count} Qs</Badge>
+                          <Badge tone="default">{pack.difficulty}</Badge>
+                          <Badge tone="emerald">{pack.job_title}</Badge>
+                          {pack.tags.slice(0, 3).map((t) => (
+                            <Badge key={t} tone="default">
+                              {t}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        size="lg"
+                        className="min-h-[44px]"
+                        disabled={busy}
+                        onClick={() => void startReadyMadePack(pack)}
+                      >
+                        {busy ? 'Starting…' : 'Start interactive mock'}
+                      </Button>
+                      {pack.audio_url && (
+                        <Button
+                          size="lg"
+                          variant="secondary"
+                          className="min-h-[44px]"
+                          disabled={busy}
+                          onClick={() => openPanelAudio(pack)}
+                        >
+                          <Headphones className="h-4 w-4" strokeWidth={1.75} />
+                          Play panel audio
+                        </Button>
+                      )}
+                    </div>
+                    <p className="mt-3 text-[11px] leading-relaxed text-white/30">
+                      Interactive: spoken questions one-by-one with scoring. Panel audio: full
+                      Maya / Daniel / Marcus track (~32 min, 25s gaps).
+                    </p>
+                  </div>
+                ))}
+                {!readyCat?.packs?.length && (
+                  <p className="text-[13px] text-white/40">No packs in this category yet.</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <label className="sm:col-span-2">
+                  <span className="ip-label">Target role</span>
+                  <input
+                    className="ip-field mt-1.5"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    placeholder="e.g. Senior Backend Engineer"
+                  />
+                </label>
+                <label>
+                  <span className="ip-label">Company (optional)</span>
+                  <input
+                    className="ip-field mt-1.5"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="e.g. Stripe"
+                  />
+                </label>
+                <label>
+                  <span className="ip-label">Questions</span>
+                  <select
+                    className="ip-field mt-1.5"
+                    value={qCount}
+                    onChange={(e) => setQCount(Number(e.target.value))}
+                  >
+                    {[3, 5, 7, 10].map((n) => (
+                      <option key={n} value={n}>
+                        {n} questions
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="sm:col-span-2">
+                  <span className="ip-label">Job description (optional)</span>
+                  <textarea
+                    className="ip-field mt-1.5 min-h-[100px] resize-y py-2.5"
+                    value={jd}
+                    onChange={(e) => setJd(e.target.value)}
+                    placeholder="Paste JD bullets for tailored questions…"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-6">
+                <span className="label-quiet">Interviewer persona</span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {personas.map((p) => (
+                    <Button
+                      key={p}
+                      size="sm"
+                      variant={practicePersona === p ? 'default' : 'secondary'}
+                      onClick={() => setPracticePersona(p)}
+                    >
+                      {PERSONA_LABELS[p]}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <span className="label-quiet">Difficulty</span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {difficulties.map((d) => (
+                      <Button
+                        key={d}
+                        size="sm"
+                        variant={difficulty === d ? 'default' : 'secondary'}
+                        onClick={() => setDifficulty(d)}
+                      >
+                        {d}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="label-quiet">Focus</span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {focuses.map((f) => (
+                      <Button
+                        key={f.id}
+                        size="sm"
+                        variant={focus === f.id ? 'default' : 'secondary'}
+                        onClick={() => setFocus(f.id)}
+                      >
+                        {f.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="mb-2 flex justify-between text-[12px] text-white/40">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" /> Answer time limit
+                  </span>
+                  <span>{timeLimit}s</span>
+                </div>
+                <input
+                  type="range"
+                  min={45}
+                  max={180}
+                  step={15}
+                  value={timeLimit}
+                  onChange={(e) => setTimeLimit(Number(e.target.value))}
+                  className="w-full accent-[#20B8CD]"
+                />
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-3">
                 <Button
-                  key={p}
-                  size="sm"
-                  variant={practicePersona === p ? 'default' : 'secondary'}
-                  onClick={() => setPracticePersona(p)}
+                  size="lg"
+                  className="min-h-[48px] ip-cta-ready"
+                  disabled={busy || !jobTitle.trim()}
+                  onClick={() => void startSession()}
                 >
-                  {PERSONA_LABELS[p]}
+                  {busy ? 'Building questions…' : 'Start mock interview'}
                 </Button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
-            <div>
-              <span className="label-quiet">Difficulty</span>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {difficulties.map((d) => (
-                  <Button
-                    key={d}
-                    size="sm"
-                    variant={difficulty === d ? 'default' : 'secondary'}
-                    onClick={() => setDifficulty(d)}
-                  >
-                    {d}
-                  </Button>
-                ))}
+                {!jobTitle.trim() && (
+                  <p className="w-full text-[12px] text-white/40">
+                    Add a target role to start.
+                  </p>
+                )}
               </div>
-            </div>
-            <div>
-              <span className="label-quiet">Focus</span>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {focuses.map((f) => (
-                  <Button
-                    key={f.id}
-                    size="sm"
-                    variant={focus === f.id ? 'default' : 'secondary'}
-                    onClick={() => setFocus(f.id)}
-                  >
-                    {f.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="mb-2 flex justify-between text-[12px] text-white/40">
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" /> Answer time limit
-              </span>
-              <span>{timeLimit}s</span>
-            </div>
-            <input
-              type="range"
-              min={45}
-              max={180}
-              step={15}
-              value={timeLimit}
-              onChange={(e) => setTimeLimit(Number(e.target.value))}
-              className="w-full accent-[#20B8CD]"
-            />
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button
-              size="lg"
-              className="min-h-[48px] ip-cta-ready"
-              disabled={busy || !jobTitle.trim()}
-              onClick={() => void startSession()}
-            >
-              {busy ? 'Building questions…' : 'Start mock interview'}
-            </Button>
-            {!jobTitle.trim() && (
-              <p className="w-full text-[12px] text-white/40">
-                Add a target role to start.
-              </p>
-            )}
-          </div>
+            </>
+          )}
         </section>
 
         <section className="glass rounded-[28px] p-8 md:p-10">
           <h3 className="mb-4 text-[15px] font-medium text-white/90">What you get</h3>
           <ul className="grid gap-3 text-[13px] text-white/50 sm:grid-cols-2">
             {[
+              'Ready-made SAP FICO Final 50 panel bank',
               'Spoken interviewer intro + questions',
-              'Conversational bridges between questions',
+              'Optional full panel audio (25s gaps)',
               'Auto mic after each question',
-              'Timed answers + live filler count',
               'STAR / depth / communication scores',
               'Spoken follow-ups like a real panel',
               'Model answer bullets after each Q',
@@ -757,6 +967,66 @@ export function PracticePage() {
               </li>
             ))}
           </ul>
+        </section>
+      </div>
+    )
+  }
+
+  // --- PANEL AUDIO (ready-made full track) ---
+  if (phase === 'audio' && activePack?.audio_url) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col gap-6">
+        <section className="glass rounded-[28px] p-8 md:p-10">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-[17px] font-medium tracking-tight text-white/95">
+                {activePack.title}
+              </h2>
+              <p className="mt-1 text-[13px] text-white/40">
+                Panel audio · {activePack.subtitle}
+              </p>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setPhase('setup')
+                setSetupTab('ready')
+              }}
+            >
+              Back to packs
+            </Button>
+          </div>
+          <p className="mb-5 text-[13px] leading-relaxed text-white/50">
+            Full Maya / Daniel / Marcus track with ~25s silence after each question. Use headphones
+            and answer out loud during the gaps — or switch to interactive for scored turns.
+          </p>
+          <audio
+            className="w-full"
+            controls
+            preload="metadata"
+            src={activePack.audio_url}
+          >
+            Your browser does not support audio playback.
+          </audio>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Button
+              size="lg"
+              disabled={busy}
+              onClick={() => void startReadyMadePack(activePack)}
+            >
+              Start interactive mock instead
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setPhase('setup')
+                setSetupTab('ready')
+              }}
+            >
+              <RotateCcw className="h-4 w-4" /> Choose another pack
+            </Button>
+          </div>
         </section>
       </div>
     )
