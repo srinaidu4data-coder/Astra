@@ -155,14 +155,53 @@ export function KnowledgePage() {
     })
   }
 
+  const hasContext =
+    documents.length > 0 ||
+    memories.length > 0 ||
+    Boolean(jdText.trim()) ||
+    Boolean(activeJobTitle.trim()) ||
+    Boolean(jobMatch)
+
   return (
     <div className="grid gap-10 xl:grid-cols-12 xl:gap-12">
+      {/* Always-visible clear control for this login's knowledge context */}
+      <div className="xl:col-span-12">
+        <div className="glass flex flex-wrap items-center justify-between gap-4 rounded-[22px] px-5 py-4 sm:px-6">
+          <div className="min-w-0">
+            <h1 className="text-[15px] font-medium tracking-tight text-white/95">
+              Interview knowledge context
+            </h1>
+            <p className="mt-0.5 text-[13px] text-white/40">
+              {hasContext
+                ? `${documents.length} document(s) · ${memories.length} STAR chunk(s) · this login only`
+                : 'Empty — nothing is loaded into answers yet'}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="danger"
+            size="sm"
+            title="Remove all uploads, STAR memory chunks, job match, and server pack for this login"
+            onClick={clearAllKnowledge}
+            disabled={!hasContext && !busy}
+          >
+            <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+            Clear knowledge context
+          </Button>
+        </div>
+        {lastOk && (
+          <p className="mt-2 text-[13px] text-[#81c995]" role="status">
+            {lastOk}
+          </p>
+        )}
+      </div>
+
       <div className="flex flex-col gap-8 xl:col-span-5">
         <section className="glass rounded-[28px] p-8 md:p-10">
           <h2 className="text-[17px] font-medium tracking-tight text-white/95">Upload</h2>
           <p className="mt-1 mb-6 text-[13px] leading-relaxed text-white/40">
-            Resume, job descriptions, and subject PDFs (SAP FICO, study notes, project docs,
-            cheatsheets). Files stay in this browser.
+            Resume, job descriptions, and subject PDFs (study notes, project docs,
+            cheatsheets). Files stay in this browser for this login only.
           </p>
 
           <div className="mb-4">
@@ -257,9 +296,23 @@ export function KnowledgePage() {
         </section>
 
         <section className="glass rounded-[28px] p-8 md:p-10">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-[17px] font-medium tracking-tight text-white/95">Documents</h2>
-            <span className="text-[12px] text-white/35">{documents.length}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-white/35">{documents.length}</span>
+              {documents.length > 0 && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="danger"
+                  title="Clear all documents and STAR chunks"
+                  onClick={clearAllKnowledge}
+                >
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  Clear
+                </Button>
+              )}
+            </div>
           </div>
           <div className="space-y-3">
             {documents.length === 0 && (
@@ -351,17 +404,17 @@ export function KnowledgePage() {
                   : ''}
               </p>
             </div>
-            {(memories.length > 0 || documents.length > 0) && (
-              <Button
-                size="sm"
-                variant="secondary"
-                title="Remove all uploads and memory chunks from this login context"
-                onClick={clearAllKnowledge}
-              >
-                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-                Clear all
-              </Button>
-            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="danger"
+              title="Remove all uploads and STAR memory chunks from this login"
+              onClick={clearAllKnowledge}
+              disabled={memories.length === 0 && documents.length === 0}
+            >
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Clear STAR memories
+            </Button>
           </div>
           {starTree.length === 0 ? (
             <p className="py-8 text-[14px] text-white/35">
