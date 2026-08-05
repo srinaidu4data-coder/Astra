@@ -178,3 +178,64 @@ def test_guardrails_mention_lock():
 def test_general_question_no_false_lock():
     lock = infer_domain("Tell me about a time you led a difficult stakeholder.", "", "")
     assert lock.domain == "general" or lock.confidence < 0.5
+
+
+def test_invented_attp_flagged_when_role_not_attp():
+    """Product/price master answers inventing SAP ATTP when Role is BRIM = bleed."""
+    from common_sense import has_invented_product_bleed, invented_product_hits
+
+    raw = (
+        "Action: In the pharmaceutical track-and-trace domain, product and price "
+        "master data should be managed within SAP ATTP. This ensures DSCSA and "
+        "EPCIS alignment from commissioning to shipping.\n"
+        "Result: Centralizing master data in ATTP reduces discrepancies."
+    )
+    q = "Where should product and price master data be managed?"
+    role = "SAP BRIM Consultant"
+    assert has_invented_product_bleed(raw, question=q, job_context=role)
+    hits = invented_product_hits(raw, question=q, job_context=role)
+    terms = " ".join(t for _d, t in hits).lower()
+    assert "attp" in terms or "epcis" in terms or "dscsa" in terms
+
+
+def test_invented_attp_flagged_when_role_blank():
+    """Blank Role: ambient ATTP framing is product bleed."""
+    from common_sense import has_invented_product_bleed
+
+    raw = (
+        "By centralizing product and price master data in SAP ATTP, we ensure "
+        "compliance with DSCSA serialization standards."
+    )
+    assert has_invented_product_bleed(
+        raw,
+        question="How do you keep product and price master data consistent?",
+        job_context="",
+    )
+
+
+def test_no_bleed_when_role_is_attp():
+    """When Role is ATTP, ATTP terms are allowed."""
+    from common_sense import has_invented_product_bleed
+
+    raw = (
+        "Action: Configure ATTP repository GTINs and EPCIS shipping events for DSCSA."
+    )
+    assert not has_invented_product_bleed(
+        raw,
+        question="How do you configure ATTP master data?",
+        job_context="SAP ATTP Techno-Functional Consultant",
+    )
+
+
+def test_resolve_pack_blob_always_empty():
+    """Pack blob must never re-inject ATTP (or any role) into RAG/STT."""
+    from common_sense import resolve_pack_blob
+    from session_context import clear_pack, update_pack
+
+    clear_pack()
+    update_pack(
+        role="SAP ATTP Techno-Functional Consultant",
+        job_description="ATTP EPCIS GTIN DSCSA",
+        keywords=["ATTP", "EPCIS"],
+    )
+    assert resolve_pack_blob() == ""

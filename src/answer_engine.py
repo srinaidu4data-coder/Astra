@@ -123,6 +123,9 @@ _CORE = (
     "Use ONLY terminology from the question, Role, and any context block provided. "
     "If a term is not there, use plain English — never invent elite buzzwords, "
     "other domains (ML, random cloud, FICO when asked ATTP, etc.), or fake metrics.\n"
+    "PRODUCT-LINE RULE: never invent SAP product modules (ATTP, BRIM, FICO, Vertex, "
+    "EPCIS, DSCSA, etc.) unless that exact product/term appears in Role or the question. "
+    "Blank Role → answer the question only; do not default to any product family.\n"
     "No markdown #. Labels exactly like Hook: (never /Hook:).\n"
     "Ban filler: basically, just, simply, leverage, synergy, excited to, circle back, "
     "going forward, best practice as empty praise, world-class, passionate.\n"
@@ -189,6 +192,53 @@ REGEN_STRICT_SUFFIX = (
     "Regenerate: sharper Hook, fewer words, more real mechanisms, harder tradeoffs, "
     "only terms from Role/question/context. Zero filler. One-word Q → Hook token only first."
 )
+
+REGEN_PRODUCT_BLEED_SUFFIX = (
+    "PREVIOUS DRAFT INVENTED A PRODUCT LINE NOT IN ROLE OR QUESTION "
+    "(often SAP ATTP / track-and-trace / EPCIS / DSCSA bleed).\n"
+    "Regenerate from scratch. Use ONLY modules and terms that appear in Role or the question. "
+    "If Role is blank, answer the question in plain professional language — "
+    "do NOT default to SAP ATTP or any other product family. "
+    "Forbidden unless present in Role/Q: ATTP, EPCIS, DSCSA, GTIN, SSCC, BRIM, FICO, Vertex."
+)
+
+
+def _product_bleed(answer: str, question: str = "", job_context: str = "") -> bool:
+    """True if answer invents product-line jargon absent from Role/Q."""
+    try:
+        from common_sense import has_invented_product_bleed
+
+        return has_invented_product_bleed(
+            answer, question=question, job_context=job_context
+        )
+    except Exception:
+        return False
+
+
+def _regen_user_for_bleed(
+    question: str,
+    *,
+    job_context: str,
+    tone: str,
+    mode: str,
+    strategy: dict[str, Any],
+    context_chunks: list,
+    bleed_terms: list[str] | None = None,
+) -> str:
+    user = _build_user_prompt(
+        question,
+        job_context=job_context,
+        tone=tone,
+        mode=mode,
+        strategy=strategy,
+        context_chunks=context_chunks,
+        strict_regen=True,
+    )
+    ban = ", ".join((bleed_terms or [])[:12]) or "ATTP, EPCIS, DSCSA, track-and-trace"
+    return (
+        f"{user}\n\n{REGEN_PRODUCT_BLEED_SUFFIX}\n"
+        f"Remove these invented terms completely: {ban}."
+    )
 
 STRATEGY_SYSTEM = """Given an interview question and role, return ONLY JSON:
 {
@@ -921,12 +971,14 @@ def _build_user_prompt(
             parts.append(
                 "ROLE RULE: Answer strictly as THIS Role and question only. "
                 "One login = one Role. Do not combine skills from other SAP products "
-                "or other users. Only terms in Role or Q."
+                "or other users. Only terms in Role or Q. "
+                "Never invent ATTP/EPCIS/DSCSA unless those words appear in Role or Q."
             )
         else:
             parts.append(
                 "TOPIC RULE: No Role set — answer the question only. "
-                "Do not invent a job title or product family."
+                "Do not invent a job title or product family. "
+                "Never default to SAP ATTP, track-and-trace, EPCIS, or DSCSA."
             )
         if long_q:
             parts.append(
@@ -998,12 +1050,15 @@ def _build_user_prompt(
     if user_job:
         parts.append(
             "ROLE RULE: Answer strictly as THIS Role and question only. "
-            "One login = one Role. Do not import other product-line skills."
+            "One login = one Role. Do not import other product-line skills. "
+            "Never invent ATTP/EPCIS/DSCSA/track-and-trace unless those words "
+            "appear in Role or the question."
         )
     else:
         parts.append(
             "TOPIC RULE: No Role set — answer the question only. "
-            "Do not invent a job title or product family."
+            "Do not invent a job title or product family. "
+            "Never default to SAP ATTP, track-and-trace, EPCIS, or DSCSA."
         )
     if strict_regen:
         parts.append(REGEN_STRICT_SUFFIX)
@@ -1201,7 +1256,7 @@ def generate_answer(
         hit = cache_lookup(
             question, mode=mode, job_context=job_context, allow_approx=False
         )
-        if hit:
+        if hit and not _product_bleed(hit[0], question, job_context):
             generate_answer.last_source = hit[1] if len(hit) > 1 else "cache"  # type: ignore[attr-defined]
             return hit[0]
 
@@ -1234,6 +1289,42 @@ def generate_answer(
         except Exception:
             answer = ""
         answer = _normalize_answer_text(answer, question, job_context)
+        # Reject ambient ATTP / foreign product bleed — one hard regen
+        if answer and _product_bleed(answer, question, job_context):
+            try:
+                from common_sense import invented_product_hits
+
+                terms = [t for _d, t in invented_product_hits(
+                    answer, question=question, job_context=job_context
+                )]
+            except Exception:
+                terms = ["ATTP", "EPCIS", "DSCSA"]
+            user_b = _regen_user_for_bleed(
+                question,
+                job_context=job_context,
+                tone=tone,
+                mode=mode,
+                strategy=strategy,
+                context_chunks=[],
+                bleed_terms=terms,
+            )
+            try:
+                answer2 = _complete_answer(
+                    system=system,
+                    user=user_b,
+                    model=primary,
+                    fallback_model=fallback,
+                    max_tokens=_max_tokens_for_mode(mode, question=question),
+                    temperature=0.1,
+                )
+                answer2 = _normalize_answer_text(answer2, question, job_context)
+                if answer2 and not _product_bleed(answer2, question, job_context):
+                    answer = answer2
+                elif answer2:
+                    # Still bleeding — keep cleaner of the two by exclusive-hit count
+                    answer = answer2
+            except Exception:
+                pass
         if not answer:
             # Never template-swap hard technical domain answers
             allow_template = (
@@ -1248,11 +1339,15 @@ def generate_answer(
                     question, job_context=job_context, mode=mode
                 )
                 answer = _normalize_answer_text(answer, question, job_context)
-                generate_answer.last_source = "template_fallback"  # type: ignore[attr-defined]
-                return answer
+                if _product_bleed(answer, question, job_context):
+                    answer = ""
+                else:
+                    generate_answer.last_source = "template_fallback"  # type: ignore[attr-defined]
+                    return answer
             generate_answer.last_source = "llm_empty"  # type: ignore[attr-defined]
             return ""
-        cache_store(question, answer, mode=mode, job_context=job_context)
+        if not _product_bleed(answer, question, job_context):
+            cache_store(question, answer, mode=mode, job_context=job_context)
         generate_answer.last_source = "llm"  # type: ignore[attr-defined]
         return answer
 
@@ -1270,7 +1365,7 @@ def generate_answer(
     chunks: list = []
     if _use_rag():
         try:
-            chunks = search_context(question) or []
+            chunks = search_context(question, job_context=job_context) or []
         except Exception:
             chunks = []
         try:
@@ -1303,19 +1398,81 @@ def generate_answer(
     answer = _normalize_answer_text(answer, question, job_context)
     generate_answer.last_source = "llm" if (answer or "").strip() else "llm_empty"  # type: ignore[attr-defined]
 
+    # Always kill ambient product-line bleed (ATTP when Role is BRIM/blank, etc.)
+    if answer and _product_bleed(answer, question, job_context):
+        try:
+            from common_sense import invented_product_hits
+
+            terms = [
+                t
+                for _d, t in invented_product_hits(
+                    answer, question=question, job_context=job_context
+                )
+            ]
+        except Exception:
+            terms = ["ATTP", "EPCIS", "DSCSA"]
+        user_b = _regen_user_for_bleed(
+            question,
+            job_context=job_context,
+            tone=tone,
+            mode=mode,
+            strategy=strategy,
+            context_chunks=chunks,
+            bleed_terms=terms,
+        )
+        answer2 = _complete_answer(
+            system=system,
+            user=user_b,
+            model=primary,
+            fallback_model=fallback,
+            max_tokens=_max_tokens_for_mode(mode, question=question),
+            temperature=0.15,
+        )
+        answer2 = _normalize_answer_text(answer2, question, job_context)
+        if answer2 and (
+            not _product_bleed(answer2, question, job_context)
+            or score_answer_quality(answer2, strategy, mode=mode)["score"]
+            >= score_answer_quality(answer, strategy, mode=mode)["score"]
+        ):
+            answer = answer2
+        generate_answer.last_source = "llm_bleed_regen"  # type: ignore[attr-defined]
+
     if _use_quality_regen() and answer:
         quality = score_answer_quality(answer, strategy, mode=mode)
         regen_floor = 40 if ANSWER_PROFILE == "balanced" else 50
-        if quality["score"] < regen_floor:
-            user2 = _build_user_prompt(
-                question,
-                job_context=job_context,
-                tone=tone,
-                mode=mode,
-                strategy=strategy,
-                context_chunks=chunks,
-                strict_regen=True,
-            )
+        force_bleed = _product_bleed(answer, question, job_context)
+        if quality["score"] < regen_floor or force_bleed:
+            if force_bleed:
+                try:
+                    from common_sense import invented_product_hits
+
+                    terms = [
+                        t
+                        for _d, t in invented_product_hits(
+                            answer, question=question, job_context=job_context
+                        )
+                    ]
+                except Exception:
+                    terms = ["ATTP"]
+                user2 = _regen_user_for_bleed(
+                    question,
+                    job_context=job_context,
+                    tone=tone,
+                    mode=mode,
+                    strategy=strategy,
+                    context_chunks=chunks,
+                    bleed_terms=terms,
+                )
+            else:
+                user2 = _build_user_prompt(
+                    question,
+                    job_context=job_context,
+                    tone=tone,
+                    mode=mode,
+                    strategy=strategy,
+                    context_chunks=chunks,
+                    strict_regen=True,
+                )
             answer2 = _complete_answer(
                 system=system,
                 user=user2,
@@ -1326,7 +1483,11 @@ def generate_answer(
             )
             answer2 = _normalize_answer_text(answer2, question, job_context)
             q2 = score_answer_quality(answer2, strategy, mode=mode)
-            if q2["score"] >= quality["score"]:
+            if force_bleed and answer2 and not _product_bleed(
+                answer2, question, job_context
+            ):
+                answer = answer2
+            elif q2["score"] >= quality["score"]:
                 answer = answer2
     return (answer or "").strip()
 
@@ -1357,7 +1518,7 @@ def iter_answer_tokens(
     chunks: list = []
     if _use_rag():
         try:
-            chunks = search_context(question) or []
+            chunks = search_context(question, job_context=job_context) or []
         except Exception:
             chunks = []
         try:

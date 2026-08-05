@@ -491,7 +491,7 @@ class LiveInterviewSession:
                     or last_emit_len == 0
                 ):
                     last_emit_len = len(raw_answer)
-                    answer = _normalize_answer_text(raw_answer)
+                    answer = _normalize_answer_text(raw_answer, question, job_ctx)
                     if not is_final:
                         partial_bullets = to_bullets(answer, self.mode) or [answer]
                         self._emit(
@@ -521,7 +521,33 @@ class LiveInterviewSession:
                     break
 
             if raw_answer and len(raw_answer) != last_emit_len:
-                answer = _normalize_answer_text(raw_answer)
+                answer = _normalize_answer_text(raw_answer, question, job_ctx)
+
+            # Final gate: never ship ambient ATTP when Role/Q did not ask for it
+            try:
+                from common_sense import has_invented_product_bleed
+
+                if answer and has_invented_product_bleed(
+                    answer, question=question, job_context=job_ctx
+                ):
+                    clean = generate_answer(
+                        question,
+                        answer_model=self.answer_model,
+                        fallback_model=self.fallback_model,
+                        user_answer_model=self.user_answer_model,
+                        user_fallback_model=self.user_fallback_model,
+                        job_context=job_ctx,
+                        tone=self.tone,
+                        mode=self.mode,
+                    )
+                    clean = _normalize_answer_text(clean, question, job_ctx)
+                    if clean and not has_invented_product_bleed(
+                        clean, question=question, job_context=job_ctx
+                    ):
+                        answer = clean
+                        source = "bleed_regen"
+            except Exception:
+                pass
 
             if not answer:
                 answer = generate_answer(
@@ -534,7 +560,7 @@ class LiveInterviewSession:
                     tone=self.tone,
                     mode=self.mode,
                 )
-                answer = _normalize_answer_text(answer)
+                answer = _normalize_answer_text(answer, question, job_ctx)
                 source = "blocking_fallback"
         except Exception as gen_err:
             traceback.print_exc()

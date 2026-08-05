@@ -149,13 +149,14 @@ def transcribe_audio(
     prompt = (initial_prompt or os.environ.get("ASTRA_STT_PROMPT") or "").strip()
     if not prompt:
         try:
-            from common_sense import resolve_pack_blob, stt_initial_prompt
+            from common_sense import stt_initial_prompt
             from session_context import effective_job_context
 
+            # Role for THIS interview only — never session pack (was ATTP bleed).
             job = effective_job_context("") or ""
             prompt = stt_initial_prompt(
                 job_context=job,
-                resume_or_pack=resolve_pack_blob(),
+                resume_or_pack="",
             )
         except Exception:
             prompt = (

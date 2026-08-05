@@ -524,6 +524,77 @@ def contamination_report(
     }
 
 
+def invented_product_hits(
+    answer: str,
+    *,
+    question: str = "",
+    job_context: str = "",
+) -> list[tuple[str, str]]:
+    """
+    Exclusive product-line terms present in the answer but NOT justified by Role/Q.
+
+    If Role/question lock a domain (e.g. ATTP), that domain's vocabulary is allowed.
+    Foreign product lines (e.g. ATTP words when Role is BRIM or blank) are hits.
+    """
+    text = (answer or "").strip()
+    if not text:
+        return []
+    ground = _norm(f"{question or ''} {job_context or ''}")
+    blob = _norm(text)
+    lock = lock_for_turn(question, job_context, extra_context="")
+    active = lock.domain if lock.confidence >= 0.22 else "general"
+    hits: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for dom, packs in _DOMAIN_LEXICONS.items():
+        # Active domain for this interview may use its full exclusive lexicon
+        if dom == active and active != "general":
+            continue
+        for term in packs.get("exclusive", frozenset()):
+            if not term or len(term) < 4:
+                continue
+            if term in ground:
+                continue
+            if term not in blob:
+                continue
+            key = f"{dom}:{term}"
+            if key in seen:
+                continue
+            seen.add(key)
+            hits.append((dom, term))
+    # Phrase forms the model loves when Role/Q did not ground ATTP
+    attp_grounded = (
+        active == "sap_attp"
+        or "attp" in ground
+        or "track and trace" in ground
+        or "track-and-trace" in ground
+    )
+    if not attp_grounded:
+        for phrase in (
+            "sap attp",
+            "pharmaceutical track-and-trace",
+            "pharmaceutical track and trace",
+            "within attp",
+            "in attp",
+            "attp repository",
+        ):
+            if phrase in blob and phrase not in seen:
+                hits.append(("sap_attp", phrase))
+                seen.add(phrase)
+    return hits
+
+
+def has_invented_product_bleed(
+    answer: str,
+    *,
+    question: str = "",
+    job_context: str = "",
+) -> bool:
+    """True when the answer invents a product line not in Role/Q (e.g. ATTP bleed)."""
+    return bool(
+        invented_product_hits(answer, question=question, job_context=job_context)
+    )
+
+
 def sanitize_answer(
     answer: str,
     *,
@@ -532,14 +603,16 @@ def sanitize_answer(
     lock: Optional[DomainLock] = None,
 ) -> str:
     """
-    Soft cleanup: strip psych-theater phrases and obvious off-domain asides.
+    Soft cleanup: strip psych-theater phrases.
 
-    Does not rewrite the whole answer — only removes known mischief patterns.
+    Product-line bleed is detected via has_invented_product_bleed / invented_product_hits
+    and forced through regen in answer_engine — do not half-delete tokens here
+    (that produced broken "SAP ." fragments).
     """
     text = (answer or "").strip()
     if not text:
         return text
-    lock = lock or infer_domain(question, job_context)
+    lock = lock or lock_for_turn(question, job_context, extra_context="")
 
     # Drop whole lines that are pure psych/ML theater
     cleaned_lines: list[str] = []
@@ -555,7 +628,7 @@ def sanitize_answer(
         cleaned_lines.append(line)
     text = "\n".join(cleaned_lines).strip() or answer.strip()
 
-    # If high-confidence domain lock and answer is pure foreign exclusive spam, append guard note for regen paths
+    # If still pure foreign exclusive spam under a strong lock, strip long terms only
     report = contamination_report(
         text, question=question, job_context=job_context, lock=lock
     )
@@ -565,9 +638,7 @@ def sanitize_answer(
         and report["native_hits"] == 0
         and len(text.split()) > 40
     ):
-        # Prefix a silent internal marker is useless in TTS; strip foreign exclusive tokens as last resort
         for _dom, term in report["foreign"]:
-            # Only remove multi-word or highly specific terms to avoid nuking common English
             if len(term) >= 6:
                 text = re.sub(re.escape(term), "", text, flags=re.I)
         text = re.sub(r"\s{2,}", " ", text)
@@ -742,24 +813,14 @@ def system_suffix(lock: DomainLock) -> str:
 
 
 def resolve_pack_blob() -> str:
-    """Best-effort resume/JD text from session pack for domain inference."""
-    try:
-        from session_context import format_for_prompt, get_pack
+    """
+    Disabled for multi-tenant safety.
 
-        pack = get_pack()
-        bits = [
-            pack.role,
-            pack.company,
-            pack.job_description[:800] if pack.job_description else "",
-            pack.resume_text[:800] if pack.resume_text else "",
-            " ".join(pack.keywords[:20]),
-        ]
-        blob = " ".join(b for b in bits if b)
-        if blob.strip():
-            return blob
-        return format_for_prompt(1200)
-    except Exception:
-        return ""
+    Session pack used to re-inject leftover ATTP (or any prior Role) into RAG
+    filters and STT prompts across logins. Answer path must use only the
+    request's Role/job_context + question. Always returns empty.
+    """
+    return ""
 
 
 def lock_for_turn(

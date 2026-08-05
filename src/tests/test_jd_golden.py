@@ -71,10 +71,15 @@ class TestJdLexicon:
         )
         low = user.lower()
         assert "brim" in low
-        assert "attp" not in low
-        assert "epcis" not in low
+        # Guardrails may name ATTP as forbidden; Role identity must not be ATTP
+        assert "sap attp techno-functional" not in low
+        assert "role: sap attp" not in low
         assert "pre-session context" not in low
         assert "this login / this interview only" in low or "role / job context" in low
+        # Jargon bank from BRIM Q must not pull ATTP terms
+        jar = " ".join(strategy.get("jargon_bank") or []).lower()
+        assert "epcis" not in jar
+        assert "attp" not in jar or "never invent attp" in low
 
     def test_soft_empty_prompt_not_attp_locked(self):
         from answer_engine import _build_user_prompt, _fallback_strategy

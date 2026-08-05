@@ -434,7 +434,13 @@ def _reciprocal_rank_fusion(
     return formatted_results
 
 
-def search_context(query: str, top_k: int = 5, use_hybrid: bool = None) -> list[dict]:
+def search_context(
+    query: str,
+    top_k: int = 5,
+    use_hybrid: bool = None,
+    *,
+    job_context: str = "",
+) -> list[dict]:
     """
     Search for relevant document chunks based on a query.
 
@@ -445,6 +451,7 @@ def search_context(query: str, top_k: int = 5, use_hybrid: bool = None) -> list[
         query: The search query
         top_k: Number of results to return
         use_hybrid: Override hybrid search setting. If None, uses HYBRID_SEARCH_ENABLED.
+        job_context: This interview's Role/Job only. Never session pack / other users.
 
     Returns:
         List of {text, source_file, similarity_score} dicts.
@@ -458,24 +465,18 @@ def search_context(query: str, top_k: int = 5, use_hybrid: bool = None) -> list[
     else:
         results = search_context_dense(query, top_k)
 
-    # Common-sense: drop robotics/ML/etc. chunks when the question is another domain
+    # Domain filter from question + this interview's Role only.
+    # Never resolve_pack_blob / ambient pack — that re-injected ATTP across logins.
     try:
-        from common_sense import filter_context_chunks, resolve_pack_blob
-        from session_context import effective_job_context
+        from common_sense import filter_context_chunks
 
-        job = effective_job_context("") or ""
+        job = (job_context or "").strip()
         results = filter_context_chunks(
             results or [],
             question=query,
             job_context=job,
             lock=None,
         )
-        # If pack has a strong domain and query is thin, re-filter with pack blob
-        pack = resolve_pack_blob()
-        if pack and results is not None:
-            results = filter_context_chunks(
-                results, question=query or pack[:200], job_context=job + " " + pack[:400]
-            )
     except Exception:
         pass
     return results or []

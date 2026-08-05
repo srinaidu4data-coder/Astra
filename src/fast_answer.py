@@ -676,20 +676,32 @@ def iter_cascade_answer(
     stages["cache_ms"] = cache_ms
     if cached:
         ans, src = cached
-        ms = (time.perf_counter() - t0) * 1000
-        stages["first_token_ms"] = round(ms, 2)
-        stages["full_answer_ms"] = round(ms, 2)
-        yield ans, {
-            "source": src,
-            "first_paint_ms": round(ms, 2),
-            "streaming": False,
-            "final": True,
-            "from_cache": True,
-            "cache_ms": cache_ms,
-            "outline_ms": None,
-            "stages": stages,
-        }
-        return
+        # Reject cached ATTP (etc.) bleed for this Role/Q
+        bleed = False
+        try:
+            from common_sense import has_invented_product_bleed
+
+            bleed = has_invented_product_bleed(
+                ans, question=question, job_context=job_context
+            )
+        except Exception:
+            bleed = False
+        if not bleed:
+            ms = (time.perf_counter() - t0) * 1000
+            stages["first_token_ms"] = round(ms, 2)
+            stages["full_answer_ms"] = round(ms, 2)
+            yield ans, {
+                "source": src,
+                "first_paint_ms": round(ms, 2),
+                "streaming": False,
+                "final": True,
+                "from_cache": True,
+                "cache_ms": cache_ms,
+                "outline_ms": None,
+                "stages": stages,
+            }
+            return
+        # Contaminated cache entry — ignore and regenerate
 
     # 2) Outline-first honest skeleton (default ON) — market pattern for TTFT
     draft = ""
@@ -825,8 +837,50 @@ def iter_cascade_answer(
     else:
         src = "llm" if acc else "empty"
 
-    if final and src == "llm":
-        cache_store(question, final, mode=mode, job_context=job_context)
+    # Kill ambient ATTP / foreign product bleed before cache + final paint
+    if final and src in ("llm", "template_fallback", "template"):
+        try:
+            from common_sense import has_invented_product_bleed
+
+            if has_invented_product_bleed(
+                final, question=question, job_context=job_context
+            ):
+                from answer_engine import generate_answer
+
+                clean = generate_answer(
+                    question,
+                    job_context=job_context,
+                    tone=tone,
+                    mode=mode,
+                    answer_model=answer_model,
+                    fallback_model=fallback_model,
+                    user_answer_model=user_answer_model,
+                    user_fallback_model=user_fallback_model,
+                )
+                clean = (clean or "").strip()
+                if clean and not has_invented_product_bleed(
+                    clean, question=question, job_context=job_context
+                ):
+                    final = clean
+                    src = "llm_bleed_regen"
+                    stages["product_bleed_regen"] = True
+        except Exception as bleed_err:
+            print(
+                f"[fast_answer] product-bleed check skipped: "
+                f"{type(bleed_err).__name__}: {bleed_err}"
+            )
+
+    if final and src in ("llm", "llm_bleed_regen"):
+        # Never cache answers that still invent product lines
+        try:
+            from common_sense import has_invented_product_bleed
+
+            if not has_invented_product_bleed(
+                final, question=question, job_context=job_context
+            ):
+                cache_store(question, final, mode=mode, job_context=job_context)
+        except Exception:
+            cache_store(question, final, mode=mode, job_context=job_context)
     full_ms = round((time.perf_counter() - t0) * 1000, 2)
     stages["full_answer_ms"] = full_ms
     if "first_token_ms" not in stages:
