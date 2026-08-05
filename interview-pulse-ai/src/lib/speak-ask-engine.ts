@@ -248,7 +248,7 @@ export function craftAskQuestion(opts: {
     },
     {
       archetype: 'success_metric',
-      text: `What would make someone strong on ${a} unmistakably successful in the first 90 days?`,
+      text: `What would make someone strong on ${a} unmistakably successful in the first ninety days?`,
       why: 'Alignment on outcomes, not vibes',
       score: 0.8,
     },
