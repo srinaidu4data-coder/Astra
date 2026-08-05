@@ -210,7 +210,7 @@ REGEN_PRODUCT_BLEED_SUFFIX = (
 
 
 def _product_bleed(answer: str, question: str = "", job_context: str = "") -> bool:
-    """True if answer invents product-line jargon absent from Role/Q/JD/Resume."""
+    """True if answer invents ALL-CAPS jargon absent from Role/Q/JD/Resume."""
     try:
         from common_sense import has_invented_product_bleed
         from session_context import materials_grounding_blob
@@ -228,6 +228,20 @@ def _product_bleed(answer: str, question: str = "", job_context: str = "") -> bo
             )
         except Exception:
             return False
+
+
+def _bleed_terms(answer: str, question: str, job_context: str) -> list[str]:
+    try:
+        from common_sense import invented_product_hits
+
+        return [
+            t
+            for _d, t in invented_product_hits(
+                answer, question=question, job_context=job_context
+            )
+        ]
+    except Exception:
+        return []
 
 
 def _regen_user_for_bleed(
@@ -254,6 +268,51 @@ def _regen_user_for_bleed(
         f"{user}\n\n{REGEN_PRODUCT_BLEED_SUFFIX}\n"
         f"Remove these invented terms completely: {ban}."
     )
+
+
+def _maybe_regen_bleed(
+    answer: str,
+    *,
+    question: str,
+    job_context: str,
+    tone: str,
+    mode: str,
+    strategy: dict[str, Any],
+    context_chunks: list,
+    system: str,
+    primary: str,
+    fallback: str | None,
+) -> str:
+    """If answer invents materials-absent jargon, regenerate once. Else return answer."""
+    if not answer or not _product_bleed(answer, question, job_context):
+        return answer
+    terms = _bleed_terms(answer, question, job_context)
+    user_b = _regen_user_for_bleed(
+        question,
+        job_context=job_context,
+        tone=tone,
+        mode=mode,
+        strategy=strategy,
+        context_chunks=context_chunks,
+        bleed_terms=terms,
+    )
+    try:
+        answer2 = _complete_answer(
+            system=system,
+            user=user_b,
+            model=primary,
+            fallback_model=fallback,
+            max_tokens=_max_tokens_for_mode(mode, question=question),
+            temperature=0.1,
+        )
+        answer2 = _normalize_answer_text(answer2, question, job_context)
+        if answer2 and (
+            not _product_bleed(answer2, question, job_context) or answer2
+        ):
+            return answer2
+    except Exception:
+        pass
+    return answer
 
 STRATEGY_SYSTEM = """Given an interview question and role, return ONLY JSON:
 {
@@ -499,7 +558,7 @@ def analyze_question_strategy(
     data.setdefault("pitfalls", [])
     data.setdefault("evidence_style", "framework")
     data.setdefault("depth_target", "high")
-    # Lexicon from question + role only (disk ATTP JD never bleeds into BRIM)
+    # Lexicon from question + role only (no ambient skill packs)
     try:
         from jd_grounding import lexicon_for_turn
 
@@ -1298,45 +1357,18 @@ def generate_answer(
         except Exception:
             answer = ""
         answer = _normalize_answer_text(answer, question, job_context)
-        # Reject ambient ATTP / foreign product bleed — one hard regen
-        if answer and _product_bleed(answer, question, job_context):
-            try:
-                from common_sense import invented_product_hits
-
-                terms = [
-                    t
-                    for _d, t in invented_product_hits(
-                        answer, question=question, job_context=job_context
-                    )
-                ]
-            except Exception:
-                terms = []
-            user_b = _regen_user_for_bleed(
-                question,
-                job_context=job_context,
-                tone=tone,
-                mode=mode,
-                strategy=strategy,
-                context_chunks=[],
-                bleed_terms=terms,
-            )
-            try:
-                answer2 = _complete_answer(
-                    system=system,
-                    user=user_b,
-                    model=primary,
-                    fallback_model=fallback,
-                    max_tokens=_max_tokens_for_mode(mode, question=question),
-                    temperature=0.1,
-                )
-                answer2 = _normalize_answer_text(answer2, question, job_context)
-                if answer2 and not _product_bleed(answer2, question, job_context):
-                    answer = answer2
-                elif answer2:
-                    # Still bleeding — keep cleaner of the two by exclusive-hit count
-                    answer = answer2
-            except Exception:
-                pass
+        answer = _maybe_regen_bleed(
+            answer,
+            question=question,
+            job_context=job_context,
+            tone=tone,
+            mode=mode,
+            strategy=strategy,
+            context_chunks=[],
+            system=system,
+            primary=primary,
+            fallback=fallback,
+        )
         if not answer:
             # Never template-swap hard technical domain answers
             allow_template = (
@@ -1408,46 +1440,23 @@ def generate_answer(
         temperature=0.2 if accuracy else 0.3,
     )
     answer = _normalize_answer_text(answer, question, job_context)
-    generate_answer.last_source = "llm" if (answer or "").strip() else "llm_empty"  # type: ignore[attr-defined]
-
-    # Always kill ambient product-line bleed (ATTP when Role is BRIM/blank, etc.)
-    if answer and _product_bleed(answer, question, job_context):
-        try:
-            from common_sense import invented_product_hits
-
-            terms = [
-                t
-                for _d, t in invented_product_hits(
-                    answer, question=question, job_context=job_context
-                )
-            ]
-        except Exception:
-            terms = []
-        user_b = _regen_user_for_bleed(
-            question,
-            job_context=job_context,
-            tone=tone,
-            mode=mode,
-            strategy=strategy,
-            context_chunks=chunks,
-            bleed_terms=terms,
-        )
-        answer2 = _complete_answer(
-            system=system,
-            user=user_b,
-            model=primary,
-            fallback_model=fallback,
-            max_tokens=_max_tokens_for_mode(mode, question=question),
-            temperature=0.15,
-        )
-        answer2 = _normalize_answer_text(answer2, question, job_context)
-        if answer2 and (
-            not _product_bleed(answer2, question, job_context)
-            or score_answer_quality(answer2, strategy, mode=mode)["score"]
-            >= score_answer_quality(answer, strategy, mode=mode)["score"]
-        ):
-            answer = answer2
+    prev = answer
+    answer = _maybe_regen_bleed(
+        answer,
+        question=question,
+        job_context=job_context,
+        tone=tone,
+        mode=mode,
+        strategy=strategy,
+        context_chunks=chunks,
+        system=system,
+        primary=primary,
+        fallback=fallback,
+    )
+    if answer is not prev and (answer or "").strip():
         generate_answer.last_source = "llm_bleed_regen"  # type: ignore[attr-defined]
+    else:
+        generate_answer.last_source = "llm" if (answer or "").strip() else "llm_empty"  # type: ignore[attr-defined]
 
     if _use_quality_regen() and answer:
         quality = score_answer_quality(answer, strategy, mode=mode)
@@ -1455,17 +1464,7 @@ def generate_answer(
         force_bleed = _product_bleed(answer, question, job_context)
         if quality["score"] < regen_floor or force_bleed:
             if force_bleed:
-                try:
-                    from common_sense import invented_product_hits
-
-                    terms = [
-                        t
-                        for _d, t in invented_product_hits(
-                            answer, question=question, job_context=job_context
-                        )
-                    ]
-                except Exception:
-                    terms = []
+                terms = _bleed_terms(answer, question, job_context)
                 user2 = _regen_user_for_bleed(
                     question,
                     job_context=job_context,

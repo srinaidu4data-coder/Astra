@@ -68,6 +68,27 @@ def get_session_id() -> str:
     return _session_id_var.get() or "default"
 
 
+def session_id_from_token(token: str = "") -> str:
+    """
+    Map JWT access token → stable pack key so HTTP + WebSocket share materials.
+
+    Returns "" if token is missing/invalid. Caller falls back to anon/random id.
+    """
+    tok = (token or "").strip()
+    if not tok:
+        return ""
+    try:
+        from backend.jwt_auth import decode_access_token
+
+        payload = decode_access_token(tok) or {}
+        sub = str(payload.get("sub") or payload.get("email") or "").strip()
+        if sub:
+            return f"user_{sub[:80]}"
+    except Exception:
+        pass
+    return ""
+
+
 def set_session_id(session_id: str) -> contextvars.Token:
     """Bind pack scope for this task/thread. Returns token for reset."""
     sid = (session_id or "").strip() or "default"

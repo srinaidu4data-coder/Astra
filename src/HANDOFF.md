@@ -1,7 +1,7 @@
 # Astra — Session Handoff (source of truth)
 
 **Path:** `C:\Users\King2\Desktop\Astra`  
-**Updated:** 2026-08-02
+**Updated:** 2026-08-05
 
 ## Product (what to run)
 
@@ -28,36 +28,38 @@ npm run dev -- --host 127.0.0.1 --port 5173
 ### Production
 
 - UI: Cloudflare Pages (root `interview-pulse-ai`, build `npm ci && npm run build` → `dist`)
-- API: Railway Docker (`deploy/Dockerfile.api`)
+- API: Railway Docker (`Dockerfile` at repo root / `deploy/Dockerfile.api`)
 - Guide: `docs/DEPLOY_CLOUDFLARE_RAILWAY.md`
 
 ## Core interview path
 
 1. UI **Start interview** → WebSocket + speaker/tab audio (not mic by default)
 2. STT: Deepgram Nova-3 if `DEEPGRAM_API_KEY`, else Whisper
-3. `answer_engine.py` → stream answer
+3. `answer_engine.py` → stream / cascade answer
 4. SpeakCanvas (`WhisperStream`) — punch lock, keys 1/2/3, copy sheet
 
 ## Important modules
 
 | Module | Role |
 |--------|------|
-| `answer_engine.py` | JD-aware answers, one-word rule, normalize |
-| `jd_grounding.py` | Load `jd and resume/`, lexicon, strip off-domain buzz |
-| `common_sense.py` | Cross-domain lock |
-| `session_context.py` | Pre-session role/JD/resume pack |
+| `answer_engine.py` | Materials-grounded answers, one-word rule, normalize |
+| `api_models.py` | HTTP request models (Answer, SessionContext, …) |
+| `jd_grounding.py` | Lexicon from Role/Q/JD text; strip corporate filler |
+| `common_sense.py` | Materials-only guardrails (no skill-domain packs) |
+| `session_context.py` | Per-login Role / JD / Resume pack + JWT session id |
 | `fast_answer.py` | Cache / outline / templates |
 | `deepgram_stt.py` / `transcriber.py` | STT |
 | `latency_metrics.py` / `latency_ai_agent.py` | Latency ops |
 | `backend/*` | Auth, billing, mock interview |
 
-## Per-login identity (no skill pooling)
+## Per-interview identity (materials only)
 
-- Answers use **only** this login’s Role + Job context + the question
-- No ambient disk ATTP, no SAP product-family skill merge
-- HTTP pack scoped by JWT user; WS pack per connection
-- Login/logout clears client knowledge + server pack + answer cache
-- `POST /api/session/reset` for full identity wipe
+- Answers use **only**: question + Role + Job Context + attached JD + attached Resume
+- **No** skill-domain packs (ATTP/FICO/BRIM/ML tables removed)
+- **No** ambient disk practice JD in multi-tenant prod (`ASTRA_PRACTICE_JD=0`)
+- **No** RAG by default (`ASTRA_USE_RAG=1` to opt in)
+- HTTP pack scoped by JWT user; WS uses same JWT so materials match
+- Login/logout + Start interview clear answer cache; `POST /api/session/reset` full wipe
 
 ## LLM provider rule
 
@@ -68,14 +70,6 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 Mismatch causes remaps, failovers, and multi-second TTFT.
 
-## Post-deploy latency
-
-```bat
-cd src
-venv\Scripts\python.exe scripts\post_deploy_latency.py
-venv\Scripts\python.exe scripts\post_deploy_latency.py --api https://api.jobinterviewcracker.com
-```
-
 ## Tests
 
 ```bat
@@ -83,13 +77,14 @@ cd src
 venv\Scripts\python.exe -m pytest tests -q
 ```
 
-Golden JD: `tests/test_jd_golden.py`
+Golden / materials: `tests/test_jd_golden.py`, `tests/test_materials_only.py`, `tests/test_common_sense.py`
 
 ## Legacy (not primary)
 
 - `gui.py` — older Windows desktop copilot (Stereo Mix)
-- `career-ops/` — separate toolkit (gitignored nested clone)
+- `career-ops/` — separate toolkit
 - Job search lab pages — localhost apply experiments
+- `generate_*_audio.py` — offline practice interview audio only
 
 ## License
 

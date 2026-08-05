@@ -7,7 +7,7 @@
 |------|------|
 | `interview-pulse-ai/` | React UI (Vite + TypeScript + Tailwind) — SpeakCanvas, Copilot, auth |
 | `src/` | FastAPI copilot API: STT, answers, WebSocket, JD grounding, auth/billing |
-| `src/jd and resume/` | Active JD + resume for answer grounding (ATTP) |
+| `src/jd and resume/` | Optional local practice JD/resume only (`ASTRA_PRACTICE_JD=1`); prod uses per-login Role + attached JD/Resume |
 | `career-ops/` | Separate toolkit (not required for live interviews; often gitignored) |
 
 ## Quick start

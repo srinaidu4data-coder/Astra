@@ -28,8 +28,6 @@ import numpy as np
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
-
 # Ensure local imports work when launched from any cwd
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
@@ -40,11 +38,18 @@ from answer_engine import (  # noqa: E402
     iter_answer_tokens,
     to_bullets,
 )
+from api_models import (  # noqa: E402
+    AnswerRequest,
+    FileRunRequest,
+    InjectQuestionRequest,
+    SessionContextRequest,
+)
 from config import get_openai_api_key  # noqa: E402
 from rag import (  # noqa: E402
     classify_utterance,
     search_context,
 )
+from session_context import session_id_from_token  # noqa: E402
 from transcriber import get_whisper_model, transcribe_audio, transcribe_best  # noqa: E402
 
 app = FastAPI(title="InterviewPulse Copilot API", version="1.0.0")
@@ -55,9 +60,8 @@ def _bootstrap_jd_grounding() -> None:
     """
     Start with an empty session role/job context.
 
-    Disk JD/resume may still exist for on-domain grounding when a question
-    matches, but we never pre-fill pack.role — UI Role/Job context stay clear
-    until the user sets them.
+    Practice disk JD is never pre-loaded. UI Role / Job Context / attached
+    JD+Resume are set per login and per interview only.
     """
     try:
         from session_context import clear_pack
@@ -118,52 +122,6 @@ app.add_middleware(
 DEFAULT_AUDIO = ROOT / "test_audio" / "ai_ml_interview_20q.wav"
 DEFAULT_AUDIO_MP3 = ROOT / "test_audio" / "ai_ml_interview_20q.mp3"
 SAMPLE_RATE = 16000
-
-
-class AnswerRequest(BaseModel):
-    question: str
-    job_context: str = ""
-    tone: str = "confident"
-    mode: str = Field(default="star", description="star | shorter | technical | code")
-    # Optional overrides (validated against ALLOWED_MODELS); else per-user / global defaults
-    answer_model: Optional[str] = None
-    fallback_model: Optional[str] = None
-    depth: Optional[str] = Field(
-        default=None, description="fast | balanced | deep — latency vs quality"
-    )
-
-
-class SessionContextRequest(BaseModel):
-    role: Optional[str] = None
-    company: Optional[str] = None
-    seniority: Optional[str] = None
-    interview_type: Optional[str] = None
-    job_description: Optional[str] = None
-    resume_text: Optional[str] = None
-    stories: Optional[list[str]] = None
-    keywords: Optional[list[str]] = None
-    depth: Optional[str] = None
-    outline_first: Optional[bool] = None
-    clear: bool = False
-
-
-class InjectQuestionRequest(BaseModel):
-    question: str
-    job_context: str = ""
-    tone: str = "confident"
-    mode: str = "star"
-    depth: Optional[str] = None
-
-
-class FileRunRequest(BaseModel):
-    path: Optional[str] = None
-    max_questions: int = 3
-    job_context: str = ""
-    tone: str = "confident"
-    mode: str = "star"
-    min_segment_sec: float = 1.5
-    silence_ms: int = 900
-    silence_threshold: float = 0.012
 
 
 def _load_audio_int16_16k(path: Path) -> np.ndarray:
@@ -512,23 +470,6 @@ def latency_ai_diagnose_last():
     return get_last_report()
 
 
-def _session_id_from_token(token: str = "") -> str:
-    """Map JWT → stable pack key so HTTP + WebSocket share Role/JD/Resume."""
-    tok = (token or "").strip()
-    if not tok:
-        return ""
-    try:
-        from backend.jwt_auth import decode_access_token
-
-        payload = decode_access_token(tok) or {}
-        sub = str(payload.get("sub") or payload.get("email") or "").strip()
-        if sub:
-            return f"user_{sub[:80]}"
-    except Exception:
-        pass
-    return ""
-
-
 def _http_session_id(request: Request) -> str:
     """
     Scope HTTP pack by authenticated user (or explicit X-Session-Id).
@@ -541,7 +482,7 @@ def _http_session_id(request: Request) -> str:
         auth = request.headers.get("authorization") or request.headers.get("Authorization") or ""
         if auth.lower().startswith("bearer "):
             token = auth.split(" ", 1)[1].strip()
-            keyed = _session_id_from_token(token)
+            keyed = session_id_from_token(token)
             if keyed:
                 return keyed
     except Exception:
@@ -659,7 +600,7 @@ def answer_inject(req: InjectQuestionRequest, request: Request):
     return {
         "question": q,
         "answer": acc,
-        "bullets": _to_bullets(acc, req.mode or "star"),
+        "bullets": to_bullets(acc, req.mode or "star"),
         "source": source,
         "depth": depth,
         "model_profile": ANSWER_PROFILE,
@@ -944,7 +885,7 @@ def answer(req: AnswerRequest, request: Request):
         "question": req.question,
         "classification": cls,
         "answer": text,
-        "bullets": _to_bullets(text, req.mode),
+        "bullets": to_bullets(text, req.mode),
         # Latency tile: first paint (cache/outline) when available
         "latency_ms": first_paint_ms if first_paint_ms is not None else full_ms,
         "first_paint_ms": first_paint_ms,
@@ -1011,7 +952,7 @@ def answer_stream(req: AnswerRequest, request: Request):
                 "done",
                 {
                     "text": acc,
-                    "bullets": _to_bullets(acc, req.mode),
+                    "bullets": to_bullets(acc, req.mode),
                     "latency_ms": round((time.perf_counter() - t0) * 1000),
                 },
             )
@@ -1151,7 +1092,7 @@ def run_test_audio(req: FileRunRequest):
 
                 total_ms = round((time.perf_counter() - t_ans) * 1000)
                 answered += 1
-                bullets = _to_bullets(acc, req.mode or "star")
+                bullets = to_bullets(acc, req.mode or "star")
                 yield _sse(
                     "answer_done",
                     {
@@ -1179,11 +1120,6 @@ def run_test_audio(req: FileRunRequest):
             yield _sse("error", {"message": str(e)})
 
     return StreamingResponse(gen(), media_type="text/event-stream")
-
-
-def _to_bullets(text: str, mode: str) -> list[str]:
-    """UI bullets from rich multi-section answers (see answer_engine.to_bullets)."""
-    return to_bullets(text, mode)
 
 
 # ---------------------------------------------------------------------------
@@ -1261,7 +1197,7 @@ async def ws_interview(websocket: WebSocket):
         (websocket.query_params.get("token") if hasattr(websocket, "query_params") else "")
         or ""
     ).strip()
-    conn_session_id = _session_id_from_token(ws_tok) or new_session_id()
+    conn_session_id = session_id_from_token(ws_tok) or new_session_id()
     _sid_token = set_session_id(conn_session_id)
     session_holder: dict[str, Any] = {"session": None, "session_id": conn_session_id}
 
@@ -1351,7 +1287,7 @@ async def ws_interview(websocket: WebSocket):
                     msg.get("access_token") or msg.get("token") or ws_tok or ""
                 ).strip()
                 if start_tok:
-                    keyed = _session_id_from_token(start_tok)
+                    keyed = session_id_from_token(start_tok)
                     if keyed:
                         conn_session_id = keyed
                         session_holder["session_id"] = keyed
