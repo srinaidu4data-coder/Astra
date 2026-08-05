@@ -52,22 +52,25 @@ export function Sidebar({ compact = false }: { compact?: boolean }) {
           : 'w-[88px] py-8 lg:w-[220px] lg:items-stretch lg:px-5',
       )}
     >
-      {/* Mark */}
+      {/* Mark — signature teal diamond */}
       <div
         className={cn(
           'mb-10 flex items-center gap-3 px-1',
           !compact && 'lg:px-2',
         )}
       >
-        <div className="flex h-11 w-11 items-center justify-center rounded-sm border border-[#20B8CD]/30 bg-[#141414]">
-          <div className="h-3 w-3 rounded-none bg-[#20B8CD]" />
+        <div
+          className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-[#20B8CD]/25 bg-gradient-to-br from-[#20B8CD]/20 to-transparent shadow-[0_0_24px_rgba(32,184,205,0.12)]"
+          aria-hidden
+        >
+          <div className="h-2.5 w-2.5 rotate-45 rounded-[2px] bg-[#5DD5E3]" />
         </div>
         <div className={cn('min-w-0', compact ? 'hidden' : 'hidden lg:block')}>
-          <div className="truncate text-[13px] font-medium tracking-tight text-white/90">
+          <div className="truncate text-[13px] font-medium tracking-tight text-white/95">
             InterviewPulse
           </div>
           <div className="truncate text-[10px] font-normal tracking-tight text-white/35">
-            Live answers
+            Live interview kit
           </div>
         </div>
       </div>
@@ -83,10 +86,10 @@ export function Sidebar({ compact = false }: { compact?: boolean }) {
               onClick={() => setRoute(item.id)}
               title={item.label}
               className={cn(
-                'group flex cursor-pointer items-center justify-center gap-3 rounded-sm px-0 py-3 transition-colors duration-150',
+                'group flex cursor-pointer items-center justify-center gap-3 rounded-xl px-0 py-3 transition-colors duration-150',
                 !compact && 'lg:justify-start lg:px-3.5',
                 active
-                  ? 'bg-[#20B8CD]/15 text-white ring-1 ring-[#20B8CD]/35'
+                  ? 'bg-[#20B8CD]/14 text-white ring-1 ring-[#20B8CD]/30'
                   : 'text-white/40 hover:bg-white/[0.05] hover:text-white/80',
               )}
             >

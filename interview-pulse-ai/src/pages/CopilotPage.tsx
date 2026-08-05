@@ -1,9 +1,15 @@
 import { ApiStatusBadge } from '@/components/ApiStatusBadge'
+import { InterviewSetupCard } from '@/components/InterviewSetupCard'
 import { LiveWaveform } from '@/components/LiveWaveform'
 import { MaterialsPanel } from '@/components/MaterialsPanel'
 import { WhisperStream } from '@/components/WhisperStream'
 import { Button } from '@/components/ui/button'
 import { openAnswerPopout } from '@/lib/answer-popout'
+import {
+  focusFirstMissing,
+  getInterviewReadiness,
+  readinessSummary,
+} from '@/lib/interview-ready'
 import { liveInterview } from '@/services/live-interview'
 import { pipeline } from '@/services/pipeline'
 import {
@@ -28,7 +34,7 @@ import {
   resolveInterviewAudioSource,
   type InterviewAudioSource,
 } from '@/lib/api-base'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 /**
  * Unified Interview home (Copilot + Materials/Knowledge).
@@ -45,12 +51,24 @@ export function CopilotPage() {
   const updateSettings = useAppStore((s) => s.updateSettings)
   const activeJobTitle = useAppStore((s) => s.activeJobTitle)
   const setActiveJobTitle = useAppStore((s) => s.setActiveJobTitle)
+  const documents = useAppStore((s) => s.documents)
   const clearTranscript = useAppStore((s) => s.clearTranscript)
   const pushTranscript = useAppStore((s) => s.pushTranscript)
   const setListening = useAppStore((s) => s.setListening)
   const setAnswer = useAppStore((s) => s.setAnswer)
   const transcript = useAppStore((s) => s.transcript)
   const user = useAppStore((s) => s.user)
+  const setMaterialsOpen = useAppStore((s) => s.setMaterialsOpen)
+
+  const interviewReady = useMemo(
+    () =>
+      getInterviewReadiness({
+        role: activeJobTitle,
+        jobContext: settings.jobContext || '',
+        documents,
+      }),
+    [activeJobTitle, settings.jobContext, documents],
+  )
 
   const cardIndexRef = useRef(0)
   const lastLevelAt = useRef(0)
@@ -454,6 +472,20 @@ export function CopilotPage() {
       return
     }
 
+    // Hard gate: Role + Job context + Resume + JD required
+    const ready = getInterviewReadiness({
+      role: activeJobTitle,
+      jobContext: settings.jobContext || '',
+      documents: useAppStore.getState().documents,
+    })
+    if (!ready.ready) {
+      pushStatus(readinessSummary(ready))
+      // Expand controls if hidden so the kit is visible
+      if (leftCollapsed) setCopilotWideAnswer(false)
+      window.setTimeout(() => focusFirstMissing(ready), 80)
+      return
+    }
+
     try {
       // Preflight: health before capture dialog (support #1, #4)
       const health = await checkCopilotHealth()
@@ -630,6 +662,22 @@ export function CopilotPage() {
 
   const askManual = async () => {
     if (!manualQ.trim() || answering) return
+
+    // Same kit gate as Start — typed answers must be grounded too
+    if (!sessionOn) {
+      const ready = getInterviewReadiness({
+        role: activeJobTitle,
+        jobContext: settings.jobContext || '',
+        documents: useAppStore.getState().documents,
+      })
+      if (!ready.ready) {
+        pushStatus(readinessSummary(ready))
+        if (leftCollapsed) setCopilotWideAnswer(false)
+        window.setTimeout(() => focusFirstMissing(ready), 80)
+        return
+      }
+    }
+
     setAnswering(true)
     const q = manualQ.trim()
     pushTranscript({
@@ -762,11 +810,26 @@ export function CopilotPage() {
               <button
                 type="button"
                 onClick={() => void toggleSession()}
-                title={sessionOn ? 'Stop interview' : 'Start interview'}
+                title={
+                  sessionOn
+                    ? 'Stop interview'
+                    : interviewReady.ready
+                      ? 'Start interview'
+                      : readinessSummary(interviewReady)
+                }
+                aria-label={
+                  sessionOn
+                    ? 'Stop interview'
+                    : interviewReady.ready
+                      ? 'Start interview'
+                      : readinessSummary(interviewReady)
+                }
                 className={`inline-flex h-9 w-9 items-center justify-center rounded-full border ${
                   sessionOn
                     ? 'border-rose-400/40 bg-rose-500/15 text-rose-100'
-                    : 'border-[#20B8CD]/40 bg-[#20B8CD]/15 text-[#5DD5E3]'
+                    : interviewReady.ready
+                      ? 'border-[#20B8CD]/40 bg-[#20B8CD]/15 text-[#5DD5E3]'
+                      : 'border-white/15 bg-white/[0.06] text-white/45'
                 }`}
               >
                 {sessionOn ? (
@@ -785,12 +848,18 @@ export function CopilotPage() {
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-[16px] font-medium tracking-tight text-white/95">
-                  Interview
+                  Live interview
                 </h2>
                 <p className="mt-0.5 text-[12px] text-white/40 sm:block">
-                  <span className="sm:hidden">Tap Start · get answers</span>
+                  <span className="sm:hidden">
+                    {interviewReady.ready
+                      ? 'Ready · tap Start'
+                      : 'Finish kit · then Start'}
+                  </span>
                   <span className="hidden sm:inline">
-                    One tap · hear interviewer · get answers
+                    {interviewReady.ready
+                      ? 'Kit complete · hear the room · answers that fit you'
+                      : 'Complete your kit · then one tap to start'}
                   </span>
                 </p>
               </div>
@@ -828,13 +897,42 @@ export function CopilotPage() {
               </span>
             </div>
 
-            {/* Primary CTA — largest control */}
+            {/* Required kit — Role, Context, Resume, JD before Start */}
+            {!sessionOn && (
+              <div className="mb-4">
+                <InterviewSetupCard />
+              </div>
+            )}
+
+            {/* Primary CTA — always clickable; incomplete kit guides to first field */}
             <div className="mb-4 flex flex-wrap gap-2">
               <Button
                 type="button"
                 size="lg"
-                className="min-h-[48px] min-w-[180px] flex-1 text-[15px]"
-                variant={sessionOn ? 'danger' : 'default'}
+                className={
+                  sessionOn || interviewReady.ready
+                    ? 'min-h-[48px] min-w-[180px] flex-1 text-[15px]'
+                    : 'min-h-[48px] min-w-[180px] flex-1 text-[15px] opacity-90'
+                }
+                variant={
+                  sessionOn
+                    ? 'danger'
+                    : interviewReady.ready
+                      ? 'default'
+                      : 'secondary'
+                }
+                title={
+                  sessionOn
+                    ? 'Stop interview'
+                    : interviewReady.ready
+                      ? 'Start live interview'
+                      : readinessSummary(interviewReady)
+                }
+                aria-describedby={
+                  !sessionOn && !interviewReady.ready
+                    ? 'ip-kit-gate-hint'
+                    : undefined
+                }
                 onClick={() => void toggleSession()}
               >
                 {sessionOn ? (
@@ -843,7 +941,8 @@ export function CopilotPage() {
                   </>
                 ) : (
                   <>
-                    <Volume2 className="h-4 w-4" strokeWidth={1.75} /> Start
+                    <Volume2 className="h-4 w-4" strokeWidth={1.75} />{' '}
+                    {interviewReady.ready ? 'Start interview' : 'Complete setup'}
                   </>
                 )}
               </Button>
@@ -879,36 +978,46 @@ export function CopilotPage() {
               </Button>
             </div>
 
-            {/* Role + context — compact */}
-            <div className="mb-4 space-y-2.5">
-              <label className="block">
-                <span className="label-quiet">Role</span>
-                <input
-                  className="field mt-1"
-                  value={activeJobTitle}
-                  onChange={(e) => setActiveJobTitle(e.target.value)}
-                  placeholder="e.g. Product Manager"
-                  autoComplete="off"
-                />
-              </label>
-              <label className="block">
-                <span className="label-quiet">Job context</span>
-                <input
-                  className="field mt-1"
-                  value={settings.jobContext}
-                  onChange={(e) => updateSettings({ jobContext: e.target.value })}
-                  placeholder="Optional stack or domain notes"
-                  autoComplete="off"
-                />
-              </label>
-              <p className="text-[11px] leading-relaxed text-white/30">
-                Answers use:{' '}
-                <span className="text-white/50">
-                  {effectiveJobContext() || 'question only'}
-                </span>
-                {sessionOn ? ' · live' : ''}
+            {!sessionOn && !interviewReady.ready && (
+              <p
+                id="ip-kit-gate-hint"
+                className="mb-4 text-[12px] leading-relaxed text-white/40"
+              >
+                {readinessSummary(interviewReady)}. Tap Complete setup to jump to
+                the next field — answers stay grounded in your materials.
               </p>
-              <label className="block">
+            )}
+
+            {sessionOn && (
+              <div className="mb-4 space-y-2 rounded-xl border border-white/[0.06] bg-black/20 px-3.5 py-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-white/35">
+                  Live kit
+                </p>
+                <p className="text-[13px] text-white/80">
+                  {effectiveJobContext() || '—'}
+                </p>
+                <p className="text-[11px] text-white/35">
+                  Audio / STT changes apply on next Start. Stop first to switch capture.
+                </p>
+                <label className="block pt-1">
+                  <span className="label-quiet">Answer depth</span>
+                  <select
+                    className="field mt-1"
+                    value={depth}
+                    onChange={(e) =>
+                      setDepth(e.target.value as 'fast' | 'balanced' | 'deep')
+                    }
+                  >
+                    <option value="fast">Fast</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="deep">Deep</option>
+                  </select>
+                </label>
+              </div>
+            )}
+
+            {!sessionOn && (
+              <label className="mb-4 block">
                 <span className="label-quiet">Answer depth</span>
                 <select
                   className="field mt-1"
@@ -922,12 +1031,7 @@ export function CopilotPage() {
                   <option value="deep">Deep</option>
                 </select>
               </label>
-              {sessionOn && (
-                <p className="text-[11px] text-white/28">
-                  Audio source / STT keys apply on next Start. Stop first to change capture mode.
-                </p>
-              )}
-            </div>
+            )}
 
             {/* Type a question */}
             <div className="mb-3 space-y-2">
@@ -952,17 +1056,27 @@ export function CopilotPage() {
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input
-                  className="field min-w-0 flex-1"
+                  className="ip-field min-w-0 flex-1"
                   value={manualQ}
                   onChange={(e) => setManualQ(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && void askManual()}
-                  placeholder="Paste if audio lags…"
+                  placeholder={
+                    !sessionOn && !interviewReady.ready
+                      ? 'Finish kit first…'
+                      : 'Paste if audio lags…'
+                  }
                   disabled={answering}
+                  aria-label="Type interview question"
                 />
                 <Button
                   variant="secondary"
                   onClick={() => void askManual()}
                   disabled={answering || !manualQ.trim()}
+                  title={
+                    !sessionOn && !interviewReady.ready
+                      ? readinessSummary(interviewReady)
+                      : 'Generate answer'
+                  }
                 >
                   {answering ? '…' : 'Answer'}
                 </Button>
@@ -984,6 +1098,10 @@ export function CopilotPage() {
             {showHowItWorks && (
               <div className="mb-2 space-y-2 rounded-[16px] glass-inset px-4 py-3 text-[12px] leading-relaxed text-white/45">
                 <ol className="list-decimal space-y-1.5 pl-4">
+                  <li>
+                    Complete your <strong className="text-white/70">Interview kit</strong> — Role,
+                    Context, Resume, and JD (required before Start)
+                  </li>
                   <li>
                     Press <strong className="text-white/70">Start</strong> — we capture{' '}
                     <strong className="text-white/70">speakers / meeting audio only</strong>, not

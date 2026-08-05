@@ -2,24 +2,25 @@ import { cn } from '@/lib/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ButtonHTMLAttributes } from 'react'
 
-/** Material 3 button shapes — pill filled / outlined / text */
+/** Premium pill controls — signature teal primary */
 const buttonVariants = cva(
   [
     'inline-flex cursor-pointer items-center justify-center gap-2',
-    'rounded-full text-[14px] font-medium tracking-[0.01em]',
-    'transition-[background,box-shadow,color,border-color] duration-150',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8ab4f8]/50',
-    'disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-38',
-    'select-none',
+    'rounded-full text-[14px] font-medium tracking-[-0.01em]',
+    'transition-[background,box-shadow,color,border-color,transform] duration-150',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5DD5E3]/45',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0c0d0f]',
+    'disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-40',
+    'select-none active:scale-[0.98]',
   ].join(' '),
   {
     variants: {
       variant: {
         default:
-          'bg-[#8ab4f8] text-[#062e6f] hover:bg-[#aecbfa] hover:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_1px_3px_1px_rgba(0,0,0,0.15)]',
+          'bg-[#20B8CD] text-[#041a1e] hover:bg-[#5DD5E3] hover:shadow-[0_4px_20px_rgba(32,184,205,0.35)]',
         secondary:
-          'bg-transparent text-[#8ab4f8] border border-[#8ab4f8]/50 hover:bg-[#8ab4f8]/12',
-        ghost: 'text-[#8ab4f8] hover:bg-[#8ab4f8]/10',
+          'bg-transparent text-[#5DD5E3] border border-[#5DD5E3]/40 hover:bg-[#20B8CD]/12',
+        ghost: 'text-[#5DD5E3] hover:bg-[#20B8CD]/10',
         success:
           'bg-[#81c995]/15 text-[#81c995] border border-[#81c995]/35 hover:bg-[#81c995]/22',
         danger:

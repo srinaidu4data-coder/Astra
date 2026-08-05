@@ -1,6 +1,8 @@
 import { ApiStatusBadge } from '@/components/ApiStatusBadge'
+import { getInterviewReadiness } from '@/lib/interview-ready'
 import { useAppStore } from '@/stores/app-store'
 import { Loader2 } from 'lucide-react'
+import { useMemo } from 'react'
 
 const titles: Record<string, string> = {
   copilot: 'Interview',
@@ -19,6 +21,19 @@ export function MobileTopBar() {
   const listening = useAppStore((s) => s.listening)
   const user = useAppStore((s) => s.user)
   const activeJobTitle = useAppStore((s) => s.activeJobTitle)
+  const jobContext = useAppStore((s) => s.settings.jobContext)
+  const documents = useAppStore((s) => s.documents)
+
+  const kit = useMemo(
+    () =>
+      getInterviewReadiness({
+        role: activeJobTitle,
+        jobContext: jobContext || '',
+        documents,
+      }),
+    [activeJobTitle, jobContext, documents],
+  )
+  const showKit = route === 'copilot' || route === 'knowledge'
 
   return (
     <header
@@ -32,6 +47,17 @@ export function MobileTopBar() {
             {listening ? (
               <span className="ml-1.5 inline-flex items-center gap-1 text-[#20B8CD]">
                 <Loader2 className="h-3 w-3 animate-spin" /> Live
+              </span>
+            ) : null}
+            {showKit && !listening ? (
+              <span
+                className={
+                  kit.ready
+                    ? ' ml-1.5 text-[#81c995]/90'
+                    : ' ml-1.5 text-white/40'
+                }
+              >
+                Kit {kit.completeCount}/{kit.total}
               </span>
             ) : null}
           </p>

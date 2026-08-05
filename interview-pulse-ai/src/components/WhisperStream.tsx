@@ -29,6 +29,7 @@ import {
 import { craftCoolSignoff } from '@/lib/speak-cool-line'
 import { planAskRail, type AskPlan } from '@/lib/speak-ask-engine'
 import { cn } from '@/lib/utils'
+import { useAppStore } from '@/stores/app-store'
 import type { AnswerMode, QACard } from '@/types'
 import {
   Check,
@@ -924,9 +925,14 @@ export const WhisperStream = memo(function WhisperStream({
         streaming: true,
       })
     }
+    const st = useAppStore.getState()
+    const role = (st.activeJobTitle || '').trim()
+    const jc = (st.settings.jobContext || '').trim()
+    const roleJob = [role, jc].filter(Boolean).join(' · ')
     return planAskRail({
       answerText: answerBodyText,
       question: card.question || card.answer.question,
+      roleJob,
       streaming: false,
       cardIndex,
       asksShownThisSession: askSessionCountRef.current,

@@ -2,9 +2,14 @@ import { ApiStatusBadge } from '@/components/ApiStatusBadge'
 import { DesktopOption } from '@/components/DesktopOption'
 import { Button } from '@/components/ui/button'
 import { openAnswerPopout } from '@/lib/answer-popout'
+import {
+  getInterviewReadiness,
+  readinessSummary,
+} from '@/lib/interview-ready'
 import { formatMs } from '@/lib/utils'
 import { useAppStore } from '@/stores/app-store'
 import { MonitorSmartphone, Shield } from 'lucide-react'
+import { useMemo } from 'react'
 
 export function TopBar() {
   const activeJobTitle = useAppStore((s) => s.activeJobTitle)
@@ -12,6 +17,7 @@ export function TopBar() {
   const updateStealth = useAppStore((s) => s.updateStealth)
   const metrics = useAppStore((s) => s.metrics)
   const settings = useAppStore((s) => s.settings)
+  const documents = useAppStore((s) => s.documents)
   const route = useAppStore((s) => s.route)
 
   const titles: Record<string, string> = {
@@ -25,6 +31,18 @@ export function TopBar() {
     autoapply: 'Jobs',
     nightscout: 'Jobs',
   }
+
+  const kit = useMemo(
+    () =>
+      getInterviewReadiness({
+        role: activeJobTitle,
+        jobContext: settings.jobContext || '',
+        documents,
+      }),
+    [activeJobTitle, settings.jobContext, documents],
+  )
+  const showKit =
+    route === 'copilot' || route === 'knowledge'
 
   const hasDesktop = typeof window !== 'undefined' && !!window.interviewPulse
 
@@ -71,6 +89,19 @@ export function TopBar() {
         <p className="text-[12px] font-light tracking-wide text-white/35">
           {titles[route] ?? 'InterviewPulse'}
           {settings.demoMode ? ' · Demo' : ' · Live'}
+          {showKit && (
+            <span
+              className={
+                kit.ready
+                  ? ' text-[#81c995]/90'
+                  : ' text-white/40'
+              }
+              title={readinessSummary(kit)}
+            >
+              {' '}
+              · Kit {kit.completeCount}/{kit.total}
+            </span>
+          )}
         </p>
         <h1 className="truncate text-[28px] font-medium tracking-tight text-white/95 md:text-[32px]">
           {activeJobTitle?.trim() || 'Live interview'}
