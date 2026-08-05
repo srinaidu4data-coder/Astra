@@ -43,8 +43,25 @@ RUN pip install --upgrade pip \
 
 COPY src/ /app/
 
-RUN mkdir -p /data/hf /data/cache /data/db
+# Never ship local practice packs into multi-tenant prod (was ambient ATTP bleed).
+# Answers must use only each login's Role + Job context.
+RUN rm -rf "/app/jd and resume" \
+    /app/test_audio \
+    /app/generate_sap_attp_audio.py \
+    /app/generate_jd_resume_interview_audio.py \
+    /app/generate_resume_natural_interview_audio.py \
+    /app/generate_brim_interview_audio.py \
+    /app/generate_brim_hard_architect_audio.py \
+    /app/generate_sap_fico_vertex_audio.py \
+ 2>/dev/null || true \
+ && mkdir -p "/app/jd and resume" \
+ && printf '%s\n' '# Practice JD disabled in production. Set Role in the UI per login.' \
+    > "/app/jd and resume/README.md"
+
+ENV ASTRA_PRACTICE_JD=0
 ENV DATABASE_URL=sqlite:////data/db/astra_backend.db
+
+RUN mkdir -p /data/hf /data/cache /data/db
 
 EXPOSE 8787
 
