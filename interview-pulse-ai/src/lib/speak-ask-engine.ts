@@ -9,6 +9,7 @@
  *
  * Engineering style (Karpathy bar): pure functions, explicit graph, eval harness.
  * No model calls here — craft from conversation anchors only (honest IM).
+ * Build id: ask-rail-v1.0.1 (asset hash bust for custom-domain CDN).
  */
 
 export type AskArchetype =
