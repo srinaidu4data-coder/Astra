@@ -62,6 +62,7 @@ export function orbitalShell(role: BeatRole): OrbitalShell {
   if (role === 'proof') return 'planet'
   if (role === 'close') return 'rim'
   if (role === 'cool') return 'rim'
+  if (role === 'ask') return 'planet' // peer-mass question, not moon
   return 'moon'
 }
 

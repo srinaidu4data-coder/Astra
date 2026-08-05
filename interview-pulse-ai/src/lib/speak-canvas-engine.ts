@@ -50,7 +50,7 @@ export const MAX_BEATS_CALM = 5
 /** Seconds assumed for a full spoken answer (time-utility horizon) */
 export const DEFAULT_TIME_BUDGET_SEC = 40
 
-export type BeatRole = 'hook' | 'proof' | 'close' | 'cool' | 'support'
+export type BeatRole = 'hook' | 'proof' | 'close' | 'cool' | 'ask' | 'support'
 
 /** Dual-process surface mode */
 export type SpeakProcessMode = 'glance' | 'depth'
@@ -240,6 +240,8 @@ export function timeUtility(
     close: 1.0,
     // Peak–end: last warm beat is memorable but never louder than proof
     cool: 0.95,
+    // Reverse-question: high signal, sparse (Heimbaugh interest; not hire lever)
+    ask: 1.0,
     support: 0.45,
   }
   let t = 0
@@ -290,7 +292,9 @@ export function displayScaleFromAttention(
           ? 0.02
           : role === 'cool'
             ? 0.03
-            : 0
+            : role === 'ask'
+              ? 0.05
+              : 0
   const base = 0.82 + 0.4 * attention + roleBoost
   return clamp(base * loadPenalty, 0.78, 1.28)
 }
@@ -356,9 +360,13 @@ export function planSpeakCanvas(
   // Extraneous load control — shrink type slightly when overloaded
   const loadPenalty = load > 1 ? 0.9 : load > 0.85 ? 0.95 : 1
 
-  /** Peak-end + serial position: never collapse Hook / Close / Cool */
+  /** Peak-end + serial position: never collapse Hook / Proof / Close / Ask / Cool */
   const isPeakRole = (role: BeatRole) =>
-    role === 'hook' || role === 'proof' || role === 'close' || role === 'cool'
+    role === 'hook' ||
+    role === 'proof' ||
+    role === 'close' ||
+    role === 'cool' ||
+    role === 'ask'
 
   const beats: BeatPlan[] = rolesMeta.map((r, i) => {
     const a = attention[i] ?? 1 / Math.max(1, n)
@@ -372,21 +380,18 @@ export function planSpeakCanvas(
           ? 1.15
           : r.role === 'close'
             ? 0.7
-            : r.role === 'cool'
+            : r.role === 'cool' || r.role === 'ask'
               ? 0.5
               : processMode === 'glance'
                 ? 0.45
                 : 0.75
     const wordBudget = Math.max(
-      r.role === 'hook' || r.role === 'cool' ? 8 : 12,
+      r.role === 'hook' || r.role === 'cool' || r.role === 'ask' ? 8 : 12,
       Math.round((wordCounts[i] || 18) * roleWordMul * (0.75 + 0.5 * a)),
     )
 
-    // Support (and only support) collapses under stress — progressive disclosure
-    const collapsible =
-      !isPeakRole(r.role) &&
-      (r.role === 'support' ||
-        (processMode === 'glance' && r.role === 'support'))
+    // Support only collapses under stress — progressive disclosure
+    const collapsible = r.role === 'support'
     const opacity =
       r.role === 'support'
         ? processMode === 'glance'
@@ -396,7 +401,7 @@ export function planSpeakCanvas(
           ? 1
           : r.role === 'close'
             ? 0.96
-            : r.role === 'cool'
+            : r.role === 'cool' || r.role === 'ask'
               ? 0.94
               : 0.92
 

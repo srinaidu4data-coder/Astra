@@ -772,6 +772,47 @@
     font-style: italic;
   }
 
+  /* Ask: reverse-question rail — peer cyan (not gold Cool) */
+  .speak-beat-ask {
+    border-color: rgba(126, 200, 255, 0.32);
+    background: linear-gradient(
+      135deg,
+      rgba(32, 120, 205, 0.12) 0%,
+      rgba(32, 184, 205, 0.05) 100%
+    );
+  }
+  .speak-beat-ask .speak-rail-label {
+    color: rgba(160, 210, 255, 0.9);
+    letter-spacing: 0.08em;
+  }
+  .speak-ask-line {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .speak-ask-why {
+    font-style: normal;
+  }
+  .speak-beat-active.speak-beat-ask,
+  .speak-beat-ask.speak-beat-active {
+    box-shadow:
+      0 0 0 1px rgba(126, 200, 255, 0.35),
+      0 8px 28px rgba(32, 120, 205, 0.1);
+    animation: speak-ask-pulse 1.4s ease-out 1;
+  }
+  @keyframes speak-ask-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(126, 200, 255, 0.5);
+    }
+    40% {
+      box-shadow: 0 0 0 6px rgba(126, 200, 255, 0.18);
+    }
+    100% {
+      box-shadow:
+        0 0 0 1px rgba(126, 200, 255, 0.3),
+        0 8px 28px rgba(32, 120, 205, 0.08);
+    }
+  }
+
   .speak-beat-active.speak-beat-cool,
   .speak-beat-cool.speak-beat-active {
     box-shadow: 0 0 0 1px rgba(232, 197, 71, 0.35),
@@ -1078,7 +1119,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .speak-beat-active.speak-beat-close,
-    .speak-beat-active.speak-beat-cool {
+    .speak-beat-active.speak-beat-cool,
+    .speak-beat-active.speak-beat-ask {
       animation: none;
     }
   }

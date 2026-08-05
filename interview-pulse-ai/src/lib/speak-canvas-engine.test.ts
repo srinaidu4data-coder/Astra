@@ -76,12 +76,13 @@ describe('Cool + ladder', () => {
     expect(line.length).toBeGreaterThan(10)
   })
 
-  it('ladder advances Hook → Proof → Close → Cool → done', () => {
+  it('ladder advances Hook → Proof → Close → Ask → Cool → done', () => {
     expect(advanceSpeakLadder('all')).toBe('hook')
     expect(advanceSpeakLadder('hook')).toBe('proof')
     expect(advanceSpeakLadder('proof')).toBe('close')
-    expect(advanceSpeakLadder('close')).toBe('cool')
+    expect(advanceSpeakLadder('close')).toBe('ask')
+    expect(advanceSpeakLadder('ask')).toBe('cool')
     expect(advanceSpeakLadder('cool')).toBe('done')
-    expect(ladderCue('close')).toMatch(/Cool/i)
+    expect(ladderCue('close')).toMatch(/Ask/i)
   })
 })

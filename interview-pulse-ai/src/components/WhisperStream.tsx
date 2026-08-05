@@ -27,6 +27,7 @@ import {
   type SpeakLadderStep,
 } from '@/lib/speak-psych-hacks'
 import { craftCoolSignoff } from '@/lib/speak-cool-line'
+import { planAskRail, type AskPlan } from '@/lib/speak-ask-engine'
 import { cn } from '@/lib/utils'
 import type { AnswerMode, QACard } from '@/types'
 import {
@@ -52,7 +53,7 @@ import {
   type ReactNode,
 } from 'react'
 
-type Spotlight = 'all' | 'hook' | 'proof' | 'close' | 'cool'
+type Spotlight = 'all' | 'hook' | 'proof' | 'close' | 'ask' | 'cool'
 
 const modes: { id: AnswerMode; label: string; hint: string }[] = [
   { id: 'shorter', label: 'Shorter', hint: '3 tight lines' },
@@ -66,11 +67,80 @@ const READY_RAILS = [
   { id: 'proof', label: 'Proof', hint: 'Action + evidence' },
   { id: 'close', label: 'Close', hint: 'Land the result' },
   {
+    id: 'ask',
+    label: 'Ask',
+    hint: 'One reverse question — when the room is ready',
+  },
+  {
     id: 'cool',
     label: 'Cool',
-    hint: 'One calm sign-off — warmth after competence',
+    hint: 'Calm sign-off if Ask is silent',
   },
 ] as const
+
+/** End rail: Ask supersedes Cool when gates fire (research v3). */
+function EndSignalRails({
+  askPlan,
+  coolLine,
+  isDim,
+  landPulse,
+  coolPulse,
+  spotlight,
+  onAskFocus,
+  onCoolFocus,
+}: {
+  askPlan: AskPlan
+  coolLine: string
+  isDim: (role: BeatRole) => boolean
+  landPulse: boolean
+  coolPulse: boolean
+  spotlight: Spotlight
+  onAskFocus: () => void
+  onCoolFocus: () => void
+}) {
+  if (askPlan.show && askPlan.question) {
+    return (
+      <OrbitBeat
+        role="ask"
+        label="ASK"
+        scale={1.06}
+        wide
+        fullText={askPlan.question}
+        dimmed={isDim('ask')}
+        active={spotlight === 'ask' || landPulse}
+        onFocus={onAskFocus}
+      >
+        <p className="speak-ask-line text-[15px] leading-snug text-[#E8F4FF]/95">
+          {askPlan.question}
+        </p>
+        {askPlan.why ? (
+          <p className="speak-ask-why mt-1.5 text-[11px] leading-snug text-white/35">
+            {askPlan.why}
+          </p>
+        ) : null}
+      </OrbitBeat>
+    )
+  }
+  if (coolLine) {
+    return (
+      <OrbitBeat
+        role="cool"
+        label="COOL"
+        scale={1.05}
+        wide
+        fullText={coolLine}
+        dimmed={isDim('cool')}
+        active={spotlight === 'cool' || coolPulse}
+        onFocus={onCoolFocus}
+      >
+        <p className="speak-cool-line text-[15px] leading-snug text-[#E8C547]/95">
+          {coolLine}
+        </p>
+      </OrbitBeat>
+    )
+  }
+  return null
+}
 
 /**
  * Neuro-astro render: full text always present.
@@ -514,7 +584,8 @@ function PathRail({
     { id: 'hook', label: 'Hook', key: '1' },
     { id: 'proof', label: 'Proof', key: '2' },
     { id: 'close', label: 'Close', key: '3' },
-    { id: 'cool', label: 'Cool', key: '4' },
+    { id: 'ask', label: 'Ask', key: '4' },
+    { id: 'cool', label: 'Cool', key: '5' },
   ]
   // Focus mode: show only active step + ladder cue (choice overload / Iyengar)
   if (focusMode && spotlight !== 'all') {
@@ -578,7 +649,7 @@ function PathRail({
             )}
             title={
               processMode === 'glance'
-                ? 'Glance: Hook + Proof + Close (+ Cool)'
+                ? 'Glance: Hook · Proof · Close · Ask'
                 : 'Depth: full rails'
             }
           >
@@ -759,6 +830,9 @@ export const WhisperStream = memo(function WhisperStream({
   /** Commitment lock: first atomic punch token freezes for the card */
   const punchLockRef = useRef<{ cardId: string; token: string } | null>(null)
   const wasStreamingRef = useRef(false)
+  /** Session Ask budget (research: sparse; max ~2). */
+  const askSessionCountRef = useRef(0)
+  const askCountedCardRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     setExpandFull(false)
@@ -783,7 +857,7 @@ export const WhisperStream = memo(function WhisperStream({
       ) {
         return
       }
-      // 1–4: Hook / Proof / Close / Cool; 0 or Esc = all
+      // 1–5: Hook / Proof / Close / Ask / Cool; 0 or Esc = all
       if (e.key === '1') {
         e.preventDefault()
         setSpotlight((s) => (s === 'hook' ? 'all' : 'hook'))
@@ -798,13 +872,17 @@ export const WhisperStream = memo(function WhisperStream({
         setFocusMode(true)
       } else if (e.key === '4') {
         e.preventDefault()
+        setSpotlight((s) => (s === 'ask' ? 'all' : 'ask'))
+        setFocusMode(true)
+      } else if (e.key === '5') {
+        e.preventDefault()
         setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
         setFocusMode(true)
       } else if (e.key === '0' || e.key === 'Escape') {
         setSpotlight('all')
         setFocusMode(false)
       } else if (e.key === ' ' || e.code === 'Space') {
-        // Speak ladder: Space advances Hook → Proof → Close → Cool
+        // Speak ladder: Hook → Proof → Close → Ask → Cool
         e.preventDefault()
         setSpotlight((s) => {
           const step = (s === 'all' ? 'all' : s) as SpeakLadderStep | 'all'
@@ -824,9 +902,9 @@ export const WhisperStream = memo(function WhisperStream({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const coolLine = useMemo(() => {
+  const answerBodyText = useMemo(() => {
     if (!card?.answer) return ''
-    const body =
+    return (
       (card.answer.bullets || []).join('\n') ||
       [
         card.answer.star?.situation,
@@ -836,13 +914,44 @@ export const WhisperStream = memo(function WhisperStream({
       ]
         .filter(Boolean)
         .join('\n')
-    if (!body.trim() || card.answer.streaming) return ''
+    )
+  }, [card])
+
+  const askPlan = useMemo((): AskPlan => {
+    if (!card?.answer || !answerBodyText.trim() || card.answer.streaming) {
+      return planAskRail({
+        answerText: '',
+        streaming: true,
+      })
+    }
+    return planAskRail({
+      answerText: answerBodyText,
+      question: card.question || card.answer.question,
+      streaming: false,
+      cardIndex,
+      asksShownThisSession: askSessionCountRef.current,
+      maxAsksPerSession: 2,
+    })
+  }, [card, answerBodyText, cardIndex])
+
+  // Count Ask fires once per card for session budget
+  useEffect(() => {
+    if (!card?.id || !askPlan.show) return
+    if (askCountedCardRef.current.has(card.id)) return
+    askCountedCardRef.current.add(card.id)
+    askSessionCountRef.current += 1
+  }, [card?.id, askPlan.show])
+
+  const coolLine = useMemo(() => {
+    if (!card?.answer || !answerBodyText.trim() || card.answer.streaming) return ''
+    // Ask supersedes Cool when gates fire
+    if (askPlan.show) return ''
     return craftCoolSignoff({
-      answerText: body,
+      answerText: answerBodyText,
       question: card.question || card.answer.question,
       mode: card.answer.mode,
     })
-  }, [card])
+  }, [card, answerBodyText, askPlan.show])
 
   const copySpeakSheet = useCallback(async () => {
     if (!card?.answer) return
@@ -850,7 +959,11 @@ export const WhisperStream = memo(function WhisperStream({
       star: card.answer.star,
       bullets: card.answer.bullets,
     })
-    if (coolLine) {
+    if (askPlan.show && askPlan.question) {
+      sheet = sheet
+        ? `${sheet}\n\nAsk\n${askPlan.question}`
+        : `Ask\n${askPlan.question}`
+    } else if (coolLine) {
       sheet = sheet ? `${sheet}\n\nCool\n${coolLine}` : `Cool\n${coolLine}`
     }
     if (!sheet) return
@@ -861,7 +974,7 @@ export const WhisperStream = memo(function WhisperStream({
     } catch {
       /* ignore */
     }
-  }, [card, coolLine])
+  }, [card, coolLine, askPlan])
   const streaming = Boolean(answer?.streaming)
 
   // Peak-end: Close land pulse, then Cool warmth pulse, then focus mode
@@ -1023,7 +1136,8 @@ export const WhisperStream = memo(function WhisperStream({
                       r !== 'hook' &&
                       r !== 'proof' &&
                       r !== 'close' &&
-                      r !== 'cool'
+                      r !== 'cool' &&
+                      r !== 'ask'
                     )
                       return
                     setSpotlight((s) => (s === r ? 'all' : r))
@@ -1034,25 +1148,24 @@ export const WhisperStream = memo(function WhisperStream({
                 </OrbitBeat>
               )
             })}
-            {coolLine && !streaming ? (
+            {!streaming ? (
               <li className="list-none w-full">
-                <OrbitBeat
-                  role="cool"
-                  label="COOL"
-                  scale={1.05}
-                  wide
-                  fullText={coolLine}
-                  dimmed={isDim('cool')}
-                  active={spotlight === 'cool' || coolPulse}
-                  onFocus={() => {
+                <EndSignalRails
+                  askPlan={askPlan}
+                  coolLine={coolLine}
+                  isDim={isDim}
+                  landPulse={landPulse}
+                  coolPulse={coolPulse}
+                  spotlight={spotlight}
+                  onAskFocus={() => {
+                    setSpotlight((s) => (s === 'ask' ? 'all' : 'ask'))
+                    setFocusMode(true)
+                  }}
+                  onCoolFocus={() => {
                     setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
                     setFocusMode(true)
                   }}
-                >
-                  <p className="speak-cool-line text-[15px] leading-snug text-[#E8C547]/95">
-                    {coolLine}
-                  </p>
-                </OrbitBeat>
+                />
               </li>
             ) : null}
           </ul>
@@ -1115,24 +1228,23 @@ export const WhisperStream = memo(function WhisperStream({
             ) : streaming ? (
               <p className="text-[13px] text-white/35">Explaining…</p>
             ) : null}
-            {coolLine && !streaming ? (
-              <OrbitBeat
-                role="cool"
-                label="COOL"
-                scale={1.05}
-                wide
-                fullText={coolLine}
-                dimmed={isDim('cool')}
-                active={spotlight === 'cool' || coolPulse}
-                onFocus={() => {
+            {!streaming ? (
+              <EndSignalRails
+                askPlan={askPlan}
+                coolLine={coolLine}
+                isDim={isDim}
+                landPulse={landPulse}
+                coolPulse={coolPulse}
+                spotlight={spotlight}
+                onAskFocus={() => {
+                  setSpotlight((s) => (s === 'ask' ? 'all' : 'ask'))
+                  setFocusMode(true)
+                }}
+                onCoolFocus={() => {
                   setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
                   setFocusMode(true)
                 }}
-              >
-                <p className="speak-cool-line text-[15px] leading-snug text-[#E8C547]/95">
-                  {coolLine}
-                </p>
-              </OrbitBeat>
+              />
             ) : null}
           </div>
         )
@@ -1158,24 +1270,23 @@ export const WhisperStream = memo(function WhisperStream({
                 ) : null}
               </span>
             </OrbitBeat>
-            {coolLine && !streaming ? (
-              <OrbitBeat
-                role="cool"
-                label="COOL"
-                scale={1.05}
-                wide
-                fullText={coolLine}
-                dimmed={isDim('cool')}
-                active={spotlight === 'cool' || coolPulse}
-                onFocus={() => {
+            {!streaming ? (
+              <EndSignalRails
+                askPlan={askPlan}
+                coolLine={coolLine}
+                isDim={isDim}
+                landPulse={landPulse}
+                coolPulse={coolPulse}
+                spotlight={spotlight}
+                onAskFocus={() => {
+                  setSpotlight((s) => (s === 'ask' ? 'all' : 'ask'))
+                  setFocusMode(true)
+                }}
+                onCoolFocus={() => {
                   setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
                   setFocusMode(true)
                 }}
-              >
-                <p className="speak-cool-line text-[15px] leading-snug text-[#E8C547]/95">
-                  {coolLine}
-                </p>
-              </OrbitBeat>
+              />
             ) : null}
           </div>
         )
@@ -1257,7 +1368,8 @@ export const WhisperStream = memo(function WhisperStream({
               role === 'hook' ||
               role === 'proof' ||
               role === 'close' ||
-              role === 'cool'
+              role === 'cool' ||
+              role === 'ask'
             const collapsed =
               glance &&
               !isPeak &&
@@ -1296,7 +1408,8 @@ export const WhisperStream = memo(function WhisperStream({
                     role !== 'hook' &&
                     role !== 'proof' &&
                     role !== 'close' &&
-                    role !== 'cool'
+                    role !== 'cool' &&
+                    role !== 'ask'
                   )
                     return
                   setSpotlight((s) => (s === role ? 'all' : role))
@@ -1307,26 +1420,25 @@ export const WhisperStream = memo(function WhisperStream({
               </OrbitBeat>
             )
           })}
-          {/* Cool: last peak–end beat — warmth after competence (key 4) */}
-          {coolLine && !streaming ? (
+          {/* Ask supersedes Cool when gates fire (key 4) */}
+          {!streaming ? (
             <li className="list-none w-full">
-              <OrbitBeat
-                role="cool"
-                label="COOL"
-                scale={1.05}
-                wide
-                fullText={coolLine}
-                dimmed={isDim('cool')}
-                active={spotlight === 'cool' || coolPulse}
-                onFocus={() => {
+              <EndSignalRails
+                askPlan={askPlan}
+                coolLine={coolLine}
+                isDim={isDim}
+                landPulse={landPulse}
+                coolPulse={coolPulse}
+                spotlight={spotlight}
+                onAskFocus={() => {
+                  setSpotlight((s) => (s === 'ask' ? 'all' : 'ask'))
+                  setFocusMode(true)
+                }}
+                onCoolFocus={() => {
                   setSpotlight((s) => (s === 'cool' ? 'all' : 'cool'))
                   setFocusMode(true)
                 }}
-              >
-                <p className="speak-cool-line text-[15px] leading-snug text-[#E8C547]/95">
-                  {coolLine}
-                </p>
-              </OrbitBeat>
+              />
             </li>
           ) : null}
           {canvasStats.processMode === 'glance' && bullets.length > 2 ? (
@@ -1337,7 +1449,7 @@ export const WhisperStream = memo(function WhisperStream({
                 onClick={() => setExpandFull((v) => !v)}
               >
                 {expandFull
-                  ? 'Glance — Hook · Proof · Close · Cool'
+                  ? 'Glance — Hook · Proof · Close · Ask'
                   : 'Depth — expand support rails'}
               </button>
             </li>
@@ -1373,7 +1485,7 @@ export const WhisperStream = memo(function WhisperStream({
             <p className="mt-1 text-[13px] text-white/40">
               {compact
                 ? `${ladderHint} · F focus`
-                : `${ladderHint} · 1–4 rails · Space ladder · F focus`}
+                : `${ladderHint} · 1–5 rails · Space ladder · F focus`}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
@@ -1538,7 +1650,9 @@ export const WhisperStream = memo(function WhisperStream({
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] font-medium tracking-wide text-white/30">
                     {canvasStats.processMode === 'glance'
-                      ? 'Hook · Proof · Close · Cool'
+                      ? askPlan.show
+                        ? 'Hook · Proof · Close · Ask'
+                        : 'Hook · Proof · Close · Cool'
                       : 'Full rails'}
                   </p>
                   <span className="text-[10px] uppercase tracking-wide text-white/25">
