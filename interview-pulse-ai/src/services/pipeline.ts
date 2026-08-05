@@ -1,4 +1,4 @@
-import { DEMO_MEMORIES, SAMPLE_QUESTIONS } from '@/lib/demo-data'
+import { SAMPLE_QUESTIONS } from '@/lib/demo-data'
 import { sleep, uid } from '@/lib/utils'
 import type {
   AnswerMode,
@@ -26,12 +26,13 @@ export class InterviewPipeline {
   private running = false
   private demoTimer: ReturnType<typeof setInterval> | null = null
   private questionIdx = 0
-  private memories: StarMemory[] = DEMO_MEMORIES
+  private memories: StarMemory[] = []
   private mode: AnswerMode = 'star'
   private jobContext = ''
 
   setMemories(memories: StarMemory[]) {
-    this.memories = memories.length ? memories : DEMO_MEMORIES
+    // User materials only — never rehydrate with baked-in demo skill stories
+    this.memories = memories.length ? memories : []
   }
 
   setMode(mode: AnswerMode) {
@@ -78,6 +79,10 @@ export class InterviewPipeline {
   }
 
   private async runOneTurn(cb: PipelineCallbacks) {
+    if (!SAMPLE_QUESTIONS.length) {
+      // No canned skill questions — demo loop is a no-op without user materials
+      return
+    }
     const q = SAMPLE_QUESTIONS[this.questionIdx % SAMPLE_QUESTIONS.length]
     this.questionIdx++
     await this.processQuestion(q, cb)

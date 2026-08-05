@@ -6,11 +6,11 @@
  *   Never bold full sentences. Never spam.
  *
  * What counts as “same impact as whole answer”:
- *   • Atomic punch (Yes. / CAPM. / Block.)
+ *   • Atomic punch (Yes. / Block. / Approve.)
  *   • Metrics & numbers
- *   • Domain terms / ALL-CAPS acronyms (EPCIS, GTIN, ATTP…)
+ *   • ALL-CAPS acronyms present in the answer text (no product-skill list)
  *   • Power verbs of ownership & decision
- *   • Hard tradeoff / control / compliance buzzwords
+ *   • Generic tradeoff / control buzzwords (domain-agnostic)
  *   • Outcome nouns that land the close
  */
 
@@ -35,31 +35,28 @@ const OWNERSHIP_RE =
   /\b(I\s+(?:led|owned|shipped|built|designed|drove|reduced|cut|improved|delivered|launched|migrated|fixed|architected|scaled|negotiated|mentored|configured|validated|authored|ran|blocked|refused|approved|rejected|escalated|enforced))\b/gi
 
 /**
- * Standalone power verbs / decision words — the few that can replace a paragraph.
- * Matched as whole words; scored as `buzz`.
- */
-/**
- * Power / process verbs — JD-leaning (serialization / integration / validation).
- * Avoid pure SWE theater (invariant, idempotent, p99) unless question uses them.
+ * Standalone power / decision words — domain-agnostic ownership language.
+ * No product modules, no industry-specific serialization/warehouse/billing lists.
  */
 const POWER_BUZZ_RE =
-  /\b(block|blocked|blocking|reject|rejected|approve|approved|refuse|refused|enforce|enforced|hard stop|hard-stop|non-negotiable|go-live|cutover|hypercare|trade-?off|tradeoff|reconcile|reconciliation|commission|commissioning|aggregate|aggregation|deaggregation|serialize|serialization|serialisation|traceability|compliance|audit(?:able)?|validated|validation|authorize|authorized|authentication|master data|trading partner|business partner|ship-block|ship block|onboard(?:ing)?|mapping|repository)\b/gi
+  /\b(block|blocked|blocking|reject|rejected|approve|approved|refuse|refused|enforce|enforced|hard stop|hard-stop|non-negotiable|go-live|cutover|trade-?off|tradeoff|reconcile|reconciliation|compliance|audit(?:able)?|validated|validation|authorize|authorized|authenticate|authentication|onboard(?:ing)?|migrate|migrated|ship|shipped|launch|launched|deliver|delivered)\b/gi
 
-/** Outcomes that land the close — prefer domain outcomes over generic SaaS metrics */
+/** Outcomes that land the close — generic professional results only */
 const OUTCOME_RE =
-  /\b(compliance|audit|go-live|cutover|hypercare|orphan serials|patient safety|traceability|integrity|throughput|accuracy|savings|reduction|aggregation|commissioning)\b/gi
+  /\b(compliance|audit|go-live|cutover|integrity|throughput|accuracy|savings|reduction|uptime|reliability|quality|deadline|milestone)\b/gi
 
 /**
- * Yes / No / Conditional atomic decisions (often the entire answer)
+ * Yes / No / Conditional atomic decisions (no role- or product-specific tokens)
  */
 const DECISION_RE =
-  /\b(Yes|No|Conditional|Approve|Reject|Green|Red|MAH|CMO|3PL)\b/g
+  /\b(Yes|No|Conditional|Approve|Reject|Green|Red)\b/g
 
 /**
- * Domain-agnostic technical terms: 2–6 letter ALL-CAPS (EPCIS, GTIN, ATTP, DSCSA…)
+ * ALL-CAPS tokens in the answer text (whatever the answer itself used — no skill lexicon)
  */
 const TERM_RE = /\b(?![AI]\b)(?!OK\b)(?!US\b)(?!EU\b)[A-Z][A-Z0-9]{1,5}\b/g
 
+/** English / label stopwords only — not product skills */
 const TERM_STOP = new Set([
   'THE',
   'AND',
@@ -76,17 +73,12 @@ const TERM_STOP = new Set([
   'HOW',
   'WHY',
   'WHO',
-  'API',
-  'UI',
-  'UX',
-  'CEO',
-  'CTO',
-  'PDF',
-  'URL',
   'ID',
-  'IT',
   'OR',
-  'SLA', // captured via outcome when lowercased context; ALL-CAPS ok via TERM
+  'HOOK',
+  'CLOSE',
+  'TASK',
+  'STAR',
 ])
 
 export type SpeakHighlightKind =

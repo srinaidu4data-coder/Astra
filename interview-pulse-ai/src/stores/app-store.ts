@@ -359,20 +359,20 @@ export const useAppStore = create<AppState>()(
             : s.memories
           return {
             documents: docs,
-            // If nothing left from user uploads, restore demo memories
+            // No baked-in demo memories — empty when user removes uploads
             memories:
               docs.filter((d) => d.type !== 'job').length === 0
-                ? DEMO_MEMORIES
+                ? []
                 : memories.length
                   ? memories
-                  : DEMO_MEMORIES,
+                  : [],
           }
         }),
-      memories: DEMO_MEMORIES,
+      memories: [] as typeof DEMO_MEMORIES,
       setMemories: (memories) => set({ memories }),
       addMemories: (m) =>
         set((s) => {
-          // Drop demo memories (no sourceFile) once the user uploads real docs
+          // Keep only memories tied to uploaded sources + new ones
           const keep = s.memories.filter((x) => Boolean(x.sourceFile))
           return { memories: [...m, ...keep].slice(0, 200) }
         }),

@@ -8,8 +8,8 @@ Rules
 2. Domain lock is always "general" — Role + Job Context + JD + Resume + question only.
 3. STT prompt is generic professional interview language.
 4. Guardrails tell the model to stay inside materials, without naming product families.
-5. Optional invent check: ALL-CAPS tokens in the answer that never appear in materials/Q
-   (not a skill list — just "don't invent unexplained jargon").
+5. Invent check: ALL-CAPS tokens in the answer that never appear in materials/Q
+   (no fixed product or acronym allowlist — ground text is the only authority).
 6. Psych/math theater lines are still stripped from answers.
 """
 
@@ -36,85 +36,6 @@ _PSYCH_ML_THEATER = frozenset(
         "attention temperature",
     }
 )
-
-# Everyday ALL-CAPS that are not product "skills" when blank materials
-_COMMON_ACRONYMS = frozenset(
-    {
-        "API",
-        "APIS",
-        "HTTP",
-        "HTTPS",
-        "JSON",
-        "XML",
-        "SQL",
-        "REST",
-        "URL",
-        "URI",
-        "UI",
-        "UX",
-        "IT",
-        "QA",
-        "UAT",
-        "SLA",
-        "SLO",
-        "KPI",
-        "OKR",
-        "CEO",
-        "CTO",
-        "CFO",
-        "HR",
-        "USA",
-        "US",
-        "UK",
-        "EU",
-        "PDF",
-        "CSV",
-        "ETL",
-        "ERP",
-        "CRM",
-        "SDK",
-        "CLI",
-        "IDE",
-        "CI",
-        "CD",
-        "AWS",
-        "GCP",
-        "SSO",
-        "OAUTH",
-        "JWT",
-        "VPN",
-        "DNS",
-        "IP",
-        "TCP",
-        "GPU",
-        "CPU",
-        "RAM",
-        "OS",
-        "DB",
-        "AI",
-        "ML",
-        "LLM",
-        "NLP",
-        "STAR",
-        "YES",
-        "NO",
-        "OK",
-        "POC",
-        "MVP",
-        "RCA",
-        "SOP",
-        "WIP",
-        "PR",
-        "MR",
-        "CR",
-        "RFQ",
-        "ROI",
-        "PII",
-        "GDPR",
-        "SSO",
-    }
-)
-
 
 @dataclass
 class DomainLock:
@@ -194,14 +115,13 @@ def invented_product_hits(
     """
     Flag ALL-CAPS jargon in the answer that never appears in materials/Q.
 
-    Not a skill list: if the Role/JD/Resume/question never used the token,
-    do not invent it in the answer. Common English acronyms are ignored.
+    Zero fixed product/acronym lists. If Role, Job Context, JD, Resume, or the
+    question never used the token, it is treated as invented.
     """
     text = (answer or "").strip()
     if not text:
         return []
     ground = _materials_ground(question, job_context)
-    # Also keep raw case ground for acronym match
     ground_raw = f"{question or ''} {job_context or ''}"
     try:
         from session_context import materials_grounding_blob
@@ -216,13 +136,10 @@ def invented_product_hits(
     seen: set[str] = set()
     for m in re.finditer(r"\b[A-Z][A-Z0-9]{2,7}\b", text):
         tok = m.group(0)
-        if tok in _COMMON_ACRONYMS:
-            continue
         if tok in ground_upper:
             continue
         if tok.lower() in ground_lower:
             continue
-        # Single-letter expansions already excluded by length
         key = tok.upper()
         if key in seen:
             continue

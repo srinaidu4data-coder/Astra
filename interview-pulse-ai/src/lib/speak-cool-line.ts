@@ -46,12 +46,15 @@ export function extractLabeledCoolLine(text: string): string | null {
   return null
 }
 
-/** Pull a concrete token (acronym / product / metric) for a tailored closer. */
+/**
+ * Pull a concrete token from the answer/question text only.
+ * No product-skill list — prefers ALL-CAPS present in the text, else a metric.
+ */
 function domainAnchor(blob: string): string | null {
   const t = blob || ''
-  // Prefer ALLCAPS tech tokens
+  // Prefer ALLCAPS tokens that already appear in answer/Q
   const caps = t.match(/\b[A-Z][A-Z0-9]{1,7}\b/g) || []
-  const skip = new Set([
+  const labelSkip = new Set([
     'I',
     'A',
     'THE',
@@ -63,17 +66,18 @@ function domainAnchor(blob: string): string | null {
     'STAR',
     'HOOK',
     'CLOSE',
-    'API',
+    'TASK',
+    'ACTION',
+    'RESULT',
   ])
   for (const c of caps) {
-    if (!skip.has(c) && c.length >= 2) return c
+    if (!labelSkip.has(c) && c.length >= 2) return c
   }
-  // Camel / known tech words
-  const tech =
-    t.match(
-      /\b(latency|throughput|serialization|aggregation|pipeline|schema|migration|rollback|SLA|SLO|EPCIS|ATTP|BRIM|RAR|FICO|Kafka|React)\b/i,
-    ) || []
-  if (tech[1]) return tech[1]
+  // Metric already in the text (no skill vocabulary)
+  const metric = t.match(
+    /\$?\d+(?:[.,]\d+)?\s*(?:%|x|ms|s|k|m|hrs?|days?|weeks?)?/i,
+  )
+  if (metric?.[0]) return metric[0].trim()
   return null
 }
 
