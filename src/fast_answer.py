@@ -301,19 +301,7 @@ def template_answer(question: str, *, job_context: str = "", mode: str = "star")
     pid, _ = classify_pattern(question)
     q_short = re.sub(r"\s+", " ", (question or "").strip())[:140]
 
-    # Common-sense: never paint SWE/ML reliability templates for specialized domains
-    try:
-        from common_sense import lock_for_turn
-
-        lock = lock_for_turn(question, job_context)
-        if lock.confidence >= 0.35 and lock.domain not in ("software", "general", "ml_ai"):
-            return _template_domain_locked(lock.domain, lock.label, role, q_short, mode)
-        if lock.domain == "ml_ai" and lock.confidence >= 0.4:
-            # ML is fine when the question IS ML — still avoid robotics/SAP bleed
-            pass
-    except Exception:
-        pass
-
+    # No skill-domain templates — generic pattern scaffolds only
     if mode == "shorter":
         return _template_shorter(pid, role, q_short)
     if mode == "code":
@@ -321,39 +309,6 @@ def template_answer(question: str, *, job_context: str = "", mode: str = "star")
     if mode == "technical":
         return _template_technical(pid, role, q_short)
     return _template_star(pid, role, q_short)
-
-
-def _template_domain_locked(
-    domain: str, label: str, role: str, q: str, mode: str
-) -> str:
-    """Sharp Musk+Jobs scaffold locked to the active domain."""
-    role_s = role or "candidate"
-    if mode == "shorter":
-        return (
-            f"Hook: One decision. One control. No theater — {label}.\n"
-            f"Approach: Name the constraint, then the move I own as a {role_s}.\n"
-            f"Tradeoff: What I refuse to fake to hit a date.\n"
-            f"Close: The proof I would put in front of leadership.\n"
-            f"(Domain lock: {domain} · Q: {q})"
-        )
-    if mode == "technical":
-        return (
-            f"Hook: The design is inevitable once you respect the domain physics of {label}.\n"
-            f"Approach: Object, flow, ownership — nothing else first.\n"
-            f"Mechanism: End-to-end path with the real artifacts, not a slide.\n"
-            f"Tradeoff: What I delete when partners push for convenience.\n"
-            f"Close: Validation that fails closed.\n"
-            f"(Domain lock: {domain} · Q: {q})"
-        )
-    return (
-        f"Hook: I do not negotiate the non-negotiable in {label}.\n"
-        f"Situation: Constraint that actually hurt — scale, partner, or control gap.\n"
-        f"Task: Done meant a measurable bar, not activity.\n"
-        f"Action: I owned design, config, integration, and the refuse line.\n"
-        f"Result: Outcome I can defend without inventing tools.\n"
-        f"Close: The tradeoff I would take again.\n"
-        f"(Domain lock: {domain} · Q: {q})"
-    )
 
 
 def outline_skeleton(

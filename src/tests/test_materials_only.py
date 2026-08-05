@@ -1,4 +1,4 @@
-"""Interviews ground only on Role / Job Context / JD / Resume — no RAG, no cross-identity cache."""
+"""Interviews ground only on Role / Job Context / JD / Resume — no domain packs."""
 
 from __future__ import annotations
 
@@ -9,7 +9,17 @@ def test_rag_off_by_default():
     assert _use_rag() is False
 
 
-def test_prompt_includes_jd_and_resume_not_rag():
+def test_no_domain_lexicons_module():
+    import common_sense as cs
+
+    assert not hasattr(cs, "_DOMAIN_LEXICONS") or not getattr(cs, "_DOMAIN_LEXICONS", None)
+    # Prefer attribute missing after rewrite
+    assert getattr(cs, "_DOMAIN_LEXICONS", None) is None
+    assert getattr(cs, "_PRODUCT_BRAND_TOKENS", None) is None
+    assert getattr(cs, "_SAP_PRODUCT_LINES", None) is None
+
+
+def test_prompt_includes_jd_and_resume_not_domain_lock():
     from answer_engine import _build_user_prompt, _fallback_strategy
     from session_context import clear_pack, session_scope, update_pack
 
@@ -34,8 +44,8 @@ def test_prompt_includes_jd_and_resume_not_rag():
         assert "led brim migration" in low
         # RAG chunk must not appear
         assert "epcis" not in low
-        assert "attp" not in low or "never invent" in low
-        assert "materials rule" in low or "interview materials" in low
+        assert "stay strictly inside" not in low
+        assert "materials" in low
         clear_pack()
 
 
@@ -58,3 +68,10 @@ def test_warm_cache_seed_disabled():
     from fast_answer import warm_cache_seed
 
     assert warm_cache_seed("anything") == 0
+
+
+def test_lock_always_general():
+    from common_sense import lock_for_turn
+
+    assert lock_for_turn("EPCIS DSCSA ATTP", "SAP ATTP").domain == "general"
+    assert lock_for_turn("FICO Vertex", "SAP FICO").domain == "general"

@@ -30,18 +30,8 @@ _OFF_DOMAIN_FILLER = re.compile(
     re.I,
 )
 
-_JD_KEEP = re.compile(
-    r"\b("
-    r"ATTP|EPCIS|GS1|GTIN|GLN|SSCC|SGTIN|DSCSA|FMD|EMVS|MAH|CMO|3PL|"
-    r"BRIM|CI|CC|SOM|RAR|FICA|FI-CA|"
-    r"commissioning|aggregation|deaggregation|serialization|seriali[sz]ation|"
-    r"subscription|billing|provider contract|convergent|"
-    r"BOOMI|AS2|SFTP|GAMP|Part\s*11|21\s*CFR|RISE|S/?4HANA|AIF|IDoc|ALE|"
-    r"Implementation Guidelines?|mapping|repository|trading partner|"
-    r"saleable returns|VRS|DataMatrix|UAT|IQ|OQ|PQ"
-    r")\b",
-    re.I,
-)
+# No product-skill allowlist. strip_off_domain_filler only drops universal filler.
+_JD_KEEP = re.compile(r"a^")  # never matches — keep nothing by brand list
 
 _STOP = frozenset(
     """

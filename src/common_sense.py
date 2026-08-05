@@ -1,282 +1,28 @@
 #!/usr/bin/env python3
 """
-Common-sense domain lock for live interview answers.
+Interview grounding helpers — materials only, no skill-domain hardcoding.
 
-Problem this solves
--------------------
-Answers (and the speak UI) were freely mixing unrelated domains — e.g. ML/robotics
-jargon when the question is SAP ATTP — and surfacing psych/math "skills" theater
-while the candidate is trying to read a speakable answer.
-
-Rules (domain-agnostic)
------------------------
-1. Infer the *active* domain only from the question + job/resume context.
-2. Never inject a second domain's jargon into the answer.
-3. Drop RAG chunks that belong to a different domain family.
-4. STT vocabulary bias follows the active domain only (no kitchen-sink ML+FICO).
-5. Post-check answers; strip or flag hard cross-domain contamination.
-
-No hard-coded "always answer as X role" — only *block cross-domain mischief*.
+Rules
+-----
+1. No product-line / skill-family tables (no ATTP, FICO, BRIM, ML, robotics packs).
+2. Domain lock is always "general" — Role + Job Context + JD + Resume + question only.
+3. STT prompt is generic professional interview language.
+4. Guardrails tell the model to stay inside materials, without naming product families.
+5. Optional invent check: ALL-CAPS tokens in the answer that never appear in materials/Q
+   (not a skill list — just "don't invent unexplained jargon").
+6. Psych/math theater lines are still stripped from answers.
 """
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
-# ---------------------------------------------------------------------------
-# Domain families + lexicons (signal words for detection / contamination)
-# ---------------------------------------------------------------------------
-
-# Each family: detection terms (any domain) + exclusive terms (strong identity)
-_DOMAIN_LEXICONS: dict[str, dict[str, frozenset[str]]] = {
-    "sap_attp": {
-        "detect": frozenset(
-            {
-                "attp",
-                "serialization",
-                "serialisation",
-                "epcis",
-                "gs1",
-                "gtin",
-                "gln",
-                "sscc",
-                "sgtin",
-                "dscsa",
-                "fmd",
-                "emvs",
-                "mah",
-                "cmo",
-                "3pl",
-                "three pl",
-                "commissioning",
-                "aggregation",
-                "deaggregation",
-                "decommissioning",
-                "tracelink",
-                "vrs",
-                "saleable returns",
-                "datamatrix",
-                "track and trace",
-                "track-and-trace",
-                "serial number",
-            }
-        ),
-        "exclusive": frozenset(
-            {
-                "attp",
-                "epcis",
-                "dscsa",
-                "emvs",
-                "sscc",
-                "sgtin",
-                "tracelink",
-                "saleable returns",
-            }
-        ),
-    },
-    "sap_fico": {
-        "detect": frozenset(
-            {
-                "fico",
-                "controlling",
-                "cost center",
-                "profit center",
-                "gl account",
-                "general ledger",
-                "asset accounting",
-                "accounts payable",
-                "accounts receivable",
-                "copa",
-                "vertex",
-                "o series",
-                "tax engine",
-                "new gl",
-                "document splitting",
-            }
-        ),
-        "exclusive": frozenset(
-            {"fico", "copa", "vertex o", "document splitting", "new gl"}
-        ),
-    },
-    "sap_brim": {
-        "detect": frozenset(
-            {
-                "brim",
-                "subscription billing",
-                "subscription order",
-                "provider contract",
-                "contributing order",
-                "billing plan",
-                "recurring fee",
-                "usage charge",
-                "revenue recognition",
-                "rev rec",
-                "som",
-                "cc module",
-                "ci module",
-                "convergent invoicing",
-                "convergent charging",
-                "bit class",
-                "billing item",
-                "invoice request",
-                "open item management",
-                "rar",
-                "revenue accounting",
-                "contract account",
-                "fica",
-                "media product",
-            }
-        ),
-        "exclusive": frozenset(
-            {
-                "brim",
-                "convergent invoicing",
-                "convergent charging",
-                "provider contract",
-                "subscription order",
-                "bit class",
-                "som",
-            }
-        ),
-    },
-    "sap_general": {
-        "detect": frozenset(
-            {
-                "sap",
-                "s/4hana",
-                "s4hana",
-                "s/4",
-                "rise with sap",
-                "idoc",
-                "ale",
-                "aif",
-                "ewm",
-                "mm module",
-                "sd module",
-                "boomi",
-                "cpi",
-                "pi/po",
-                "gamp",
-                "21 cfr",
-                "part 11",
-            }
-        ),
-        "exclusive": frozenset({"s/4hana", "rise with sap", "aif", "gamp 5"}),
-    },
-    "ml_ai": {
-        "detect": frozenset(
-            {
-                "machine learning",
-                "deep learning",
-                "neural network",
-                "neural net",
-                "gradient descent",
-                "backpropagation",
-                "overfitting",
-                "underfitting",
-                "pytorch",
-                "tensorflow",
-                "sklearn",
-                "scikit-learn",
-                "xgboost",
-                "transformer model",
-                "llm fine-tun",
-                "embedding model",
-                "feature engineering",
-                "hyperparameter",
-                "cross validation",
-                "cross-validation",
-                "confusion matrix",
-                "precision recall",
-                "f1 score",
-                "relu",
-                "softmax layer",
-                "cnn",
-                "rnn",
-                "lstm",
-                "gpu training",
-                "mlops",
-                "model training",
-                "supervised learning",
-                "unsupervised learning",
-                "reinforcement learning",
-            }
-        ),
-        "exclusive": frozenset(
-            {
-                "pytorch",
-                "tensorflow",
-                "gradient descent",
-                "backpropagation",
-                "overfitting",
-                "xgboost",
-                "sklearn",
-                "scikit-learn",
-                "hyperparameter",
-                "mlops",
-            }
-        ),
-    },
-    "robotics": {
-        "detect": frozenset(
-            {
-                "ros2",
-                "ros 2",
-                "robot operating system",
-                "slam",
-                "odometry",
-                "lidar",
-                "kalman filter",
-                "extended kalman",
-                "ukf",
-                "tf2",
-                "urdf",
-                "moveit",
-                "path planning",
-                "a* algorithm",
-                "gnc",
-                "imu fusion",
-                "base_link",
-                "point cloud",
-            }
-        ),
-        "exclusive": frozenset(
-            {"ros2", "ros 2", "slam", "moveit", "urdf", "tf2", "base_link"}
-        ),
-    },
-    "software": {
-        "detect": frozenset(
-            {
-                "microservices",
-                "kubernetes",
-                "k8s",
-                "distributed system",
-                "rest api",
-                "graphql",
-                "postgres",
-                "redis cache",
-                "message queue",
-                "kafka",
-                "cicd",
-                "ci/cd",
-                "load balancer",
-                "p99 latency",
-                "horizontal scaling",
-            }
-        ),
-        "exclusive": frozenset(
-            {"kubernetes", "kafka", "graphql", "microservices"}
-        ),
-    },
-}
-
-# Soft ML theater / psych jargon that must never appear as "skills" in speakable
-# answers (UI labels are stripped separately on the frontend).
+# UI / coaching meta — never interview content
 _PSYCH_ML_THEATER = frozenset(
     {
-        "softmax attention",
+        "softmax",
         "zipf budget",
         "von restorff",
         "serial-position curve",
@@ -291,26 +37,88 @@ _PSYCH_ML_THEATER = frozenset(
     }
 )
 
-# Friendly labels for prompts
-_DOMAIN_LABELS = {
-    "sap_attp": "SAP ATTP / pharmaceutical track-and-trace serialization",
-    "sap_fico": "SAP Finance / FICO / tax",
-    "sap_brim": "SAP BRIM / subscription billing / convergent charging & invoicing",
-    "sap_general": "SAP techno-functional / enterprise ERP",
-    "ml_ai": "machine learning / AI engineering",
-    "robotics": "robotics / ROS / autonomy",
-    "software": "software engineering / systems",
-    "general": "general professional (use only the question + job context)",
-}
-
-# Every SAP product line is its own skill set — never pool/combine them.
-# Sharing the brand "SAP" does NOT make ATTP, BRIM, FICO, or generic SAP one family.
-_SAP_PRODUCT_LINES = frozenset({"sap_attp", "sap_fico", "sap_brim", "sap_general"})
+# Everyday ALL-CAPS that are not product "skills" when blank materials
+_COMMON_ACRONYMS = frozenset(
+    {
+        "API",
+        "APIS",
+        "HTTP",
+        "HTTPS",
+        "JSON",
+        "XML",
+        "SQL",
+        "REST",
+        "URL",
+        "URI",
+        "UI",
+        "UX",
+        "IT",
+        "QA",
+        "UAT",
+        "SLA",
+        "SLO",
+        "KPI",
+        "OKR",
+        "CEO",
+        "CTO",
+        "CFO",
+        "HR",
+        "USA",
+        "US",
+        "UK",
+        "EU",
+        "PDF",
+        "CSV",
+        "ETL",
+        "ERP",
+        "CRM",
+        "SDK",
+        "CLI",
+        "IDE",
+        "CI",
+        "CD",
+        "AWS",
+        "GCP",
+        "SSO",
+        "OAUTH",
+        "JWT",
+        "VPN",
+        "DNS",
+        "IP",
+        "TCP",
+        "GPU",
+        "CPU",
+        "RAM",
+        "OS",
+        "DB",
+        "AI",
+        "ML",
+        "LLM",
+        "NLP",
+        "STAR",
+        "YES",
+        "NO",
+        "OK",
+        "POC",
+        "MVP",
+        "RCA",
+        "SOP",
+        "WIP",
+        "PR",
+        "MR",
+        "CR",
+        "RFQ",
+        "ROI",
+        "PII",
+        "GDPR",
+        "SSO",
+    }
+)
 
 
 @dataclass
 class DomainLock:
-    """Resolved active domain for one question turn."""
+    """Legacy shape kept for callers — always general (no skill domains)."""
 
     domain: str = "general"
     confidence: float = 0.0
@@ -330,54 +138,25 @@ class DomainLock:
 
 def _norm(text: str) -> str:
     t = (text or "").lower()
-    t = t.replace("a t t p", "attp").replace("e p c i s", "epcis")
-    t = t.replace("d s c s a", "dscsa").replace("g t i n", "gtin")
-    t = t.replace("g l n", "gln").replace("s s c c", "sscc")
-    t = t.replace("three p l", "3pl").replace("3 p l", "3pl")
     t = re.sub(r"\s+", " ", t)
     return t
 
 
-def _score_domain(blob: str) -> dict[str, tuple[float, list[str]]]:
-    """Return domain → (score, hit terms)."""
-    out: dict[str, tuple[float, list[str]]] = {}
-    for dom, packs in _DOMAIN_LEXICONS.items():
-        hits: list[str] = []
-        score = 0.0
-        for term in packs["detect"]:
-            if term in blob:
-                hits.append(term)
-                # Longer / exclusive terms weigh more
-                w = 1.0 + min(2.0, len(term) / 12.0)
-                if term in packs["exclusive"]:
-                    w += 2.5
-                score += w
-        if hits:
-            out[dom] = (score, hits)
-    return out
+def _materials_ground(question: str = "", job_context: str = "") -> str:
+    """Question + Role/job + session JD/Resume (no domain packs)."""
+    bits = [question or "", job_context or ""]
+    try:
+        from session_context import materials_grounding_blob
+
+        bits.append(materials_grounding_blob(job_context))
+    except Exception:
+        pass
+    return _norm(" ".join(bits))
 
 
 def domains_compatible(a: str, b: str) -> bool:
-    """
-    True only when two domain ids may share one answer.
-
-    Rule: different product lines never combine — including all SAP lines.
-    "SAP" branding is not a skill family. ATTP, BRIM, FICO, and generic SAP
-    are separate; only exact domain match (or general) is compatible.
-    """
-    if not a or not b:
-        return True
-    if a == b:
-        return True
-    # Non-product "general" is neutral (no skill pooling)
-    if a == "general" or b == "general":
-        return True
-    # Any two distinct SAP product lines are incompatible (including sap_general)
-    if a in _SAP_PRODUCT_LINES and b in _SAP_PRODUCT_LINES:
-        return False
-    if a.startswith("sap_") and b.startswith("sap_"):
-        return False
-    return False
+    """No skill families — always compatible."""
+    return True
 
 
 def infer_domain(
@@ -385,143 +164,25 @@ def infer_domain(
     job_context: str = "",
     resume_or_pack: str = "",
 ) -> DomainLock:
-    """
-    Infer the active interview domain from question + role context only.
-
-    Question signals dominate. Pack/JD must not re-label a clear off-topic
-    question as SAP ATTP (or any other stored role domain).
-    """
-    q = _norm(question)
-    job = _norm(job_context)
-    pack = _norm(resume_or_pack)
-
-    q_scores = _score_domain(q) if q.strip() else {}
-    # Strong question-only signal → ignore pack/job for domain choice
-    if q_scores:
-        q_ranked = sorted(q_scores.items(), key=lambda x: -x[1][0])
-        q_top_dom, (q_top_sc, q_hits) = q_ranked[0]
-        q_second = q_ranked[1][1][0] if len(q_ranked) > 1 else 0.0
-        exclusive_hit = any(
-            t in _DOMAIN_LEXICONS.get(q_top_dom, {}).get("exclusive", frozenset())
-            for t in q_hits
-        )
-        # Clear topical question (e.g. ML terms) wins over stored ATTP pack
-        if exclusive_hit or (q_top_sc >= 2.5 and q_top_sc >= q_second + 1.0):
-            conf = min(1.0, q_top_sc / 6.0)
-            # Prefer a specific product line over bare "sap" token — not combining skills,
-            # choosing the narrowest matching line for THIS text only.
-            if q_top_dom == "sap_general":
-                for specialized in ("sap_attp", "sap_fico", "sap_brim"):
-                    if specialized in q_scores and q_scores[specialized][0] >= q_top_sc * 0.45:
-                        q_top_dom = specialized
-                        q_hits = q_scores[specialized][1]
-                        break
-            return DomainLock(
-                domain=q_top_dom,
-                confidence=conf,
-                signals=q_hits[:12],
-                secondary=[d for d, _ in q_ranked[1:4]],
-                label=_DOMAIN_LABELS.get(q_top_dom, _DOMAIN_LABELS["general"]),
-            )
-
-    # Weight: question 1.2, job 0.75, pack 0.35 (pack is weakest — bootstrap residue)
-    combined_scores: dict[str, float] = {}
-    all_hits: dict[str, list[str]] = {}
-
-    for weight, blob in ((1.2, q), (0.75, job), (0.35, pack)):
-        if not blob.strip():
-            continue
-        for dom, (sc, hits) in _score_domain(blob).items():
-            combined_scores[dom] = combined_scores.get(dom, 0.0) + sc * weight
-            all_hits.setdefault(dom, [])
-            for h in hits:
-                if h not in all_hits[dom]:
-                    all_hits[dom].append(h)
-
-    if not combined_scores:
-        return DomainLock(domain="general", confidence=0.0, label=_DOMAIN_LABELS["general"])
-
-    ranked = sorted(combined_scores.items(), key=lambda x: -x[1])
-    top_dom, top_sc = ranked[0]
-    second_sc = ranked[1][1] if len(ranked) > 1 else 0.0
-    # Confidence: absolute signal + separation from runner-up
-    conf = min(1.0, top_sc / 8.0) * (0.55 + 0.45 * min(1.0, (top_sc - second_sc + 0.5) / 4.0))
-
-    # Prefer specific product line over bare "sap" when both fire (pick one line, don't merge)
-    if top_dom == "sap_general":
-        for specialized in ("sap_attp", "sap_fico", "sap_brim"):
-            if specialized in combined_scores and combined_scores[specialized] >= top_sc * 0.45:
-                top_dom = specialized
-                top_sc = combined_scores[specialized]
-                break
-
-    # Do not list other SAP product lines as "secondary" companions
-    secondary = [
-        d
-        for d, _ in ranked[1:4]
-        if combined_scores[d] >= top_sc * 0.35
-        and domains_compatible(top_dom, d)
-    ]
-    return DomainLock(
-        domain=top_dom,
-        confidence=conf,
-        signals=all_hits.get(top_dom, [])[:12],
-        secondary=secondary,
-        label=_DOMAIN_LABELS.get(top_dom, _DOMAIN_LABELS["general"]),
-    )
+    """No domain inference. Always general."""
+    _ = (question, job_context, resume_or_pack)
+    return DomainLock()
 
 
-def _foreign_exclusive_hits(text: str, active: str) -> list[tuple[str, str]]:
-    """Return (domain, term) for exclusive terms from domains other than active."""
-    blob = _norm(text)
-    bad: list[tuple[str, str]] = []
-    for dom, packs in _DOMAIN_LEXICONS.items():
-        if dom == active:
-            continue
-        # No soft merging of SAP lines — foreign exclusive terms always flag
-        # (sap_general exclusive is rare; still treat specialized cross-hits as foreign)
-        for term in packs["exclusive"]:
-            if term in blob:
-                bad.append((dom, term))
-    for term in _PSYCH_ML_THEATER:
-        if term in blob:
-            bad.append(("psych_theater", term))
-    return bad
-
-
-def contamination_report(
-    answer: str,
-    *,
+def lock_for_turn(
     question: str = "",
     job_context: str = "",
-    lock: Optional[DomainLock] = None,
-) -> dict[str, Any]:
-    """Analyze whether an answer wandered into a foreign domain."""
-    lock = lock or infer_domain(question, job_context)
-    if lock.domain == "general" or lock.confidence < 0.28:
-        # Low lock confidence → only flag psych theater
-        theater = [t for t in _PSYCH_ML_THEATER if t in _norm(answer)]
-        return {
-            "ok": not theater,
-            "lock": lock.to_dict(),
-            "foreign": [("psych_theater", t) for t in theater],
-            "severity_hits": 0,
-            "severity_hits": len(theater),
-        }
+    extra_context: str | None = None,
+) -> DomainLock:
+    """No domain lock. Always general."""
+    _ = (question, job_context, extra_context)
+    return DomainLock()
 
-    foreign = _foreign_exclusive_hits(answer, lock.domain)
-    # Count how many active-domain exclusive/detect terms appear (grounding)
-    blob = _norm(answer)
-    packs = _DOMAIN_LEXICONS.get(lock.domain, {})
-    native = [t for t in packs.get("detect", frozenset()) if t in blob]
 
-    return {
-        "ok": len(foreign) == 0,
-        "lock": lock.to_dict(),
-        "foreign": foreign,
-        "native_hits": len(native),
-        "foreign_hits": len(foreign),
-    }
+def product_brand_named(domain: str, *blobs: str) -> bool:
+    """Deprecated — no product brands. Always False."""
+    _ = (domain, blobs)
+    return False
 
 
 def invented_product_hits(
@@ -531,81 +192,42 @@ def invented_product_hits(
     job_context: str = "",
 ) -> list[tuple[str, str]]:
     """
-    Product *brand/module* terms in the answer not justified by Role or question.
+    Flag ALL-CAPS jargon in the answer that never appears in materials/Q.
 
-    Soft industry words (track-and-trace, serialization, billing) do NOT license
-    inventing SAP ATTP / BRIM / FICO. Only explicit product tokens in Role/Q do.
+    Not a skill list: if the Role/JD/Resume/question never used the token,
+    do not invent it in the answer. Common English acronyms are ignored.
     """
     text = (answer or "").strip()
     if not text:
         return []
-    ground = _norm(f"{question or ''} {job_context or ''}")
-    blob = _norm(text)
-    lock = lock_for_turn(question, job_context, extra_context="")
-    active = lock.domain if lock.confidence >= 0.22 else "general"
+    ground = _materials_ground(question, job_context)
+    # Also keep raw case ground for acronym match
+    ground_raw = f"{question or ''} {job_context or ''}"
+    try:
+        from session_context import materials_grounding_blob
+
+        ground_raw = f"{ground_raw} {materials_grounding_blob(job_context)}"
+    except Exception:
+        pass
+    ground_upper = set(re.findall(r"\b[A-Z][A-Z0-9]{1,7}\b", ground_raw))
+    ground_lower = ground
+
     hits: list[tuple[str, str]] = []
     seen: set[str] = set()
-
-    # Brand gate first — inventing "ATTP" without Role/Q saying ATTP is always bleed
-    for dom, brands in _PRODUCT_BRAND_TOKENS.items():
-        if product_brand_named(dom, question, job_context):
+    for m in re.finditer(r"\b[A-Z][A-Z0-9]{2,7}\b", text):
+        tok = m.group(0)
+        if tok in _COMMON_ACRONYMS:
             continue
-        for tok in brands:
-            if tok in blob and tok not in ground:
-                key = f"brand:{dom}:{tok}"
-                if key not in seen:
-                    seen.add(key)
-                    hits.append((dom, tok))
-
-    for dom, packs in _DOMAIN_LEXICONS.items():
-        # Active *brand-grounded* domain may use its exclusive lexicon
-        if (
-            dom == active
-            and active != "general"
-            and product_brand_named(dom, question, job_context)
-        ):
+        if tok in ground_upper:
             continue
-        for term in packs.get("exclusive", frozenset()):
-            if not term or len(term) < 4:
-                continue
-            if term in ground:
-                continue
-            if term not in blob:
-                continue
-            # Soft exclusives that appear in industry talk without product brand
-            # (e.g. DSCSA) are only OK when the product brand is also grounded
-            if dom in _PRODUCT_BRAND_TOKENS and not product_brand_named(
-                dom, question, job_context
-            ):
-                key = f"{dom}:{term}"
-                if key not in seen:
-                    seen.add(key)
-                    hits.append((dom, term))
-                continue
-            key = f"{dom}:{term}"
-            if key in seen:
-                continue
-            seen.add(key)
-            hits.append((dom, term))
-
-    # Phrase forms the model loves when Role/Q never named ATTP
-    if not product_brand_named("sap_attp", question, job_context):
-        for phrase in (
-            "sap attp",
-            "within attp",
-            "in attp",
-            "attp repository",
-            "managed within sap attp",
-            "managed in sap attp",
-            "centralizing.*attp",
-        ):
-            if ".*" in phrase:
-                if re.search(phrase, blob) and phrase not in seen:
-                    hits.append(("sap_attp", "sap attp"))
-                    seen.add(phrase)
-            elif phrase in blob and phrase not in seen:
-                hits.append(("sap_attp", phrase))
-                seen.add(phrase)
+        if tok.lower() in ground_lower:
+            continue
+        # Single-letter expansions already excluded by length
+        key = tok.upper()
+        if key in seen:
+            continue
+        seen.add(key)
+        hits.append(("materials", tok))
     return hits
 
 
@@ -615,10 +237,33 @@ def has_invented_product_bleed(
     question: str = "",
     job_context: str = "",
 ) -> bool:
-    """True when the answer invents a product line not in Role/Q (e.g. ATTP bleed)."""
+    """True when answer invents unexplained ALL-CAPS jargon not in materials/Q."""
     return bool(
         invented_product_hits(answer, question=question, job_context=job_context)
     )
+
+
+def contamination_report(
+    answer: str,
+    *,
+    question: str = "",
+    job_context: str = "",
+    lock: Optional[DomainLock] = None,
+) -> dict[str, Any]:
+    """Legacy report shape — materials invent hits only."""
+    _ = lock
+    hits = invented_product_hits(answer, question=question, job_context=job_context)
+    theater = [t for t in _PSYCH_ML_THEATER if t in _norm(answer)]
+    foreign = [("materials", t) for _d, t in hits] + [
+        ("psych_theater", t) for t in theater
+    ]
+    return {
+        "ok": len(foreign) == 0,
+        "lock": DomainLock().to_dict(),
+        "foreign": foreign,
+        "native_hits": 0,
+        "foreign_hits": len(foreign),
+    }
 
 
 def sanitize_answer(
@@ -628,19 +273,11 @@ def sanitize_answer(
     job_context: str = "",
     lock: Optional[DomainLock] = None,
 ) -> str:
-    """
-    Soft cleanup: strip psych-theater phrases.
-
-    Product-line bleed is detected via has_invented_product_bleed / invented_product_hits
-    and forced through regen in answer_engine — do not half-delete tokens here
-    (that produced broken "SAP ." fragments).
-    """
+    """Strip psych/meta coaching lines only."""
+    _ = (question, job_context, lock)
     text = (answer or "").strip()
     if not text:
         return text
-    lock = lock or lock_for_turn(question, job_context, extra_context="")
-
-    # Drop whole lines that are pure psych/ML theater
     cleaned_lines: list[str] = []
     for line in text.splitlines():
         low = _norm(line)
@@ -652,25 +289,7 @@ def sanitize_answer(
         ):
             continue
         cleaned_lines.append(line)
-    text = "\n".join(cleaned_lines).strip() or answer.strip()
-
-    # If still pure foreign exclusive spam under a strong lock, strip long terms only
-    report = contamination_report(
-        text, question=question, job_context=job_context, lock=lock
-    )
-    if (
-        lock.confidence >= 0.45
-        and report["foreign_hits"] >= 2
-        and report["native_hits"] == 0
-        and len(text.split()) > 40
-    ):
-        for _dom, term in report["foreign"]:
-            if len(term) >= 6:
-                text = re.sub(re.escape(term), "", text, flags=re.I)
-        text = re.sub(r"\s{2,}", " ", text)
-        text = re.sub(r"\n{3,}", "\n\n", text).strip()
-
-    return text
+    return "\n".join(cleaned_lines).strip() or answer.strip()
 
 
 def filter_context_chunks(
@@ -680,51 +299,9 @@ def filter_context_chunks(
     job_context: str = "",
     lock: Optional[DomainLock] = None,
 ) -> list[dict]:
-    """Drop RAG chunks that are clearly from a different domain family."""
-    if not chunks:
-        return []
-    lock = lock or infer_domain(question, job_context)
-    if lock.domain == "general" or lock.confidence < 0.3:
-        # Still drop pure robotics/ML when question is not that domain
-        q_lock = infer_domain(question, "", "")
-        if q_lock.domain in ("ml_ai", "robotics") and q_lock.confidence >= 0.35:
-            lock = q_lock
-        else:
-            # Filter out chunks that are ONLY foreign exclusive domains
-            kept: list[dict] = []
-            for c in chunks:
-                t = c.get("text") or c.get("document") or ""
-                blob = _norm(t)
-                exclusive_hits = []
-                for dom, packs in _DOMAIN_LEXICONS.items():
-                    for term in packs["exclusive"]:
-                        if term in blob:
-                            exclusive_hits.append(dom)
-                            break
-                # Keep if no exclusive hit, or hits match question soft domain
-                if not exclusive_hits:
-                    kept.append(c)
-                    continue
-                # Drop robotics/ml knowledge when Q is not those domains
-                if all(d in ("ml_ai", "robotics") for d in exclusive_hits):
-                    continue
-                kept.append(c)
-            return kept
-
-    kept = []
-    for c in chunks:
-        t = c.get("text") or c.get("document") or ""
-        blob = _norm(t)
-        # Chunk must not be dominated by foreign exclusive terms
-        foreign = _foreign_exclusive_hits(blob, lock.domain)
-        packs = _DOMAIN_LEXICONS.get(lock.domain, {})
-        native = sum(1 for term in packs.get("detect", frozenset()) if term in blob)
-        if foreign and native == 0:
-            continue
-        if len(foreign) >= 2 and native < len(foreign):
-            continue
-        kept.append(c)
-    return kept
+    """No domain filtering — RAG should be off; pass chunks through unchanged."""
+    _ = (question, job_context, lock)
+    return list(chunks or [])
 
 
 def stt_initial_prompt(
@@ -732,186 +309,53 @@ def stt_initial_prompt(
     resume_or_pack: str = "",
     question_hint: str = "",
 ) -> str:
-    """
-    Domain-scoped Whisper initial_prompt. Never kitchen-sink ML+FICO+robotics.
-    """
-    lock = infer_domain(question_hint, job_context, resume_or_pack)
-    prompts = {
-        "sap_attp": (
-            "Interview about SAP ATTP serialization, EPCIS, GS1, GTIN, GLN, SSCC, "
-            "DSCSA, EU FMD, MAH, CMO, 3PL, commissioning, aggregation, GAMP 5."
-        ),
-        "sap_fico": (
-            "Interview about SAP S/4HANA Finance, FICO, general ledger, cost centers, "
-            "profit centers, controlling, Vertex tax, accounts payable and receivable."
-        ),
-        "sap_brim": (
-            "Interview about SAP BRIM, subscription billing, provider contracts, "
-            "convergent charging, convergent invoicing, revenue recognition, FI-CA."
-        ),
-        "sap_general": (
-            "Interview about SAP consulting, S/4HANA, integration, IDoc, AIF, "
-            "master data, validation, and business process design."
-        ),
-        "ml_ai": (
-            "Interview about machine learning, model training, evaluation metrics, "
-            "and ML system design. Use standard ML vocabulary only when asked."
-        ),
-        "robotics": (
-            "Interview about robotics, ROS 2, state estimation, planning, and controls."
-        ),
-        "software": (
-            "Interview about software engineering, system design, APIs, and reliability."
-        ),
-        "general": (
-            "Professional job interview. Transcribe the interviewer's question accurately. "
-            "Do not invent technical jargon from unrelated fields."
-        ),
-    }
-    return prompts.get(lock.domain, prompts["general"])[:224]
+    """Generic STT bias — no skill-domain vocabulary banks."""
+    role = (job_context or "").strip()
+    if role:
+        # Use only words from the role string itself (no external skill pack)
+        snippet = re.sub(r"\s+", " ", role)[:160]
+        return (
+            f"Professional job interview for role: {snippet}. "
+            "Transcribe the interviewer's question accurately."
+        )[:224]
+    _ = (resume_or_pack, question_hint)
+    return (
+        "Professional job interview. Transcribe the interviewer's question "
+        "accurately. Do not invent technical jargon from unrelated fields."
+    )[:224]
 
 
 def prompt_guardrails(lock: DomainLock, *, role: str = "") -> str:
-    """Block of rules injected into the answer LLM user prompt."""
+    """Materials-only rules — no named product families."""
+    _ = lock
     role_s = (role or "").strip()
     role_line = (
-        f"- Stay inside the stated Role ({role_s[:80]}). "
-        "Only use module/product names that appear in Role or the question.\n"
-        if role_s
-        else ""
+        f"- Stay inside the stated Role ({role_s[:80]}).\n" if role_s else ""
     )
-    if lock.domain == "general" or lock.confidence < 0.25:
-        return (
-            "COMMON SENSE DOMAIN LOCK:\n"
-            "- Answer ONLY the topic in the interviewer's question.\n"
-            f"{role_line}"
-            "- Do NOT invent product families or modules that are not in the Role or question.\n"
-            "- If Role and question conflict, prefer the question wording.\n"
-            "- Do NOT mention psychology techniques, softmax, Zipf, peak-end, "
-            "or coaching meta-commentary — only speakable interview content.\n"
-            "- Use jargon only when it appears in the question or Role."
-        )
-
-    foreign_names = {
-        "sap_attp": "unrelated finance tax stacks, subscription-billing modules, ML, or robotics",
-        "sap_fico": "unrelated track-and-trace stacks, subscription-billing modules, ML, or robotics",
-        "sap_brim": (
-            "unrelated track-and-trace/serialization stacks, pure tax-engine deep-dives, "
-            "ML, or non-billing modules"
-        ),
-        "sap_general": (
-            "specific product-line deep-dives not named in Role/Q "
-            "(do not invent track-and-trace, subscription-billing, or tax modules), "
-            "ML training, or robotics"
-        ),
-        "ml_ai": "unrelated ERP modules, robotics hardware, or enterprise tax stacks",
-        "robotics": "unrelated ML interview clichés or ERP modules",
-        "software": "unrelated ML paper jargon or ERP modules",
-    }
-    ban = foreign_names.get(lock.domain, "unrelated domains not in Role or question")
     return (
-        f"COMMON SENSE DOMAIN LOCK (active: {lock.label}; confidence={lock.confidence:.2f}):\n"
-        f"- Stay strictly inside {lock.label}.\n"
+        "MATERIALS-ONLY GROUNDING:\n"
+        "- Answer ONLY from the interviewer's question plus THIS interview's "
+        "Role, Job Context, attached Job Description, and attached Resume.\n"
         f"{role_line}"
-        f"- FORBIDDEN unless the question explicitly asks: {ban}.\n"
-        "- Do NOT mention psychology techniques, softmax, Zipf, von Restorff, "
-        "peak-end, primacy/recency labels, or 'psych-math' — those are UI internals, "
-        "not interview answers.\n"
-        "- Do NOT combine SAP product skills. One Role = one product line. "
-        "Never mix track-and-trace, subscription billing, and finance tax in one answer "
-        "unless the question explicitly asks for a comparison.\n"
-        "- Prefer precise terms from the question + Role context only.\n"
-        f"- Domain signals seen: {', '.join(lock.signals[:8]) or 'context-derived'}."
+        "- Do NOT use RAG, prior interviews, or any stored skill/domain pack.\n"
+        "- Do NOT invent product modules, tools, or stack names that do not "
+        "appear in Role, Job Context, JD, Resume, or the question.\n"
+        "- If materials are empty, answer the question in plain professional "
+        "language — do not invent a job title or product family.\n"
+        "- Do NOT mention psychology techniques, softmax, Zipf, peak-end, "
+        "or coaching meta-commentary — only speakable interview content.\n"
     )
 
 
 def system_suffix(lock: DomainLock) -> str:
-    """Short suffix appended to system prompts."""
-    if lock.domain == "general":
-        return (
-            " Stay on the asked topic only. Never inject ML, robotics, or other "
-            "domains. No psych/meta coaching labels in the answer body."
-        )
+    """Short system-prompt suffix — always materials-only."""
+    _ = lock
     return (
-        f" Active domain: {lock.label}. Answer only in that domain. "
-        "Never cross-wire unrelated skills. No psych/meta labels in the answer body."
+        " Use only the question plus this interview's Role, Job Context, JD, "
+        "and Resume. No skill-domain packs. No psych/meta labels in the answer body."
     )
 
 
 def resolve_pack_blob() -> str:
-    """
-    Disabled for multi-tenant safety.
-
-    Session pack used to re-inject leftover ATTP (or any prior Role) into RAG
-    filters and STT prompts across logins. Answer path must use only the
-    request's Role/job_context + question. Always returns empty.
-    """
+    """Disabled — never inject session pack into RAG/STT domain paths."""
     return ""
-
-
-# Product *brand* tokens — soft industry words (serialization, track-and-trace)
-# must NOT force a vendor product line without these.
-_PRODUCT_BRAND_TOKENS: dict[str, frozenset[str]] = {
-    "sap_attp": frozenset({"attp", "sap attp"}),
-    "sap_brim": frozenset(
-        {
-            "brim",
-            "sap brim",
-            "fi-ca",
-            "fica",
-            "convergent charging",
-            "convergent invoicing",
-            "subscription billing",
-            "provider contract",
-        }
-    ),
-    "sap_fico": frozenset({"fico", "sap fico", "vertex", "copa", "new gl"}),
-}
-
-
-def product_brand_named(domain: str, *blobs: str) -> bool:
-    """True only when Role/Q explicitly names that product brand/module."""
-    ground = _norm(" ".join(b for b in blobs if b))
-    if not ground or domain not in _PRODUCT_BRAND_TOKENS:
-        return False
-    return any(tok in ground for tok in _PRODUCT_BRAND_TOKENS[domain])
-
-
-def lock_for_turn(
-    question: str = "",
-    job_context: str = "",
-    extra_context: str | None = None,
-) -> DomainLock:
-    """
-    Domain for THIS interview only: question + Role/job_context.
-
-    Session pack / other users' JD are NEVER attached (multi-tenant safety).
-    extra_context is ignored unless it is a non-empty explicit string from
-    the caller (still not auto-loaded from pack).
-
-    Brand gate: soft industry terms (serialization, track-and-trace, billing)
-    alone never lock to SAP ATTP / BRIM / FICO — Role or Q must name the product.
-    """
-    job = (job_context or "").strip()
-    # Never auto-resolve pack blob — that was the cross-login ATTP leak
-    pack = ""
-    if extra_context is not None and str(extra_context).strip():
-        pack = str(extra_context).strip()
-    if not job:
-        lock = infer_domain(question, "", "")
-    else:
-        # Role + question only (pack empty by default)
-        lock = infer_domain(question, job, pack)
-
-    # Strip vendor product locks that Role/Q never named (kills ambient ATTP)
-    if lock.domain in _PRODUCT_BRAND_TOKENS and not product_brand_named(
-        lock.domain, question, job
-    ):
-        return DomainLock(
-            domain="general",
-            confidence=0.0,
-            signals=lock.signals[:8],
-            secondary=[],
-            label=_DOMAIN_LABELS["general"],
-        )
-    return lock

@@ -75,7 +75,7 @@ def test_session_context_pack():
     assert pack.role == "AI/ML Engineer"
     assert get_depth() == "fast"
     blob = format_for_prompt()
-    assert "PRE-SESSION CONTEXT" in blob
+    assert "INTERVIEW MATERIALS" in blob
     assert "Acme" in blob
     assert "NDCG" in blob or "ranking" in blob
     clear_pack()

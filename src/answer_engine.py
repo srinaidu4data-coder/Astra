@@ -129,18 +129,15 @@ _CORE = (
     "Sharp and decisive (clear claim → mechanism → tradeoff → proof).\n"
     "GROUNDING RULE (strict): Use ONLY the interviewer's question plus THIS interview's "
     "Role, Job Context, attached Job Description, and attached Resume. "
-    "Do NOT use RAG, prior interviews, stored domain packs, or other product families.\n"
-    "If a term is not in those materials, use plain English — never invent elite buzzwords "
-    "or off-role modules (e.g. ATTP when Role is BRIM).\n"
-    "PRODUCT-LINE RULE: never invent SAP product modules (ATTP, BRIM, FICO, Vertex) "
-    "unless that exact product name appears in Role, Job Context, JD, or Resume. "
-    "Industry words alone do NOT license naming a product brand. "
-    "Blank materials → answer the question only; do not invent a role or product family.\n"
+    "Do NOT use RAG, prior interviews, or any stored skill/domain pack.\n"
+    "Do NOT invent product names, modules, tools, or stack jargon that do not appear "
+    "in those materials or the question. Prefer plain English when unsure.\n"
+    "Blank materials → answer the question only; do not invent a job title or product family.\n"
     "No markdown #. Labels exactly like Hook: (never /Hook:).\n"
     "Ban filler: basically, just, simply, leverage, synergy, excited to, circle back, "
     "going forward, best practice as empty praise, world-class, passionate.\n"
     "ONE-WORD RULE: if the Q wants yes/no or a single term, Hook: is ONLY that "
-    "token + period (Hook: Yes. / Hook: EPCIS.). Then explain.\n"
+    "token + period (Hook: Yes. / Hook: Block.). Then explain.\n"
     "COOL LINE (optional last): after Close, one short Cool: line — calm, dry, "
     "affiliative (warmth after competence). 8–18 words. No roasting the interviewer, "
     "no self-sabotage, no slang memes. Example: Cool: That's the short version — "
@@ -204,12 +201,11 @@ REGEN_STRICT_SUFFIX = (
 )
 
 REGEN_PRODUCT_BLEED_SUFFIX = (
-    "PREVIOUS DRAFT INVENTED A PRODUCT LINE NOT IN ROLE OR QUESTION "
-    "(often SAP ATTP / track-and-trace / EPCIS / DSCSA bleed).\n"
-    "Regenerate from scratch. Use ONLY modules and terms that appear in Role or the question. "
-    "If Role is blank, answer the question in plain professional language — "
-    "do NOT default to SAP ATTP or any other product family. "
-    "Forbidden unless present in Role/Q: ATTP, EPCIS, DSCSA, GTIN, SSCC, BRIM, FICO, Vertex."
+    "PREVIOUS DRAFT INVENTED JARGON OR PRODUCT NAMES NOT IN MATERIALS OR QUESTION.\n"
+    "Regenerate from scratch. Use ONLY terms that appear in Role, Job Context, "
+    "attached JD, attached Resume, or the question. "
+    "If materials are blank, answer in plain professional language — "
+    "do not invent a job title or product family."
 )
 
 
@@ -253,7 +249,7 @@ def _regen_user_for_bleed(
         context_chunks=context_chunks,
         strict_regen=True,
     )
-    ban = ", ".join((bleed_terms or [])[:12]) or "ATTP, EPCIS, DSCSA, track-and-trace"
+    ban = ", ".join((bleed_terms or [])[:12]) or "unexplained product acronyms"
     return (
         f"{user}\n\n{REGEN_PRODUCT_BLEED_SUFFIX}\n"
         f"Remove these invented terms completely: {ban}."
@@ -978,10 +974,7 @@ def _build_user_prompt(
     long_q = _is_long_or_multipart_question(q)
     depth = _answer_depth()
     one_word = _is_one_word_answer_question(q)
-    # Never paint a stored product domain unless materials named a brand
     domain = "interview materials only"
-    if lock and lock.confidence >= 0.28 and lock.domain != "general":
-        domain = lock.label
 
     materials_rule = (
         "MATERIALS RULE: Answer ONLY from the question + Role/Job Context + "
@@ -1310,11 +1303,14 @@ def generate_answer(
             try:
                 from common_sense import invented_product_hits
 
-                terms = [t for _d, t in invented_product_hits(
-                    answer, question=question, job_context=job_context
-                )]
+                terms = [
+                    t
+                    for _d, t in invented_product_hits(
+                        answer, question=question, job_context=job_context
+                    )
+                ]
             except Exception:
-                terms = ["ATTP", "EPCIS", "DSCSA"]
+                terms = []
             user_b = _regen_user_for_bleed(
                 question,
                 job_context=job_context,
@@ -1426,7 +1422,7 @@ def generate_answer(
                 )
             ]
         except Exception:
-            terms = ["ATTP", "EPCIS", "DSCSA"]
+            terms = []
         user_b = _regen_user_for_bleed(
             question,
             job_context=job_context,
@@ -1469,7 +1465,7 @@ def generate_answer(
                         )
                     ]
                 except Exception:
-                    terms = ["ATTP"]
+                    terms = []
                 user2 = _regen_user_for_bleed(
                     question,
                     job_context=job_context,

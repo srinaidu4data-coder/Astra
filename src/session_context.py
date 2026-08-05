@@ -154,36 +154,10 @@ def clear_pack() -> None:
 
 
 def scrub_pack_for_role(role: str) -> SessionContextPack:
-    """
-    When user sets Role (e.g. BRIM), drop pack JD/keywords from a different
-    SAP product family (e.g. leftover ATTP practice JD).
-    """
+    """Keep pack.role aligned with UI Role. No product-domain keyword filters."""
     role_s = (role or "").strip()
     with _lock:
         pack = _pack_ref()
-        if not role_s:
-            return SessionContextPack(**asdict(pack))
-        jd = (pack.job_description or "").strip()
-        if jd and not _text_domain_ok(role_s, jd):
-            pack.job_description = ""
-        # Filter ATTP tokens when role is BRIM (and reverse)
-        rl = role_s.lower()
-        if "brim" in rl or "subscription" in rl:
-            pack.keywords = [
-                k
-                for k in pack.keywords
-                if not re.search(
-                    r"attp|epcis|gtin|sscc|dscsa|sgtin|serialization|commissioning",
-                    k,
-                    re.I,
-                )
-            ]
-        if "attp" in rl or "serialization" in rl:
-            pack.keywords = [
-                k
-                for k in pack.keywords
-                if not re.search(r"\bbrim\b|convergent invoic|provider contract", k, re.I)
-            ]
         pack.role = role_s
         pack.updated_at = time.time()
         return SessionContextPack(**asdict(pack))
@@ -200,25 +174,9 @@ def drop_session(session_id: str | None = None) -> None:
 
 
 def _text_domain_ok(role: str, blob: str) -> bool:
-    """False when blob is a foreign SAP product family vs role (ATTP vs BRIM)."""
-    if not role or not blob:
-        return True
-    try:
-        from common_sense import domains_compatible, infer_domain
-
-        r = infer_domain("", role, "")
-        b = infer_domain("", "", blob[:1500])
-        if r.domain in ("general",) or b.domain in ("general",):
-            # String guard for classic bleed
-            rl, bl = role.lower(), blob.lower()
-            if "brim" in rl and "attp" in bl and "brim" not in bl:
-                return False
-            if "attp" in rl and "brim" in bl and "attp" not in bl:
-                return False
-            return True
-        return domains_compatible(r.domain, b.domain)
-    except Exception:
-        return "attp" not in blob.lower() or "attp" in role.lower()
+    """No domain families — always OK. Kept for call-site compatibility."""
+    _ = (role, blob)
+    return True
 
 
 def format_for_prompt(max_chars: int = 1800, role_hint: str = "") -> str:
@@ -228,7 +186,7 @@ def format_for_prompt(max_chars: int = 1800, role_hint: str = "") -> str:
         return ""
     role = (role_hint or pack.role or "").strip()
     parts: list[str] = [
-        "PRE-SESSION CONTEXT (use only facts here; never invent experience):"
+        "INTERVIEW MATERIALS (this interview only — use only facts here):"
     ]
     if role:
         parts.append(f"Target role: {role}")
@@ -240,28 +198,14 @@ def format_for_prompt(max_chars: int = 1800, role_hint: str = "") -> str:
         parts.append(f"Seniority: {pack.seniority}")
     if pack.interview_type:
         parts.append(f"Interview type: {pack.interview_type}")
-    # Keywords: drop ATTP-family tokens when role is BRIM (and vice versa)
     if pack.keywords:
-        kws = list(pack.keywords[:20])
-        if role and not _text_domain_ok(role, " ".join(kws)):
-            kws = [
-                k
-                for k in kws
-                if not re.search(
-                    r"attp|epcis|gtin|sscc|dscsa|serialization|commissioning",
-                    k,
-                    re.I,
-                )
-            ]
-        if kws:
-            parts.append("Keywords: " + ", ".join(kws[:20]))
-    # Never inject a foreign practice JD (ATTP file when Role is BRIM)
-    if pack.job_description and _text_domain_ok(role, pack.job_description):
+        parts.append("Keywords: " + ", ".join(pack.keywords[:20]))
+    if pack.job_description:
         jd = pack.job_description.strip()
         if len(jd) > 600:
             jd = jd[:600] + "…"
         parts.append(f"Job description excerpt:\n{jd}")
-    if pack.resume_text and _text_domain_ok(role, pack.resume_text):
+    if pack.resume_text:
         rv = pack.resume_text.strip()
         if len(rv) > 700:
             rv = rv[:700] + "…"
