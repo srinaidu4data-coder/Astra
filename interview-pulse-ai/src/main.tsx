@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
+// Deploy stamp: force new Vite content hash so custom-domain CDN skips poisoned asset keys
+void 'interview-ui-merge-2026-08-05'
+
 /** Never leave users on a silent black screen if React crashes. */
 class RootErrorBoundary extends Component<
   { children: ReactNode },
