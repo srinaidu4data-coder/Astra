@@ -791,6 +791,7 @@
   }
   .speak-ask-why {
     font-style: normal;
+    /* deploy-bust: force new hashed assets after custom-domain cache poison */
   }
   .speak-beat-active.speak-beat-ask,
   .speak-beat-ask.speak-beat-active {
