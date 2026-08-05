@@ -6,33 +6,93 @@ const MAX_PDF_PAGES = 80
 /** Cap extracted text so localStorage stays healthy. */
 const MAX_TEXT_CHARS = 120_000
 
+/**
+ * pdf.js modern build calls Uint8Array#toHex() for document fingerprints.
+ * That method is still missing in many browsers → "a.toHex is not a function".
+ * Legacy build ships the polyfill; we also patch the main thread as a belt.
+ */
+function ensureUint8ArrayToHex(): void {
+  const proto = Uint8Array.prototype as Uint8Array & {
+    toHex?: () => string
+  }
+  if (typeof proto.toHex === 'function') return
+  Object.defineProperty(proto, 'toHex', {
+    value: function toHex(this: Uint8Array): string {
+      let out = ''
+      for (let i = 0; i < this.length; i++) {
+        out += this[i]!.toString(16).padStart(2, '0')
+      }
+      return out
+    },
+    configurable: true,
+    writable: true,
+  })
+}
+
 /** Extract plain text from PDF using pdf.js (browser). */
 export async function extractPdfText(file: File): Promise<string> {
-  const pdfjs = await import('pdfjs-dist')
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url,
-  ).toString()
+  ensureUint8ArrayToHex()
+
+  // Legacy build + matching worker: polyfills toHex / withResolvers for real browsers.
+  // Vite ?url keeps worker version locked to the same package as the API.
+  const [{ getDocument, GlobalWorkerOptions, version }, workerUrl] =
+    await Promise.all([
+      import('pdfjs-dist/legacy/build/pdf.mjs'),
+      import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url').then(
+        (m) => m.default as string,
+      ),
+    ])
+
+  GlobalWorkerOptions.workerSrc = workerUrl
 
   const data = new Uint8Array(await file.arrayBuffer())
-  const doc = await pdfjs.getDocument({ data }).promise
-  const pages: string[] = []
-  const limit = Math.min(doc.numPages, MAX_PDF_PAGES)
-
-  for (let i = 1; i <= limit; i++) {
-    const page = await doc.getPage(i)
-    const content = await page.getTextContent()
-    const text = content.items
-      .map((item) => ('str' in item ? item.str : ''))
-      .join(' ')
-    pages.push(text)
+  let doc: Awaited<ReturnType<typeof getDocument>['promise']>
+  try {
+    doc = await getDocument({
+      data,
+      // Text extraction only — skip font face / eval paths that break some PDFs
+      useSystemFonts: true,
+      isEvalSupported: false,
+      disableAutoFetch: true,
+      disableStream: true,
+    }).promise
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    if (/toHex|worker|Setting up fake worker|Failed to fetch/i.test(msg)) {
+      throw new Error(
+        `PDF engine failed (${msg}). Try DOCX/TXT, or re-export the PDF as text-based. pdf.js ${version}`,
+      )
+    }
+    throw new Error(
+      `Could not open PDF: ${msg}. If it is password-protected or scanned (image-only), export text or use DOCX/TXT.`,
+    )
   }
 
-  let out = pages.join('\n').replace(/\s+/g, ' ').trim()
-  if (doc.numPages > MAX_PDF_PAGES) {
-    out += ` [truncated after ${MAX_PDF_PAGES} of ${doc.numPages} pages]`
+  try {
+    const pages: string[] = []
+    const limit = Math.min(doc.numPages, MAX_PDF_PAGES)
+
+    for (let i = 1; i <= limit; i++) {
+      const page = await doc.getPage(i)
+      const content = await page.getTextContent()
+      const text = content.items
+        .map((item) => ('str' in item ? item.str : ''))
+        .join(' ')
+      pages.push(text)
+    }
+
+    let out = pages.join('\n').replace(/\s+/g, ' ').trim()
+    if (doc.numPages > MAX_PDF_PAGES) {
+      out += ` [truncated after ${MAX_PDF_PAGES} of ${doc.numPages} pages]`
+    }
+    return out.slice(0, MAX_TEXT_CHARS)
+  } finally {
+    try {
+      await doc.destroy()
+    } catch {
+      /* ignore */
+    }
   }
-  return out.slice(0, MAX_TEXT_CHARS)
 }
 
 function u16(view: DataView, o: number) {
