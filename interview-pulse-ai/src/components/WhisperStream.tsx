@@ -427,23 +427,103 @@ function OrbitBeat({
   )
 }
 
-/** Empty scaffold rails — same expand/resize affordance before answer lands */
-function ReadyRails({ compact }: { compact?: boolean }) {
-  return (
-    <div className={cn('w-full space-y-3', compact ? 'py-2' : 'py-4')}>
-      <div className="mb-1">
+export type SpeakStage = 'setup' | 'armed' | 'live'
+
+/** Empty / pre-answer surface — stage-aware, not a fake dashboard */
+function ReadyRails({
+  compact,
+  stage = 'armed',
+  stageHint,
+}: {
+  compact?: boolean
+  stage?: SpeakStage
+  stageHint?: string
+}) {
+  if (compact) {
+    return (
+      <div className={cn('w-full space-y-3', 'py-2')}>
         <p className="text-[15px] font-medium tracking-tight text-white/80">
-          Ready to speak
+          Waiting for answers
         </p>
         <p className="speak-body-secondary mt-1">
-          {compact
-            ? 'Answers stream here from the main window.'
-            : 'Type a question and press Answer — scaffold fills as you go. Expand or drag card edges to fit your screen.'}
+          Answers stream here from the main window.
+        </p>
+        {READY_RAILS.slice(0, 3).map((rail) => (
+          <ReadyRailCard key={rail.id} rail={rail} compact />
+        ))}
+      </div>
+    )
+  }
+
+  const title =
+    stage === 'setup'
+      ? 'Complete your kit first'
+      : stage === 'live'
+        ? 'Listening for the next question'
+        : 'You’re armed — speak when ready'
+
+  const body =
+    stage === 'setup'
+      ? stageHint ||
+        'Add role, job context, resume, and JD on the left. Answers stay grounded in your materials.'
+      : stage === 'live'
+        ? 'When a real question ends, Hook · Proof · Close appear here. Type below if audio lags.'
+        : 'Start the interview to capture speakers only — or paste a question and press Answer.'
+
+  const steps =
+    stage === 'setup'
+      ? [
+          { n: '1', t: 'Fill Interview kit', d: 'Role · Context · Resume · JD', done: false, active: true },
+          { n: '2', t: 'Start interview', d: 'Share tab audio on Teams/Zoom', done: false, active: false },
+          { n: '3', t: 'Speak this', d: 'Hook · Proof · Close land here', done: false, active: false },
+        ]
+      : stage === 'live'
+        ? [
+            { n: '✓', t: 'Kit ready', d: 'Your materials are loaded', done: true, active: false },
+            { n: '●', t: 'Live now', d: 'Hearing the room — not your mic', done: false, active: true },
+            { n: '3', t: 'Answer rails', d: 'Appear when a question ends', done: false, active: false },
+          ]
+        : [
+            { n: '✓', t: 'Kit complete', d: stageHint || 'Materials grounded', done: true, active: false },
+            { n: '2', t: 'Start interview', d: 'One tap — speakers / tab audio', done: false, active: true },
+            { n: '3', t: 'Speak this', d: 'Hook · Proof · Close · Ask', done: false, active: false },
+          ]
+
+  return (
+    <div className="ip-stage-empty w-full">
+      <div>
+        <p className="text-[17px] font-medium tracking-tight text-white/92">{title}</p>
+        <p className="mt-1.5 max-w-[40ch] text-[13px] leading-relaxed text-white/42">
+          {body}
         </p>
       </div>
-      {READY_RAILS.map((rail) => (
-        <ReadyRailCard key={rail.id} rail={rail} compact={compact} />
-      ))}
+      <ol className="ip-stage-steps" aria-label="What happens next">
+        {steps.map((s) => (
+          <li
+            key={s.t}
+            className={cn(
+              'ip-stage-step',
+              s.done && 'ip-stage-step-done',
+              s.active && 'ip-stage-step-active',
+            )}
+          >
+            <span className="ip-stage-step-num" aria-hidden>
+              {s.n}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[13px] font-medium text-white/88">{s.t}</p>
+              <p className="text-[11px] text-white/38">{s.d}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      {stage !== 'setup' && (
+        <div className="mt-1 w-full space-y-2 opacity-50">
+          {READY_RAILS.slice(0, 3).map((rail) => (
+            <ReadyRailCard key={rail.id} rail={rail} compact />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -791,6 +871,8 @@ export const WhisperStream = memo(function WhisperStream({
   detaching,
   /** Overlay Hide: strip Speak chrome so answer body pulls to top (red-mark line) */
   chromeHidden,
+  stage,
+  stageHint,
 }: {
   cards: QACard[]
   cardIndex: number
@@ -811,6 +893,9 @@ export const WhisperStream = memo(function WhisperStream({
    * so ANSWER / PROOF rails sit under the floating Show pill.
    */
   chromeHidden?: boolean
+  /** Pre-answer journey stage for empty state */
+  stage?: SpeakStage
+  stageHint?: string
 }) {
   const card = cards[cardIndex] ?? null
   const total = cards.length
@@ -1491,7 +1576,13 @@ export const WhisperStream = memo(function WhisperStream({
             <p className="mt-1 text-[13px] text-white/40">
               {compact
                 ? `${ladderHint} · F focus`
-                : `${ladderHint} · 1–5 rails · Space ladder · F focus`}
+                : card
+                  ? `${ladderHint} · 1–5 rails · Space · F focus`
+                  : stage === 'setup'
+                    ? 'Answers appear here once your kit is ready'
+                    : stage === 'live'
+                      ? 'Live — rails fill when a question ends'
+                      : 'Your speak sheet · Hook · Proof · Close'}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
@@ -1638,7 +1729,13 @@ export const WhisperStream = memo(function WhisperStream({
           chromeHidden ? 'space-y-2' : 'space-y-4',
         )}
       >
-        {showReadyRails && <ReadyRails compact={compact || chromeHidden} />}
+        {showReadyRails && (
+          <ReadyRails
+            compact={compact || chromeHidden}
+            stage={stage}
+            stageHint={stageHint}
+          />
+        )}
 
         {showPreparingSkeleton && !card && (
           <div className="space-y-3">

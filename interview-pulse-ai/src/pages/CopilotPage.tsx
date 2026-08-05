@@ -846,21 +846,16 @@ export function CopilotPage() {
         <div className={leftCollapsed ? 'hidden' : 'flex flex-col gap-4 xl:col-span-4'}>
           <section className="glass rounded-[24px] p-5 md:p-6">
             <div className="mb-5 flex items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-[16px] font-medium tracking-tight text-white/95">
                   Live interview
                 </h2>
-                <p className="mt-0.5 text-[12px] text-white/40 sm:block">
-                  <span className="sm:hidden">
-                    {interviewReady.ready
-                      ? 'Ready · tap Start'
-                      : 'Finish kit · then Start'}
-                  </span>
-                  <span className="hidden sm:inline">
-                    {interviewReady.ready
-                      ? 'Kit complete · hear the room · answers that fit you'
-                      : 'Complete your kit · then one tap to start'}
-                  </span>
+                <p className="mt-0.5 text-[12px] leading-snug text-white/40">
+                  {sessionOn
+                    ? 'Hearing the room · answers on the right'
+                    : interviewReady.ready
+                      ? 'Kit complete · one tap to go live'
+                      : 'Finish the kit · then Start'}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1.5">
@@ -875,9 +870,14 @@ export function CopilotPage() {
                 </button>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`h-2 w-2 rounded-full ${
-                      sessionOn ? 'bg-[#20B8CD]' : apiOk ? 'bg-white/30' : 'bg-[#E8C547]'
-                    }`}
+                    className={
+                      sessionOn
+                        ? 'ip-status-dot ip-status-dot-live'
+                        : !apiOk
+                          ? 'ip-status-dot ip-status-dot-warn'
+                          : 'ip-status-dot ip-status-dot-idle'
+                    }
+                    aria-hidden
                   />
                   <span className="text-[11px] text-white/45">{phaseLabel}</span>
                 </div>
@@ -887,14 +887,21 @@ export function CopilotPage() {
               </div>
             </div>
 
-            <div className="mb-4 rounded-[18px] glass-inset px-4 py-5">
-              <LiveWaveform active={sessionOn} className="h-12 w-full" />
-            </div>
-
-            <div className="mb-4 min-h-[2.5rem] rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5 text-[12px] text-white/55">
-              <span className="line-clamp-2">
-                {statusLine || (sessionOn ? 'Listening…' : 'Ready when you are')}
-              </span>
+            {/* Waveform + status as one calm instrument cluster */}
+            <div className="mb-4 overflow-hidden rounded-[18px] border border-white/[0.06] bg-black/25">
+              <div className="px-4 py-4">
+                <LiveWaveform active={sessionOn} className="h-11 w-full" />
+              </div>
+              <div className="border-t border-white/[0.05] px-3.5 py-2.5 text-[12px] text-white/50">
+                <span className="line-clamp-2" aria-live="polite">
+                  {statusLine ||
+                    (sessionOn
+                      ? 'Listening…'
+                      : interviewReady.ready
+                        ? 'Ready when you are'
+                        : readinessSummary(interviewReady))}
+                </span>
+              </div>
             </div>
 
             {/* Required kit — Role, Context, Resume, JD before Start */}
@@ -904,184 +911,152 @@ export function CopilotPage() {
               </div>
             )}
 
-            {/* Primary CTA — always clickable; incomplete kit guides to first field */}
-            <div className="mb-4 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                size="lg"
-                className={
-                  sessionOn || interviewReady.ready
-                    ? 'min-h-[48px] min-w-[180px] flex-1 text-[15px]'
-                    : 'min-h-[48px] min-w-[180px] flex-1 text-[15px] opacity-90'
-                }
-                variant={
-                  sessionOn
-                    ? 'danger'
-                    : interviewReady.ready
-                      ? 'default'
-                      : 'secondary'
-                }
-                title={
-                  sessionOn
-                    ? 'Stop interview'
-                    : interviewReady.ready
-                      ? 'Start live interview'
-                      : readinessSummary(interviewReady)
-                }
-                aria-describedby={
-                  !sessionOn && !interviewReady.ready
-                    ? 'ip-kit-gate-hint'
-                    : undefined
-                }
-                onClick={() => void toggleSession()}
-              >
-                {sessionOn ? (
-                  <>
-                    <MicOff className="h-4 w-4" strokeWidth={1.75} /> Stop
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="h-4 w-4" strokeWidth={1.75} />{' '}
-                    {interviewReady.ready ? 'Start interview' : 'Complete setup'}
-                  </>
-                )}
-              </Button>
-              <Button
-                size="lg"
-                variant="ghost"
-                className="min-h-[48px]"
-                title="Clear answers, transcript, role, and server cache"
-                onClick={() => {
-                  if (sessionOn) liveInterview.stop()
-                  liveInterview.clearStartOpts()
-                  setSessionOn(false)
-                  setListening(false)
-                  clearTranscript()
-                  setCards([])
-                  updateCardIndex(0)
-                  setAnswer(null)
-                  setStatusLog([])
-                  setStatusLine('')
-                  setLevels(Array.from({ length: 16 }, () => 0.08))
-                  setPhase('idle')
-                  setManualQ('')
-                  setActiveJobTitle('')
-                  updateSettings({ jobContext: '' })
-                  void fullSessionReset().catch(() =>
-                    setSessionContext({ clear: true, role: '' }),
-                  )
-                  pushStatus('Reset complete — Role, answers, and server cache cleared')
-                }}
-              >
-                <RefreshCw className="h-4 w-4" strokeWidth={1.75} />
-                Reset
-              </Button>
-            </div>
-
-            {!sessionOn && !interviewReady.ready && (
-              <p
-                id="ip-kit-gate-hint"
-                className="mb-4 text-[12px] leading-relaxed text-white/40"
-              >
-                {readinessSummary(interviewReady)}. Tap Complete setup to jump to
-                the next field — answers stay grounded in your materials.
-              </p>
-            )}
-
             {sessionOn && (
-              <div className="mb-4 space-y-2 rounded-xl border border-white/[0.06] bg-black/20 px-3.5 py-3">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-white/35">
-                  Live kit
-                </p>
-                <p className="text-[13px] text-white/80">
+              <div className="mb-4 space-y-2 rounded-2xl border border-[#20B8CD]/15 bg-[#20B8CD]/[0.05] px-3.5 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-[#5DD5E3]/80">
+                    Live kit
+                  </p>
+                  <span className="text-[10px] text-white/30">Stop to change audio</span>
+                </div>
+                <p className="text-[13px] font-medium leading-snug text-white/88">
                   {effectiveJobContext() || '—'}
                 </p>
-                <p className="text-[11px] text-white/35">
-                  Audio / STT changes apply on next Start. Stop first to switch capture.
-                </p>
-                <label className="block pt-1">
-                  <span className="label-quiet">Answer depth</span>
-                  <select
-                    className="field mt-1"
-                    value={depth}
-                    onChange={(e) =>
-                      setDepth(e.target.value as 'fast' | 'balanced' | 'deep')
-                    }
-                  >
-                    <option value="fast">Fast</option>
-                    <option value="balanced">Balanced</option>
-                    <option value="deep">Deep</option>
-                  </select>
-                </label>
               </div>
             )}
 
-            {!sessionOn && (
-              <label className="mb-4 block">
-                <span className="label-quiet">Answer depth</span>
-                <select
-                  className="field mt-1"
-                  value={depth}
-                  onChange={(e) =>
-                    setDepth(e.target.value as 'fast' | 'balanced' | 'deep')
-                  }
-                >
-                  <option value="fast">Fast</option>
-                  <option value="balanced">Balanced</option>
-                  <option value="deep">Deep</option>
-                </select>
-              </label>
-            )}
-
-            {/* Type a question */}
-            <div className="mb-3 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="label-quiet">Type a question</span>
-                <div className="flex gap-0.5 rounded-full bg-white/5 p-0.5 text-[11px]">
-                  {(['fast', 'balanced', 'deep'] as const).map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDepth(d)}
-                      className={`rounded-full px-2 py-0.5 capitalize ${
-                        depth === d
-                          ? 'bg-[#20B8CD]/20 text-[#20B8CD]'
-                          : 'text-white/40 hover:text-white/70'
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
-                  className="ip-field min-w-0 flex-1"
-                  value={manualQ}
-                  onChange={(e) => setManualQ(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && void askManual()}
-                  placeholder={
-                    !sessionOn && !interviewReady.ready
-                      ? 'Finish kit first…'
-                      : 'Paste if audio lags…'
-                  }
-                  disabled={answering}
-                  aria-label="Type interview question"
-                />
+            {/* Primary CTA dock — sticky on phone */}
+            <div className="ip-start-dock mb-4">
+              <div className="flex flex-wrap gap-2">
                 <Button
-                  variant="secondary"
-                  onClick={() => void askManual()}
-                  disabled={answering || !manualQ.trim()}
-                  title={
-                    !sessionOn && !interviewReady.ready
-                      ? readinessSummary(interviewReady)
-                      : 'Generate answer'
+                  type="button"
+                  size="lg"
+                  className={
+                    sessionOn
+                      ? 'min-h-[48px] min-w-[180px] flex-1 text-[15px]'
+                      : interviewReady.ready
+                        ? 'ip-cta-ready min-h-[48px] min-w-[180px] flex-1 text-[15px]'
+                        : 'min-h-[48px] min-w-[180px] flex-1 text-[15px]'
                   }
+                  variant={
+                    sessionOn
+                      ? 'danger'
+                      : interviewReady.ready
+                        ? 'default'
+                        : 'secondary'
+                  }
+                  title={
+                    sessionOn
+                      ? 'Stop interview'
+                      : interviewReady.ready
+                        ? 'Start live interview'
+                        : readinessSummary(interviewReady)
+                  }
+                  aria-describedby={
+                    !sessionOn && !interviewReady.ready
+                      ? 'ip-kit-gate-hint'
+                      : undefined
+                  }
+                  onClick={() => void toggleSession()}
                 >
-                  {answering ? '…' : 'Answer'}
+                  {sessionOn ? (
+                    <>
+                      <MicOff className="h-4 w-4" strokeWidth={1.75} /> Stop
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="h-4 w-4" strokeWidth={1.75} />{' '}
+                      {interviewReady.ready ? 'Start interview' : 'Complete setup'}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  className="min-h-[48px]"
+                  title="Clear answers, transcript, role, and server cache"
+                  onClick={() => {
+                    if (sessionOn) liveInterview.stop()
+                    liveInterview.clearStartOpts()
+                    setSessionOn(false)
+                    setListening(false)
+                    clearTranscript()
+                    setCards([])
+                    updateCardIndex(0)
+                    setAnswer(null)
+                    setStatusLog([])
+                    setStatusLine('')
+                    setLevels(Array.from({ length: 16 }, () => 0.08))
+                    setPhase('idle')
+                    setManualQ('')
+                    setActiveJobTitle('')
+                    updateSettings({ jobContext: '' })
+                    void fullSessionReset().catch(() =>
+                      setSessionContext({ clear: true, role: '' }),
+                    )
+                    pushStatus('Reset complete — Role, answers, and server cache cleared')
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4" strokeWidth={1.75} />
+                  Reset
                 </Button>
               </div>
+              {!sessionOn && !interviewReady.ready && (
+                <p
+                  id="ip-kit-gate-hint"
+                  className="mt-2.5 text-[12px] leading-relaxed text-white/40"
+                >
+                  {readinessSummary(interviewReady)}. Tap Complete setup to jump to the next
+                  field.
+                </p>
+              )}
             </div>
+
+            {/* Depth + type question — only when kit ready or live (less noise early) */}
+            {(interviewReady.ready || sessionOn) && (
+              <div className="mb-3 space-y-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-white/35">
+                    Answer depth
+                  </span>
+                  <div className="ip-seg" role="group" aria-label="Answer depth">
+                    {(['fast', 'balanced', 'deep'] as const).map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        className="ip-seg-btn capitalize"
+                        aria-pressed={depth === d}
+                        onClick={() => setDepth(d)}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="ip-label mb-1.5">Type a question</span>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <input
+                      className="ip-field min-w-0 flex-1"
+                      value={manualQ}
+                      onChange={(e) => setManualQ(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && void askManual()}
+                      placeholder="Paste if audio lags…"
+                      disabled={answering}
+                      aria-label="Type interview question"
+                    />
+                    <Button
+                      variant="secondary"
+                      onClick={() => void askManual()}
+                      disabled={answering || !manualQ.trim()}
+                      title="Generate answer"
+                    >
+                      {answering ? '…' : 'Answer'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* How this works — progressive disclosure */}
             <button
@@ -1100,25 +1075,22 @@ export function CopilotPage() {
                 <ol className="list-decimal space-y-1.5 pl-4">
                   <li>
                     Complete your <strong className="text-white/70">Interview kit</strong> — Role,
-                    Context, Resume, and JD (required before Start)
+                    Context, Resume, and JD
                   </li>
                   <li>
                     Press <strong className="text-white/70">Start</strong> — we capture{' '}
-                    <strong className="text-white/70">speakers / meeting audio only</strong>, not
-                    your mic
+                    <strong className="text-white/70">speakers only</strong>, not your mic
                   </li>
                   <li>
-                    Share the <strong className="text-white/70">Teams/Zoom tab</strong> and enable{' '}
+                    Share the <strong className="text-white/70">Teams/Zoom tab</strong> with{' '}
                     <strong className="text-white/70">Share tab audio</strong>
                   </li>
                   <li>
-                    Answer out loud as usual — your voice is not transcribed; only the interviewer is
+                    Speak as usual — suggested answers appear on the right when a question ends
                   </li>
-                  <li>When a real question ends, a suggested answer appears on the right</li>
                 </ol>
                 <p className="text-[11px] text-white/30">
-                  Audio source: Settings → Interview audio source. Speed metrics: Settings → Speed &
-                  latency. Local Windows can use Stereo Mix.
+                  Audio source & latency metrics live in Settings.
                 </p>
                 {!apiOk && (
                   <p className="text-[#E8C547]">
@@ -1224,6 +1196,14 @@ export function CopilotPage() {
                 onToggleExpand={toggleAnswerExpand}
                 onDetach={() => void handleDetachAnswer()}
                 detaching={detaching}
+                stage={
+                  !interviewReady.ready
+                    ? 'setup'
+                    : sessionOn
+                      ? 'live'
+                      : 'armed'
+                }
+                stageHint={readinessSummary(interviewReady)}
               />
             </div>
           </div>

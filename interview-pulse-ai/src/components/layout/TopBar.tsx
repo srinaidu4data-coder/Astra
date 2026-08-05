@@ -103,8 +103,11 @@ export function TopBar() {
             </span>
           )}
         </p>
-        <h1 className="truncate text-[28px] font-medium tracking-tight text-white/95 md:text-[32px]">
-          {activeJobTitle?.trim() || 'Live interview'}
+        <h1 className="truncate text-[26px] font-medium tracking-[-0.02em] text-white/95 md:text-[30px]">
+          {activeJobTitle?.trim() ||
+            (showKit && !kit.ready
+              ? 'Prepare your kit'
+              : 'Live interview')}
         </h1>
       </div>
 
