@@ -49,7 +49,11 @@ export function SettingsPage() {
       {/* Latency stack moved from Interview (Copilot) — every metric preserved */}
       <LatencyMetricsPanel />
 
-      <section className="glass rounded-[28px] p-8 md:p-10">
+      <section className="glass relative overflow-hidden rounded-[28px] p-8 md:p-10">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#5DD5E3]/35 to-transparent"
+          aria-hidden
+        />
         <h2 className="text-[17px] font-medium tracking-tight text-white/95">
           Account & billing
         </h2>

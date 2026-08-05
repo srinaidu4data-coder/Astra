@@ -584,47 +584,55 @@ export function PracticePage() {
   if (phase === 'setup') {
     return (
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
-        <section className="glass rounded-[28px] p-8 md:p-10">
+        <section className="glass relative overflow-hidden rounded-[28px] p-8 md:p-10">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#5DD5E3]/40 to-transparent"
+            aria-hidden
+          />
           <div className="mb-2 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#20B8CD]" strokeWidth={1.75} />
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#20B8CD]/12">
+              <Sparkles className="h-4 w-4 text-[#5DD5E3]" strokeWidth={1.75} />
+            </span>
             <h2 className="text-[17px] font-medium tracking-tight text-white/95">
-              AI Mock Interview
+              Mock interview
             </h2>
           </div>
-          <p className="mb-8 text-[13px] leading-relaxed text-white/40">
-            Audio mock interview: the interviewer speaks questions out loud (conversational style),
-            you answer with your mic, then get scores, follow-ups, and a debrief.
+          <p className="mb-8 max-w-xl text-[13px] leading-relaxed text-white/40">
+            Spoken interviewer · your mic · scores and follow-ups. Practice before the live kit.
           </p>
 
           {error && (
-            <div className="mb-5 rounded-[14px] border border-[#E85D5D]/40 bg-[#E85D5D]/10 px-4 py-3 text-[13px] text-[#E85D5D]">
+            <div
+              className="mb-5 rounded-[14px] border border-[#E85D5D]/40 bg-[#E85D5D]/10 px-4 py-3 text-[13px] text-[#E85D5D]"
+              role="alert"
+            >
               {error}
             </div>
           )}
 
           <div className="grid gap-5 sm:grid-cols-2">
             <label className="sm:col-span-2">
-              <span className="label-quiet">Target role</span>
+              <span className="ip-label">Target role</span>
               <input
-                className="field"
+                className="ip-field mt-1.5"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="e.g. Senior Backend Engineer"
               />
             </label>
             <label>
-              <span className="label-quiet">Company (optional)</span>
+              <span className="ip-label">Company (optional)</span>
               <input
-                className="field"
+                className="ip-field mt-1.5"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 placeholder="e.g. Stripe"
               />
             </label>
             <label>
-              <span className="label-quiet">Questions</span>
+              <span className="ip-label">Questions</span>
               <select
-                className="field"
+                className="ip-field mt-1.5"
                 value={qCount}
                 onChange={(e) => setQCount(Number(e.target.value))}
               >
@@ -636,9 +644,9 @@ export function PracticePage() {
               </select>
             </label>
             <label className="sm:col-span-2">
-              <span className="label-quiet">Job description (optional — better questions)</span>
+              <span className="ip-label">Job description (optional)</span>
               <textarea
-                className="field min-h-[100px] resize-y"
+                className="ip-field mt-1.5 min-h-[100px] resize-y py-2.5"
                 value={jd}
                 onChange={(e) => setJd(e.target.value)}
                 placeholder="Paste JD bullets for tailored questions…"
@@ -714,9 +722,19 @@ export function PracticePage() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" disabled={busy} onClick={() => void startSession()}>
+            <Button
+              size="lg"
+              className="min-h-[48px] ip-cta-ready"
+              disabled={busy || !jobTitle.trim()}
+              onClick={() => void startSession()}
+            >
               {busy ? 'Building questions…' : 'Start mock interview'}
             </Button>
+            {!jobTitle.trim() && (
+              <p className="w-full text-[12px] text-white/40">
+                Add a target role to start.
+              </p>
+            )}
           </div>
         </section>
 

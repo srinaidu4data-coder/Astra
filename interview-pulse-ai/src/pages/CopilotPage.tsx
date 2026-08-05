@@ -34,6 +34,7 @@ import {
   resolveInterviewAudioSource,
   type InterviewAudioSource,
 } from '@/lib/api-base'
+import { useIsMobile } from '@/lib/mobile'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 /**
@@ -102,6 +103,7 @@ export function CopilotPage() {
   const [detaching, setDetaching] = useState(false)
   const [showHowItWorks, setShowHowItWorks] = useState(false)
   const [showTranscript, setShowTranscript] = useState(false)
+  const isMobile = useIsMobile()
 
   const toggleAnswerExpand = useCallback(() => {
     setAnswerExpanded((v) => !v)
@@ -778,7 +780,15 @@ export function CopilotPage() {
           : 'Idle'
 
   return (
-    <div className={leftCollapsed ? 'space-y-3' : 'space-y-4'}>
+    <div
+      className={
+        leftCollapsed
+          ? 'space-y-3'
+          : isMobile
+            ? 'space-y-4 ip-mobile-live-pad'
+            : 'space-y-4'
+      }
+    >
       {/* Offline banner — only when controls visible */}
       {!leftCollapsed && <ApiStatusBadge variant="banner" />}
 
@@ -925,8 +935,8 @@ export function CopilotPage() {
               </div>
             )}
 
-            {/* Primary CTA dock — sticky on phone */}
-            <div className="ip-start-dock mb-4">
+            {/* Primary CTA — desktop / tablet in-flow; phones use fixed dock below */}
+            <div className={`mb-4 ${isMobile ? 'hidden' : ''}`}>
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
@@ -1214,6 +1224,94 @@ export function CopilotPage() {
           )}
         </div>
       </div>
+
+      {/* Fixed mobile Start/Stop — always above bottom tabs under interview stress */}
+      {isMobile && (
+        <div
+          className="ip-mobile-live-dock"
+          role="region"
+          aria-label="Interview controls"
+        >
+          <div className="ip-mobile-live-dock-inner">
+            <div className="mb-1.5 flex items-center justify-between gap-2 px-0.5">
+              <span className="text-[11px] font-medium tabular-nums text-white/45">
+                {sessionOn
+                  ? phaseLabel
+                  : `Kit ${interviewReady.completeCount}/${interviewReady.total}`}
+              </span>
+              <span className="truncate text-[11px] text-white/35">
+                {sessionOn
+                  ? effectiveJobContext() || 'Live'
+                  : interviewReady.ready
+                    ? 'Ready to start'
+                    : readinessSummary(interviewReady)}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="lg"
+                className={
+                  sessionOn
+                    ? 'min-h-[50px] flex-1 text-[15px]'
+                    : interviewReady.ready
+                      ? 'ip-cta-ready min-h-[50px] flex-1 text-[15px]'
+                      : 'min-h-[50px] flex-1 text-[15px]'
+                }
+                variant={
+                  sessionOn
+                    ? 'danger'
+                    : interviewReady.ready
+                      ? 'default'
+                      : 'secondary'
+                }
+                onClick={() => void toggleSession()}
+              >
+                {sessionOn ? (
+                  <>
+                    <MicOff className="h-4 w-4" strokeWidth={1.75} /> Stop
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="h-4 w-4" strokeWidth={1.75} />{' '}
+                    {interviewReady.ready ? 'Start interview' : 'Complete setup'}
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                size="lg"
+                variant="ghost"
+                className="min-h-[50px] px-4"
+                title="Reset session"
+                onClick={() => {
+                  if (sessionOn) liveInterview.stop()
+                  liveInterview.clearStartOpts()
+                  setSessionOn(false)
+                  setListening(false)
+                  clearTranscript()
+                  setCards([])
+                  updateCardIndex(0)
+                  setAnswer(null)
+                  setStatusLog([])
+                  setStatusLine('')
+                  setLevels(Array.from({ length: 16 }, () => 0.08))
+                  setPhase('idle')
+                  setManualQ('')
+                  setActiveJobTitle('')
+                  updateSettings({ jobContext: '' })
+                  void fullSessionReset().catch(() =>
+                    setSessionContext({ clear: true, role: '' }),
+                  )
+                  pushStatus('Reset complete — Role, answers, and server cache cleared')
+                }}
+              >
+                <RefreshCw className="h-4 w-4" strokeWidth={1.75} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

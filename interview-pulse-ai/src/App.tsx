@@ -224,9 +224,22 @@ function GatedApp() {
 
   if (!authReady) {
     return (
-      <div className="app-mesh flex h-full items-center justify-center text-white/50">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading…
+      <div className="app-mesh flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#20B8CD]/25 bg-gradient-to-br from-[#20B8CD]/18 to-transparent"
+          aria-hidden
+        >
+          <div className="h-2.5 w-2.5 rotate-45 rounded-[2px] bg-[#5DD5E3]" />
+        </div>
+        <div>
+          <p className="text-[15px] font-medium tracking-tight text-white/90">
+            InterviewPulse
+          </p>
+          <p className="mt-1 flex items-center justify-center gap-2 text-[13px] text-white/40">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5DD5E3]" />
+            Preparing your session…
+          </p>
+        </div>
       </div>
     )
   }

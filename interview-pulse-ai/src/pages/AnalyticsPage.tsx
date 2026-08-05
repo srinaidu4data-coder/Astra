@@ -22,8 +22,17 @@ export function AnalyticsPage() {
     sessions.reduce((a, s) => a + s.fillerWords, 0) / Math.max(1, sessions.length)
 
   return (
-    <div className="flex flex-col gap-10">
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="flex flex-col gap-8 md:gap-10">
+      <header className="max-w-xl">
+        <h2 className="text-[17px] font-medium tracking-tight text-white/95">
+          Your practice signals
+        </h2>
+        <p className="mt-1 text-[13px] leading-relaxed text-white/40">
+          Mock session trends — separate from Live kit answers.
+        </p>
+      </header>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat title="Confidence" value={`${Math.round(latest?.confidence ?? 0)}%`} hint="This week" />
         <Stat
           title="Technical depth"
@@ -34,7 +43,11 @@ export function AnalyticsPage() {
         <Stat title="Avg fillers" value={avgFillers.toFixed(1)} hint="Per session" />
       </div>
 
-      <section className="glass rounded-[28px] p-8 md:p-10">
+      <section className="glass relative overflow-hidden rounded-[28px] p-8 md:p-10">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#5DD5E3]/35 to-transparent"
+          aria-hidden
+        />
         <div className="mb-8">
           <h2 className="text-[17px] font-medium tracking-tight text-white/95">Trends</h2>
           <p className="mt-1 text-[13px] text-white/40">Seven-day interview signals</p>

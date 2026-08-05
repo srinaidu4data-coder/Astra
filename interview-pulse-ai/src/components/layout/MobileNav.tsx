@@ -52,7 +52,7 @@ export function MobileNav() {
 
   return (
     <nav
-      className="mobile-nav fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.08] bg-[#0c0c0c]/95 backdrop-blur-xl"
+      className="mobile-nav fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.08] bg-[#0c0c0c]/96 backdrop-blur-xl"
       style={{ paddingBottom: 'max(0.35rem, env(safe-area-inset-bottom))' }}
       aria-label="Main"
     >
@@ -66,11 +66,18 @@ export function MobileNav() {
               type="button"
               key={item.id}
               onClick={() => setRoute(item.id)}
+              aria-current={active ? 'page' : undefined}
               className={cn(
-                'relative flex min-h-[48px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1 transition-colors',
+                'relative flex min-h-[48px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-1 transition-colors',
                 active ? 'text-[#5DD5E3]' : 'text-white/40 active:text-white/70',
               )}
             >
+              {active && (
+                <span
+                  className="absolute inset-x-2 top-0 h-0.5 rounded-full bg-[#20B8CD]/80"
+                  aria-hidden
+                />
+              )}
               <span className="relative">
                 <Icon
                   className={cn('h-5 w-5', active && 'text-[#20B8CD]')}

@@ -14,7 +14,7 @@ import {
   type AuthConfig,
 } from '@/services/auth'
 import { useAppStore } from '@/stores/app-store'
-import { Loader2 } from 'lucide-react'
+import { Check, Loader2, Shield } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -262,6 +262,17 @@ export function AuthPage({
 
   const emailAuth = config?.email_password_enabled !== false
 
+  const subtitle =
+    view === 'forgot'
+      ? 'Reset your password'
+      : view === 'reset'
+        ? 'Choose a new password'
+        : view === 'register'
+          ? 'Create your account'
+          : view === 'callback'
+            ? 'Finishing sign-in'
+            : 'Live interview answers, grounded in you'
+
   return (
     <div
       className="app-mesh flex min-h-full items-center justify-center p-4 sm:p-6"
@@ -270,41 +281,65 @@ export function AuthPage({
         paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
       }}
     >
-      <div className="glass w-full max-w-md rounded-[24px] p-6 sm:rounded-[28px] sm:p-8 md:p-10">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-sm border border-[#20B8CD]/30 bg-[#141414]">
-            <div className="h-3 w-3 bg-[#20B8CD]" />
+      <div className="w-full max-w-[440px]">
+        {/* Brand + value */}
+        <div className="mb-6 text-center sm:mb-8">
+          <div
+            className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#20B8CD]/25 bg-gradient-to-br from-[#20B8CD]/20 to-transparent shadow-[0_0_32px_rgba(32,184,205,0.15)]"
+            aria-hidden
+          >
+            <div className="h-2.5 w-2.5 rotate-45 rounded-[2px] bg-[#5DD5E3]" />
           </div>
-          <div>
-            <h1 className="text-[18px] font-medium tracking-tight text-white/95">
-              InterviewPulse
-            </h1>
-            <p className="text-[12px] text-white/40">
-              {view === 'forgot'
-                ? 'Reset your password'
-                : view === 'reset'
-                  ? 'Choose a new password'
-                  : view === 'register'
-                    ? 'Create your account'
-                    : 'Sign in before you use the copilot'}
-            </p>
-          </div>
+          <h1 className="text-[22px] font-medium tracking-[-0.02em] text-white/95 sm:text-[24px]">
+            InterviewPulse
+          </h1>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-white/45">{subtitle}</p>
         </div>
 
-        {view === 'login' && (
-          <p className="mb-6 text-[14px] leading-relaxed text-white/55">
-            Sign in with <strong className="font-medium text-white/80">Google</strong> or
-            email. Forgot your password? We email a reset link via Gmail.
-          </p>
+        {(view === 'login' || view === 'register') && (
+          <ul
+            className="mb-5 grid gap-2 sm:grid-cols-3"
+            aria-label="What you get"
+          >
+            {[
+              'Role + resume grounded',
+              'Speakers only — not your mic',
+              'Speak Hook · Proof · Close',
+            ].map((t) => (
+              <li
+                key={t}
+                className="flex items-start gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-left text-[11px] leading-snug text-white/55"
+              >
+                <Check
+                  className="mt-0.5 h-3 w-3 shrink-0 text-[#5DD5E3]"
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+                {t}
+              </li>
+            ))}
+          </ul>
         )}
 
+        <div className="glass relative overflow-hidden rounded-[24px] p-6 sm:rounded-[28px] sm:p-8">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#5DD5E3]/45 to-transparent"
+            aria-hidden
+          />
+
         {error && (
-          <div className="mb-5 whitespace-pre-wrap rounded-[14px] border border-[#E85D5D]/40 bg-[#E85D5D]/10 px-4 py-3 text-[13px] text-[#E85D5D]">
+          <div
+            className="mb-5 whitespace-pre-wrap rounded-[14px] border border-[#E85D5D]/40 bg-[#E85D5D]/10 px-4 py-3 text-[13px] text-[#E85D5D]"
+            role="alert"
+          >
             {error}
           </div>
         )}
         {info && (
-          <div className="mb-5 whitespace-pre-wrap break-all rounded-[14px] border border-[#20B8CD]/30 bg-[#20B8CD]/10 px-4 py-3 text-[13px] text-[#5DD5E3]">
+          <div
+            className="mb-5 whitespace-pre-wrap break-all rounded-[14px] border border-[#20B8CD]/30 bg-[#20B8CD]/10 px-4 py-3 text-[13px] text-[#5DD5E3]"
+            role="status"
+          >
             {info}
           </div>
         )}
@@ -339,7 +374,7 @@ export function AuthPage({
               <>
                 <Button
                   size="lg"
-                  className="w-full"
+                  className="w-full min-h-[48px] text-[15px]"
                   disabled={!config?.google_configured || busy}
                   onClick={onGoogle}
                 >
@@ -383,9 +418,9 @@ export function AuthPage({
                 }}
               >
                 <label className="block">
-                  <span className="label-quiet">Email</span>
+                  <span className="ip-label">Email</span>
                   <input
-                    className="field"
+                    className="ip-field mt-1.5"
                     type="email"
                     autoComplete="email"
                     value={email}
@@ -395,9 +430,9 @@ export function AuthPage({
                   />
                 </label>
                 <label className="block">
-                  <span className="label-quiet">Password</span>
+                  <span className="ip-label">Password</span>
                   <input
-                    className="field"
+                    className="ip-field mt-1.5"
                     type="password"
                     autoComplete="current-password"
                     value={password}
@@ -448,18 +483,18 @@ export function AuthPage({
                 }}
               >
                 <label className="block">
-                  <span className="label-quiet">Name (optional)</span>
+                  <span className="ip-label">Name (optional)</span>
                   <input
-                    className="field"
+                    className="ip-field mt-1.5"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
                   />
                 </label>
                 <label className="block">
-                  <span className="label-quiet">Email</span>
+                  <span className="ip-label">Email</span>
                   <input
-                    className="field"
+                    className="ip-field mt-1.5"
                     type="email"
                     autoComplete="email"
                     value={email}
@@ -468,9 +503,9 @@ export function AuthPage({
                   />
                 </label>
                 <label className="block">
-                  <span className="label-quiet">Password (min 8 characters)</span>
+                  <span className="ip-label">Password (min 8 characters)</span>
                   <input
-                    className="field"
+                    className="ip-field mt-1.5"
                     type="password"
                     autoComplete="new-password"
                     value={password}
@@ -519,9 +554,9 @@ export function AuthPage({
                   </p>
                 )}
                 <label className="block">
-                  <span className="label-quiet">Email</span>
+                  <span className="ip-label">Email</span>
                   <input
-                    className="field"
+                    className="ip-field mt-1.5"
                     type="email"
                     autoComplete="email"
                     value={email}
@@ -562,9 +597,9 @@ export function AuthPage({
                   </p>
                 )}
                 <label className="block">
-                  <span className="label-quiet">New password</span>
+                  <span className="ip-label">New password</span>
                   <input
-                    className="field"
+                    className="ip-field mt-1.5"
                     type="password"
                     autoComplete="new-password"
                     value={newPassword}
@@ -574,9 +609,9 @@ export function AuthPage({
                   />
                 </label>
                 <label className="block">
-                  <span className="label-quiet">Confirm password</span>
+                  <span className="ip-label">Confirm password</span>
                   <input
-                    className="field"
+                    className="ip-field mt-1.5"
                     type="password"
                     autoComplete="new-password"
                     value={confirmPassword}
@@ -620,12 +655,14 @@ export function AuthPage({
           </div>
         )}
 
-        <div className="mt-6 flex justify-center">
-          <DesktopOption variant="link" />
+          <div className="mt-6 flex items-center justify-center gap-1.5 text-[11px] text-white/30">
+            <Shield className="h-3 w-3" strokeWidth={1.75} aria-hidden />
+            Secure sign-in · personal prep only
+          </div>
+          <div className="mt-4 flex justify-center">
+            <DesktopOption variant="link" />
+          </div>
         </div>
-        <p className="mt-4 text-center text-[11px] text-white/30">
-          By continuing you agree to use the product for personal interview prep.
-        </p>
       </div>
     </div>
   )
