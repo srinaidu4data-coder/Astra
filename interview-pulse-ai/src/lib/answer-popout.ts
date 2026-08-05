@@ -11,8 +11,9 @@ import { useAppStore } from '@/stores/app-store'
 
 export const ANSWER_POPOUT_NAME = 'ip-answer-popout'
 
+/** Tall detach by default — full-height Speak (Hide chrome in OverlayPage). */
 const DEFAULT_FEATURES =
-  'popup=yes,width=720,height=860,left=100,top=60,resizable=yes,scrollbars=yes,noopener=no'
+  'popup=yes,width=560,height=960,left=100,top=40,resizable=yes,scrollbars=yes,noopener=no'
 
 let browserPopout: Window | null = null
 

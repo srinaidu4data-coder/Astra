@@ -59,17 +59,24 @@ export function OverlayPage() {
   const [cardIndex, setCardIndex] = useState(0)
   const [regenerating, setRegenerating] = useState(false)
   const modeAbortRef = useRef<AbortController | null>(null)
-  /** One Hide: collapses chrome + pulls Speak full height (persists for this popup) */
+  /**
+   * Hide chrome → Speak full height.
+   * Default ON for tall detach (best for reading under pressure).
+   * sessionStorage: '1' hide / '0' show; unset → hide (tall default).
+   */
   const [chromeCollapsed, setChromeCollapsed] = useState(() => {
     try {
-      return sessionStorage.getItem('ip_overlay_chrome_hidden') === '1'
+      const v = sessionStorage.getItem('ip_overlay_chrome_hidden')
+      if (v === '0') return false
+      return true
     } catch {
-      return false
+      return true
     }
   })
   const [sizeLabel, setSizeLabel] = useState('')
   const [maximized, setMaximized] = useState(false)
-  const [activePreset, setActivePreset] = useState<OverlaySizePreset | null>('medium')
+  /** Detach defaults to Tall — full-height answer reading */
+  const [activePreset, setActivePreset] = useState<OverlaySizePreset | null>('tall')
   const resizingRef = useRef(false)
   const movingRef = useRef(false)
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null)
@@ -183,6 +190,32 @@ export function OverlayPage() {
     void window.interviewPulse?.setClickThrough?.(false)
     void window.interviewPulse?.setOverlayOpacity?.(stealth.opacity)
     void window.interviewPulse?.setContentProtection?.(stealth.contentProtection)
+    // Detach opens in Tall + Hide (full Speak surface) by default
+    void (async () => {
+      if (window.interviewPulse?.setOverlayPreset) {
+        const res = await window.interviewPulse.setOverlayPreset('tall')
+        if (res?.width != null && res?.height != null) {
+          setSizeLabel(`${res.width}×${res.height}`)
+        }
+        setActivePreset('tall')
+        setMaximized(false)
+      } else {
+        const dims = applyBrowserWindowPreset('tall')
+        if (dims) setSizeLabel(`${dims.width}×${dims.height}`)
+        setActivePreset('tall')
+        setMaximized(false)
+      }
+      // Ensure Hide is on unless user explicitly chose Show earlier in this session
+      try {
+        if (sessionStorage.getItem('ip_overlay_chrome_hidden') !== '0') {
+          setChromeCollapsed(true)
+          sessionStorage.setItem('ip_overlay_chrome_hidden', '1')
+        }
+      } catch {
+        setChromeCollapsed(true)
+      }
+      void refreshBounds()
+    })()
     void refreshBounds()
 
     const unsub = window.interviewPulse?.onToggleClickThrough?.(() => {
@@ -241,6 +274,10 @@ export function OverlayPage() {
 
   const applyPreset = async (preset: OverlaySizePreset) => {
     setActivePreset(preset)
+    // Tall mode: Hide chrome by default so Speak fills the window
+    if (preset === 'tall') {
+      setChromeHidden(true)
+    }
     if (window.interviewPulse?.setOverlayPreset) {
       const res = await window.interviewPulse.setOverlayPreset(preset)
       if (res?.width != null && res?.height != null) {

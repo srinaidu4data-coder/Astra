@@ -12,8 +12,9 @@ let overlayBoundsSaveTimer = null
 
 const OVERLAY_MIN_W = 320
 const OVERLAY_MIN_H = 240
-const OVERLAY_DEFAULT_W = 560
-const OVERLAY_DEFAULT_H = 700
+/** Tall detach default — full-height Speak (Hide chrome on in OverlayPage) */
+const OVERLAY_DEFAULT_W = 520
+const OVERLAY_DEFAULT_H = 960
 
 function overlayStatePath() {
   return path.join(app.getPath('userData'), 'overlay-bounds.json')
@@ -82,12 +83,13 @@ function defaultOverlayBounds() {
   const display = screen.getPrimaryDisplay()
   const { width: sw, height: sh, x: sx, y: sy } = display.workArea
   const width = Math.min(OVERLAY_DEFAULT_W, sw - 40)
-  const height = Math.min(OVERLAY_DEFAULT_H, sh - 80)
+  // Tall: use most of the work area height (matches "Tall" preset)
+  const height = Math.min(Math.max(OVERLAY_DEFAULT_H, Math.round(sh * 0.9)), sh - 40)
   return {
     width,
     height,
     x: sx + sw - width - 40,
-    y: sy + 60,
+    y: sy + 40,
   }
 }
 
