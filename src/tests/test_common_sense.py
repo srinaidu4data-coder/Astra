@@ -3,6 +3,7 @@
 from common_sense import (
     contamination_report,
     filter_context_chunks,
+    has_invented_product_bleed,
     infer_domain,
     prompt_guardrails,
     sanitize_answer,
@@ -11,13 +12,37 @@ from common_sense import (
 
 
 def test_attp_question_locks_sap_attp():
-    lock = infer_domain(
+    from common_sense import lock_for_turn
+
+    lock = lock_for_turn(
         "Should shipping be blocked when parent-child aggregation is incomplete?",
         "SAP ATTP Techno-Functional Consultant",
-        "EPCIS DSCSA CMO 3PL serialization",
     )
     assert lock.domain == "sap_attp"
     assert lock.confidence >= 0.35
+
+
+def test_track_and_trace_without_attp_brand_stays_general():
+    """Industry phrasing must not force SAP ATTP product dependency."""
+    from common_sense import lock_for_turn
+
+    lock = lock_for_turn(
+        "In the pharmaceutical track-and-trace domain, where should "
+        "product and price master data be managed?",
+        "",
+    )
+    assert lock.domain == "general"
+    assert not has_invented_product_bleed(
+        "Use a centralized MDM system for product and price master data.",
+        question="track-and-trace product price master data",
+        job_context="",
+    )
+    assert has_invented_product_bleed(
+        "Manage product and price master data within SAP ATTP for DSCSA.",
+        question="In the pharmaceutical track-and-trace domain, where should "
+        "product and price master data be managed?",
+        job_context="",
+    )
 
 
 def test_ml_question_locks_ml():

@@ -531,10 +531,10 @@ def invented_product_hits(
     job_context: str = "",
 ) -> list[tuple[str, str]]:
     """
-    Exclusive product-line terms present in the answer but NOT justified by Role/Q.
+    Product *brand/module* terms in the answer not justified by Role or question.
 
-    If Role/question lock a domain (e.g. ATTP), that domain's vocabulary is allowed.
-    Foreign product lines (e.g. ATTP words when Role is BRIM or blank) are hits.
+    Soft industry words (track-and-trace, serialization, billing) do NOT license
+    inventing SAP ATTP / BRIM / FICO. Only explicit product tokens in Role/Q do.
     """
     text = (answer or "").strip()
     if not text:
@@ -545,9 +545,25 @@ def invented_product_hits(
     active = lock.domain if lock.confidence >= 0.22 else "general"
     hits: list[tuple[str, str]] = []
     seen: set[str] = set()
+
+    # Brand gate first — inventing "ATTP" without Role/Q saying ATTP is always bleed
+    for dom, brands in _PRODUCT_BRAND_TOKENS.items():
+        if product_brand_named(dom, question, job_context):
+            continue
+        for tok in brands:
+            if tok in blob and tok not in ground:
+                key = f"brand:{dom}:{tok}"
+                if key not in seen:
+                    seen.add(key)
+                    hits.append((dom, tok))
+
     for dom, packs in _DOMAIN_LEXICONS.items():
-        # Active domain for this interview may use its full exclusive lexicon
-        if dom == active and active != "general":
+        # Active *brand-grounded* domain may use its exclusive lexicon
+        if (
+            dom == active
+            and active != "general"
+            and product_brand_named(dom, question, job_context)
+        ):
             continue
         for term in packs.get("exclusive", frozenset()):
             if not term or len(term) < 4:
@@ -556,28 +572,38 @@ def invented_product_hits(
                 continue
             if term not in blob:
                 continue
+            # Soft exclusives that appear in industry talk without product brand
+            # (e.g. DSCSA) are only OK when the product brand is also grounded
+            if dom in _PRODUCT_BRAND_TOKENS and not product_brand_named(
+                dom, question, job_context
+            ):
+                key = f"{dom}:{term}"
+                if key not in seen:
+                    seen.add(key)
+                    hits.append((dom, term))
+                continue
             key = f"{dom}:{term}"
             if key in seen:
                 continue
             seen.add(key)
             hits.append((dom, term))
-    # Phrase forms the model loves when Role/Q did not ground ATTP
-    attp_grounded = (
-        active == "sap_attp"
-        or "attp" in ground
-        or "track and trace" in ground
-        or "track-and-trace" in ground
-    )
-    if not attp_grounded:
+
+    # Phrase forms the model loves when Role/Q never named ATTP
+    if not product_brand_named("sap_attp", question, job_context):
         for phrase in (
             "sap attp",
-            "pharmaceutical track-and-trace",
-            "pharmaceutical track and trace",
             "within attp",
             "in attp",
             "attp repository",
+            "managed within sap attp",
+            "managed in sap attp",
+            "centralizing.*attp",
         ):
-            if phrase in blob and phrase not in seen:
+            if ".*" in phrase:
+                if re.search(phrase, blob) and phrase not in seen:
+                    hits.append(("sap_attp", "sap attp"))
+                    seen.add(phrase)
+            elif phrase in blob and phrase not in seen:
                 hits.append(("sap_attp", phrase))
                 seen.add(phrase)
     return hits
@@ -823,6 +849,34 @@ def resolve_pack_blob() -> str:
     return ""
 
 
+# Product *brand* tokens — soft industry words (serialization, track-and-trace)
+# must NOT force a vendor product line without these.
+_PRODUCT_BRAND_TOKENS: dict[str, frozenset[str]] = {
+    "sap_attp": frozenset({"attp", "sap attp"}),
+    "sap_brim": frozenset(
+        {
+            "brim",
+            "sap brim",
+            "fi-ca",
+            "fica",
+            "convergent charging",
+            "convergent invoicing",
+            "subscription billing",
+            "provider contract",
+        }
+    ),
+    "sap_fico": frozenset({"fico", "sap fico", "vertex", "copa", "new gl"}),
+}
+
+
+def product_brand_named(domain: str, *blobs: str) -> bool:
+    """True only when Role/Q explicitly names that product brand/module."""
+    ground = _norm(" ".join(b for b in blobs if b))
+    if not ground or domain not in _PRODUCT_BRAND_TOKENS:
+        return False
+    return any(tok in ground for tok in _PRODUCT_BRAND_TOKENS[domain])
+
+
 def lock_for_turn(
     question: str = "",
     job_context: str = "",
@@ -834,6 +888,9 @@ def lock_for_turn(
     Session pack / other users' JD are NEVER attached (multi-tenant safety).
     extra_context is ignored unless it is a non-empty explicit string from
     the caller (still not auto-loaded from pack).
+
+    Brand gate: soft industry terms (serialization, track-and-trace, billing)
+    alone never lock to SAP ATTP / BRIM / FICO — Role or Q must name the product.
     """
     job = (job_context or "").strip()
     # Never auto-resolve pack blob — that was the cross-login ATTP leak
@@ -841,6 +898,20 @@ def lock_for_turn(
     if extra_context is not None and str(extra_context).strip():
         pack = str(extra_context).strip()
     if not job:
-        return infer_domain(question, "", "")
-    # Role + question only (pack empty by default)
-    return infer_domain(question, job, pack)
+        lock = infer_domain(question, "", "")
+    else:
+        # Role + question only (pack empty by default)
+        lock = infer_domain(question, job, pack)
+
+    # Strip vendor product locks that Role/Q never named (kills ambient ATTP)
+    if lock.domain in _PRODUCT_BRAND_TOKENS and not product_brand_named(
+        lock.domain, question, job
+    ):
+        return DomainLock(
+            domain="general",
+            confidence=0.0,
+            signals=lock.signals[:8],
+            secondary=[],
+            label=_DOMAIN_LABELS["general"],
+        )
+    return lock
