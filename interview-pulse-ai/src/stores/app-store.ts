@@ -38,6 +38,10 @@ interface AppState {
   copilotWideAnswer: boolean
   setCopilotWideAnswer: (v: boolean) => void
 
+  /** Materials accordion open on Interview (also used when redirecting from old Knowledge route) */
+  materialsOpen: boolean
+  setMaterialsOpen: (v: boolean) => void
+
   /** Auth / billing gate */
   authReady: boolean
   authConfig: AuthConfig | null
@@ -118,6 +122,15 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       route: 'copilot',
       setRoute: (route) => {
+        // Legacy Knowledge tab → Interview with Materials open (no feature lost)
+        if (route === 'knowledge') {
+          set({
+            route: 'copilot',
+            materialsOpen: true,
+            copilotWideAnswer: false,
+          })
+          return
+        }
         // Leaving copilot ends wide-answer focus so other pages keep normal chrome
         set((s) => ({
           route,
@@ -142,6 +155,8 @@ export const useAppStore = create<AppState>()(
         }
         set({ copilotWideAnswer })
       },
+      materialsOpen: false,
+      setMaterialsOpen: (materialsOpen) => set({ materialsOpen }),
 
       authReady: false,
       authConfig: null,

@@ -1,4 +1,5 @@
 import { DesktopOption } from '@/components/DesktopOption'
+import { LatencyMetricsPanel } from '@/components/LatencyMetricsPanel'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { clamp } from '@/lib/utils'
@@ -45,6 +46,9 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
+      {/* Latency stack moved from Interview (Copilot) — every metric preserved */}
+      <LatencyMetricsPanel />
+
       <section className="glass rounded-[28px] p-8 md:p-10">
         <h2 className="text-[17px] font-medium tracking-tight text-white/95">
           Account & billing

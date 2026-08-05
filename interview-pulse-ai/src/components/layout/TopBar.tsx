@@ -15,8 +15,8 @@ export function TopBar() {
   const route = useAppStore((s) => s.route)
 
   const titles: Record<string, string> = {
-    copilot: 'Copilot',
-    knowledge: 'Knowledge',
+    copilot: 'Interview',
+    knowledge: 'Interview',
     practice: 'Mock interview',
     analytics: 'Analytics',
     settings: 'Settings',

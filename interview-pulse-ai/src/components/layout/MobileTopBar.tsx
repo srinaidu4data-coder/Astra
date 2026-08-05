@@ -3,8 +3,8 @@ import { useAppStore } from '@/stores/app-store'
 import { Loader2 } from 'lucide-react'
 
 const titles: Record<string, string> = {
-  copilot: 'Copilot',
-  knowledge: 'Knowledge',
+  copilot: 'Interview',
+  knowledge: 'Interview',
   practice: 'Mock interview',
   analytics: 'Analytics',
   settings: 'Settings',
@@ -22,25 +22,24 @@ export function MobileTopBar() {
 
   return (
     <header
-      className="mobile-topbar shrink-0 border-b border-white/[0.06] px-4 pb-3"
-      style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+      className="mobile-topbar shrink-0 border-b border-white/[0.06] px-3 pb-2"
+      style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium tracking-wide text-white/40">
+          <p className="text-[10px] font-medium tracking-wide text-white/35">
             InterviewPulse
             {listening ? (
-              <span className="ml-2 inline-flex items-center gap-1 text-[#20B8CD]">
+              <span className="ml-1.5 inline-flex items-center gap-1 text-[#20B8CD]">
                 <Loader2 className="h-3 w-3 animate-spin" /> Live
               </span>
             ) : null}
           </p>
-          <h1 className="truncate text-[18px] font-semibold tracking-tight text-white/95">
-            {titles[route] ?? 'App'}
+          <h1 className="truncate text-[17px] font-semibold tracking-tight text-white/95">
+            {route === 'copilot' && activeJobTitle?.trim()
+              ? activeJobTitle.trim()
+              : titles[route] || 'App'}
           </h1>
-          {route === 'copilot' && activeJobTitle && (
-            <p className="mt-0.5 truncate text-[12px] text-white/40">{activeJobTitle}</p>
-          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <ApiStatusBadge variant="compact" />

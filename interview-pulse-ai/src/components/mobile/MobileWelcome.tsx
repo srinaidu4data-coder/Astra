@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/stores/app-store'
-import { BookOpen, BrainCircuit, Mic2, Smartphone, X } from 'lucide-react'
+import { BrainCircuit, Mic2, Smartphone, Upload, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 const KEY = 'astra_mobile_welcome_v1'
@@ -51,39 +51,35 @@ export function MobileWelcome() {
             <X className="h-4 w-4" />
           </button>
         </div>
-        <h2 id="mobile-welcome-title" className="text-[18px] font-semibold text-white/95">
-          Phone mode is ready
+        <h2 id="mobile-welcome-title" className="text-[17px] font-semibold text-white/95">
+          Ready on your phone
         </h2>
         <p className="mt-2 text-[13px] leading-relaxed text-white/50">
-          InterviewPulse works in your mobile browser. Use the bottom tabs to move around.
-          For live answers, allow the microphone when prompted.
+          Bottom tabs move you around. On Interview, tap <strong className="text-white/75">Start</strong>.
         </p>
-        <ul className="mt-5 space-y-3 text-[13px] text-white/65">
+        <ul className="mt-4 space-y-2.5 text-[13px] text-white/65">
           <li className="flex gap-3">
             <Mic2 className="mt-0.5 h-4 w-4 shrink-0 text-[#20B8CD]" />
             <span>
-              <strong className="text-white/85">Copilot</strong> — start interview, speak or type
-              questions, read answers on the go.
+              <strong className="text-white/85">Interview</strong> — live answers. Type a question if
+              audio lags.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <Upload className="mt-0.5 h-4 w-4 shrink-0 text-[#20B8CD]" />
+            <span>
+              <strong className="text-white/85">Materials</strong> — resume / JD / notes (same screen).
             </span>
           </li>
           <li className="flex gap-3">
             <BrainCircuit className="mt-0.5 h-4 w-4 shrink-0 text-[#20B8CD]" />
             <span>
-              <strong className="text-white/85">Mock</strong> — full practice interviews with spoken
-              questions (use headphones).
-            </span>
-          </li>
-          <li className="flex gap-3">
-            <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-[#20B8CD]" />
-            <span>
-              <strong className="text-white/85">Knowledge</strong> — upload resume / subject PDFs from
-              your phone files.
+              <strong className="text-white/85">Mock</strong> — practice with headphones.
             </span>
           </li>
         </ul>
-        <p className="mt-4 text-[12px] leading-relaxed text-white/35">
-          Stealth hide-from-screen-share needs the desktop app. Everything else works on phone over
-          HTTPS.
+        <p className="mt-3 text-[11px] leading-relaxed text-white/35">
+          Screen-share stealth needs the desktop app. Live answers work here over HTTPS.
         </p>
         <div className="mt-6 flex flex-col gap-2">
           <Button
@@ -94,7 +90,7 @@ export function MobileWelcome() {
               setRoute('copilot')
             }}
           >
-            Start with Copilot
+            Start Interview
           </Button>
           <Button size="lg" variant="secondary" className="w-full min-h-[48px]" onClick={dismiss}>
             Got it

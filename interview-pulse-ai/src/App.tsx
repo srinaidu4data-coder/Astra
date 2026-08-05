@@ -7,7 +7,6 @@ import { AdminPage } from '@/pages/AdminPage'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AuthPage } from '@/pages/AuthPage'
 import { CopilotPage } from '@/pages/CopilotPage'
-import { KnowledgePage } from '@/pages/KnowledgePage'
 import { OverlayPage } from '@/pages/OverlayPage'
 import { PaywallPage } from '@/pages/PaywallPage'
 import { PracticePage } from '@/pages/PracticePage'
@@ -77,8 +76,7 @@ function PageBody() {
 
   return (
     <>
-      {route === 'copilot' && <CopilotPage />}
-      {route === 'knowledge' && <KnowledgePage />}
+      {(route === 'copilot' || route === 'knowledge') && <CopilotPage />}
       {route === 'practice' && <PracticePage />}
       {route === 'analytics' && <AnalyticsPage />}
       {route === 'settings' && <SettingsPage />}
@@ -101,13 +99,13 @@ function MobileDashboardShell() {
       <MobileWelcome />
       <MobileTopBar />
       <main
-        className="min-h-0 flex-1 overflow-auto px-3 pt-3"
+        className="min-h-0 flex-1 overflow-auto px-2.5 pt-2"
         style={{
           // Room for bottom tab bar + home indicator
-          paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: 'calc(4.25rem + env(safe-area-inset-bottom, 0px))',
         }}
       >
-        <div className="page-shell page-shell-mobile mx-auto max-w-lg pb-4">
+        <div className="page-shell page-shell-mobile mx-auto max-w-lg pb-2">
           <PageBody />
         </div>
       </main>

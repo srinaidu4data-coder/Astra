@@ -401,6 +401,68 @@
     .glass.rounded-\[32px\] {
       border-radius: 1.25rem;
     }
+
+    /*
+      Interview home on phone — tighter air, still 48px taps.
+      (Desktop spacing stays unchanged.)
+    */
+    .page-shell-mobile {
+      max-width: 100%;
+    }
+
+    .page-shell-mobile .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+      margin-top: 0.75rem;
+    }
+
+    .page-shell-mobile .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+      margin-top: 0.5rem;
+    }
+
+    .page-shell-mobile .gap-4 {
+      gap: 0.75rem;
+    }
+
+    .page-shell-mobile .gap-6 {
+      gap: 0.75rem;
+    }
+
+    .page-shell-mobile .p-5 {
+      padding: 1rem;
+    }
+
+    .page-shell-mobile .p-6 {
+      padding: 1rem;
+    }
+
+    .page-shell-mobile .md\:p-6 {
+      padding: 1rem;
+    }
+
+    .page-shell-mobile .mb-5 {
+      margin-bottom: 0.75rem;
+    }
+
+    .page-shell-mobile .mb-4 {
+      margin-bottom: 0.65rem;
+    }
+
+    .page-shell-mobile .label-quiet {
+      margin-bottom: 0.3rem;
+      font-size: 0.75rem;
+    }
+
+    .page-shell-mobile .min-h-\[640px\] {
+      min-height: 280px;
+    }
+
+    .page-shell-mobile .min-h-\[calc\(100vh-9rem\)\] {
+      min-height: auto;
+    }
+
+    /* Hide long helper footers on small screens */
+    .mobile-hide-helper {
+      display: none !important;
+    }
   }
 
   .label-quiet {

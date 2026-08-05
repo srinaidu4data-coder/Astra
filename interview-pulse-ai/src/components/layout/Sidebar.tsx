@@ -4,7 +4,6 @@ import type { NavRoute } from '@/types'
 import { isJobSearchLabHost } from '@/services/jobsearch'
 import {
   Activity,
-  BookOpen,
   BrainCircuit,
   Mic2,
   Radar,
@@ -14,8 +13,7 @@ import {
 import { useMemo } from 'react'
 
 const baseItems: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
-  { id: 'copilot', label: 'Copilot', icon: Mic2 },
-  { id: 'knowledge', label: 'Knowledge', icon: BookOpen },
+  { id: 'copilot', label: 'Interview', icon: Mic2 },
   { id: 'practice', label: 'Mock', icon: BrainCircuit },
   { id: 'analytics', label: 'Analytics', icon: Activity },
   { id: 'settings', label: 'Settings', icon: Settings2 },
@@ -69,7 +67,7 @@ export function Sidebar({ compact = false }: { compact?: boolean }) {
             InterviewPulse
           </div>
           <div className="truncate text-[10px] font-normal tracking-tight text-white/35">
-            AI Copilot
+            Live answers
           </div>
         </div>
       </div>

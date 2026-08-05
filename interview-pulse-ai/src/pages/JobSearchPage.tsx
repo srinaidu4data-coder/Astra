@@ -1845,7 +1845,7 @@ export function JobSearchPage() {
       sizeBytes: text.length,
     })
     setActiveJobTitle(job.title)
-    setToast('JD saved to Knowledge')
+    setToast('JD saved to Interview Materials')
   }
 
   const trackerById = useMemo(() => {
@@ -2890,7 +2890,7 @@ export function JobSearchPage() {
                     onChange={(e) => onPickResumeDoc(e.target.value)}
                     className="h-8 rounded-lg border border-white/[0.08] bg-[#141414] px-2 text-[11px] text-white/70"
                   >
-                    <option value="">Knowledge…</option>
+                    <option value="">Materials…</option>
                     {resumes.map((d) => (
                       <option key={d.id} value={d.id}>
                         {d.name}

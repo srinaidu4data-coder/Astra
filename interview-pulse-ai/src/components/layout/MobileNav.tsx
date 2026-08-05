@@ -4,7 +4,6 @@ import { useAppStore } from '@/stores/app-store'
 import type { NavRoute } from '@/types'
 import {
   Activity,
-  BookOpen,
   BrainCircuit,
   Mic2,
   Radar,
@@ -14,8 +13,7 @@ import {
 import { useMemo } from 'react'
 
 const baseItems: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
-  { id: 'copilot', label: 'Copilot', icon: Mic2 },
-  { id: 'knowledge', label: 'Knowledge', icon: BookOpen },
+  { id: 'copilot', label: 'Interview', icon: Mic2 },
   { id: 'practice', label: 'Mock', icon: BrainCircuit },
   { id: 'analytics', label: 'Stats', icon: Activity },
   { id: 'settings', label: 'Settings', icon: Settings2 },
@@ -35,11 +33,11 @@ export function MobileNav() {
   const items = useMemo(() => {
     let list = [...baseItems]
     if (jobLab) {
+      // Interview | Jobs | Mock | Stats | Settings
       list = [
         list[0]!,
         { id: 'jobsearch' as NavRoute, label: 'Jobs', icon: Radar },
-        ...list.slice(1, 4),
-        list[4]!,
+        ...list.slice(1),
       ]
     }
     if (isAdmin) {
@@ -55,10 +53,10 @@ export function MobileNav() {
   return (
     <nav
       className="mobile-nav fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.08] bg-[#0c0c0c]/95 backdrop-blur-xl"
-      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      style={{ paddingBottom: 'max(0.35rem, env(safe-area-inset-bottom))' }}
       aria-label="Main"
     >
-      <div className="mx-auto flex max-w-lg items-stretch justify-between px-1 pt-1">
+      <div className="mx-auto flex max-w-lg items-stretch justify-between px-0.5 pt-0.5">
         {items.map((item) => {
           const Icon = item.icon
           const active = route === item.id
@@ -69,7 +67,7 @@ export function MobileNav() {
               key={item.id}
               onClick={() => setRoute(item.id)}
               className={cn(
-                'relative flex min-h-[52px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1.5 transition-colors',
+                'relative flex min-h-[48px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1 transition-colors',
                 active ? 'text-[#5DD5E3]' : 'text-white/40 active:text-white/70',
               )}
             >
