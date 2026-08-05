@@ -71,6 +71,11 @@ interface AppState {
   memories: StarMemory[]
   setMemories: (m: StarMemory[]) => void
   addMemories: (m: StarMemory[]) => void
+  /**
+   * Wipe Knowledge uploads, STAR memory chunks, job match, role, and server pack.
+   * Call on every new login / account switch / Sign out / Clear on Knowledge page.
+   */
+  clearKnowledgeContext: () => void
   jobMatch: JobMatch | null
   setJobMatch: (j: JobMatch | null) => void
   activeJobTitle: string
@@ -144,11 +149,19 @@ export const useAppStore = create<AppState>()(
       authToken: getToken(),
       setAuth: ({ user, token }) => {
         setToken(token)
-        const prevId = useAppStore.getState().user?.id || useAppStore.getState().user?.email
+        const prevId =
+          useAppStore.getState().user?.id || useAppStore.getState().user?.email
         const nextId = user?.id || user?.email
-        // New login → wipe prior user's role, knowledge, and interview state
-        const switched = Boolean(prevId && nextId && String(prevId) !== String(nextId))
+        // Always wipe knowledge on login / account switch (never carry STAR chunks)
+        const switched = Boolean(
+          prevId && nextId && String(prevId) !== String(nextId),
+        )
         const clearIdentity = !prevId || switched
+        try {
+          if (nextId) sessionStorage.setItem('ip_auth_identity', String(nextId))
+        } catch {
+          /* ignore */
+        }
         set({
           user,
           authToken: token,
@@ -169,6 +182,13 @@ export const useAppStore = create<AppState>()(
             : {}),
         })
         if (clearIdentity) {
+          try {
+            void import('@/services/pipeline').then((m) =>
+              m.pipeline.setMemories([]),
+            )
+          } catch {
+            /* ignore */
+          }
           void import('@/services/real-api')
             .then((m) => m.fullSessionReset())
             .catch(() => {})
@@ -185,11 +205,28 @@ export const useAppStore = create<AppState>()(
             s.route === 'admin' && !nextUser.is_admin ? 'copilot' : s.route
           const prevId = s.user?.id || s.user?.email
           const nextId = nextUser.id || nextUser.email
+          let stored = ''
+          try {
+            stored = sessionStorage.getItem('ip_auth_identity') || ''
+          } catch {
+            stored = ''
+          }
           const switched =
-            Boolean(prevId && nextId && String(prevId) !== String(nextId))
+            Boolean(prevId && nextId && String(prevId) !== String(nextId)) ||
+            Boolean(stored && nextId && stored !== String(nextId))
+          if (nextId) {
+            try {
+              sessionStorage.setItem('ip_auth_identity', String(nextId))
+            } catch {
+              /* ignore */
+            }
+          }
           if (switched) {
             void import('@/services/real-api')
               .then((m) => m.fullSessionReset())
+              .catch(() => {})
+            void import('@/services/pipeline')
+              .then((m) => m.pipeline.setMemories([]))
               .catch(() => {})
             return {
               user: nextUser,
@@ -209,8 +246,16 @@ export const useAppStore = create<AppState>()(
       },
       clearAuth: () => {
         setToken(null)
+        try {
+          sessionStorage.removeItem('ip_auth_identity')
+        } catch {
+          /* ignore */
+        }
         void import('@/services/real-api')
           .then((m) => m.fullSessionReset())
+          .catch(() => {})
+        void import('@/services/pipeline')
+          .then((m) => m.pipeline.setMemories([]))
           .catch(() => {})
         set({
           user: null,
@@ -248,8 +293,29 @@ export const useAppStore = create<AppState>()(
             try {
               const me = await fetchMe()
               if (me) {
+                const nextId = me.user?.id || me.user?.email || ''
+                let stored = ''
+                try {
+                  stored = sessionStorage.getItem('ip_auth_identity') || ''
+                } catch {
+                  stored = ''
+                }
+                // Different account than last session in this tab → wipe knowledge
+                if (stored && nextId && stored !== String(nextId)) {
+                  useAppStore.getState().clearKnowledgeContext()
+                }
+                if (nextId) {
+                  try {
+                    sessionStorage.setItem('ip_auth_identity', String(nextId))
+                  } catch {
+                    /* ignore */
+                  }
+                }
                 set({
-                  user: { ...me.user, subscription_active: me.subscription_active },
+                  user: {
+                    ...me.user,
+                    subscription_active: me.subscription_active,
+                  },
                   authToken: getToken(),
                 })
               } else {
@@ -376,6 +442,26 @@ export const useAppStore = create<AppState>()(
           const keep = s.memories.filter((x) => Boolean(x.sourceFile))
           return { memories: [...m, ...keep].slice(0, 200) }
         }),
+      clearKnowledgeContext: () => {
+        set({
+          documents: [],
+          memories: [],
+          jobMatch: null,
+          activeJobTitle: '',
+          settings: {
+            ...useAppStore.getState().settings,
+            jobContext: '',
+          },
+          answer: null,
+          transcript: [],
+        })
+        void import('@/services/pipeline')
+          .then((m) => m.pipeline.setMemories([]))
+          .catch(() => {})
+        void import('@/services/real-api')
+          .then((m) => m.fullSessionReset())
+          .catch(() => {})
+      },
       jobMatch: null,
       setJobMatch: (jobMatch) => set({ jobMatch }),
       // Always start empty — user types the real target role (no demo placeholder)

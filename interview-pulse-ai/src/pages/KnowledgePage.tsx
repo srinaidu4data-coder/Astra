@@ -34,6 +34,7 @@ export function KnowledgePage() {
     removeDocument,
     memories,
     addMemories,
+    clearKnowledgeContext,
     jobMatch,
     setJobMatch,
     activeJobTitle,
@@ -46,6 +47,20 @@ export function KnowledgePage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastOk, setLastOk] = useState<string | null>(null)
+
+  const clearAllKnowledge = () => {
+    if (
+      !window.confirm(
+        'Clear all Knowledge documents, STAR memory chunks, job match, and server interview pack?\n\nThis does not delete your account. New logins also clear automatically.',
+      )
+    ) {
+      return
+    }
+    clearKnowledgeContext()
+    setJdText('')
+    setLastOk('Knowledge & STAR memories cleared for this login.')
+    setError(null)
+  }
 
   const starTree = useMemo(() => memories.slice(0, 36), [memories])
   const userMemories = useMemo(
@@ -249,7 +264,7 @@ export function KnowledgePage() {
           <div className="space-y-3">
             {documents.length === 0 && (
               <p className="py-6 text-[14px] text-white/35">
-                No uploads yet — demo memories are active until you add files.
+                No uploads yet — interview context is empty until you add files.
               </p>
             )}
             {documents.map((d) => (
@@ -324,34 +339,57 @@ export function KnowledgePage() {
         </section>
 
         <section className="glass rounded-[28px] p-8 md:p-10">
-          <div className="mb-8">
-            <h2 className="text-[17px] font-medium tracking-tight text-white/95">
-              Knowledge & STAR memories
-            </h2>
-            <p className="mt-1 text-[13px] text-white/40">
-              {memories.length} chunks · {userMemories} from your uploads
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="text-[17px] font-medium tracking-tight text-white/95">
+                Knowledge & STAR memories
+              </h2>
+              <p className="mt-1 text-[13px] text-white/40">
+                {memories.length} chunks · {userMemories} from your uploads
+                {memories.length > 0
+                  ? ' · cleared automatically on new login'
+                  : ''}
+              </p>
+            </div>
+            {(memories.length > 0 || documents.length > 0) && (
+              <Button
+                size="sm"
+                variant="secondary"
+                title="Remove all uploads and memory chunks from this login context"
+                onClick={clearAllKnowledge}
+              >
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                Clear all
+              </Button>
+            )}
+          </div>
+          {starTree.length === 0 ? (
+            <p className="py-8 text-[14px] text-white/35">
+              No memory chunks yet. Upload a resume or notes above — they never
+              carry over to a different account or after Sign out.
             </p>
-          </div>
-          <div className="grid gap-5 md:grid-cols-2">
-            {starTree.map((m) => (
-              <div key={m.id} className="rounded-[22px] glass-inset p-5">
-                <div className="mb-4 flex flex-wrap gap-1.5">
-                  {m.tags.slice(0, 4).map((t) => (
-                    <Badge key={t} tone="indigo">
-                      {t}
-                    </Badge>
-                  ))}
-                  {m.sourceFile && (
-                    <Badge tone="default">{m.sourceFile.slice(0, 18)}</Badge>
-                  )}
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2">
+              {starTree.map((m) => (
+                <div key={m.id} className="rounded-[22px] glass-inset p-5">
+                  <div className="mb-4 flex flex-wrap gap-1.5">
+                    {m.tags.slice(0, 4).map((t) => (
+                      <Badge key={t} tone="indigo">
+                        {t}
+                      </Badge>
+                    ))}
+                    {m.sourceFile && (
+                      <Badge tone="default">{m.sourceFile.slice(0, 18)}</Badge>
+                    )}
+                  </div>
+                  <StarLine label="S" text={m.situation} />
+                  <StarLine label="T" text={m.task} />
+                  <StarLine label="A" text={m.action} />
+                  <StarLine label="R" text={m.result} />
                 </div>
-                <StarLine label="S" text={m.situation} />
-                <StarLine label="T" text={m.task} />
-                <StarLine label="A" text={m.action} />
-                <StarLine label="R" text={m.result} />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>
