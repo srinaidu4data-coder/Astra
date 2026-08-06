@@ -7,91 +7,219 @@ const MAX_PDF_PAGES = 80
 const MAX_TEXT_CHARS = 120_000
 
 /**
- * pdf.js modern build calls Uint8Array#toHex() for document fingerprints.
- * That method is still missing in many browsers → "a.toHex is not a function".
- * Legacy build ships the polyfill; we also patch the main thread as a belt.
+ * pdf.js 5.x expects APIs missing in some browsers / Electron builds:
+ * - Uint8Array#toHex() for document fingerprints → "a.toHex is not a function"
+ * - Promise.withResolvers()
+ * We polyfill on the main thread. Workers do NOT see this, so we prefer a
+ * module worker (legacy build has polyfills) or pure main-thread parse.
  */
-function ensureUint8ArrayToHex(): void {
-  const proto = Uint8Array.prototype as Uint8Array & {
-    toHex?: () => string
+function ensurePdfRuntimePolyfills(): void {
+  const proto = Uint8Array.prototype as Uint8Array & { toHex?: () => string }
+  if (typeof proto.toHex !== 'function') {
+    Object.defineProperty(proto, 'toHex', {
+      value: function toHex(this: Uint8Array): string {
+        let out = ''
+        for (let i = 0; i < this.length; i++) {
+          out += this[i]!.toString(16).padStart(2, '0')
+        }
+        return out
+      },
+      configurable: true,
+      writable: true,
+    })
   }
-  if (typeof proto.toHex === 'function') return
-  Object.defineProperty(proto, 'toHex', {
-    value: function toHex(this: Uint8Array): string {
-      let out = ''
-      for (let i = 0; i < this.length; i++) {
-        out += this[i]!.toString(16).padStart(2, '0')
-      }
-      return out
-    },
-    configurable: true,
-    writable: true,
-  })
+
+  const P = Promise as unknown as {
+    withResolvers?: <T>() => {
+      promise: Promise<T>
+      resolve: (value: T | PromiseLike<T>) => void
+      reject: (reason?: unknown) => void
+    }
+  }
+  if (typeof P.withResolvers !== 'function') {
+    P.withResolvers = function withResolvers<T>() {
+      let resolve!: (value: T | PromiseLike<T>) => void
+      let reject!: (reason?: unknown) => void
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res
+        reject = rej
+      })
+      return { promise, resolve, reject }
+    }
+  }
 }
 
-/** Extract plain text from PDF using pdf.js (browser). */
-export async function extractPdfText(file: File): Promise<string> {
-  ensureUint8ArrayToHex()
+type PdfJsModule = typeof import('pdfjs-dist/legacy/build/pdf.mjs')
+type PdfDocument = Awaited<ReturnType<PdfJsModule['getDocument']>['promise']>
 
-  // Legacy build + matching worker: polyfills toHex / withResolvers for real browsers.
-  // Vite ?url keeps worker version locked to the same package as the API.
-  const [{ getDocument, GlobalWorkerOptions, version }, workerUrl] =
-    await Promise.all([
-      import('pdfjs-dist/legacy/build/pdf.mjs'),
-      import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url').then(
-        (m) => m.default as string,
-      ),
-    ])
+async function loadPdfJs(): Promise<PdfJsModule> {
+  // Legacy build — includes browser polyfills for toHex / withResolvers.
+  return import('pdfjs-dist/legacy/build/pdf.mjs')
+}
+
+async function resolveWorkerUrl(): Promise<string | null> {
+  try {
+    const m = await import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url')
+    return (m as { default: string }).default || null
+  } catch {
+    return null
+  }
+}
+
+function configurePdfWorker(
+  pdfjs: PdfJsModule,
+  workerUrl: string | null,
+  mode: 'module' | 'src' | 'none',
+): Worker | null {
+  const { GlobalWorkerOptions } = pdfjs
+  // Clear any previous port
+  try {
+    ;(GlobalWorkerOptions as { workerPort?: Worker | null }).workerPort = null
+  } catch {
+    /* ignore */
+  }
+
+  if (mode === 'none' || !workerUrl) {
+    // Force main-thread "fake worker" — our polyfills apply here
+    GlobalWorkerOptions.workerSrc = ''
+    return null
+  }
+
+  if (mode === 'module' && typeof Worker !== 'undefined') {
+    try {
+      const worker = new Worker(workerUrl, { type: 'module' })
+      ;(GlobalWorkerOptions as { workerPort?: Worker | null }).workerPort = worker
+      GlobalWorkerOptions.workerSrc = workerUrl
+      return worker
+    } catch {
+      /* fall through to classic src */
+    }
+  }
 
   GlobalWorkerOptions.workerSrc = workerUrl
+  return null
+}
 
-  const data = new Uint8Array(await file.arrayBuffer())
-  let doc: Awaited<ReturnType<typeof getDocument>['promise']>
+async function openPdfDocument(
+  pdfjs: PdfJsModule,
+  data: Uint8Array,
+): Promise<PdfDocument> {
+  return pdfjs.getDocument({
+    data,
+    useSystemFonts: true,
+    disableAutoFetch: true,
+    disableStream: true,
+  }).promise
+}
+
+async function extractTextFromPdfDoc(doc: PdfDocument): Promise<string> {
+  const pages: string[] = []
+  const limit = Math.min(doc.numPages, MAX_PDF_PAGES)
+
+  for (let i = 1; i <= limit; i++) {
+    const page = await doc.getPage(i)
+    const content = await page.getTextContent()
+    const text = content.items
+      .map((item) => ('str' in item ? String((item as { str?: string }).str ?? '') : ''))
+      .join(' ')
+    pages.push(text)
+  }
+
+  let out = pages.join('\n').replace(/\s+/g, ' ').trim()
+  if (doc.numPages > MAX_PDF_PAGES) {
+    out += ` [truncated after ${MAX_PDF_PAGES} of ${doc.numPages} pages]`
+  }
+  return out.slice(0, MAX_TEXT_CHARS)
+}
+
+/**
+ * Extract plain text from PDF using pdf.js (browser / Electron).
+ *
+ * Strategy (most reliable first for production):
+ * 1) Module worker (ESM .mjs) — correct for pdfjs 5
+ * 2) Classic workerSrc
+ * 3) Main-thread fake worker (polyfills apply; avoids worker MIME/CORS issues on CDN)
+ */
+export async function extractPdfText(file: File): Promise<string> {
+  ensurePdfRuntimePolyfills()
+
+  let pdfjs: PdfJsModule
   try {
-    doc = await getDocument({
-      data,
-      // Text extraction only — keep options minimal for pdfjs 5.x typing
-      useSystemFonts: true,
-      disableAutoFetch: true,
-      disableStream: true,
-    }).promise
+    pdfjs = await loadPdfJs()
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
-    if (/toHex|worker|Setting up fake worker|Failed to fetch/i.test(msg)) {
-      throw new Error(
-        `PDF engine failed (${msg}). Try DOCX/TXT, or re-export the PDF as text-based. pdf.js ${version}`,
-      )
-    }
     throw new Error(
-      `Could not open PDF: ${msg}. If it is password-protected or scanned (image-only), export text or use DOCX/TXT.`,
+      `Could not load the PDF engine (${msg}). Hard-refresh the page, or upload DOCX/TXT instead.`,
     )
   }
 
-  try {
-    const pages: string[] = []
-    const limit = Math.min(doc.numPages, MAX_PDF_PAGES)
-
-    for (let i = 1; i <= limit; i++) {
-      const page = await doc.getPage(i)
-      const content = await page.getTextContent()
-      const text = content.items
-        .map((item) => ('str' in item ? item.str : ''))
-        .join(' ')
-      pages.push(text)
-    }
-
-    let out = pages.join('\n').replace(/\s+/g, ' ').trim()
-    if (doc.numPages > MAX_PDF_PAGES) {
-      out += ` [truncated after ${MAX_PDF_PAGES} of ${doc.numPages} pages]`
-    }
-    return out.slice(0, MAX_TEXT_CHARS)
-  } finally {
-    try {
-      await doc.destroy()
-    } catch {
-      /* ignore */
+  const data = new Uint8Array(await file.arrayBuffer())
+  if (data.length < 5 || String.fromCharCode(data[0]!, data[1]!, data[2]!, data[3]!) !== '%PDF') {
+    // Some valid PDFs still start with BOM/whitespace — only soft-check
+    const head = new TextDecoder('latin1').decode(data.subarray(0, 16))
+    if (!head.includes('%PDF')) {
+      throw new Error(
+        `${file.name} does not look like a PDF. Re-export as PDF, or upload DOCX/TXT.`,
+      )
     }
   }
+
+  const workerUrl = await resolveWorkerUrl()
+  const attempts: Array<'module' | 'src' | 'none'> = workerUrl
+    ? ['module', 'src', 'none']
+    : ['none']
+
+  let lastError: unknown = null
+  let ownedWorker: Worker | null = null
+
+  for (const mode of attempts) {
+    ownedWorker?.terminate()
+    ownedWorker = null
+    try {
+      ownedWorker = configurePdfWorker(pdfjs, workerUrl, mode)
+      const doc = await openPdfDocument(pdfjs, data)
+      try {
+        const text = await extractTextFromPdfDoc(doc)
+        if (!text || text.trim().length < 8) {
+          throw new Error(
+            'No readable text found (likely a scanned/image-only PDF). Use a text-based export, DOCX, or TXT.',
+          )
+        }
+        return text
+      } finally {
+        try {
+          await doc.destroy()
+        } catch {
+          /* ignore */
+        }
+      }
+    } catch (e) {
+      lastError = e
+      const msg = e instanceof Error ? e.message : String(e)
+      // Retry next strategy for worker/polyfill failures; stop for bad PDF content
+      if (
+        /password|Invalid PDF|No readable text|does not look like a PDF|scanned/i.test(
+          msg,
+        )
+      ) {
+        break
+      }
+      // continue to next attempt
+    }
+  }
+
+  ownedWorker?.terminate()
+
+  const msg = lastError instanceof Error ? lastError.message : String(lastError || 'unknown')
+  const ver = (pdfjs as { version?: string }).version || '?'
+  if (/toHex|withResolvers|worker|Setting up fake worker|Failed to fetch|Dynamic import/i.test(msg)) {
+    throw new Error(
+      `PDF engine failed (${msg}). Hard-refresh (Ctrl+Shift+R), try another browser, or upload DOCX/TXT. pdf.js ${ver}`,
+    )
+  }
+  throw new Error(
+    `Could not open ${file.name}: ${msg}. If it is password-protected or scanned (image-only), export text or use DOCX/TXT.`,
+  )
 }
 
 function u16(view: DataView, o: number) {
@@ -275,26 +403,59 @@ export function nameFromResumeFilename(filename: string): string | null {
 const ALLOWED_EXT = /\.(pdf|docx|md|txt|markdown)$/i
 
 export function isAllowedKnowledgeFile(file: File): boolean {
-  return ALLOWED_EXT.test(file.name)
+  if (ALLOWED_EXT.test(file.name)) return true
+  // Some OS file pickers strip extensions or only set MIME
+  const mime = (file.type || '').toLowerCase()
+  if (mime === 'application/pdf') return true
+  if (
+    mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ) {
+    return true
+  }
+  if (mime === 'text/plain' || mime === 'text/markdown') return true
+  // Old .doc is not supported (binary OLE) — call out clearly elsewhere
+  return false
+}
+
+function looksLikePdf(file: File): boolean {
+  const n = file.name.toLowerCase()
+  return n.endsWith('.pdf') || (file.type || '').toLowerCase() === 'application/pdf'
+}
+
+function looksLikeDocx(file: File): boolean {
+  const n = file.name.toLowerCase()
+  return (
+    n.endsWith('.docx') ||
+    (file.type || '').toLowerCase() ===
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  )
 }
 
 export async function parseUploadedFile(
   file: File,
   type: KnowledgeDocType,
 ): Promise<ResumeDocument> {
+  const nameLower = file.name.toLowerCase()
+  if (nameLower.endsWith('.doc') && !nameLower.endsWith('.docx')) {
+    throw new Error(
+      `“${file.name}” is old Word .doc format. Save as .docx, PDF, or TXT and upload again.`,
+    )
+  }
   if (!isAllowedKnowledgeFile(file)) {
     throw new Error(`Unsupported file: ${file.name}. Use PDF, DOCX, MD, or TXT.`)
   }
   if (file.size > 25 * 1024 * 1024) {
     throw new Error(`${file.name} is over 25 MB — use a smaller PDF or split it.`)
   }
+  if (file.size < 20) {
+    throw new Error(`${file.name} is empty or unreadable.`)
+  }
 
-  const ext = file.name.toLowerCase()
   let text = ''
 
-  if (ext.endsWith('.pdf')) {
+  if (looksLikePdf(file)) {
     text = await extractPdfText(file)
-  } else if (ext.endsWith('.docx')) {
+  } else if (looksLikeDocx(file)) {
     text = await extractDocxText(file)
   } else {
     text = (await file.text()).slice(0, MAX_TEXT_CHARS)
