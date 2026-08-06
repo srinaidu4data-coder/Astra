@@ -680,7 +680,14 @@ export function CopilotPage() {
       }
     }
 
+    // Immediate acknowledgement (<50ms UI target) — never block the click handler
     setAnswering(true)
+    const clientT0 = performance.now()
+    try {
+      performance.mark('answer_submit')
+    } catch {
+      /* perf API optional */
+    }
     const q = manualQ.trim()
     pushTranscript({
       id: `tr_${Date.now()}`,
@@ -689,6 +696,7 @@ export function CopilotPage() {
       ts: Date.now(),
       final: true,
     })
+    pushStatus('Question received')
     try {
       // Pre-load context pack so answers are resume/JD grounded (latency amortization)
       const jobCtx = effectiveJobContext()
@@ -706,31 +714,69 @@ export function CopilotPage() {
         })
         setManualQ('')
       } else if (apiOk) {
-        const ans = await fetchAnswer(q, {
-          jobContext: effectiveJobContext(),
-          tone: settings.tone,
-          mode: answerMode,
-          depth,
-        })
-        pushCard({
-          id: ans.id,
-          question: q,
-          answer: { ...ans, question: q },
-        })
+        // Streaming cascade — Hook paints before full STAR completes
+        showPending(q)
+        setManualQ('')
+        const { streamCascadeAnswer } = await import('@/services/real-api')
+        const ans = await streamCascadeAnswer(
+          q,
+          {
+            jobContext: effectiveJobContext(),
+            tone: settings.tone,
+            mode: answerMode,
+            depth,
+          },
+          {
+            onAnswerDelta: (partial) => {
+              pushCard({
+                id: partial.id,
+                question: q,
+                answer: { ...partial, question: q, streaming: true },
+              })
+            },
+            onAnswerDone: (final) => {
+              pushCard({
+                id: final.id,
+                question: q,
+                answer: { ...final, question: q, streaming: false },
+              })
+            },
+            onMetrics: setMetrics,
+            onStatus: pushStatus,
+            onError: (msg) => pushStatus(`Answer failed: ${msg}`),
+          },
+        )
+        const clientE2e = performance.now() - clientT0
+        try {
+          performance.measure('answer_e2e', 'answer_submit', 'answer_hook_paint')
+        } catch {
+          /* optional — mark may be set inside stream */
+        }
+        // Ensure final metrics if stream path missed onMetrics
         if (ans.latencyMs != null) {
-          const fullMs = (ans as { fullMs?: number }).fullMs
+          const fullMs =
+            (ans as { fullMs?: number; totalMs?: number }).fullMs ??
+            (ans as { totalMs?: number }).totalMs ??
+            clientE2e
+          const usefulMs = (ans as { firstUsefulMs?: number }).firstUsefulMs
           setMetrics({
             vadMs: 0,
             sttMs: 0,
-            firstTokenMs: ans.latencyMs,
-            totalMs: ans.latencyMs,
+            firstTokenMs: ans.latencyMs ?? 0,
+            firstUsefulMs: usefulMs ?? ans.latencyMs,
+            totalMs: fullMs,
             fullAnswerMs: fullMs,
+            totalPipelineMs: fullMs,
+            clientE2eMs: clientE2e,
+            clientFirstPaintMs: clientE2e,
             lastUpdated: Date.now(),
             source: (ans as { source?: string }).source,
             depth,
+            requestId: (ans as { requestId?: string }).requestId,
+            turnId: (ans as { turnId?: string }).turnId,
+            answerMode: (ans as { answerMode?: string }).answerMode,
           })
         }
-        setManualQ('')
       } else {
         // Local offline fallback so Answer never feels dead
         await pipeline.injectQuestion(q, {

@@ -343,17 +343,280 @@ export async function injectAnswer(
     question?: string
     stages?: Record<string, number | null | undefined>
   }
-  return normalizeAnswer({
+  const firstMs = data.first_token_ms ?? data.full_ms
+  const fullMs =
+    typeof (data as { full_answer_ms?: number }).full_answer_ms === 'number'
+      ? (data as { full_answer_ms?: number }).full_answer_ms
+      : data.full_ms
+  const ans = normalizeAnswer({
     id: uid('ans'),
     mode,
     text: data.answer ?? '',
     bullets: data.bullets,
-    latencyMs: data.first_token_ms ?? data.full_ms,
+    latencyMs: firstMs,
     question: data.question || question,
   })
+  const extra = ans as SuggestedAnswer & {
+    fullMs?: number
+    firstUsefulMs?: number
+    totalMs?: number
+    source?: string
+    stages?: typeof data.stages
+    requestId?: string
+    turnId?: string
+    answerMode?: string
+  }
+  extra.fullMs = fullMs
+  extra.firstUsefulMs =
+    typeof (data as { first_useful_ms?: number }).first_useful_ms === 'number'
+      ? (data as { first_useful_ms?: number }).first_useful_ms
+      : firstMs
+  extra.totalMs = fullMs ?? firstMs
+  extra.source = (data as { source?: string }).source
+  extra.stages = data.stages
+  extra.requestId = (data as { request_id?: string }).request_id
+  extra.turnId = (data as { turn_id?: string }).turn_id
+  extra.answerMode = (data as { answer_mode?: string }).answer_mode
+  return ans
 }
 
-/** @deprecated Prefer fetchAnswer — kept for callers; now wraps JSON endpoint */
+/**
+ * Streaming cascade for typed questions (SSE semantic events).
+ * Paints Hook as soon as hook_delta/hook_complete arrives — does not wait for full STAR.
+ */
+export async function streamCascadeAnswer(
+  question: string,
+  opts: {
+    jobContext?: string
+    tone?: string
+    mode?: AnswerMode
+    depth?: string
+  } = {},
+  cb: RealPipelineCallbacks,
+  signal?: AbortSignal,
+): Promise<SuggestedAnswer> {
+  const mode = opts.mode ?? 'star'
+  const clientT0 = performance.now()
+  const res = await fetch(`${API_BASE}/api/answer/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+      ...authHeaders(),
+    },
+    body: JSON.stringify({
+      question,
+      job_context: opts.jobContext ?? '',
+      tone: opts.tone ?? 'confident',
+      mode,
+      ...(opts.depth ? { depth: opts.depth } : {}),
+    }),
+    signal,
+  })
+  if (!res.ok || !res.body) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`Stream failed (${res.status}): ${errText || res.statusText}`)
+  }
+
+  const answerId = uid('ans')
+  let acc = ''
+  let firstPaintClient: number | undefined
+  let firstUsefulClient: number | undefined
+  let firstTokenMs: number | undefined
+  let firstUsefulMs: number | undefined
+  let fullMs: number | undefined
+  let llmFirst: number | undefined
+  let source: string | undefined
+  let requestId: string | undefined
+  let turnId: string | undefined
+  let answerMode: string | undefined
+  let lastUiAt = 0
+  let lastLen = 0
+
+  const pushDelta = (text: string, streaming: boolean) => {
+    acc = text
+    const now = performance.now()
+    if (firstPaintClient == null && text.trim()) {
+      firstPaintClient = now - clientT0
+      try {
+        performance.mark('answer_hook_paint')
+      } catch {
+        /* optional */
+      }
+    }
+    // Batch UI ~30ms; always push first chunk and finals
+    if (
+      streaming &&
+      lastLen > 0 &&
+      now - lastUiAt < 30 &&
+      text.length - lastLen < 24
+    ) {
+      return
+    }
+    lastUiAt = now
+    lastLen = text.length
+    const bullets = text
+      .split(/\n+/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+    const ans = normalizeAnswer({
+      id: answerId,
+      mode,
+      text,
+      bullets: bullets.length ? bullets : [text],
+      latencyMs: firstTokenMs ?? firstPaintClient,
+      question,
+    })
+    ans.streaming = streaming
+    if (streaming) cb.onAnswerDelta?.(ans)
+    else cb.onAnswerDone?.(ans)
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let currentEvent = 'message'
+
+  const handleEvent = (event: string, dataRaw: string) => {
+    let data: Record<string, unknown> = {}
+    try {
+      data = JSON.parse(dataRaw) as Record<string, unknown>
+    } catch {
+      return
+    }
+    if (data.request_id) requestId = String(data.request_id)
+    if (data.turn_id) turnId = String(data.turn_id)
+    if (data.answer_mode) answerMode = String(data.answer_mode)
+    if (data.source) source = String(data.source)
+
+    if (event === 'error') {
+      throw new Error(String(data.message || 'stream error'))
+    }
+    if (event === 'meta') {
+      cb.onStatus?.('Preparing…')
+      return
+    }
+    if (event === 'hook_delta' || event === 'hook_complete' || event === 'proof_delta') {
+      const text = String(data.text || data.hook || acc || '')
+      if (event === 'hook_complete' && firstUsefulClient == null) {
+        firstUsefulClient = performance.now() - clientT0
+      }
+      if (typeof data.first_paint_ms === 'number') firstTokenMs = data.first_paint_ms
+      if (typeof data.first_useful_ms === 'number') firstUsefulMs = data.first_useful_ms
+      if (typeof data.llm_first_token_ms === 'number') llmFirst = data.llm_first_token_ms
+      pushDelta(text, event !== 'hook_complete' || Boolean(data.streaming))
+      // After hook_complete keep streaming true until done
+      if (event === 'hook_complete') {
+        pushDelta(text, true)
+        cb.onStatus?.('Hook ready')
+      }
+      return
+    }
+    if (event === 'timing') {
+      if (typeof data.first_token_ms === 'number') firstTokenMs = data.first_token_ms
+      if (typeof data.first_useful_ms === 'number') firstUsefulMs = data.first_useful_ms
+      if (typeof data.full_answer_ms === 'number') fullMs = data.full_answer_ms
+      if (typeof data.llm_first_token_ms === 'number') llmFirst = data.llm_first_token_ms
+      return
+    }
+    if (event === 'done') {
+      const text = String(data.text || acc || '')
+      if (typeof data.first_token_ms === 'number') firstTokenMs = data.first_token_ms
+      if (typeof data.first_paint_ms === 'number') firstTokenMs = data.first_paint_ms
+      if (typeof data.first_useful_ms === 'number') firstUsefulMs = data.first_useful_ms
+      if (typeof data.full_answer_ms === 'number') fullMs = data.full_answer_ms
+      if (typeof data.full_ms === 'number') fullMs = data.full_ms
+      if (typeof data.llm_first_token_ms === 'number') llmFirst = data.llm_first_token_ms
+      pushDelta(text, false)
+      const clientE2e = performance.now() - clientT0
+      const useful =
+        firstUsefulMs ?? firstUsefulClient ?? firstTokenMs ?? firstPaintClient
+      const full = fullMs ?? clientE2e
+      cb.onMetrics?.({
+        vadMs: 0,
+        sttMs: 0,
+        firstTokenMs: firstTokenMs ?? firstPaintClient ?? 0,
+        firstUsefulMs: useful,
+        totalMs: full,
+        fullAnswerMs: full,
+        totalPipelineMs: full,
+        clientE2eMs: clientE2e,
+        clientFirstPaintMs: firstPaintClient ?? clientE2e,
+        llmFirstTokenMs: llmFirst,
+        lastUpdated: Date.now(),
+        source,
+        requestId,
+        turnId,
+        answerMode,
+      })
+      cb.onStatus?.('Complete')
+    }
+    // legacy token events
+    if (event === 'token') {
+      const text = String(data.text || '')
+      if (typeof data.first_token_ms === 'number' && firstTokenMs == null) {
+        firstTokenMs = data.first_token_ms
+      }
+      pushDelta(text, true)
+    }
+  }
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const parts = buffer.split('\n')
+    buffer = parts.pop() || ''
+    let dataLines: string[] = []
+    for (const line of parts) {
+      if (line.startsWith('event:')) {
+        currentEvent = line.slice(6).trim()
+      } else if (line.startsWith('data:')) {
+        dataLines.push(line.slice(5).trim())
+      } else if (line === '' && dataLines.length) {
+        handleEvent(currentEvent, dataLines.join('\n'))
+        dataLines = []
+        currentEvent = 'message'
+      }
+    }
+    if (dataLines.length) {
+      // keep incomplete data in buffer via rejoining — simplified: process on next blank
+      buffer = `event: ${currentEvent}\n` + dataLines.map((d) => `data: ${d}`).join('\n') + '\n' + buffer
+    }
+  }
+  // Flush trailing
+  if (buffer.includes('data:')) {
+    const m = buffer.match(/event:\s*(\S+)/)
+    const ev = m?.[1] || 'done'
+    const dataMatch = buffer.match(/data:\s*(\{[\s\S]*\})/)
+    if (dataMatch) handleEvent(ev, dataMatch[1]!)
+  }
+
+  const final = normalizeAnswer({
+    id: answerId,
+    mode,
+    text: acc,
+    bullets: acc
+      .split(/\n+/)
+      .map((l) => l.trim())
+      .filter(Boolean),
+    latencyMs: firstTokenMs ?? firstPaintClient,
+    question,
+  })
+  ;(final as SuggestedAnswer & { fullMs?: number; firstUsefulMs?: number; totalMs?: number })
+    .fullMs = fullMs ?? performance.now() - clientT0
+  ;(final as SuggestedAnswer & { firstUsefulMs?: number }).firstUsefulMs =
+    firstUsefulMs ?? firstUsefulClient ?? firstTokenMs
+  ;(final as SuggestedAnswer & { totalMs?: number }).totalMs =
+    fullMs ?? performance.now() - clientT0
+  ;(final as SuggestedAnswer & { source?: string }).source = source
+  ;(final as SuggestedAnswer & { requestId?: string }).requestId = requestId
+  ;(final as SuggestedAnswer & { turnId?: string }).turnId = turnId
+  ;(final as SuggestedAnswer & { answerMode?: string }).answerMode = answerMode
+  return final
+}
+
+/** @deprecated Prefer streamCascadeAnswer — kept for callers */
 export async function streamAnswer(
   question: string,
   opts: {
@@ -365,17 +628,8 @@ export async function streamAnswer(
   signal?: AbortSignal,
 ) {
   try {
-    const ans = await fetchAnswer(question, opts, signal)
-    cb.onAnswerDone?.(ans)
-    if (ans.latencyMs != null) {
-      cb.onMetrics?.({
-        vadMs: 0,
-        sttMs: 0,
-        firstTokenMs: Math.round(ans.latencyMs * 0.3),
-        totalMs: ans.latencyMs,
-        lastUpdated: Date.now(),
-      })
-    }
+    const ans = await streamCascadeAnswer(question, opts, cb, signal)
+    if (!cb.onAnswerDone) cb.onAnswerDone?.(ans)
   } catch (e) {
     cb.onError?.((e as Error).message)
     throw e

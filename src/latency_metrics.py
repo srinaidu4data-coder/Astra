@@ -218,18 +218,25 @@ class StageTrace:
     cache_ms: Optional[float] = None
     outline_ms: Optional[float] = None
     first_token_ms: Optional[float] = None
+    first_useful_ms: Optional[float] = None
     full_answer_ms: Optional[float] = None
     total_ms: Optional[float] = None
     from_cache: bool = False
     outline_first: bool = False
     warm: bool = True
     words: int = 0
+    request_id: str = ""
+    turn_id: str = ""
     meta: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         d["grades"] = {
             "first_token_ms": _grade(self.first_token_ms, MARKET_BARS["first_token_ms"]),
+            "first_useful_ms": _grade(
+                self.first_useful_ms or self.first_token_ms,
+                MARKET_BARS["first_token_ms"],
+            ),
             "full_answer_ms": _grade(self.full_answer_ms, MARKET_BARS["full_answer_ms"]),
             "stt_ms": _grade(self.stt_ms, MARKET_BARS["stt_ms"]),
             "total_ms": _grade(self.total_ms, MARKET_BARS["total_ms"]),
@@ -318,6 +325,7 @@ class LatencyRegistry:
             "cache_ms": _hist(col("cache_ms")),
             "outline_ms": _hist(col("outline_ms")),
             "first_token_ms": _hist(col("first_token_ms")),
+            "first_useful_ms": _hist(col("first_useful_ms")),
             "full_answer_ms": _hist(col("full_answer_ms")),
             "total_ms": _hist(col("total_ms")),
         }

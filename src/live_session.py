@@ -79,8 +79,11 @@ class LiveInterviewSession:
         self._peak_speech_level = 0.0  # for adaptive fast hangover
         self._last_fp = ""
         self._recent_fps: list[str] = []  # last few fingerprints (long interview)
-        self._generation = 0  # only bumped on stop — never cancel mid-answer for next Q
+        self._generation = 0  # bumped on stop AND on each new question (cancel stale)
         self._job_id = 0
+        self._active_turn_id = ""
+        self._turn_sm = None  # lazy TurnStateMachine
+        self._last_transcript_finals: list[str] = []
         # Browser path: create capture immediately so early PCM is not dropped
         self._early_browser_cap: Optional[BrowserAudioCapture] = None
         # Deepgram Nova-3 continuous stream (optional)
@@ -89,6 +92,13 @@ class LiveInterviewSession:
         self._stt_provider = "whisper"  # deepgram | whisper
         self._dg_feed_cursor = 0  # samples already fed from ring (system path)
         self._last_partial_emit = 0.0
+
+    def _get_turn_sm(self):
+        if self._turn_sm is None:
+            from turn_state import TurnStateMachine
+
+            self._turn_sm = TurnStateMachine(session_id=self.session_id or "")
+        return self._turn_sm
 
     @property
     def running(self) -> bool:
@@ -282,6 +292,10 @@ class LiveInterviewSession:
     def stop(self) -> None:
         self._stop.set()
         self._generation += 1
+        try:
+            self._get_turn_sm().reset()
+        except Exception:
+            pass
         with self._process_lock:
             self._pending.clear()
             self._processing = False
@@ -335,7 +349,7 @@ class LiveInterviewSession:
     def inject_question(self, question: str) -> None:
         """
         Manual question inject (STT lag fallback — market pattern).
-        Spawns the same answer path without waiting for audio/VAD.
+        Cancels any in-flight answer generation for a prior question.
         """
         q = (question or "").strip()
         if not q:
@@ -347,22 +361,46 @@ class LiveInterviewSession:
             get_registry().incr("manual_injects")
         except Exception:
             pass
-        # Fake a short speech_s so _process_clip path works if we share it
+        # Cancel stale streams — new question always wins
+        turn = self._get_turn_sm().begin_answer(inject=True)
+        self._generation = turn.generation
+        self._active_turn_id = turn.turn_id
+        with self._process_lock:
+            self._pending.clear()  # drop queued STT clips behind this inject
         self._emit(
             "status",
             {
-                "message": "Manual question inject — generating…",
+                "message": "Question received — preparing…",
                 "listening": True,
                 "answering": True,
+                "turn_id": turn.turn_id,
+                "request_id": turn.request_id,
+                "generation": turn.generation,
             },
         )
+        self._emit(
+            "turn",
+            {
+                "state": "ANSWER_GENERATING",
+                "turn_id": turn.turn_id,
+                "request_id": turn.request_id,
+                "generation": turn.generation,
+            },
+        )
+
         def _run_inject() -> None:
             self._job_id += 1
             job_id = self._job_id
-            gen = self._generation
+            gen = turn.generation
             try:
                 self._generate_and_emit(
-                    q, stt_ms=0.0, classify_ms=0.0, job_id=job_id, gen=gen
+                    q,
+                    stt_ms=0.0,
+                    classify_ms=0.0,
+                    job_id=job_id,
+                    gen=gen,
+                    turn_id=turn.turn_id,
+                    request_id=turn.request_id,
                 )
             except Exception as e:
                 traceback.print_exc()
@@ -379,6 +417,8 @@ class LiveInterviewSession:
         job_id: int = 0,
         gen: int = 0,
         vad_ms: float | None = None,
+        turn_id: str = "",
+        request_id: str = "",
     ) -> None:
         """Core answer cascade + latency trace emit (used by STT path and inject)."""
         _sess_token = None
@@ -404,6 +444,8 @@ class LiveInterviewSession:
                 vad_ms=vad_ms,
                 job_ctx=job_ctx,
                 depth=depth,
+                turn_id=turn_id,
+                request_id=request_id,
             )
         finally:
             if _sess_token is not None and reset_session_id is not None:
@@ -423,6 +465,8 @@ class LiveInterviewSession:
         vad_ms: float | None = None,
         job_ctx: str = "",
         depth: str = "balanced",
+        turn_id: str = "",
+        request_id: str = "",
     ) -> None:
         from answer_engine import (
             generate_answer,
@@ -457,6 +501,7 @@ class LiveInterviewSession:
         try:
             last_emit_len = 0
             raw_answer = ""
+            seq = 0
             for text, meta in iter_cascade_answer(
                 question,
                 job_context=job_ctx,
@@ -470,6 +515,8 @@ class LiveInterviewSession:
             ):
                 if gen != self._generation or self._stop.is_set():
                     break
+                if turn_id and self._active_turn_id and turn_id != self._active_turn_id:
+                    break  # superseded by a newer turn
                 raw_answer = text or ""
                 source = str(meta.get("source") or source)
                 if meta.get("cache_ms") is not None:
@@ -480,18 +527,22 @@ class LiveInterviewSession:
                     llm_first_ms = float(meta["llm_first_token_ms"])
                 if meta.get("stages"):
                     stages = dict(meta["stages"])
+                rid = request_id or meta.get("request_id") or ""
+                tid = turn_id or meta.get("turn_id") or ""
                 if first_token_ms is None and raw_answer:
                     first_token_ms = round(
                         float(meta.get("first_paint_ms") or (time.perf_counter() - t1) * 1000)
                     )
                 is_final = bool(meta.get("final"))
+                # Emit more often for Hook first paint (every ~40 chars or first chunk)
                 if raw_answer and (
                     is_final
-                    or len(raw_answer) - last_emit_len >= 80
+                    or len(raw_answer) - last_emit_len >= 40
                     or last_emit_len == 0
                 ):
                     last_emit_len = len(raw_answer)
                     answer = _normalize_answer_text(raw_answer, question, job_ctx)
+                    seq += 1
                     if not is_final:
                         partial_bullets = to_bullets(answer, self.mode) or [answer]
                         self._emit(
@@ -508,11 +559,19 @@ class LiveInterviewSession:
                                 "cache_ms": cache_ms,
                                 "outline_ms": outline_ms,
                                 "first_token_ms": first_token_ms,
+                                "first_useful_ms": meta.get("first_useful_ms")
+                                or first_token_ms,
                                 "llm_first_token_ms": llm_first_ms,
                                 "answer_ms": round((time.perf_counter() - t1) * 1000),
-                                "pipeline_ms": first_token_ms
-                                or round((time.perf_counter() - t1) * 1000),
+                                "pipeline_ms": round((time.perf_counter() - t1) * 1000),
+                                "full_answer_ms": None,
                                 "job_id": job_id,
+                                "request_id": rid,
+                                "turn_id": tid,
+                                "generation": gen,
+                                "sequence_number": seq,
+                                "answer_mode": meta.get("answer_mode"),
+                                "grounding": meta.get("grounding"),
                                 "stages": stages,
                                 "depth": depth,
                             },
@@ -594,8 +653,9 @@ class LiveInterviewSession:
             source = source or "empty_guard"
 
         if self._stop.is_set() or gen != self._generation:
-            if not answer:
-                return
+            return  # cancelled — do not emit stale final
+        if turn_id and self._active_turn_id and turn_id != self._active_turn_id:
+            return
 
         ans_ms = round((time.perf_counter() - t1) * 1000)
         if first_token_ms is None:
@@ -613,6 +673,13 @@ class LiveInterviewSession:
             self._recent_fps = self._recent_fps[-8:]
 
         total_ms = round(float(stt_ms or 0) + ans_ms, 2)
+        first_useful_ms = None
+        try:
+            first_useful_ms = stages.get("first_useful_ms")
+        except Exception:
+            first_useful_ms = None
+        if first_useful_ms is None:
+            first_useful_ms = first_token_ms
         latency_trace = {
             "vad_ms": vad_ms,
             "stt_ms": stt_ms,
@@ -620,12 +687,16 @@ class LiveInterviewSession:
             "cache_ms": cache_ms,
             "outline_ms": outline_ms,
             "first_token_ms": first_token_ms,
+            "first_useful_ms": first_useful_ms,
             "llm_first_token_ms": llm_first_ms,
             "full_answer_ms": ans_ms,
             "total_ms": total_ms,
             "source": source,
             "depth": depth,
             "stages": stages,
+            "request_id": stages.get("request_id"),
+            "turn_id": stages.get("turn_id"),
+            "answer_mode": stages.get("answer_mode"),
         }
         try:
             from latency_metrics import record_trace
@@ -640,12 +711,19 @@ class LiveInterviewSession:
                 cache_ms=cache_ms,
                 outline_ms=outline_ms,
                 first_token_ms=first_token_ms,
+                first_useful_ms=first_useful_ms,
                 full_answer_ms=ans_ms,
                 total_ms=total_ms,
                 from_cache="cache" in (source or ""),
                 outline_first=outline_ms is not None,
                 words=len((answer or "").split()),
-                meta={"llm_first_token_ms": llm_first_ms},
+                request_id=str(stages.get("request_id") or ""),
+                turn_id=str(stages.get("turn_id") or ""),
+                meta={
+                    "llm_first_token_ms": llm_first_ms,
+                    "answer_mode": stages.get("answer_mode"),
+                    "grounding_violations": stages.get("grounding_violations"),
+                },
             )
         except Exception:
             pass
@@ -664,20 +742,37 @@ class LiveInterviewSession:
                 "cache_ms": cache_ms,
                 "outline_ms": outline_ms,
                 "first_token_ms": first_token_ms,
+                "first_useful_ms": first_useful_ms,
                 "llm_first_token_ms": llm_first_ms,
                 "answer_ms": ans_ms,
-                "pipeline_ms": first_token_ms,
+                # Honest E2E: full answer path time (not first-token paint)
+                "pipeline_ms": ans_ms,
                 "full_answer_ms": ans_ms,
                 "total_pipeline_ms": total_ms,
                 "job_id": job_id,
+                "request_id": request_id or stages.get("request_id"),
+                "turn_id": turn_id or stages.get("turn_id"),
+                "generation": gen,
+                "answer_mode": stages.get("answer_mode"),
                 "latency_trace": latency_trace,
                 "stages": stages,
                 "depth": depth,
             },
         )
+        try:
+            self._get_turn_sm().mark_answer_done(turn_id or self._active_turn_id)
+        except Exception:
+            pass
         self._emit(
             "latency",
-            {**latency_trace, "job_id": job_id, "question": question[:160]},
+            {
+                **latency_trace,
+                "job_id": job_id,
+                "question": question[:160],
+                "turn_id": turn_id or stages.get("turn_id"),
+                "request_id": request_id or stages.get("request_id"),
+                "generation": gen,
+            },
         )
         self._emit(
             "status",
@@ -1204,16 +1299,42 @@ class LiveInterviewSession:
                     )
                     return
 
+            # Deduplicate overlapping partial/final STT segments
+            try:
+                from turn_state import dedupe_transcript_segments
+
+                text = dedupe_transcript_segments(
+                    "",
+                    text,
+                    previous_finals=self._last_transcript_finals,
+                )
+            except Exception:
+                pass
+            if not (text or "").strip():
+                return
+            self._last_transcript_finals.append(text.strip())
+            self._last_transcript_finals = self._last_transcript_finals[-8:]
+
+            # Begin question-finalize turn (cancels any in-flight answer)
+            sm = self._get_turn_sm()
+            turn_ctx = sm.begin_question_finalize()
+            self._generation = turn_ctx.generation
+            self._active_turn_id = turn_ctx.turn_id
+            gen = turn_ctx.generation
+
             self._emit(
                 "transcript",
                 {
                     "text": text,
                     "stt_ms": stt_ms,
                     "final": True,
-                    "role": "interviewer",
+                    "role": "interviewer",  # never candidate — speakers/tab only
                     "stt_provider": stt_meta.get("provider") or stt_provider,
                     "stt_model": stt_meta.get("model"),
                     "stt_mode": stt_meta.get("mode"),
+                    "turn_id": turn_ctx.turn_id,
+                    "request_id": turn_ctx.request_id,
+                    "generation": gen,
                 },
             )
 
@@ -1256,6 +1377,7 @@ class LiveInterviewSession:
                     },
                 )
                 self._emit("status", {"message": "Chatter filtered — still listening"})
+                sm.begin_listening()
                 return
 
             fp = question_fingerprint(question)
@@ -1270,7 +1392,16 @@ class LiveInterviewSession:
                         "status",
                         {"message": "Same question skipped — still listening"},
                     )
+                    sm.begin_listening()
                     return
+
+            # Move to answer-generating
+            try:
+                from turn_state import LiveTurnState
+
+                sm.transition(LiveTurnState.ANSWER_GENERATING)
+            except Exception:
+                pass
 
             # Shared cascade + stage metrics (also used by manual inject)
             self._generate_and_emit(
@@ -1280,6 +1411,8 @@ class LiveInterviewSession:
                 job_id=job_id,
                 gen=gen,
                 vad_ms=None,
+                turn_id=turn_ctx.turn_id,
+                request_id=turn_ctx.request_id,
             )
             return
         except Exception as e:

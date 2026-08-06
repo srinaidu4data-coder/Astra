@@ -128,7 +128,7 @@ export function TopBar() {
                     ? 'text-[#E8C547]'
                     : 'text-[#E85D5D]'
               }
-              title="End-to-end answer latency (STT + model)"
+              title={`True E2E (full answer): ${formatMs(metrics.totalMs)} · First useful: ${formatMs(metrics.firstUsefulMs || metrics.firstTokenMs || 0)}`}
             >
               {formatMs(metrics.totalMs)}
             </span>

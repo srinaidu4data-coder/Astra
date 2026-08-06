@@ -40,21 +40,36 @@ export function LatencyMetricsPanel() {
         Live timing for your last answers. Moved here so Interview stays simple — nothing removed.
       </p>
 
-      {/* Session / first token / full / STT strip */}
+      {/* Session / first useful / full / true E2E strip */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         {[
           { label: 'Session', value: listening ? 'ON' : 'Off' },
           {
-            label: 'First token',
-            value: metrics ? formatMs(metrics.firstTokenMs || metrics.totalMs) : '—',
+            label: 'First useful',
+            value: metrics
+              ? formatMs(metrics.firstUsefulMs || metrics.firstTokenMs || 0)
+              : '—',
           },
           {
             label: 'Full answer',
-            value: metrics?.fullAnswerMs != null ? formatMs(metrics.fullAnswerMs) : '—',
+            value:
+              metrics?.fullAnswerMs != null
+                ? formatMs(metrics.fullAnswerMs)
+                : metrics?.totalMs
+                  ? formatMs(metrics.totalMs)
+                  : '—',
           },
           {
-            label: 'STT',
-            value: metrics?.sttMs != null && metrics.sttMs > 0 ? formatMs(metrics.sttMs) : '—',
+            label: 'True E2E',
+            value: metrics
+              ? formatMs(
+                  metrics.clientE2eMs ||
+                    metrics.totalPipelineMs ||
+                    metrics.totalMs ||
+                    metrics.fullAnswerMs ||
+                    0,
+                )
+              : '—',
           },
         ].map((k) => (
           <div key={k.label} className="glass rounded-[18px] px-4 py-4">
@@ -75,7 +90,7 @@ export function LatencyMetricsPanel() {
         <div>
           <h3 className="text-[14px] font-medium text-white/90">Latency stack</h3>
           <p className="text-[11px] text-white/35">
-            Honest stages vs market — first token ≠ full monologue
+            First useful ≠ full answer. E2E is submit → full render, never first-token alone.
           </p>
         </div>
         <button
@@ -88,18 +103,21 @@ export function LatencyMetricsPanel() {
             })
           }}
         >
-          {showBench ? 'Hide benchmark' : 'vs competitors'}
+          {showBench ? 'Hide benchmark' : 'Stage history'}
         </button>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {[
+          { label: 'STT', ms: metrics?.sttMs },
           { label: 'Outline', ms: metrics?.outlineMs },
           { label: 'Cache', ms: metrics?.cacheMs },
-          { label: 'Classify', ms: metrics?.classifyMs },
           { label: 'LLM first', ms: metrics?.llmFirstTokenMs },
-          { label: 'Full ans', ms: metrics?.fullAnswerMs },
-          { label: 'E2E', ms: metrics?.totalPipelineMs },
+          { label: 'First useful', ms: metrics?.firstUsefulMs || metrics?.firstTokenMs },
+          {
+            label: 'True E2E',
+            ms: metrics?.clientE2eMs || metrics?.totalPipelineMs || metrics?.totalMs,
+          },
         ].map((s) => (
           <div key={s.label} className="rounded-[14px] bg-white/[0.04] px-3 py-2">
             <div className="text-[10px] uppercase tracking-wide text-white/30">{s.label}</div>
@@ -110,11 +128,18 @@ export function LatencyMetricsPanel() {
         ))}
       </div>
 
+      {metrics?.answerMode && (
+        <p className="mt-2 text-[11px] text-white/40">
+          Grounding mode: <span className="text-white/70">{metrics.answerMode}</span>
+          {metrics.requestId ? ` · req ${metrics.requestId}` : ''}
+        </p>
+      )}
+
       {latencySnap?.verdict && (
         <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px]">
-          <span className="text-white/40">Market rank:</span>
+          <span className="text-white/40">Stage grades (internal):</span>
           <span className={gradeColor(latencySnap.verdict.first_token_grade)}>
-            first-token {latencySnap.verdict.first_token_grade || 'n/a'}
+            first-useful {latencySnap.verdict.first_token_grade || 'n/a'}
           </span>
           <span className={gradeColor(latencySnap.verdict.full_answer_grade)}>
             full {latencySnap.verdict.full_answer_grade || 'n/a'}

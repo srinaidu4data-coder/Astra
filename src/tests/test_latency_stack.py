@@ -116,8 +116,8 @@ def test_outline_cascade_paints_before_llm(monkeypatch):
     )
     assert len(events) >= 2
     first_text, first_meta = events[0]
-    assert first_meta.get("source") in ("outline", "exact_cache")
-    if first_meta.get("source") == "outline":
+    assert first_meta.get("source") in ("outline", "stage_a", "exact_cache")
+    if first_meta.get("source") in ("outline", "stage_a"):
         assert first_meta.get("outline_first") is True
         assert first_meta.get("first_paint_ms") is not None
         assert "Outline" in first_text or "Hook" in first_text

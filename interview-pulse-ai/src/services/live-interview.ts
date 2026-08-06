@@ -83,6 +83,9 @@ export class LiveInterviewClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private reconnectAttempt = 0
   private wasListening = false
+  /** Active turn — ignore stale stream events from cancelled generations */
+  private activeTurnId = ''
+  private activeGeneration = 0
   private lastStartOpts: {
     jobContext?: string
     tone?: string
@@ -292,6 +295,12 @@ export class LiveInterviewClient {
           (data as { reason?: string }).reason,
         )
         break
+      case 'turn': {
+        const t = data as { turn_id?: string; generation?: number; state?: string }
+        if (t.turn_id) this.activeTurnId = String(t.turn_id)
+        if (t.generation != null) this.activeGeneration = Number(t.generation)
+        break
+      }
       case 'answer': {
         const a = data as {
           question?: string
@@ -312,9 +321,29 @@ export class LiveInterviewClient {
           source?: string
           depth?: string
           job_id?: number | string
+          turn_id?: string
+          generation?: number
           stages?: Record<string, number | null | undefined>
           latency_trace?: Record<string, unknown>
         }
+        // Drop stale turns (cancelled by a newer question)
+        if (
+          a.generation != null &&
+          this.activeGeneration > 0 &&
+          Number(a.generation) < this.activeGeneration
+        ) {
+          break
+        }
+        if (
+          a.turn_id &&
+          this.activeTurnId &&
+          String(a.turn_id) !== this.activeTurnId &&
+          a.streaming
+        ) {
+          break
+        }
+        if (a.turn_id) this.activeTurnId = String(a.turn_id)
+        if (a.generation != null) this.activeGeneration = Number(a.generation)
         const mode = (a.mode as AnswerMode) || this.mode
         const text = a.answer ?? ''
         const bullets =
@@ -345,12 +374,13 @@ export class LiveInterviewClient {
         ans.streaming = Boolean(a.streaming)
         // Guarantee UI has something to render
         if (!ans.bullets.length && text) ans.bullets = [text]
-        // Throttle intermediate stream paints (~3/s) — finals always pass
+        // Batch stream paints ~25–40ms (not every token; not 280ms lag)
         if (a.streaming) {
           const now = Date.now()
           if (
-            now - this._lastStreamUiAt < 280 &&
-            text.length - this._lastStreamLen < 48
+            this._lastStreamLen > 0 &&
+            now - this._lastStreamUiAt < 32 &&
+            text.length - this._lastStreamLen < 24
           ) {
             return
           }
@@ -360,24 +390,43 @@ export class LiveInterviewClient {
           this._lastStreamLen = 0
         }
         this.handlers.onAnswer?.(ans)
-        // Full stage metrics for competitor dashboard
+        // Full stage metrics — totalMs must be full answer / true E2E, never first_token alone
         if (!a.streaming) {
+          const fullMs = Number(
+            a.full_answer_ms ?? a.answer_ms ?? a.pipeline_ms ?? a.total_pipeline_ms ?? 0,
+          )
+          const firstMs = Number(a.first_token_ms ?? latency ?? 0)
+          const usefulMs = Number(
+            (a as { first_useful_ms?: number }).first_useful_ms ?? firstMs,
+          )
+          const e2e = Number(
+            a.total_pipeline_ms != null && a.total_pipeline_ms > 0
+              ? a.total_pipeline_ms
+              : fullMs > 0
+                ? fullMs
+                : firstMs,
+          )
           this.handlers.onMetrics?.({
             vadMs: 0,
             sttMs: Number(a.stt_ms ?? 0),
-            firstTokenMs: Number(a.first_token_ms ?? latency ?? 0),
-            totalMs: Number(a.first_token_ms ?? latency ?? 0),
+            firstTokenMs: firstMs,
+            // Honest E2E: full answer completion (fixes impossible 1ms display)
+            totalMs: e2e > 0 ? e2e : fullMs || firstMs,
             lastUpdated: Date.now(),
             classifyMs: a.classify_ms != null ? Number(a.classify_ms) : undefined,
             cacheMs: a.cache_ms != null ? Number(a.cache_ms) : undefined,
             outlineMs: a.outline_ms != null ? Number(a.outline_ms) : undefined,
             llmFirstTokenMs:
               a.llm_first_token_ms != null ? Number(a.llm_first_token_ms) : undefined,
-            fullAnswerMs: Number(a.full_answer_ms ?? a.answer_ms ?? 0) || undefined,
+            firstUsefulMs: usefulMs || undefined,
+            fullAnswerMs: fullMs || undefined,
             totalPipelineMs:
-              a.total_pipeline_ms != null ? Number(a.total_pipeline_ms) : undefined,
+              a.total_pipeline_ms != null ? Number(a.total_pipeline_ms) : e2e || undefined,
             source: a.source,
             depth: a.depth,
+            requestId: (a as { request_id?: string }).request_id,
+            turnId: (a as { turn_id?: string }).turn_id,
+            answerMode: (a as { answer_mode?: string }).answer_mode,
           })
         }
         break
@@ -386,6 +435,7 @@ export class LiveInterviewClient {
         const L = data as {
           stt_ms?: number
           first_token_ms?: number
+          first_useful_ms?: number
           full_answer_ms?: number
           total_ms?: number
           outline_ms?: number
@@ -394,22 +444,39 @@ export class LiveInterviewClient {
           llm_first_token_ms?: number
           source?: string
           depth?: string
+          request_id?: string
+          turn_id?: string
+          answer_mode?: string
         }
+        const fullMs = Number(L.full_answer_ms ?? L.total_ms ?? 0)
+        const firstMs = Number(L.first_token_ms ?? 0)
+        const e2e = Number(
+          L.total_ms != null && L.total_ms > 0
+            ? L.total_ms
+            : fullMs > 0
+              ? fullMs
+              : firstMs,
+        )
         this.handlers.onMetrics?.({
           vadMs: 0,
           sttMs: Number(L.stt_ms ?? 0),
-          firstTokenMs: Number(L.first_token_ms ?? 0),
-          totalMs: Number(L.first_token_ms ?? L.total_ms ?? 0),
+          firstTokenMs: firstMs,
+          totalMs: e2e,
           lastUpdated: Date.now(),
           classifyMs: L.classify_ms != null ? Number(L.classify_ms) : undefined,
           cacheMs: L.cache_ms != null ? Number(L.cache_ms) : undefined,
           outlineMs: L.outline_ms != null ? Number(L.outline_ms) : undefined,
           llmFirstTokenMs:
             L.llm_first_token_ms != null ? Number(L.llm_first_token_ms) : undefined,
-          fullAnswerMs: L.full_answer_ms != null ? Number(L.full_answer_ms) : undefined,
-          totalPipelineMs: L.total_ms != null ? Number(L.total_ms) : undefined,
+          firstUsefulMs:
+            L.first_useful_ms != null ? Number(L.first_useful_ms) : firstMs || undefined,
+          fullAnswerMs: fullMs || undefined,
+          totalPipelineMs: L.total_ms != null ? Number(L.total_ms) : e2e || undefined,
           source: L.source,
           depth: L.depth,
+          requestId: L.request_id,
+          turnId: L.turn_id,
+          answerMode: L.answer_mode,
         })
         break
       }

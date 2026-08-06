@@ -25,6 +25,7 @@ import os
 import re
 import threading
 import time
+import uuid
 from collections import OrderedDict
 from typing import Any, Callable, Generator, Optional
 
@@ -624,6 +625,34 @@ def iter_cascade_answer(
     t0 = time.perf_counter()
     mode = (mode or "star").strip().lower() or "star"
     stages: dict[str, Any] = {}
+    request_id = uuid.uuid4().hex[:12]
+    turn_id = uuid.uuid4().hex[:12]
+    stages["request_id"] = request_id
+    stages["turn_id"] = turn_id
+    grounding_meta: dict[str, Any] = {}
+
+    # Evidence bundle (precomputed / hash-cached) — off critical path for LLM but used for Stage A
+    t_ev = time.perf_counter()
+    evidence_bundle = None
+    answer_mode = "knowledge_answer"
+    try:
+        from evidence_grounding import (
+            bundle_from_session_pack,
+            classify_answer_mode,
+            select_relevant_evidence,
+            stage_a_hook_from_evidence,
+        )
+
+        evidence_bundle = bundle_from_session_pack(job_context)
+        rel = select_relevant_evidence(evidence_bundle, question, max_facts=8)
+        answer_mode = classify_answer_mode(question, rel)
+        stages["evidence_ms"] = round((time.perf_counter() - t_ev) * 1000, 2)
+        stages["answer_mode"] = answer_mode
+        grounding_meta["answer_mode"] = answer_mode
+        grounding_meta["materials_hash"] = evidence_bundle.materials_hash
+    except Exception as ev_err:
+        stages["evidence_ms"] = round((time.perf_counter() - t_ev) * 1000, 2)
+        stages["evidence_error"] = type(ev_err).__name__
 
     # 1) Exact cache only for live streams (approx caused wrong answers in long interviews)
     t_cache = time.perf_counter()
@@ -644,26 +673,52 @@ def iter_cascade_answer(
             )
         except Exception:
             bleed = False
+        # Sanitize cached answer against current evidence
+        if not bleed and evidence_bundle is not None:
+            try:
+                from evidence_grounding import sanitize_answer_against_evidence
+
+                g = sanitize_answer_against_evidence(
+                    ans, evidence_bundle, question=question, mode=answer_mode
+                )
+                ans = g.text
+                if g.violations:
+                    grounding_meta["violations"] = [v.to_dict() for v in g.violations]
+                    # Don't use contaminated cache — regenerate
+                    if any(
+                        v.kind in ("invented_baseline_final", "fabrication_pattern")
+                        for v in g.violations
+                    ):
+                        bleed = True
+            except Exception:
+                pass
         if not bleed:
             ms = (time.perf_counter() - t0) * 1000
             stages["first_token_ms"] = round(ms, 2)
             stages["full_answer_ms"] = round(ms, 2)
+            stages["first_useful_ms"] = round(ms, 2)
             yield ans, {
                 "source": src,
                 "first_paint_ms": round(ms, 2),
+                "first_useful_ms": round(ms, 2),
                 "streaming": False,
                 "final": True,
                 "from_cache": True,
                 "cache_ms": cache_ms,
                 "outline_ms": None,
+                "request_id": request_id,
+                "turn_id": turn_id,
+                "answer_mode": answer_mode,
+                "grounding": grounding_meta,
                 "stages": stages,
             }
             return
         # Contaminated cache entry — ignore and regenerate
 
-    # 2) Outline-first honest skeleton (default ON) — market pattern for TTFT
+    # 2) Stage-A speakable paint (evidence hook) then outline scaffold
     draft = ""
     first_paint_ms = 0.0
+    first_useful_ms: Optional[float] = None
     outline_ms: Optional[float] = None
     outline_used = False
     use_outline = os.environ.get("ASTRA_OUTLINE_FIRST", "1").strip().lower() not in (
@@ -679,13 +734,52 @@ def iter_cascade_answer(
     except Exception:
         pass
 
-    if use_outline:
+    # Prefer evidence-grounded Stage A when we have real facts (speakable Hook)
+    stage_a = ""
+    if evidence_bundle is not None and use_outline:
+        try:
+            stage_a = stage_a_hook_from_evidence(
+                question, evidence_bundle, mode=mode
+            )
+        except Exception:
+            stage_a = ""
+
+    if stage_a and len(stage_a.strip()) >= 40:
+        t_out = time.perf_counter()
+        draft = stage_a
+        outline_ms = round((time.perf_counter() - t_out) * 1000, 2)
+        first_paint_ms = (time.perf_counter() - t0) * 1000
+        first_useful_ms = first_paint_ms  # speakable clause
+        stages["outline_ms"] = outline_ms
+        stages["stage_a_ms"] = outline_ms
+        stages["first_token_ms"] = round(first_paint_ms, 2)
+        stages["first_useful_ms"] = round(first_useful_ms, 2)
+        outline_used = True
+        yield draft, {
+            "source": "stage_a",
+            "first_paint_ms": round(first_paint_ms, 2),
+            "first_useful_ms": round(first_useful_ms, 2),
+            "streaming": True,
+            "final": False,
+            "from_cache": False,
+            "cache_ms": cache_ms,
+            "outline_ms": outline_ms,
+            "outline_first": True,
+            "stage_a": True,
+            "request_id": request_id,
+            "turn_id": turn_id,
+            "answer_mode": answer_mode,
+            "grounding": grounding_meta,
+            "stages": dict(stages),
+        }
+    elif use_outline:
         t_out = time.perf_counter()
         draft = outline_skeleton(question, job_context=job_context, mode=mode)
         outline_ms = round((time.perf_counter() - t_out) * 1000, 2)
         first_paint_ms = (time.perf_counter() - t0) * 1000
         stages["outline_ms"] = outline_ms
         stages["first_token_ms"] = round(first_paint_ms, 2)
+        # Outline scaffold is NOT first useful speakable answer
         outline_used = True
         yield draft, {
             "source": "outline",
@@ -696,6 +790,9 @@ def iter_cascade_answer(
             "cache_ms": cache_ms,
             "outline_ms": outline_ms,
             "outline_first": True,
+            "request_id": request_id,
+            "turn_id": turn_id,
+            "answer_mode": answer_mode,
             "stages": dict(stages),
         }
 
@@ -760,11 +857,30 @@ def iter_cascade_answer(
                     if not first_paint_ms:
                         first_paint_ms = llm_first_ms
                         stages["first_token_ms"] = round(first_paint_ms, 2)
+                    # First speakable useful content: first clause from LLM or Stage A
+                    if first_useful_ms is None:
+                        first_useful_ms = llm_first_ms
+                        stages["first_useful_ms"] = round(first_useful_ms, 2)
+                # Mid-stream grounding check (non-blocking warn)
+                if evidence_bundle is not None and len(acc) % 120 < 40:
+                    try:
+                        from evidence_grounding import detect_stream_violations
+
+                        mid = detect_stream_violations(acc, evidence_bundle)
+                        if mid:
+                            stages["stream_violations"] = len(mid)
+                    except Exception:
+                        pass
                 yield acc, {
                     "source": "llm_stream",
                     "first_paint_ms": round(
                         first_paint_ms or (time.perf_counter() - t0) * 1000, 2
                     ),
+                    "first_useful_ms": round(
+                        first_useful_ms or llm_first_ms or first_paint_ms, 2
+                    )
+                    if (first_useful_ms or llm_first_ms)
+                    else None,
                     "llm_first_token_ms": round(llm_first_ms, 2) if llm_first_ms else None,
                     "streaming": True,
                     "final": False,
@@ -772,6 +888,9 @@ def iter_cascade_answer(
                     "cache_ms": cache_ms,
                     "outline_ms": outline_ms,
                     "outline_first": outline_used,
+                    "request_id": request_id,
+                    "turn_id": turn_id,
+                    "answer_mode": answer_mode,
                     "stages": dict(stages),
                 }
     except Exception as e:
@@ -828,14 +947,36 @@ def iter_cascade_answer(
                 f"{type(bleed_err).__name__}: {bleed_err}"
             )
 
+    # Layer-2 final grounding sanitize
+    if final and evidence_bundle is not None:
+        try:
+            from evidence_grounding import sanitize_answer_against_evidence
+
+            g = sanitize_answer_against_evidence(
+                final, evidence_bundle, question=question, mode=answer_mode
+            )
+            if g.modified:
+                final = g.text
+                stages["grounding_sanitized"] = True
+                stages["grounding_violations"] = len(g.violations)
+                grounding_meta["violations"] = [v.to_dict() for v in g.violations]
+                grounding_meta["sanitized"] = True
+            grounding_meta["answer_mode"] = g.mode or answer_mode
+        except Exception as g_err:
+            stages["grounding_error"] = type(g_err).__name__
+
     if final and src in ("llm", "llm_bleed_regen"):
-        # Never cache answers that still invent product lines
+        # Never cache answers that still invent product lines or metrics
         try:
             from common_sense import has_invented_product_bleed
 
-            if not has_invented_product_bleed(
+            dirty = has_invented_product_bleed(
                 final, question=question, job_context=job_context
-            ):
+            )
+            if not dirty and not grounding_meta.get("violations"):
+                cache_store(question, final, mode=mode, job_context=job_context)
+            elif not dirty:
+                # Sanitized cleanly — safe to cache sanitized form
                 cache_store(question, final, mode=mode, job_context=job_context)
         except Exception:
             cache_store(question, final, mode=mode, job_context=job_context)
@@ -845,11 +986,15 @@ def iter_cascade_answer(
         stages["first_token_ms"] = round(
             first_paint_ms or full_ms, 2
         )
+    if first_useful_ms is None:
+        first_useful_ms = first_paint_ms or llm_first_ms or full_ms
+        stages["first_useful_ms"] = round(first_useful_ms, 2)
     yield final, {
         "source": src,
         "first_paint_ms": round(
             first_paint_ms or (time.perf_counter() - t0) * 1000, 2
         ),
+        "first_useful_ms": round(first_useful_ms, 2),
         "llm_first_token_ms": round(llm_first_ms, 2) if llm_first_ms else None,
         "streaming": False,
         "final": True,
@@ -858,6 +1003,10 @@ def iter_cascade_answer(
         "outline_ms": outline_ms,
         "outline_first": outline_used,
         "full_ms": full_ms,
+        "request_id": request_id,
+        "turn_id": turn_id,
+        "answer_mode": answer_mode,
+        "grounding": grounding_meta,
         "stages": stages,
     }
 

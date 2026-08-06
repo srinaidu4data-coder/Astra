@@ -100,7 +100,12 @@ export interface AudioDeviceInfo {
 export interface PipelineMetrics {
   vadMs: number
   sttMs: number
+  /** First paint (outline/stage-A/cache) — not full E2E */
   firstTokenMs: number
+  /**
+   * True end-to-end for the answer path (submit → full answer, or STT end → full).
+   * Must NEVER equal firstToken when the user waited seconds for completion.
+   */
   totalMs: number
   lastUpdated: number
   /** Stage breakdown for competitor benchmarking */
@@ -108,11 +113,20 @@ export interface PipelineMetrics {
   cacheMs?: number
   outlineMs?: number
   llmFirstTokenMs?: number
+  /** First complete speakable clause (Hook) */
+  firstUsefulMs?: number
   fullAnswerMs?: number
   totalPipelineMs?: number
+  /** Browser-measured submit → Hook paint (performance.now) */
+  clientE2eMs?: number
+  clientFirstPaintMs?: number
   source?: string
   depth?: string
   grade?: string
+  requestId?: string
+  turnId?: string
+  answerMode?: string
+  groundingViolations?: number
 }
 
 /** Live latency snapshot from /api/latency/metrics */

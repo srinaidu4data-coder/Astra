@@ -167,11 +167,39 @@ def update_pack(**kwargs: Any) -> SessionContextPack:
             elif v is not None and str(v).strip():
                 setattr(pack, k, str(v).strip() if isinstance(v, str) else v)
         pack.updated_at = time.time()
+        # Precompute evidence bundle when materials change (hash-invalidated)
+        try:
+            from evidence_grounding import clear_bundle_cache, get_or_build_bundle
+
+            if clear:
+                clear_bundle_cache(sid)
+            else:
+                get_or_build_bundle(
+                    session_key=sid,
+                    resume_text=pack.resume_text or "",
+                    job_description=pack.job_description or "",
+                    role=pack.role or "",
+                    stories=list(pack.stories or []),
+                    force=bool(
+                        kwargs.get("resume_text") is not None
+                        or kwargs.get("job_description") is not None
+                        or kwargs.get("role") is not None
+                        or kwargs.get("stories") is not None
+                    ),
+                )
+        except Exception:
+            pass
         return SessionContextPack(**asdict(pack))
 
 
 def clear_pack() -> None:
     update_pack(clear=True)
+    try:
+        from evidence_grounding import clear_bundle_cache
+
+        clear_bundle_cache(get_session_id())
+    except Exception:
+        pass
 
 
 def scrub_pack_for_role(role: str) -> SessionContextPack:

@@ -541,12 +541,17 @@ def answer_inject(req: InjectQuestionRequest, request: Request):
     u_primary, u_fallback = _user_model_prefs(request)
 
     first_paint_ms = None
+    first_useful_ms = None
     outline_ms = None
     cache_ms = None
     llm_first_ms = None
     source = "llm"
     acc = ""
     stages: dict[str, Any] = {}
+    request_id = ""
+    turn_id = ""
+    answer_mode = None
+    grounding = None
 
     def streamer(**kwargs):
         return iter_answer_tokens(**kwargs)
@@ -570,15 +575,27 @@ def answer_inject(req: InjectQuestionRequest, request: Request):
             outline_ms = meta["outline_ms"]
         if meta.get("llm_first_token_ms") is not None:
             llm_first_ms = meta["llm_first_token_ms"]
+        if meta.get("first_useful_ms") is not None and first_useful_ms is None:
+            first_useful_ms = meta["first_useful_ms"]
         if first_paint_ms is None and acc:
             first_paint_ms = meta.get("first_paint_ms")
         if meta.get("stages"):
             stages = dict(meta["stages"])
+        if meta.get("request_id"):
+            request_id = str(meta["request_id"])
+        if meta.get("turn_id"):
+            turn_id = str(meta["turn_id"])
+        if meta.get("answer_mode"):
+            answer_mode = meta["answer_mode"]
+        if meta.get("grounding"):
+            grounding = meta["grounding"]
 
     full_ms = round((time.perf_counter() - t0) * 1000)
     if first_paint_ms is None:
         first_paint_ms = full_ms
-    total_ms = full_ms  # inject has no STT
+    if first_useful_ms is None:
+        first_useful_ms = stages.get("first_useful_ms") or first_paint_ms
+    total_ms = full_ms  # inject has no STT — E2E is full answer completion
     try:
         record_trace(
             question=q[:200],
@@ -589,12 +606,20 @@ def answer_inject(req: InjectQuestionRequest, request: Request):
             cache_ms=cache_ms,
             outline_ms=outline_ms,
             first_token_ms=first_paint_ms,
+            first_useful_ms=first_useful_ms,
             full_answer_ms=full_ms,
             total_ms=total_ms,
             from_cache="cache" in source,
             outline_first=outline_ms is not None,
             words=len((acc or "").split()),
-            meta={"path": "inject", "llm_first_token_ms": llm_first_ms},
+            request_id=request_id,
+            turn_id=turn_id,
+            meta={
+                "path": "inject",
+                "llm_first_token_ms": llm_first_ms,
+                "answer_mode": answer_mode,
+                "grounding": grounding,
+            },
         )
     except Exception:
         pass
@@ -606,15 +631,22 @@ def answer_inject(req: InjectQuestionRequest, request: Request):
         "source": source,
         "depth": depth,
         "model_profile": ANSWER_PROFILE,
+        # latency_ms stays first paint for the Latency tile
         "latency_ms": first_paint_ms,
         "first_paint_ms": first_paint_ms,
         "first_token_ms": first_paint_ms,
+        "first_useful_ms": first_useful_ms,
         "llm_first_token_ms": llm_first_ms,
         "outline_ms": outline_ms,
         "cache_ms": cache_ms,
         "full_ms": full_ms,
         "full_answer_ms": full_ms,
+        # Honest end-to-end for typed inject = full completion (not first paint)
         "total_ms": total_ms,
+        "request_id": request_id,
+        "turn_id": turn_id,
+        "answer_mode": answer_mode,
+        "grounding": grounding,
         "stages": stages,
         "is_question": looks_like_question(q),
         "openai_ready": True,
@@ -914,6 +946,12 @@ def answer(req: AnswerRequest, request: Request):
 
 @app.post("/api/answer/stream")
 def answer_stream(req: AnswerRequest, request: Request):
+    """
+    Semantic cascade stream for typed questions (non-WS path).
+
+    Events: meta, hook_delta, hook_complete, proof_delta, close_delta,
+    timing, done, error — each tagged with request_id / turn_id / sequence.
+    """
     if not req.question.strip():
         raise HTTPException(400, "question required")
     if not get_openai_api_key():
@@ -923,46 +961,250 @@ def answer_stream(req: AnswerRequest, request: Request):
         )
 
     u_primary, u_fallback = _user_model_prefs(request)
+    session_id = _http_session_id(request)
 
     def gen():
+        import uuid as _uuid
+
+        from answer_engine import looks_like_question
+        from fast_answer import iter_cascade_answer
+        from latency_metrics import record_trace
+        from session_context import get_depth, session_scope, update_pack
+
         t0 = time.perf_counter()
+        request_id = _uuid.uuid4().hex[:12]
+        turn_id = _uuid.uuid4().hex[:12]
+        seq = 0
+        q = req.question.strip()
+        job = (req.job_context or "").strip()
+        mode = req.mode or "star"
         try:
-            cls = classify_utterance(req.question)
-            yield _sse("classification", cls)
-            q = cls.get("cleaned_question") or req.question
-            acc = ""
-            first = True
-            for tok in _stream_answer_text(
-                q,
-                job_context=req.job_context,
-                tone=req.tone,
-                mode=req.mode,
-                answer_model=req.answer_model,
-                fallback_model=req.fallback_model,
-                user_answer_model=u_primary,
-                user_fallback_model=u_fallback,
-            ):
-                acc += tok
-                payload = {
-                    "delta": tok,
-                    "text": acc,
-                    "first_token_ms": round((time.perf_counter() - t0) * 1000) if first else None,
+            with session_scope(session_id):
+                if req.depth:
+                    update_pack(depth=req.depth)
+                depth = get_depth()
+
+                # Deterministic classify — do not block Stage A on LLM classify
+                t_cls = time.perf_counter()
+                is_q = looks_like_question(q)
+                cls = {
+                    "is_interview_question": is_q,
+                    "confidence": 0.9 if is_q else 0.6,
+                    "cleaned_question": q,
+                    "reason": "stream_heuristic",
                 }
-                first = False
-                yield _sse("token", payload)
-            yield _sse(
-                "done",
-                {
-                    "text": acc,
-                    "bullets": to_bullets(acc, req.mode),
-                    "latency_ms": round((time.perf_counter() - t0) * 1000),
-                },
-            )
+                classify_ms = round((time.perf_counter() - t_cls) * 1000, 2)
+                seq += 1
+                yield _sse(
+                    "meta",
+                    {
+                        "session_id": session_id,
+                        "request_id": request_id,
+                        "turn_id": turn_id,
+                        "sequence_number": seq,
+                        "question": q,
+                        "mode": mode,
+                        "depth": depth,
+                        "classification": cls,
+                        "classify_ms": classify_ms,
+                    },
+                )
+
+                def streamer(**kwargs):
+                    return iter_answer_tokens(**kwargs)
+
+                acc = ""
+                source = "llm"
+                first_paint_ms = None
+                first_useful_ms = None
+                llm_first_ms = None
+                stages: dict[str, Any] = {}
+                hook_done = False
+                last_hook = ""
+
+                for text, meta in iter_cascade_answer(
+                    q,
+                    job_context=job,
+                    tone=req.tone,
+                    mode=mode,
+                    user_answer_model=u_primary,
+                    user_fallback_model=u_fallback,
+                    llm_streamer=streamer,
+                ):
+                    acc = text or acc
+                    source = str(meta.get("source") or source)
+                    stages = dict(meta.get("stages") or stages)
+                    if meta.get("llm_first_token_ms") is not None:
+                        llm_first_ms = meta["llm_first_token_ms"]
+                    if first_paint_ms is None and acc:
+                        first_paint_ms = meta.get("first_paint_ms")
+                    if first_useful_ms is None and meta.get("first_useful_ms") is not None:
+                        first_useful_ms = meta["first_useful_ms"]
+
+                    # Split Hook / rest for semantic events
+                    hook_text, rest = _split_hook_rest(acc)
+                    seq += 1
+                    base = {
+                        "session_id": session_id,
+                        "request_id": request_id,
+                        "turn_id": turn_id,
+                        "sequence_number": seq,
+                        "source": source,
+                        "text": acc,
+                        "first_paint_ms": first_paint_ms,
+                        "first_useful_ms": first_useful_ms,
+                        "llm_first_token_ms": llm_first_ms,
+                        "answer_mode": meta.get("answer_mode"),
+                        "streaming": not bool(meta.get("final")),
+                    }
+                    if hook_text and hook_text != last_hook:
+                        last_hook = hook_text
+                        yield _sse(
+                            "hook_delta",
+                            {**base, "hook": hook_text, "delta": hook_text},
+                        )
+                        if (
+                            not hook_done
+                            and len(hook_text) >= 12
+                            and hook_text.rstrip().endswith((".", "!", "?"))
+                        ):
+                            hook_done = True
+                            if first_useful_ms is None:
+                                first_useful_ms = round(
+                                    (time.perf_counter() - t0) * 1000, 2
+                                )
+                            seq += 1
+                            yield _sse(
+                                "hook_complete",
+                                {
+                                    **base,
+                                    "sequence_number": seq,
+                                    "hook": hook_text,
+                                    "first_useful_ms": first_useful_ms,
+                                },
+                            )
+                    if rest:
+                        yield _sse("proof_delta", {**base, "proof": rest})
+
+                    if meta.get("final"):
+                        break
+
+                full_ms = round((time.perf_counter() - t0) * 1000, 2)
+                if first_paint_ms is None:
+                    first_paint_ms = full_ms
+                if first_useful_ms is None:
+                    first_useful_ms = first_paint_ms
+                hook_text, rest = _split_hook_rest(acc)
+                seq += 1
+                yield _sse(
+                    "timing",
+                    {
+                        "session_id": session_id,
+                        "request_id": request_id,
+                        "turn_id": turn_id,
+                        "sequence_number": seq,
+                        "classify_ms": classify_ms,
+                        "first_token_ms": first_paint_ms,
+                        "first_useful_ms": first_useful_ms,
+                        "llm_first_token_ms": llm_first_ms,
+                        "full_answer_ms": full_ms,
+                        "total_ms": full_ms,
+                        "stages": stages,
+                        "source": source,
+                    },
+                )
+                seq += 1
+                yield _sse(
+                    "done",
+                    {
+                        "session_id": session_id,
+                        "request_id": request_id,
+                        "turn_id": turn_id,
+                        "sequence_number": seq,
+                        "text": acc,
+                        "hook": hook_text,
+                        "proof": rest,
+                        "bullets": to_bullets(acc, mode),
+                        "source": source,
+                        "depth": depth,
+                        "answer_mode": stages.get("answer_mode"),
+                        "first_paint_ms": first_paint_ms,
+                        "first_useful_ms": first_useful_ms,
+                        "llm_first_token_ms": llm_first_ms,
+                        "full_answer_ms": full_ms,
+                        "full_ms": full_ms,
+                        "total_ms": full_ms,
+                        "latency_ms": first_paint_ms,
+                        "stages": stages,
+                    },
+                )
+                try:
+                    record_trace(
+                        question=q[:200],
+                        source=source,
+                        depth=depth,
+                        classify_ms=classify_ms,
+                        first_token_ms=first_paint_ms,
+                        first_useful_ms=first_useful_ms,
+                        full_answer_ms=full_ms,
+                        total_ms=full_ms,
+                        request_id=request_id,
+                        turn_id=turn_id,
+                        words=len((acc or "").split()),
+                        meta={"path": "answer_stream", "llm_first_token_ms": llm_first_ms},
+                    )
+                except Exception:
+                    pass
         except Exception as e:
             traceback.print_exc()
-            yield _sse("error", {"message": str(e)})
+            yield _sse(
+                "error",
+                {
+                    "message": str(e),
+                    "request_id": request_id,
+                    "turn_id": turn_id,
+                },
+            )
 
-    return StreamingResponse(gen(), media_type="text/event-stream")
+    headers = {
+        "Cache-Control": "no-cache, no-transform",
+        "X-Accel-Buffering": "no",
+        "Connection": "keep-alive",
+    }
+    return StreamingResponse(
+        gen(), media_type="text/event-stream", headers=headers
+    )
+
+
+def _split_hook_rest(text: str) -> tuple[str, str]:
+    """Extract Hook section vs remainder for semantic stream events."""
+    t = (text or "").strip()
+    if not t:
+        return "", ""
+    m = re.match(
+        r"^(?:Hook\s*:\s*)?(.*?)(?:\n\s*(?:Proof|Situation|Task|Action|Result|"
+        r"Approach|Mechanism|Tradeoff|Close|Explain)\s*:|$)",
+        t,
+        flags=re.I | re.S,
+    )
+    if m:
+        hook = m.group(1).strip()
+        # Prefer labeled Hook line
+        hm = re.search(r"Hook\s*:\s*(.+?)(?:\n|$)", t, flags=re.I)
+        if hm:
+            hook = hm.group(1).strip()
+            rest = t[hm.end() :].strip()
+            return hook, rest
+        rest = t[m.end() :].strip() if m.lastindex else ""
+        if "\n" in t:
+            lines = t.split("\n", 1)
+            return lines[0].strip(), (lines[1] if len(lines) > 1 else "").strip()
+        return hook, rest
+    # First sentence as hook
+    sm = re.match(r"^(.+?[.!?])\s*(.*)$", t, flags=re.S)
+    if sm:
+        return sm.group(1).strip(), sm.group(2).strip()
+    return t, ""
 
 
 @app.post("/api/run-test-audio")
