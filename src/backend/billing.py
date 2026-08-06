@@ -17,30 +17,25 @@ import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
+from stripe import StripeClient
 
 from backend.config import settings
 from backend.database import get_session
 from backend.email_service import send_billing_email, send_email_async
 from backend.jwt_auth import get_current_user, user_has_active_subscription, user_public_dict
 from backend.models import User
+from backend.stripe_client import get_stripe_client, stripe_not_configured_error
 
 logger = logging.getLogger("astra.billing")
 
 router = APIRouter(prefix="/v1/billing", tags=["billing"])
 
 
-def _stripe() -> None:
-    if not settings.STRIPE_SECRET_KEY.strip():
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "error": {
-                    "code": "stripe_not_configured",
-                    "message": "Stripe is not configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_ID.",
-                }
-            },
-        )
-    stripe.api_key = settings.STRIPE_SECRET_KEY.strip()
+def _stripe() -> StripeClient:
+    """Return a StripeClient or raise 503 if billing is not configured."""
+    if not settings.stripe_configured:
+        raise stripe_not_configured_error()
+    return get_stripe_client()
 
 
 def _as_dict(obj: Any) -> dict:
@@ -89,16 +84,19 @@ class SyncResponse(BaseModel):
 
 def _ensure_customer(user: User, session: Session) -> str:
     """Return Stripe customer id, creating one if needed."""
-    _stripe()
+    client = _stripe()
     if user.stripe_customer_id:
         return user.stripe_customer_id
 
-    customer = stripe.Customer.create(
-        email=user.email,
-        name=user.name or None,
-        metadata={"astra_user_id": str(user.id)},
+    customer = client.v1.customers.create(
+        params={
+            "email": user.email,
+            "name": user.name or None,
+            "metadata": {"astra_user_id": str(user.id)},
+        }
     )
-    user.stripe_customer_id = customer["id"]
+    cid = getattr(customer, "id", None) or _as_dict(customer).get("id")
+    user.stripe_customer_id = str(cid)
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -224,30 +222,36 @@ def _user_from_customer_id(session: Session, customer_id: str | None) -> User | 
 
 def _sync_user_from_stripe(session: Session, user: User) -> str:
     """Pull latest subscription state from Stripe for this user. Returns source label."""
-    _stripe()
+    client = _stripe()
 
     # Prefer known subscription id
     if user.stripe_subscription_id:
         try:
-            sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
+            sub = client.v1.subscriptions.retrieve(user.stripe_subscription_id)
             _apply_subscription(session, user, _as_dict(sub))
             return "subscription_id"
-        except stripe.error.InvalidRequestError:
-            logger.warning("Stored subscription %s missing", user.stripe_subscription_id)
+        except Exception as exc:
+            logger.warning(
+                "Stored subscription %s missing: %s",
+                user.stripe_subscription_id,
+                exc,
+            )
 
     customer_id = user.stripe_customer_id
     if not customer_id:
         # Try lookup by email
-        customers = stripe.Customer.list(email=user.email, limit=3)
+        customers = client.v1.customers.list(params={"email": user.email, "limit": 3})
         data = list(getattr(customers, "data", None) or [])
         if data:
-            customer_id = data[0]["id"]
-            user.stripe_customer_id = customer_id
+            customer_id = getattr(data[0], "id", None) or _as_dict(data[0]).get("id")
+            user.stripe_customer_id = str(customer_id)
             session.add(user)
             session.commit()
 
     if customer_id:
-        subs = stripe.Subscription.list(customer=customer_id, status="all", limit=10)
+        subs = client.v1.subscriptions.list(
+            params={"customer": customer_id, "status": "all", "limit": 10}
+        )
         items = list(getattr(subs, "data", None) or [])
         preferred = None
         for s in items:
@@ -328,7 +332,7 @@ async def create_checkout(
     price_id = (product.stripe_price_id or "").strip()
     # Legacy fallback for pro monthly
     if not price_id and product.code == "pro_monthly":
-        price_id = (settings.STRIPE_PRICE_ID or "").strip()
+        price_id = settings.stripe_price_pro_monthly_effective
     if not settings.STRIPE_SECRET_KEY.strip() or not price_id:
         raise HTTPException(
             status_code=503,
@@ -339,7 +343,7 @@ async def create_checkout(
                 }
             },
         )
-    _stripe()
+    client = _stripe()
 
     if product.billing_mode == "subscription" and user_has_active_subscription(user):
         raise HTTPException(
@@ -372,6 +376,7 @@ async def create_checkout(
     if body.opportunity_id:
         meta["opportunity_id"] = str(body.opportunity_id)
 
+    # Never pass payment_method_types — dynamic payment methods from Dashboard
     kwargs: dict = {
         "customer": customer_id,
         "mode": "subscription" if product.billing_mode == "subscription" else "payment",
@@ -391,11 +396,11 @@ async def create_checkout(
             "metadata": {"astra_user_id": str(user.id), "product_code": product.code}
         }
 
-    checkout = stripe.checkout.Session.create(**kwargs)
-    url = checkout.get("url") if isinstance(checkout, dict) else checkout.url
+    checkout = client.v1.checkout.sessions.create(params=kwargs)
+    url = getattr(checkout, "url", None) or _as_dict(checkout).get("url")
     if not url:
         raise HTTPException(status_code=500, detail="Stripe did not return a checkout URL.")
-    return CheckoutResponse(url=url)
+    return CheckoutResponse(url=str(url))
 
 
 @router.post("/portal", response_model=PortalResponse)
@@ -404,17 +409,19 @@ async def create_portal(
     session: Session = Depends(get_session),
 ) -> PortalResponse:
     """Stripe Customer Portal — cancel, update card, view invoices / request refunds."""
-    _stripe()
+    client = _stripe()
     if not user.stripe_customer_id and not user_has_active_subscription(user):
         # Still allow portal creation after first customer ensure
         pass
     customer_id = _ensure_customer(user, session)
-    portal = stripe.billing_portal.Session.create(
-        customer=customer_id,
-        return_url=f"{settings.FRONTEND_URL.rstrip('/')}/#/settings",
+    portal = client.v1.billing_portal.sessions.create(
+        params={
+            "customer": customer_id,
+            "return_url": f"{settings.FRONTEND_URL.rstrip('/')}/#/settings",
+        }
     )
-    url = portal.get("url") if isinstance(portal, dict) else portal.url
-    return PortalResponse(url=url)
+    url = getattr(portal, "url", None) or _as_dict(portal).get("url")
+    return PortalResponse(url=str(url))
 
 
 @router.post("/sync", response_model=SyncResponse)
@@ -453,17 +460,17 @@ async def confirm_checkout_session(
     session: Session = Depends(get_session),
 ) -> SyncResponse:
     """After Stripe redirects back with session_id — apply sub without waiting for webhook."""
-    _stripe()
+    client = _stripe()
     db_user = session.get(User, user.id)
     if db_user is None:
         raise HTTPException(status_code=401, detail="User not found")
 
     try:
-        cs = stripe.checkout.Session.retrieve(
+        cs = client.v1.checkout.sessions.retrieve(
             body.session_id,
-            expand=["subscription"],
+            params={"expand": ["subscription"]},
         )
-    except stripe.error.InvalidRequestError as exc:
+    except Exception as exc:
         raise HTTPException(
             status_code=400,
             detail={
@@ -490,7 +497,7 @@ async def confirm_checkout_session(
 
     sub = cs_d.get("subscription")
     if isinstance(sub, str):
-        sub = _as_dict(stripe.Subscription.retrieve(sub))
+        sub = _as_dict(client.v1.subscriptions.retrieve(sub))
     else:
         sub = _as_dict(sub)
 
@@ -563,7 +570,7 @@ async def stripe_webhook(
     if not settings.STRIPE_SECRET_KEY.strip():
         raise HTTPException(status_code=503, detail="Stripe not configured")
 
-    stripe.api_key = settings.STRIPE_SECRET_KEY.strip()
+    client = get_stripe_client()
     payload = await request.body()
     sig = request.headers.get("stripe-signature", "")
 
@@ -575,7 +582,10 @@ async def stripe_webhook(
         else:
             import json
 
-            event = stripe.Event.construct_from(json.loads(payload), stripe.api_key)
+            # Dev-only path — never skip verification in production long-term
+            event = stripe.Event.construct_from(
+                json.loads(payload), settings.STRIPE_SECRET_KEY.strip()
+            )
             logger.warning(
                 "Stripe webhook accepted WITHOUT signature verification — set STRIPE_WEBHOOK_SECRET"
             )
@@ -599,7 +609,7 @@ async def stripe_webhook(
         if user_id:
             user = session.get(User, int(user_id))
             if user and sub_id:
-                sub = stripe.Subscription.retrieve(sub_id)
+                sub = client.v1.subscriptions.retrieve(str(sub_id))
                 _apply_subscription(session, user, _as_dict(sub), clear_revocation=True)
                 try:
                     from backend.entitlements import grant_entitlement
@@ -668,7 +678,7 @@ async def stripe_webhook(
         user = _user_from_customer_id(session, cid)
         sub_id = data.get("subscription")
         if user and sub_id:
-            sub = stripe.Subscription.retrieve(sub_id)
+            sub = client.v1.subscriptions.retrieve(str(sub_id))
             _apply_subscription(session, user, _as_dict(sub), clear_revocation=True)
 
     elif etype == "invoice.payment_failed":
@@ -725,7 +735,7 @@ async def stripe_webhook(
                 # Also cancel subscription in Stripe if still open (best-effort)
                 if user.stripe_subscription_id:
                     try:
-                        stripe.Subscription.cancel(user.stripe_subscription_id)
+                        client.v1.subscriptions.cancel(user.stripe_subscription_id)
                     except Exception:
                         logger.warning(
                             "Could not cancel sub %s after refund",

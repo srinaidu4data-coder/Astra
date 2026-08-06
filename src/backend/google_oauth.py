@@ -80,7 +80,12 @@ async def auth_config() -> AuthConfigResponse:
             "env_file_hint": "src/.env",
             "google_redirect_uri": settings.GOOGLE_REDIRECT_URI,
             "smtp": smtp_self_check(),
-            "stripe_price_set": bool(settings.STRIPE_PRICE_ID.strip()),
+            "stripe_price_set": bool(
+                settings.STRIPE_PRICE_ID.strip()
+                or settings.STRIPE_PRICE_PRO_MONTHLY.strip()
+                or settings.STRIPE_PRICE_INTERVIEW_PASS.strip()
+                or settings.STRIPE_PRICE_INTERVIEW_SPRINT.strip()
+            ),
             "stripe_webhook_secret_set": bool(settings.STRIPE_WEBHOOK_SECRET.strip()),
             "jwt_secret_is_default": settings.JWT_SECRET.startswith("change-me"),
             "password_reset_expire_minutes": settings.PASSWORD_RESET_EXPIRE_MINUTES,

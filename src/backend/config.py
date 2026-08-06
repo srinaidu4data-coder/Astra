@@ -269,7 +269,24 @@ class Settings(BaseSettings):
 
     @property
     def stripe_configured(self) -> bool:
-        return bool(self.STRIPE_SECRET_KEY.strip() and self.STRIPE_PRICE_ID.strip())
+        """True when a secret key and at least one sellable price id are set."""
+        key = self.STRIPE_SECRET_KEY.strip()
+        if not key:
+            return False
+        return bool(
+            self.STRIPE_PRICE_ID.strip()
+            or self.STRIPE_PRICE_PRO_MONTHLY.strip()
+            or self.STRIPE_PRICE_INTERVIEW_PASS.strip()
+            or self.STRIPE_PRICE_INTERVIEW_SPRINT.strip()
+        )
+
+    @property
+    def stripe_price_pro_monthly_effective(self) -> str:
+        """Pro monthly price: dedicated env or legacy STRIPE_PRICE_ID."""
+        return (
+            self.STRIPE_PRICE_PRO_MONTHLY.strip()
+            or self.STRIPE_PRICE_ID.strip()
+        )
 
     @property
     def smtp_configured(self) -> bool:
