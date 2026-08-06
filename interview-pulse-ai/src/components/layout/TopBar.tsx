@@ -27,7 +27,7 @@ export function TopBar() {
     practice: 'Mock interview',
     analytics: 'Analytics',
     settings: 'Settings',
-    admin: 'Admin · models',
+    admin: 'Admin · models & latency',
     jobsearch: 'Jobs',
     autoapply: 'Jobs',
     nightscout: 'Jobs',

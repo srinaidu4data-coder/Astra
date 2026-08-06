@@ -39,6 +39,7 @@ from answer_engine import (  # noqa: E402
     to_bullets,
 )
 from api_models import (  # noqa: E402
+    AdminLatencySuiteRequest,
     AnswerRequest,
     FileRunRequest,
     InjectQuestionRequest,
@@ -445,6 +446,58 @@ def session_full_reset(request: Request):
         "cache_cleared": cleared_cache,
         "message": "Identity pack and answer cache cleared for this login",
     }
+
+
+def _require_admin_request(request: Request) -> None:
+    """Raise 401/403 unless Authorization Bearer is an admin user."""
+    try:
+        from backend.database import engine
+        from backend.jwt_auth import decode_access_token
+        from backend.models import User
+        from sqlmodel import Session
+    except Exception as e:
+        raise HTTPException(503, f"Admin auth unavailable: {e}") from e
+
+    auth = request.headers.get("authorization") or request.headers.get("Authorization") or ""
+    if not auth.lower().startswith("bearer "):
+        raise HTTPException(401, "Admin login required")
+    token = auth.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(401, "Admin login required")
+    payload = decode_access_token(token)
+    uid = payload.get("sub")
+    if not uid:
+        raise HTTPException(401, "Invalid session")
+    with Session(engine) as session:
+        user = session.get(User, int(uid))
+        if not user or not bool(getattr(user, "is_admin", False)):
+            raise HTTPException(403, "Admin access required")
+
+
+@app.post("/api/latency/admin-suite")
+def latency_admin_suite(req: AdminLatencySuiteRequest, request: Request):
+    """
+    Admin-only holistic latency suite — single-shot view of:
+      health, warm, STT, typed first-useful, full shorter/STAR, grounding gates.
+
+    Same cascade as live Interview (not mock-only).
+    """
+    _require_admin_request(request)
+    from latency_admin_suite import run_admin_latency_suite
+
+    sid = f"admin_suite_{_http_session_id(request)}"
+    return run_admin_latency_suite(
+        modes=list(req.modes or ["shorter", "star"]),
+        depths=list(req.depths or ["fast", "balanced"]),
+        max_questions=int(req.max_questions or 8),
+        include_stt=bool(req.include_stt),
+        include_llm=bool(req.include_llm),
+        warm_first=bool(req.warm_first),
+        role=req.role or "Senior SAP FICO Consultant",
+        resume_text=req.resume_text or "",
+        job_description=req.job_description or "",
+        session_id=sid,
+    )
 
 
 @app.post("/api/latency/ai-diagnose")

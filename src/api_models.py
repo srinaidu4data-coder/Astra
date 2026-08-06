@@ -60,3 +60,30 @@ class FileRunRequest(BaseModel):
     min_segment_sec: float = 1.5
     silence_ms: int = 900
     silence_threshold: float = 0.012
+
+
+class AdminLatencySuiteRequest(BaseModel):
+    """Admin-only holistic latency suite (typed answers + optional STT)."""
+
+    modes: list[str] = Field(
+        default_factory=lambda: ["shorter", "star"],
+        description="Answer formats to test",
+    )
+    depths: list[str] = Field(
+        default_factory=lambda: ["fast", "balanced"],
+        description="Depth modes to test",
+    )
+    max_questions: int = Field(default=8, ge=1, le=24)
+    include_stt: bool = True
+    include_llm: bool = True
+    warm_first: bool = True
+    # Synthetic kit materials for grounded answers
+    role: str = "Senior SAP FICO Consultant"
+    resume_text: str = (
+        "Senior SAP FICO Consultant with 8 years experience. S/4HANA Finance, "
+        "enterprise structure, asset accounting, integration testing, cutover and hypercare. "
+        "Improved month-end close time by 30% through reconciliation standardization and automation."
+    )
+    job_description: str = (
+        "SAP FICO consultant for S/4HANA Finance close, reconciliation, and hypercare."
+    )

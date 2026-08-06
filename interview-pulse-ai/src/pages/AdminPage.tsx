@@ -1,3 +1,4 @@
+import { AdminLatencyLab } from '@/components/AdminLatencyLab'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -7,8 +8,10 @@ import {
 } from '@/services/admin'
 import type { AuthUser } from '@/services/auth'
 import { useAppStore } from '@/stores/app-store'
-import { Loader2, RefreshCw, Search, Shield, Sparkles } from 'lucide-react'
+import { Gauge, Loader2, RefreshCw, Search, Shield, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+
+type AdminTab = 'models' | 'latency'
 
 const DEFAULT_PRIMARY = 'gpt-4.1-nano'
 const DEFAULT_FALLBACK = 'gpt-4o-mini'
@@ -22,6 +25,7 @@ export function AdminPage() {
   const me = useAppStore((s) => s.user)
   const setAuthFromUser = useAppStore((s) => s.setAuthFromUser)
 
+  const [tab, setTab] = useState<AdminTab>('models')
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -156,6 +160,38 @@ export function AdminPage() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
+      {/* Admin tabs — Models | Latency lab */}
+      <div className="flex flex-wrap gap-2 px-1">
+        <button
+          type="button"
+          onClick={() => setTab('models')}
+          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-medium transition ${
+            tab === 'models'
+              ? 'bg-[#20B8CD]/18 text-[#5DD5E3]'
+              : 'bg-white/[0.04] text-white/45 hover:text-white/70'
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} />
+          Models
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('latency')}
+          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-medium transition ${
+            tab === 'latency'
+              ? 'bg-[#20B8CD]/18 text-[#5DD5E3]'
+              : 'bg-white/[0.04] text-white/45 hover:text-white/70'
+          }`}
+        >
+          <Gauge className="h-3.5 w-3.5" strokeWidth={1.75} />
+          Latency lab
+        </button>
+      </div>
+
+      {tab === 'latency' ? <AdminLatencyLab /> : null}
+
+      {tab === 'models' ? (
+      <>
       <section className="glass rounded-[28px] p-6 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -423,6 +459,8 @@ export function AdminPage() {
         </span>
         .
       </p>
+      </>
+      ) : null}
     </div>
   )
 }
