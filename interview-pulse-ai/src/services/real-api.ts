@@ -628,8 +628,7 @@ export async function streamAnswer(
   signal?: AbortSignal,
 ) {
   try {
-    const ans = await streamCascadeAnswer(question, opts, cb, signal)
-    if (!cb.onAnswerDone) cb.onAnswerDone?.(ans)
+    await streamCascadeAnswer(question, opts, cb, signal)
   } catch (e) {
     cb.onError?.((e as Error).message)
     throw e
