@@ -203,6 +203,7 @@ def test_cascade_stage_a_before_llm(monkeypatch):
             role="Senior SAP FICO Consultant",
             resume_text=RESUME_30PCT,
             outline_first=True,
+            depth="balanced",
         )
         events = list(
             iter_cascade_answer(
@@ -222,6 +223,87 @@ def test_cascade_stage_a_before_llm(monkeypatch):
         low = final_text.lower()
         assert "10 days" not in low
         assert "40%" not in low
+        clear_pack()
+
+
+def test_shorter_fast_completes_on_stage_a(monkeypatch):
+    """Shorter+fast must not wait for LLM — Stage A is the full answer."""
+    from fast_answer import iter_cascade_answer
+    from session_context import clear_pack, session_scope, update_pack
+
+    def boom(*_a, **_k):
+        raise RuntimeError("LLM must not be required for shorter+fast Stage A")
+        yield ""  # pragma: no cover
+
+    monkeypatch.setenv("ASTRA_OUTLINE_FIRST", "1")
+    monkeypatch.setenv("ASTRA_TEMPLATE_PAINT", "0")
+
+    with session_scope("test_shorter_fast_stage_a"):
+        clear_pack()
+        update_pack(
+            role="Senior SAP FICO Consultant",
+            resume_text=RESUME_30PCT,
+            outline_first=True,
+            depth="fast",
+        )
+        events = list(
+            iter_cascade_answer(
+                QUESTION_MONTH_END,
+                job_context="Senior SAP FICO Consultant",
+                mode="shorter",
+                llm_streamer=boom,
+            )
+        )
+        assert events
+        final_text, final_meta = events[-1]
+        assert final_meta.get("final") is True
+        assert final_meta.get("source") in ("stage_a", "exact_cache")
+        low = final_text.lower()
+        assert "30%" in low or "30 %" in low
+        assert "10 days" not in low
+        assert "40%" not in low
+        assert (final_meta.get("full_ms") or 0) < 100
+        clear_pack()
+
+
+def test_llm_fail_keeps_stage_a_not_template(monkeypatch):
+    from fast_answer import iter_cascade_answer
+    from session_context import clear_pack, session_scope, update_pack
+
+    def boom(*_a, **_k):
+        raise RuntimeError("provider down")
+        yield ""  # pragma: no cover
+
+    monkeypatch.setenv("ASTRA_OUTLINE_FIRST", "1")
+    monkeypatch.setenv("ASTRA_TEMPLATE_PAINT", "0")
+    monkeypatch.setenv("ASTRA_TEMPLATE_FIRST", "1")
+
+    with session_scope("test_stage_a_fallback"):
+        clear_pack()
+        update_pack(
+            role="Senior SAP FICO Consultant",
+            resume_text=RESUME_30PCT,
+            depth="balanced",
+            outline_first=True,
+        )
+        events = list(
+            iter_cascade_answer(
+                QUESTION_MONTH_END,
+                job_context="Senior SAP FICO Consultant",
+                mode="star",
+                llm_streamer=boom,
+            )
+        )
+        final_text, final_meta = events[-1]
+        assert final_meta.get("final") is True
+        # Must keep Stage A, not generic template_fallback
+        assert final_meta.get("source") in (
+            "stage_a_fallback",
+            "stage_a",
+            "draft_fallback",
+        )
+        assert "reframe this around a measurable outcome" not in final_text.lower()
+        assert "30%" in final_text or "30 %" in final_text
         clear_pack()
 
 

@@ -755,12 +755,27 @@ def iter_cascade_answer(
         stages["first_token_ms"] = round(first_paint_ms, 2)
         stages["first_useful_ms"] = round(first_useful_ms, 2)
         outline_used = True
+        # Shorter + fast: Stage A IS the complete speakable answer (Hook→Proof→Close).
+        # Never hold the candidate for a multi-second LLM monologue when evidence
+        # already produced a grounded short answer.
+        depth_now = "balanced"
+        try:
+            from session_context import get_depth
+
+            depth_now = get_depth() or "balanced"
+        except Exception:
+            pass
+        stage_a_complete = mode == "shorter" and depth_now == "fast" and answer_mode in (
+            "verified_experience",
+            "partially_supported",
+            "hypothetical_approach",
+        )
         yield draft, {
             "source": "stage_a",
             "first_paint_ms": round(first_paint_ms, 2),
             "first_useful_ms": round(first_useful_ms, 2),
-            "streaming": True,
-            "final": False,
+            "streaming": not stage_a_complete,
+            "final": stage_a_complete,
             "from_cache": False,
             "cache_ms": cache_ms,
             "outline_ms": outline_ms,
@@ -772,6 +787,32 @@ def iter_cascade_answer(
             "grounding": grounding_meta,
             "stages": dict(stages),
         }
+        if stage_a_complete:
+            stages["full_answer_ms"] = round((time.perf_counter() - t0) * 1000, 2)
+            # Cache Stage A so repeat typed questions are instant
+            try:
+                cache_store(question, draft, mode=mode, job_context=job_context)
+            except Exception:
+                pass
+            yield draft, {
+                "source": "stage_a",
+                "first_paint_ms": round(first_paint_ms, 2),
+                "first_useful_ms": round(first_useful_ms, 2),
+                "streaming": False,
+                "final": True,
+                "from_cache": False,
+                "cache_ms": cache_ms,
+                "outline_ms": outline_ms,
+                "outline_first": True,
+                "stage_a": True,
+                "full_ms": stages["full_answer_ms"],
+                "request_id": request_id,
+                "turn_id": turn_id,
+                "answer_mode": answer_mode,
+                "grounding": grounding_meta,
+                "stages": stages,
+            }
+            return
     elif use_outline:
         t_out = time.perf_counter()
         draft = outline_skeleton(question, job_context=job_context, mode=mode)
@@ -897,17 +938,23 @@ def iter_cascade_answer(
         # Root cause of a template_fallback answer must be visible somewhere —
         # this was silently swallowed before, leaving no trace of why a real
         # question got a generic canned answer mid-interview.
-        print(f"[fast_answer] llm_streamer failed, falling back to template: {type(e).__name__}: {e}")
+        print(f"[fast_answer] llm_streamer failed, falling back to stage_a/template: {type(e).__name__}: {e}")
         try:
             from latency_metrics import get_registry
 
             get_registry().incr("provider_failovers")
         except Exception:
             pass
+        stages["llm_error"] = f"{type(e).__name__}: {e}"[:200]
         acc = ""
 
     final = (acc or "").strip()
-    if not final and ENABLE_TEMPLATE_FIRST:
+    # Prefer Stage A / outline draft over generic template when LLM fails
+    if not final and draft and len(draft.strip()) >= 40:
+        final = draft.strip()
+        src = "stage_a_fallback" if "Hook:" in draft or outline_used else "draft_fallback"
+        stages["used_stage_a_on_llm_fail"] = True
+    elif not final and ENABLE_TEMPLATE_FIRST:
         # Offline / API failure only — mark honestly
         final = template_answer(question, job_context=job_context, mode=mode)
         src = "template_fallback"

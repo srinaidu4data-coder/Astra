@@ -46,6 +46,9 @@ class InjectQuestionRequest(BaseModel):
     tone: str = "confident"
     mode: str = "star"
     depth: Optional[str] = None
+    # Optional materials for inject when kit pack was not POSTed to /api/session/context
+    resume_text: Optional[str] = None
+    job_description: Optional[str] = None
 
 
 class FileRunRequest(BaseModel):

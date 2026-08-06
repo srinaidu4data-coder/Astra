@@ -518,6 +518,9 @@ def answer_inject(req: InjectQuestionRequest, request: Request):
     """
     Manual question path when STT lags (same cascade as live, no audio).
     Returns full stage latency for competitor benchmarking.
+
+    MUST use the same session_scope as /api/session/context so resume/JD
+    materials from the Interview kit ground the answer.
     """
     if not req.question.strip():
         raise HTTPException(400, "question required")
@@ -527,130 +530,144 @@ def answer_inject(req: InjectQuestionRequest, request: Request):
     from answer_engine import ANSWER_PROFILE, looks_like_question
     from fast_answer import iter_cascade_answer
     from latency_metrics import get_registry, record_trace
-    from session_context import get_depth, update_pack
+    from session_context import get_depth, session_scope, update_pack
 
-    if req.depth:
-        update_pack(depth=req.depth)
-    get_registry().incr("manual_injects")
+    sid = _http_session_id(request)
+    with session_scope(sid):
+        # Optional inline materials (typed inject without prior pack POST)
+        pack_kwargs: dict[str, Any] = {}
+        if req.depth:
+            pack_kwargs["depth"] = req.depth
+        if getattr(req, "resume_text", None) is not None:
+            pack_kwargs["resume_text"] = req.resume_text
+        if getattr(req, "job_description", None) is not None:
+            pack_kwargs["job_description"] = req.job_description
+        if (req.job_context or "").strip():
+            pack_kwargs["role"] = (req.job_context or "").strip()
+        if pack_kwargs:
+            update_pack(**pack_kwargs)
+        get_registry().incr("manual_injects")
 
-    t0 = time.perf_counter()
-    q = req.question.strip()
-    # Request job_context is source of truth — blank stays blank
-    job = (req.job_context or "").strip()
-    depth = get_depth()
-    u_primary, u_fallback = _user_model_prefs(request)
+        t0 = time.perf_counter()
+        q = req.question.strip()
+        # Request job_context is source of truth — blank stays blank
+        job = (req.job_context or "").strip()
+        depth = get_depth()
+        u_primary, u_fallback = _user_model_prefs(request)
 
-    first_paint_ms = None
-    first_useful_ms = None
-    outline_ms = None
-    cache_ms = None
-    llm_first_ms = None
-    source = "llm"
-    acc = ""
-    stages: dict[str, Any] = {}
-    request_id = ""
-    turn_id = ""
-    answer_mode = None
-    grounding = None
+        first_paint_ms = None
+        first_useful_ms = None
+        outline_ms = None
+        cache_ms = None
+        llm_first_ms = None
+        source = "llm"
+        acc = ""
+        stages: dict[str, Any] = {}
+        request_id = ""
+        turn_id = ""
+        answer_mode = None
+        grounding = None
 
-    def streamer(**kwargs):
-        return iter_answer_tokens(**kwargs)
+        def streamer(**kwargs):
+            return iter_answer_tokens(**kwargs)
 
-    for text, meta in iter_cascade_answer(
-        q,
-        job_context=job,
-        tone=req.tone,
-        mode=req.mode or "star",
-        answer_model=None,
-        fallback_model=None,
-        user_answer_model=u_primary,
-        user_fallback_model=u_fallback,
-        llm_streamer=streamer,
-    ):
-        acc = text or acc
-        source = str(meta.get("source") or source)
-        if meta.get("cache_ms") is not None:
-            cache_ms = meta["cache_ms"]
-        if meta.get("outline_ms") is not None:
-            outline_ms = meta["outline_ms"]
-        if meta.get("llm_first_token_ms") is not None:
-            llm_first_ms = meta["llm_first_token_ms"]
-        if meta.get("first_useful_ms") is not None and first_useful_ms is None:
-            first_useful_ms = meta["first_useful_ms"]
-        if first_paint_ms is None and acc:
-            first_paint_ms = meta.get("first_paint_ms")
-        if meta.get("stages"):
-            stages = dict(meta["stages"])
-        if meta.get("request_id"):
-            request_id = str(meta["request_id"])
-        if meta.get("turn_id"):
-            turn_id = str(meta["turn_id"])
-        if meta.get("answer_mode"):
-            answer_mode = meta["answer_mode"]
-        if meta.get("grounding"):
-            grounding = meta["grounding"]
+        for text, meta in iter_cascade_answer(
+            q,
+            job_context=job,
+            tone=req.tone,
+            mode=req.mode or "star",
+            answer_model=None,
+            fallback_model=None,
+            user_answer_model=u_primary,
+            user_fallback_model=u_fallback,
+            llm_streamer=streamer,
+        ):
+            acc = text or acc
+            source = str(meta.get("source") or source)
+            if meta.get("cache_ms") is not None:
+                cache_ms = meta["cache_ms"]
+            if meta.get("outline_ms") is not None:
+                outline_ms = meta["outline_ms"]
+            if meta.get("llm_first_token_ms") is not None:
+                llm_first_ms = meta["llm_first_token_ms"]
+            if meta.get("first_useful_ms") is not None and first_useful_ms is None:
+                first_useful_ms = meta["first_useful_ms"]
+            if first_paint_ms is None and acc:
+                first_paint_ms = meta.get("first_paint_ms")
+            if meta.get("stages"):
+                stages = dict(meta["stages"])
+            if meta.get("request_id"):
+                request_id = str(meta["request_id"])
+            if meta.get("turn_id"):
+                turn_id = str(meta["turn_id"])
+            if meta.get("answer_mode"):
+                answer_mode = meta["answer_mode"]
+            if meta.get("grounding"):
+                grounding = meta["grounding"]
 
-    full_ms = round((time.perf_counter() - t0) * 1000)
-    if first_paint_ms is None:
-        first_paint_ms = full_ms
-    if first_useful_ms is None:
-        first_useful_ms = stages.get("first_useful_ms") or first_paint_ms
-    total_ms = full_ms  # inject has no STT — E2E is full answer completion
-    try:
-        record_trace(
-            question=q[:200],
-            source=source,
-            depth=depth,
-            stt_ms=0,
-            classify_ms=0,
-            cache_ms=cache_ms,
-            outline_ms=outline_ms,
-            first_token_ms=first_paint_ms,
-            first_useful_ms=first_useful_ms,
-            full_answer_ms=full_ms,
-            total_ms=total_ms,
-            from_cache="cache" in source,
-            outline_first=outline_ms is not None,
-            words=len((acc or "").split()),
-            request_id=request_id,
-            turn_id=turn_id,
-            meta={
-                "path": "inject",
-                "llm_first_token_ms": llm_first_ms,
-                "answer_mode": answer_mode,
-                "grounding": grounding,
-            },
-        )
-    except Exception:
-        pass
+        full_ms = round((time.perf_counter() - t0) * 1000)
+        if first_paint_ms is None:
+            first_paint_ms = full_ms
+        if first_useful_ms is None:
+            first_useful_ms = stages.get("first_useful_ms") or first_paint_ms
+        total_ms = full_ms  # inject has no STT — E2E is full answer completion
+        try:
+            record_trace(
+                question=q[:200],
+                source=source,
+                depth=depth,
+                stt_ms=0,
+                classify_ms=0,
+                cache_ms=cache_ms,
+                outline_ms=outline_ms,
+                first_token_ms=first_paint_ms,
+                first_useful_ms=first_useful_ms,
+                full_answer_ms=full_ms,
+                total_ms=total_ms,
+                from_cache="cache" in source,
+                outline_first=outline_ms is not None,
+                words=len((acc or "").split()),
+                request_id=request_id,
+                turn_id=turn_id,
+                meta={
+                    "path": "inject",
+                    "session_id": sid,
+                    "llm_first_token_ms": llm_first_ms,
+                    "answer_mode": answer_mode,
+                    "grounding": grounding,
+                },
+            )
+        except Exception:
+            pass
 
-    return {
-        "question": q,
-        "answer": acc,
-        "bullets": to_bullets(acc, req.mode or "star"),
-        "source": source,
-        "depth": depth,
-        "model_profile": ANSWER_PROFILE,
-        # latency_ms stays first paint for the Latency tile
-        "latency_ms": first_paint_ms,
-        "first_paint_ms": first_paint_ms,
-        "first_token_ms": first_paint_ms,
-        "first_useful_ms": first_useful_ms,
-        "llm_first_token_ms": llm_first_ms,
-        "outline_ms": outline_ms,
-        "cache_ms": cache_ms,
-        "full_ms": full_ms,
-        "full_answer_ms": full_ms,
-        # Honest end-to-end for typed inject = full completion (not first paint)
-        "total_ms": total_ms,
-        "request_id": request_id,
-        "turn_id": turn_id,
-        "answer_mode": answer_mode,
-        "grounding": grounding,
-        "stages": stages,
-        "is_question": looks_like_question(q),
-        "openai_ready": True,
-    }
+        return {
+            "question": q,
+            "answer": acc,
+            "bullets": to_bullets(acc, req.mode or "star"),
+            "source": source,
+            "depth": depth,
+            "model_profile": ANSWER_PROFILE,
+            # latency_ms stays first paint for the Latency tile
+            "latency_ms": first_paint_ms,
+            "first_paint_ms": first_paint_ms,
+            "first_token_ms": first_paint_ms,
+            "first_useful_ms": first_useful_ms,
+            "llm_first_token_ms": llm_first_ms,
+            "outline_ms": outline_ms,
+            "cache_ms": cache_ms,
+            "full_ms": full_ms,
+            "full_answer_ms": full_ms,
+            # Honest end-to-end for typed inject = full completion (not first paint)
+            "total_ms": total_ms,
+            "request_id": request_id,
+            "turn_id": turn_id,
+            "answer_mode": answer_mode,
+            "grounding": grounding,
+            "session_id": sid,
+            "stages": stages,
+            "is_question": looks_like_question(q),
+            "openai_ready": True,
+        }
 
 
 @app.post("/api/warm")
@@ -815,6 +832,17 @@ def answer(req: AnswerRequest, request: Request):
 
     t0 = time.perf_counter()
     # Fast path: skip classify LLM for typed questions (saves 0.5–2s)
+    from answer_engine import ANSWER_PROFILE, looks_like_question
+    from fast_answer import cache_lookup, outline_skeleton
+    from latency_metrics import record_trace
+    from session_context import get_depth, session_scope, update_pack
+
+    sid = _http_session_id(request)
+    with session_scope(sid):
+        return _answer_impl(req, request, t0)
+
+
+def _answer_impl(req: AnswerRequest, request: Request, t0: float):
     from answer_engine import ANSWER_PROFILE, looks_like_question
     from fast_answer import cache_lookup, outline_skeleton
     from latency_metrics import record_trace
