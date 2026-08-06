@@ -1,0 +1,172 @@
+[
+  {
+    "skill_label": "SAP FICO",
+    "question": "How do you configure a new company code and general ledger for a US entity going live with tax determination?",
+    "answer": "Hook: I configure a new company code and general ledger by following a structured process.\n\nSituation: When a US entity is going live with tax determination, it\u2019s crucial to ensure compliance with local regulations.\n\nTask: The main tasks include setting up the company code, defining the general ledger accounts, and configuring the tax determination settings.\n\nAction: First, I create the company code in the system, ensuring it aligns with the entity's legal structure. Next, I set up the general ledger by defining the necessary accounts for assets, liabilities, equity, revenues, and expenses. I then configure the tax determination settings, which involves defining tax codes and linking them to the appropriate general ledger accounts. This ensures that transactions are accurately recorded and reported for tax purposes.\n\nResult: This structured approach minimizes errors and ensures that the entity is compliant with tax regulations from day one.\n\nClose: This methodical setup supports smooth operations and accurate financial reporting. \n\nCool: I'm ready to share more details if needed.",
+    "q_grounded": {
+      "SAP FICO": [
+        "\\bcompany code\\b",
+        "\\bgeneral ledger\\b"
+      ]
+    },
+    "found_skills": {
+      "SAP FICO": [
+        "\\bcompany code\\b",
+        "\\bgeneral ledger\\b"
+      ]
+    },
+    "invented_not_in_q": {},
+    "hard_fails": [],
+    "cross_skill": [],
+    "status": "PASS",
+    "attp_invented": false,
+    "sap_invented": false
+  },
+  {
+    "skill_label": "Computer Systems Validation",
+    "question": "How do you structure an IQ OQ PQ package for a GxP system change under GAMP 5?",
+    "answer": "Hook: Structured documentation. \n\nSituation: For a GxP system change under GAMP 5, I start by defining the scope of the change. \n\nTask: I then outline the IQ, OQ, and PQ requirements specific to the system. \n\nAction: I create a detailed IQ protocol to verify installation, followed by an OQ protocol to confirm operational functionality. Finally, I develop a PQ protocol to ensure performance meets user requirements. Each protocol includes acceptance criteria and testing methods. \n\nResult: This structured approach ensures compliance and minimizes risks associated with system changes. It also facilitates clear communication among stakeholders. \n\nClose: This methodical process enhances system reliability and regulatory adherence. \n\nCool: I can share specific examples if you're interested.",
+    "q_grounded": {
+      "CSV/GAMP": [
+        "\\bGAMP\\b",
+        "\\bIQ\\b",
+        "\\bOQ\\b",
+        "\\bPQ\\b",
+        "\\bGxP\\b"
+      ]
+    },
+    "found_skills": {
+      "CSV/GAMP": [
+        "\\bGAMP\\b",
+        "\\bIQ\\b",
+        "\\bOQ\\b",
+        "\\bPQ\\b",
+        "\\bGxP\\b"
+      ]
+    },
+    "invented_not_in_q": {},
+    "hard_fails": [],
+    "cross_skill": [],
+    "status": "PASS",
+    "attp_invented": false,
+    "sap_invented": false
+  },
+  {
+    "skill_label": "Clinical Data Management",
+    "question": "How do you design an edit check strategy and query management process for an EDC study?",
+    "answer": "Hook: A structured approach is essential.\n\nSituation: In designing an edit check strategy for an EDC study, I first assess the data requirements and regulatory standards.\n\nTask: I need to ensure data integrity while minimizing the burden on data entry personnel.\n\nAction: I implement a tiered edit check system. First, I define critical data fields that require strict validation. Then, I create automated checks for these fields, flagging discrepancies for review. For less critical data, I use a combination of automated and manual checks, allowing for flexibility. I also establish a query management process that categorizes queries by urgency and complexity, ensuring timely resolution.\n\nResult: This approach reduces data entry errors by 30% and improves query resolution time by 40%. \n\nClose: A systematic strategy enhances data quality and operational efficiency. \n\nCool: I'm ready to dive deeper into specific examples if needed.",
+    "q_grounded": {
+      "Clinical/EDC": [
+        "\\bEDC\\b",
+        "\\bedit check\\b",
+        "\\bquery\\b"
+      ]
+    },
+    "found_skills": {
+      "CSV/GAMP": [
+        "\\bvalidation\\b"
+      ],
+      "Clinical/EDC": [
+        "\\bEDC\\b",
+        "\\bedit check\\b",
+        "\\bquery\\b"
+      ]
+    },
+    "invented_not_in_q": {
+      "CSV/GAMP": [
+        "\\bvalidation\\b"
+      ]
+    },
+    "hard_fails": [],
+    "cross_skill": [],
+    "status": "PASS",
+    "attp_invented": false,
+    "sap_invented": false
+  },
+  {
+    "skill_label": "SAP EWM",
+    "question": "How do you design inbound putaway and warehouse task creation for mixed pallets in EWM?",
+    "answer": "Hook: I design inbound putaway and warehouse task creation for mixed pallets in EWM by optimizing processes.\n\nSituation: In a typical scenario, mixed pallets arrive at the warehouse, requiring efficient handling to maximize space and minimize labor.\n\nTask: My goal is to create a streamlined process for putaway that accommodates various pallet types while ensuring accuracy and speed.\n\nAction: I start by analyzing the warehouse layout and identifying optimal storage locations for mixed pallets. I configure EWM to automatically generate putaway tasks based on the characteristics of the incoming pallets, such as size and weight. This includes setting up rules for task prioritization, ensuring that high-traffic areas are utilized effectively. I also implement barcode scanning to enhance accuracy during the putaway process.\n\nResult: This approach reduces the time spent on manual task creation and increases the efficiency of the putaway process, leading to quicker inventory turnover and improved space utilization.\n\nClose: This method balances efficiency with accuracy, ensuring that we meet operational goals. \n\nCool: I'm always ready to share more detailed examples if you're interested.",
+    "q_grounded": {
+      "SAP EWM": [
+        "\\bEWM\\b",
+        "\\bputaway\\b",
+        "\\bwarehouse task\\b"
+      ]
+    },
+    "found_skills": {
+      "SAP EWM": [
+        "\\bEWM\\b",
+        "\\bputaway\\b",
+        "\\bwarehouse task\\b"
+      ]
+    },
+    "invented_not_in_q": {},
+    "hard_fails": [],
+    "cross_skill": [],
+    "status": "PASS",
+    "attp_invented": false,
+    "sap_invented": false
+  },
+  {
+    "skill_label": "SAP BTP",
+    "question": "How do you design a CAP service on BTP with destination services and principal propagation to S/4HANA?",
+    "answer": "Hook: To design a CAP service on BTP with destination services and principal propagation to S/4HANA, I focus on integration and security.\n\nSituation: First, I assess the requirements for the CAP service, ensuring it aligns with the business processes in S/4HANA.\n\nTask: The main tasks involve setting up destination services in BTP and configuring principal propagation to ensure secure communication between the CAP service and S/4HANA.\n\nAction: I start by creating a destination in BTP that points to the S/4HANA system, configuring the necessary authentication methods. Then, I implement principal propagation by using OAuth 2.0, which allows the user\u2019s identity to be passed through to S/4HANA. This involves setting up the necessary trust relationships and ensuring that the service user has the appropriate roles in S/4HANA.\n\nResult: This design enables seamless and secure access to S/4HANA data from the CAP service, enhancing user experience and maintaining data integrity.\n\nClose: This approach balances security and usability effectively. \n\nCool: I'm ready to dive deeper into any specific aspect if needed.",
+    "q_grounded": {
+      "SAP BTP": [
+        "\\bBTP\\b",
+        "\\bCAP\\b",
+        "\\bprincipal propagation\\b",
+        "\\bdestination service"
+      ]
+    },
+    "found_skills": {
+      "SAP BTP": [
+        "\\bBTP\\b",
+        "\\bCAP\\b",
+        "\\bprincipal propagation\\b",
+        "\\bdestination service"
+      ]
+    },
+    "invented_not_in_q": {},
+    "hard_fails": [],
+    "cross_skill": [],
+    "status": "PASS",
+    "attp_invented": false,
+    "sap_invented": false
+  },
+  {
+    "skill_label": "Oracle Financials",
+    "question": "How do you configure multi-org and subledger accounting for a new legal entity in Oracle Financials Cloud?",
+    "answer": "Hook: To configure multi-org and subledger accounting for a new legal entity in Oracle Financials Cloud, I follow a structured approach.\n\nSituation: First, I assess the requirements for the new legal entity, including its specific accounting needs and compliance regulations.\n\nTask: Next, I set up the multi-org structure by defining the organization hierarchy and ensuring that the new entity aligns with existing configurations.\n\nAction: I then configure the subledger accounting by creating accounting rules that reflect the entity's transactions. This involves mapping the subledger accounts to the general ledger and ensuring that the accounting methods are correctly applied. I also validate the setup by running test transactions to confirm that the accounting entries are generated accurately.\n\nResult: This process ensures that the new legal entity is fully integrated into the Oracle Financials Cloud environment, allowing for accurate financial reporting and compliance.\n\nClose: This methodical approach minimizes errors and ensures a smooth transition for the new entity. \n\nCool: I'm always ready to share more details if needed.",
+    "q_grounded": {
+      "Oracle Financials": [
+        "\\bOracle\\b",
+        "\\bmulti-org\\b",
+        "\\bsubledger\\b",
+        "\\blegal entity\\b"
+      ]
+    },
+    "found_skills": {
+      "SAP FICO": [
+        "\\bgeneral ledger\\b"
+      ],
+      "Oracle Financials": [
+        "\\bOracle\\b",
+        "\\bmulti-org\\b",
+        "\\bsubledger\\b",
+        "\\blegal entity\\b"
+      ]
+    },
+    "invented_not_in_q": {
+      "SAP FICO": [
+        "\\bgeneral ledger\\b"
+      ]
+    },
+    "hard_fails": [],
+    "cross_skill": [],
+    "status": "PASS",
+    "attp_invented": false,
+    "sap_invented": false
+  }
+]

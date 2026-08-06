@@ -1,0 +1,56 @@
+SAP ATTP Techno-Functional — 50 spoken prompts (10 themes × 5)
+Structure: Main → F1 scenario → F2 corner → F3 Yes/No → F4 single-word
+Gap between questions: 12s
+TTS engine: edge-tts
+Psych: commitment traps, cognitive load, status challenge, anchoring, compliance pressure
+
+1. [Theme 1 | main] Theme one, main scenario. You walk into a serialization program where the marketing authorization holder, two contract manufacturers, and one third-party logistics provider all claim A T T P is already live. Shipping works for full pallets, but partial pallets, rework, and returns create orphan serial numbers. How do you run discovery to map as-is event flows and design a to-be process that A T T P can actually enforce?
+2. [Theme 1 | follow1] Theme one, follow-up one. Business wants the to-be signed this Friday. C M O I T refuses workshops. The three P L only shares a P D F from twenty twenty-one. Compliance says the D S C S A timeline is non-negotiable. What do you deliver by Friday that is not fiction, and what do you explicitly refuse to sign?
+3. [Theme 1 | follow2] Theme one, follow-up two. A V P says standard A T T P covers this, stop over-engineering. You believe partial-pallet deaggregation at the three P L is a real gap. How do you prove the gap with evidence, and how do you present decision options to leadership without looking political?
+4. [Theme 1 | follow3] Theme one, follow-up three. Yes or no only. Will you sign the to-be process as complete without a live C M O workshop?
+5. [Theme 1 | follow4] Theme one, follow-up four. One word only. Approve, Conditional, or Reject — for the program go-live gate this sprint.
+6. [Theme 2 | main] Theme two, main scenario. Define end-to-end how serial number requests, commissioning, packing, shipping, and receiving events should flow between the M A H, C M O, and three P L on SAP A T T P, including who owns G T I N, G L N, S S C C, and business partner master data.
+7. [Theme 2 | follow1] Theme two, follow-up one. The C M O commissions under their G L N but ships under M A H branding. The three P L receives against a different G L N than A T T P expects. Serials land as unknown location. Walk the failure path event by event and show the corrected ownership model.
+8. [Theme 2 | follow2] Theme two, follow-up two. Production already ran. Ten thousand serials are commissioned with wrong parent S S C C aggregation. Shipping starts in six hours. What is your recovery sequence, and what do you tell Quality if patient-impact risk is non-zero?
+9. [Theme 2 | follow3] Theme two, follow-up three. Yes or no. Should shipping be blocked when parent-child aggregation is incomplete?
+10. [Theme 2 | follow4] Theme two, follow-up four. One word only. Who is accountable if those ten thousand serials ship broken — M A H, C M O, three P L, or Integration?
+11. [Theme 3 | main] Theme three, main scenario. How do you systematically identify gaps between standard SAP A T T P capabilities and partner operational realities: partial pallets, late aggregation, returns, rework, and mixed-lot handling? Give me your gap matrix method.
+12. [Theme 3 | follow1] Theme three, follow-up one. The three P L can only send daily flat files, not real-time E P C I S. Legal still wants D S C S A-grade traceability. Design the interim control and the A T T P configuration boundaries you will not cross.
+13. [Theme 3 | follow2] Theme three, follow-up two. A partner closes the gap with a manual spreadsheet upload by warehouse clerks. Validation and Part eleven teams call it a compliance bomb. Do you allow it for ninety days? Defend your position with G A M P five language.
+14. [Theme 3 | follow3] Theme three, follow-up three. Yes or no. Is a manual spreadsheet upload an acceptable E P C I S substitute in production?
+15. [Theme 3 | follow4] Theme three, follow-up four. One word. Risk rating for that interim — Low, Medium, High, or Critical.
+16. [Theme 4 | main] Theme four, main scenario. Your M A H ships U S and E U packs through shared C M Os. Explain how A T T P design must differ for U S D S C S A versus E U F M D, and where a single global process will fail if forced.
+17. [Theme 4 | follow1] Theme four, follow-up one. A C M O wants one E P C I S map for both markets to save cost. You suspect that collapses required fields and dispositions. How do you refute them with concrete message-level examples, not slogans?
+18. [Theme 4 | follow2] Theme four, follow-up two. An E U affiliate says a U S-only design is already live and works. A recall drill fails to reconstruct pedigree across borders. Who failed — A T T P config, process, partner, or requirements — and what is your forty-eight hour containment plan?
+19. [Theme 4 | follow3] Theme four, follow-up three. Yes or no. Can one E P C I S Implementation Guideline fully cover D S C S A and F M D for this network without market-specific variants?
+20. [Theme 4 | follow4] Theme four, follow-up four. One word. Primary root cause of the failed recall drill — Data, Design, Partner, or Process.
+21. [Theme 5 | main] Theme five, main scenario. Walk me through how you configure A T T P repository master data for C M Os and three P Ls: business partners, locations with G L Ns, G T I Ns, and S S C C rules. What is mandatory before the first commissioning event?
+22. [Theme 5 | follow1] Theme five, follow-up one. Two plants share a G L N by mistake. Commissioning succeeds; shipping events misroute. How do you detect, correct historical events if possible, and prevent recurrence with governance?
+23. [Theme 5 | follow2] Theme five, follow-up two. Master data steward is on leave. Middleware is ready. Business wants to hardcode G L Ns in Boomi mappings temporarily. Your call as A T T P techno-functional lead?
+24. [Theme 5 | follow3] Theme five, follow-up three. Yes or no. Will you allow G L Ns hardcoded in Boomi for go-live?
+25. [Theme 5 | follow4] Theme five, follow-up four. One word. If you refuse and go-live slips, who do you escalate first — Business, I T, Compliance, or Program?
+26. [Theme 6 | main] Theme six, main scenario. Design the standard G S one E P C I S message set for a C M O and a three P L integrating to A T T P. Which business steps and dispositions are mandatory for commissioning, packing, shipping, and receiving in your Implementation Guideline?
+27. [Theme 6 | follow1] Theme six, follow-up one. Partner returns events with missing event time, wrong business step, and disposition active on destroy scenarios. A T T P rejects half the feed. How do you triage config versus mapping versus partner process in one working session?
+28. [Theme 6 | follow2] Theme six, follow-up two. Partner claims your Implementation Guideline is non-standard and not G S one. You know your guideline is a constrained profile. How do you run the standards argument without losing the onboarding timeline?
+29. [Theme 6 | follow3] Theme six, follow-up three. Yes or no. Is a missing event time always a hard reject?
+30. [Theme 6 | follow4] Theme six, follow-up four. Answer with one word only. For destroy events, the correct disposition should be… what?
+31. [Theme 7 | main] Theme seven, main scenario. How do you configure A T T P rules, system schemas, and authentication so only authorized partners can exchange serialization data with specific locations and products?
+32. [Theme 7 | follow1] Theme seven, follow-up one. A rogue test certificate from a C M O still works in production and posts events against a live G T I N. Security is furious. Reconstruct how this was possible and the permanent control stack you implement.
+33. [Theme 7 | follow2] Theme seven, follow-up two. Business wants a break-glass shared technical user for all three P Ls during peak season. Refuse or accept? Justify under Part eleven and operational reality.
+34. [Theme 7 | follow3] Theme seven, follow-up three. Yes or no. Shared technical users across partners — allowed in production?
+35. [Theme 7 | follow4] Theme seven, follow-up four. One word. Maximum acceptable authentication model for partners — Certificate, Basic, Token, or Mutual T L S.
+36. [Theme 8 | main] Theme eight, main scenario. Collaborate with middleware. How do you design secure partner connections for A T T P traffic using A S two, S F T P, and web services, and what does the A T T P consultant own versus the Dell Boomi team?
+37. [Theme 8 | follow1] Theme eight, follow-up one. A S two works in lower environments; production A S two fails intermittently with partner timeouts. Serialization backlog grows. How do you run triage across network, Boomi, A T T P, and partner — and what interim business process do you authorize?
+38. [Theme 8 | follow2] Theme eight, follow-up two. Boomi lead says A T T P is rejecting good messages. Your logs show schema violations. How do you run a joint war room so the partner trusts the diagnosis?
+39. [Theme 8 | follow3] Theme eight, follow-up three. Yes or no. Should business shipping continue if A T T P event posting is delayed by more than four hours?
+40. [Theme 8 | follow4] Theme eight, follow-up four. One word. Preferred production connectivity for regulated event exchange with a mature three P L — A S two, S F T P, or A P I.
+41. [Theme 9 | main] Theme nine, main scenario. You are the primary technical contact guiding C M O and three P L I T through testing and onboarding. Describe the pipeline from Implementation Guideline sign-off to production cutover, including end-to-end tests that simulate automated C M O production runs and three P L fulfillment.
+42. [Theme 9 | follow1] Theme nine, follow-up one. Partner passes unit tests but fails end-to-end when volumes hit ten thousand serials per hour. Where do you look first — A T T P, Boomi, partner, network — and what performance evidence do you demand before go-live?
+43. [Theme 9 | follow2] Theme nine, follow-up two. U A T sign-off is green, but a shadow production pilot shows two percent event loss. Program wants to go live anyway. What is your recommendation, and how do you document residual risk?
+44. [Theme 9 | follow3] Theme nine, follow-up three. Yes or no. Do you approve go-live with two percent event loss?
+45. [Theme 9 | follow4] Theme nine, follow-up four. One word. Your go-live vote — Go, No Go, or Defer.
+46. [Theme 10 | main] Theme ten, main scenario. Author validation deliverables for A T T P integration: Functional Spec, Configuration Spec, and U A T scripts under G A M P five and twenty-one C F R Part eleven. What must be testable, and what is out of scope for electronic signature controls?
+47. [Theme 10 | follow1] Theme ten, follow-up one. Auditor challenges that partner-facing configuration changes lack adequate audit trail and dual control. How do you remediate without freezing all partner onboarding?
+48. [Theme 10 | follow2] Theme ten, follow-up two. Leadership asks you to lead discovery for RISE with SAP impact on A T T P, interfaces, and validation. What risks do you put on the first slide for executives, and what will you not estimate in week one?
+49. [Theme 10 | follow3] Theme ten, follow-up three. Yes or no. Does moving to RISE automatically re-validate all A T T P partner interfaces?
+50. [Theme 10 | follow4] Theme ten, follow-up four. One word. Biggest RISE risk to A T T P — Connectivity, Validation, Master Data, or Timeline.

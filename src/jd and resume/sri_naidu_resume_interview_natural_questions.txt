@@ -1,0 +1,48 @@
+Natural conversation job interview — based on resume
+Resume: Sri_Naidu_ATTP_Resume.pdf
+Questions: 18
+Gap between questions: 20s exact
+TTS engine: edge-tts
+Style: warm conversational interviewer; no question numbers spoken
+
+Spoken intro:
+Good morning. Thanks for joining me today. This will feel like a conversation more than a quiz. I have read your background in S A P A T T P, track and trace, and partner integration — McKesson, Moderna, Cynosure, Biogen. I will ask a question, then give you about twenty seconds of quiet so you can answer fully. There is a soft tone before each question. Ready when you are. Let's begin.
+
+1. Thanks for making the time today. I'd love to start with your story. Walk me through your path into S A P A T T P and track and trace — what pulled you into serialization, and what kept you there for more than twelve years?
+
+2. You're currently at McKesson as an A T T P techno-functional consultant. In plain terms, what does a good day look like for you on inbound and outbound serialization — receiving verification, outbound shipping events, and the partners you touch?
+
+3. You mentioned saleable returns and the V R S path. Tell me about a real case where a serial didn't verify against the manufacturer. What did you check first, who did you pull in, and how did you close it without blocking the warehouse all afternoon?
+
+4. A lot of people say they know A I F — few live in slash A I F slash I F M O N. When E P C I S messages start failing mid-day, how do you triage? What do you fix in A T T P yourself, and when do you escalate to middleware?
+
+5. Trading partners, G L Ns, G T I Ns, lots — master data is where programs quietly die. How do you set up and keep partner and location master clean at a distributor scale, especially when suppliers and three P Ls change faster than I T likes?
+
+6. You work the S D side — sales orders, deliveries, P G I. Where in the delivery cycle should the shipping E P C I S event fire, and what goes wrong if it fires too early or too late?
+
+7. At Moderna you were the person partners escalated to when an exchange broke. Paint me a picture of a messy C M O or three P L incident — what broke, how you sat between business, I T, and partner I T, and what you changed so it didn't repeat.
+
+8. You ran A S-I S and T O-B E workshops on serial requests, commissioning, packing, and shipping. How do you run those workshops so they stay honest — not a slide deck of wishes — and still land a design partners can actually implement?
+
+9. Implementation Guidelines and E P C I S mapping specs — that is partner contract language, not fluff. What belongs in a good I G, and how do you hold a C M O accountable when their file drifts off the agreed fields, business steps, or dispositions?
+
+10. Partial pallets, re-aggregation, returns — the edge cases partners always bring. Tell me about a gap you found between standard A T T P and how a three P L really operated. What did you design around it without pretending standard config covered it?
+
+11. You rolled out E U F M D to the E M V S hub, then layered Russia, South Korea, and China. How do you keep market rules from contaminating each other on a shared packaging line, and what would you refuse if someone asked for one global map for everything?
+
+12. Middleware — B O O M I, C P I, A S two, S F T P. Walk me through how you partner with the integration team to stand up a new C M O: auth, connectivity, test cases, and the moment you say they are ready for production.
+
+13. At Cynosure you did a green-field A T T P build — empty repository to first live C M O. If you had to sequence that again next month, what are the first five things you stand up, and what do you refuse to skip before go-live?
+
+14. Everything has to survive an audit — G A M P five, twenty-one C F R Part eleven, I Q O Q P Q. How do you write functional and configuration specs and U A T so Quality trusts the trail, without drowning the project in paperwork theater?
+
+15. Earlier at Biogen you cleaned G T I N and G L N master data and sat between Quality, Regulatory, and Labeling. How does that foundation still show up in how you work today when a new product or new market comes online?
+
+16. At McKesson you supported a RISE with S A P discovery for the serialization landscape. What upgrade impacts to A T T P interfaces and master data would you put in front of leadership first — and when would you say Conditional or Red instead of Green?
+
+17. Give me a time leadership wanted product to ship and serialization integrity was at risk. What did you say, what control did you put on the table, and how did you keep the relationship while still protecting the patient and the audit story?
+
+18. Last one. For this kind of A T T P techno-functional role — partners, E P C I S, compliance, and hands-on config — what do you want us to remember about how you work when things get messy? And what is one question you wish interviewers asked more often?
+
+Spoken outro:
+That is everything I had prepared. Thank you for the thoughtful answers and for walking through the real operational detail. We will be in touch on next steps. This interview is complete. Take care.

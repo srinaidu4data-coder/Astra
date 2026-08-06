@@ -1,0 +1,88 @@
+SAP ATTP Techno-Functional — JD + Resume interview
+Sources: jd and resume/jd.txt + Sri_Naidu_ATTP_Resume.pdf
+Questions: 25 (5 arcs × hard open + 4 architect scenarios)
+Gap between questions: 18s exact
+TTS engine: edge-tts
+Psych: commitment-consistency, anchoring, scarcity, authority, status challenge,
+       sunk-cost, peak-end, cognitive load — conversational, no meta labels
+
+Spoken intro:
+Good morning. Thanks for joining me. Today I want to go deep on your S A P A T T P work — track and trace, partner integration, and the design calls that do not show up in a slide deck. I will pause after each question so you can answer fully. Ready when you are. Let's begin.
+
+1. [arc 1 | HARD OPEN (yes/no or one-word)]
+   Thanks for coming in. Let's start simple. Yes or no only — should shipping be blocked when parent-child aggregation is incomplete?
+
+2. [arc 1 | SCENARIO / ARCH TRADE-OFF]
+   Picture this. Your marketing authorization holder has a contract manufacturer that commissions twenty thousand serials on time, but the third-party logistics provider can only send partial-pallet deaggregation once a day as a flat file — not real-time E P C I S. Leadership wants product to leave the dock tonight. Walk me through the architecture you would actually ship: where do you hold the serial state, what do you refuse to fake in A T T P, and how does that choice still honor a hard ship-block when aggregation is incomplete?
+
+3. [arc 1 | SCENARIO / ARCH TRADE-OFF]
+   Same network, new pressure. Quality says patient-impact risk is non-zero if orphaned children leave under a parent S S C C that never existed. Operations says blocking ships burns two million dollars of inventory this week. Design the trade-off you put in front of leadership — including the control that replaces a soft warning — and tell me why that design still treats incomplete aggregation as a hard stop, not a soft flag.
+
+4. [arc 1 | SCENARIO / ARCH TRADE-OFF]
+   A V P claims standard A T T P already covers partial pallets and you are over-engineering. You have seen three P L rework and returns create unknown locations and broken parent-child links. How do you prove the capability gap with event-level evidence — G T I N, G L N, S S C C, business step, disposition — and still defend the same ship-block posture without looking political?
+
+5. [arc 1 | SCENARIO / ARCH TRADE-OFF]
+   Cutover night. Ten thousand serials already commissioned with the wrong parent S S C C. Shipping starts in six hours. Sequence the recovery — A T T P, middleware, partner file, Quality communication — and show me which steps you will not take because they would re-open the incomplete-aggregation loophole you refused earlier.
+
+6. [arc 2 | HARD OPEN (yes/no or one-word)]
+   One word only. Who owns the golden G T I N and serial-number range authority in a multi-C M O, multi-three-P L network — M A H, C M O, three P L, or Integration?
+
+7. [arc 2 | SCENARIO / ARCH TRADE-OFF]
+   A C M O commissions under their own G L N but ships under M A H branding. The three P L receives against a G L N A T T P never saw. Serials land as unknown location. Design the to-be ownership model event by event — serial request, commissioning, packing, shipping, receiving — and show how that model still keeps golden G T I N and range authority where you just put it.
+
+8. [arc 2 | SCENARIO / ARCH TRADE-OFF]
+   Two C M Os want independent range pools so they never wait on M A H I T. Compliance wants one auditable chain for U S D S C S A saleable returns. What architecture do you choose for range management and partner auth in A T T P, what do you give the C M Os so they can still run production, and why does that not surrender the ownership word you used a moment ago?
+
+9. [arc 2 | SCENARIO / ARCH TRADE-OFF]
+   During an S slash four migration you reconcile historical serials and partner records. Some G L Ns in A T T P disagree with E W M and S D. Walk the master-data cutover design — what is system of record, what is derived, what fails closed — and how you keep trading-partner authorization from drifting while ranges stay owned the way you said.
+
+10. [arc 2 | SCENARIO / ARCH TRADE-OFF]
+   A partner I T team rewrites their mapping and starts sending commissioning under a new company prefix you never authorized. A I F is flooding. How do you design the containment — repository rules, authentication settings, B O O M I or C P I gate, onboarding freeze — so production can recover without silently reassigning who owns the golden identifiers?
+
+11. [arc 3 | HARD OPEN (yes/no or one-word)]
+   Yes or no only. Will you accept one global E P C I S map for both U S D S C S A and E U F M D to save partner cost?
+
+12. [arc 3 | SCENARIO / ARCH TRADE-OFF]
+   The C M O's integration lead says one map cuts three months off the program. Legal still wants D S C S A transaction statements and E U hub reporting that survive an inspection. Design the message architecture — shared core versus market-specific extensions — and explain the trade-off you refuse so your no on a single global map still stands.
+
+13. [arc 3 | SCENARIO / ARCH TRADE-OFF]
+   Russia, South Korea, and China are joining the same packaging line after E U F M D is live. How do you structure A T T P configuration, notification rules, and partner I Gs so markets do not contaminate each other, and how does that structure stay consistent with rejecting one flattened global map?
+
+14. [arc 3 | SCENARIO / ARCH TRADE-OFF]
+   A three P L can only support daily batch files for one market and near-real-time A S two for another. Middleware is Dell B O O M I into A T T P. Draw the integration pattern — protocols, retries, reconciliation, A I F monitoring — and show where you accept latency versus where you refuse to collapse the regulatory event model into one partner convenience format.
+
+15. [arc 3 | SCENARIO / ARCH TRADE-OFF]
+   U A T is tomorrow. A tester finds a disposition that is valid for E U but dangerous if reused on a U S saleable-return path through V R S. How do you re-architect the test matrix and the configuration boundary overnight, and what do you tell the program manager when they ask to 'just share the map'?
+
+16. [arc 4 | HARD OPEN (yes/no or one-word)]
+   One word only — Approve, Conditional, or Reject. A three P L proposes that warehouse clerks upload a spreadsheet of serial events into production for ninety days while A S two is built. Your gate decision?
+
+17. [arc 4 | SCENARIO / ARCH TRADE-OFF]
+   Compliance just quoted G A M P five and twenty-one C F R Part eleven. The business still needs an interim because the partner cannot meet the go-live date. Design an interim that is not a spreadsheet free-for-all — or defend why no interim is safer — and show how that design still matches the gate word you just used.
+
+18. [arc 4 | SCENARIO / ARCH TRADE-OFF]
+   You must author Functional Spec, Configuration Spec, and U A T under a validated landscape. Where does partner onboarding testing end and regulated system change begin? Walk the validation boundary for E P C I S exchanges with C M Os and three P Ls, including what evidence you keep for audit when someone later claims the spreadsheet was 'temporary but approved'.
+
+19. [arc 4 | SCENARIO / ARCH TRADE-OFF]
+   Green-field cutover. Empty A T T P repository to first live C M O connection. How do you sequence repository config, trading partners, G L Ns, G T I N and S S C C master data, E two E simulation of a production run, and hypercare so you never rely on uncontrolled manual loads to fake readiness?
+
+20. [arc 4 | SCENARIO / ARCH TRADE-OFF]
+   A senior director says if you reject the spreadsheet, they will run it outside I T and 'reconcile later'. Architect your escalation path — risk language, who signs, what you put in writing, what you monitor in A I F afterward — so your Reject decision does not become a silent shadow process.
+
+21. [arc 5 | HARD OPEN (yes/no or one-word)]
+   One word only. For a RISE with SAP discovery on a live serialization landscape — Green, Conditional, or Red — what is your leadership recommendation if A T T P interfaces and partner maps have not been impact-assessed?
+
+22. [arc 5 | SCENARIO / ARCH TRADE-OFF]
+   Leadership wants a two-slide answer by Friday. You have S slash four, A T T P, E W M, S D, and a web of A S two and S F T P partners. Design the discovery method you actually run — what you inventory, what you spike, what you refuse to guess — so a Conditional or Red call is evidence-based, not fear-based.
+
+23. [arc 5 | SCENARIO / ARCH TRADE-OFF]
+   During upgrade impact analysis you find serial history, partner auth settings, and A I F error queues that may not migrate cleanly. Trade off big-bang versus strangler patterns for serialization. Why does your pattern protect the recommendation word you gave leadership, and what would force you to flip it?
+
+24. [arc 5 | SCENARIO / ARCH TRADE-OFF]
+   Distribution is live on D S C S A receiving verification and outbound shipping events. A RISE cutover window collides with peak shipping week. Architect the go / no-go criteria that keep patient-safety and trading-partner continuity above project optics — and show how those criteria still honor the one-word posture you took on unassessed interfaces.
+
+25. [arc 5 | SCENARIO / ARCH TRADE-OFF]
+   Last one. You are the primary point between business, I T, and external partner I T. A C M O refuses workshops, a three P L only has a twenty twenty-one P D F, and RISE timelines are locked. What do you put in writing this week that is not fiction, what do you explicitly not sign, and how does that close the loop on treating unassessed serialization interfaces with the caution you named at the start of this arc?
+
+Spoken outro:
+That is all I have for you today. Thank you for walking the trade-offs with me. We will follow up on next steps. This interview is complete.

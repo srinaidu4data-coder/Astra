@@ -1,0 +1,271 @@
+SAP ATTP Techno-Functional — High-Pressure Scenario Interview Bank
+================================================================================
+Role: SAP ATTP Techno-Functional Consultant (Foster City / remote-capable)
+Scope: ATTP repository, MAH–CMO–3PL serialization, GS1 EPCIS, DSCSA / EU FMD,
+       Dell Boomi integrations (AS2/SFTP/WS), GAMP 5 / 21 CFR Part 11 validation,
+       RISE with SAP discovery impacts
+
+Structure:
+  10 themes × (1 main + 4 follow-ups) = 50 spoken prompts
+  Follow-up 1–2: scenario ladders (increase stakes / multi-party conflict)
+  Follow-up 3–4: deliberate single-word / Yes-No traps (create doubt, force commitment)
+  After short answers: next prompt forces defense under intensity
+
+Psych design (applied, not announced to candidate):
+  • Commitment & consistency (Cialdini) — lock Yes/No then explode consequences
+  • Cognitive load — multi-regulation + partner ops + middleware in one frame
+  • Status challenge / dominance — rigid interviewer cadence, “prove me wrong”
+  • Anchoring — assert a “correct” industry position, force pushback or collapse
+  • Inconsistency trap — recycle earlier Yes/No against a new scenario
+  • Expertise micro-trap — GLN, GTIN, SSCC, bizStep, disposition, EPCIS event fields
+  • Moral/compliance pressure — patient safety, DSCSA, GAMP 5, Part 11 signatures
+  • Time scarcity — go-live / freeze / war-room clocks
+  • False dichotomy — ship vs compliance, fail-open vs fail-closed
+  • Attribution pivot — “so the CMO is right and you are wrong?”
+
+Tone for TTS: sharp, skeptical senior architect + QA/compliance lead hybrid.
+Gap between spoken prompts: 12 seconds (answer window)
+
+================================================================================
+THEME 1 — AS-IS / TO-BE process ownership (MAH vs CMO vs 3PL)
+================================================================================
+Main (scenario):
+You walk into a serialization program where Marketing Authorization Holder, two CMOs,
+and one 3PL all claim “ATTP is already live.” Shipping works for full pallets, but
+partial pallets, rework, and returns create orphan serials. How do you run discovery
+to map AS-IS event flows and design a TO-BE process that ATTP can actually enforce?
+
+Follow-up 1 (pressure):
+Business wants TO-BE signed this Friday. CMO IT refuses workshops. 3PL only shares
+a PDF from 2021. Compliance says DSCSA timeline is non-negotiable. What do you deliver
+by Friday that is not fiction, and what do you explicitly refuse to sign?
+
+Follow-up 2 (corner):
+A VP says: “Standard ATTP covers this; stop over-engineering.” You believe partial-pallet
+deaggregation at the 3PL is a real gap. How do you prove the gap with evidence, and how
+do you present the decision options to leadership without looking political?
+
+Follow-up 3 (single-word trap — doubt):
+Yes or no only. Will you sign the TO-BE process as complete without a live CMO workshop?
+
+Follow-up 4 (single-word trap — tighter):
+One word. Approve, Conditional, or Reject — for the program go-live gate this sprint.
+
+================================================================================
+THEME 2 — Serial lifecycle: request, commission, pack, ship, receive
+================================================================================
+Main (scenario):
+Define end-to-end how serial number requests, commissioning, packing, shipping, and
+receiving events should flow between MAH, CMO, and 3PL on SAP ATTP, including who owns
+which master data objects: GTIN, GLN, SSCC, and business partner.
+
+Follow-up 1 (pressure):
+CMO commissions under their GLN but ships under MAH branding. 3PL receives against a
+different GLN than ATTP expects. Serials land as “unknown location.” Walk the failure
+path event by event and show the corrected ownership model.
+
+Follow-up 2 (corner):
+Production already ran. Ten thousand serials are commissioned with wrong parent SSCC
+aggregation. Shipping starts in six hours. What is your recovery sequence, and what
+do you tell Quality if patient-impact risk is non-zero?
+
+Follow-up 3 (yes/no trap):
+Yes or no. Should shipping be blocked when parent-child aggregation is incomplete?
+
+Follow-up 4 (single-word trap):
+One word only. Who is accountable if those ten thousand serials ship broken — MAH,
+CMO, 3PL, or Integration?
+
+================================================================================
+THEME 3 — Partner capability gaps vs standard ATTP
+================================================================================
+Main (scenario):
+How do you systematically identify gaps between standard SAP ATTP capabilities and
+partner operational realities: partial pallets, late aggregation, returns, rework,
+and mixed-lot handling? Give me your gap matrix method.
+
+Follow-up 1 (pressure):
+3PL can only send daily flat files, not real-time EPCIS. Legal still wants DSCSA-grade
+traceability. Design the interim control and the ATTP configuration boundaries you
+will not cross.
+
+Follow-up 2 (corner):
+A partner “closes the gap” with a manual spreadsheet upload by warehouse clerks.
+Validation and Part 11 teams call it a compliance bomb. Do you allow it for ninety days?
+Defend your position with GAMP 5 language.
+
+Follow-up 3 (yes/no trap):
+Yes or no. Is a manual spreadsheet upload an acceptable EPCIS substitute in production?
+
+Follow-up 4 (single-word trap):
+One word. Risk rating for that interim — Low, Medium, High, or Critical.
+
+================================================================================
+THEME 4 — Global regulations: US DSCSA vs EU FMD
+================================================================================
+Main (scenario):
+Your MAH ships US and EU packs through shared CMOs. Explain how ATTP design must differ
+for US DSCSA versus EU FMD, and where a single global process will fail if forced.
+
+Follow-up 1 (pressure):
+A CMO wants one EPCIS map for both markets to save cost. You suspect that collapses
+required fields and dispositions. How do you refute them with concrete message-level
+examples, not slogans?
+
+Follow-up 2 (corner):
+EU affiliate says a US-only design is already live and “works.” A recall drill fails
+to reconstruct pedigree across borders. Who failed — ATTP config, process, partner,
+or requirements — and what is your 48-hour containment plan?
+
+Follow-up 3 (yes/no trap):
+Yes or no. Can one EPCIS Implementation Guideline fully cover DSCSA and FMD for this
+network without market-specific variants?
+
+Follow-up 4 (single-word trap):
+One word. Primary root cause of the failed recall drill — Data, Design, Partner, or Process.
+
+================================================================================
+THEME 5 — ATTP master data: partners, locations, GTIN/SSCC
+================================================================================
+Main (scenario):
+Walk me through how you configure ATTP repository master data for CMOs and 3PLs:
+business partners, locations with GLNs, GTINs, and SSCC rules. What is mandatory before
+the first commissioning event?
+
+Follow-up 1 (pressure):
+Two plants share a GLN by mistake. Commissioning succeeds; shipping events misroute.
+How do you detect, correct historical events if possible, and prevent recurrence with
+governance?
+
+Follow-up 2 (corner):
+Master data steward is on leave. Middleware is ready. Business wants to hardcode GLNs
+in Boomi mappings “temporarily.” Your call as ATTP techno-functional lead?
+
+Follow-up 3 (yes/no trap):
+Yes or no. Will you allow GLNs hardcoded in Boomi for go-live?
+
+Follow-up 4 (single-word trap):
+One word. If you refuse and go-live slips, who do you escalate first — Business, IT,
+Compliance, or Program?
+
+================================================================================
+THEME 6 — GS1 EPCIS design & Implementation Guidelines
+================================================================================
+Main (scenario):
+Design the standard GS1 EPCIS message set for a CMO and a 3PL integrating to ATTP.
+Which business steps and dispositions are mandatory for commissioning, packing,
+shipping, and receiving in your IG?
+
+Follow-up 1 (pressure):
+Partner returns events with missing eventTime, wrong bizStep, and disposition “active”
+on destroy scenarios. ATTP rejects half the feed. How do you triage: config vs mapping
+vs partner process — in one working session?
+
+Follow-up 2 (corner):
+Partner claims your IG is non-standard and “not GS1.” You know your IG is a constrained
+profile. How do you run the standards argument without losing the onboarding timeline?
+
+Follow-up 3 (yes/no trap):
+Yes or no. Is a missing eventTime always a hard reject?
+
+Follow-up 4 (single-word trap):
+Answer with one word only. For destroy events, the correct disposition should be… what?
+
+================================================================================
+THEME 7 — Rules, schemas, authentication, authorized exchanges
+================================================================================
+Main (scenario):
+How do you configure ATTP rules, system schemas, and authentication so only authorized
+partners can exchange serialization data with specific locations and products?
+
+Follow-up 1 (pressure):
+A rogue test certificate from a CMO still works in production and posts events against
+a live GTIN. Security is furious. Reconstruct how this was possible and the permanent
+control stack you implement.
+
+Follow-up 2 (corner):
+Business wants a “break-glass” shared technical user for all 3PLs during peak season.
+Refuse or accept? Justify under Part 11 and operational reality.
+
+Follow-up 3 (yes/no trap):
+Yes or no. Shared technical users across partners — allowed in production?
+
+Follow-up 4 (single-word trap):
+One word. Maximum acceptable authentication model for partners — Certificate, Basic,
+Token, or MutualTLS.
+
+================================================================================
+THEME 8 — Middleware (Dell Boomi) and connectivity patterns
+================================================================================
+Main (scenario):
+Collaborate with middleware: how do you design secure partner connections for ATTP
+traffic using AS2, SFTP, and web services, and what does the ATTP consultant own versus
+the Boomi team?
+
+Follow-up 1 (pressure):
+AS2 works in lower environments; production AS2 fails intermittently with partner
+timeouts. Serialization backlog grows. How do you run triage across network, Boomi,
+ATTP, and partner — and what interim business process do you authorize?
+
+Follow-up 2 (corner):
+Boomi lead says “ATTP is rejecting good messages.” Your logs show schema violations.
+How do you run a joint war room so the partner trusts the diagnosis?
+
+Follow-up 3 (yes/no trap):
+Yes or no. Should business shipping continue if ATTP event posting is delayed by more
+than four hours?
+
+Follow-up 4 (single-word trap):
+One word. Preferred production connectivity for regulated event exchange with a mature
+3PL — AS2, SFTP, or API.
+
+================================================================================
+THEME 9 — Partner onboarding & E2E testing
+================================================================================
+Main (scenario):
+You are the primary technical contact guiding CMO and 3PL IT through testing and
+onboarding. Describe the pipeline from IG sign-off to production cutover, including
+E2E tests that simulate automated CMO production runs and 3PL fulfillment.
+
+Follow-up 1 (pressure):
+Partner passes unit tests but fails E2E when volumes hit ten thousand serials per hour.
+Where do you look first — ATTP, Boomi, partner, network — and what performance evidence
+do you demand before go-live?
+
+Follow-up 2 (corner):
+UAT sign-off is green, but a shadow production pilot shows 2% event loss. Program
+wants to go live anyway. What is your recommendation, and how do you document residual risk?
+
+Follow-up 3 (yes/no trap):
+Yes or no. Do you approve go-live with two percent event loss?
+
+Follow-up 4 (single-word trap):
+One word. Your go-live vote — Go, NoGo, or Defer.
+
+================================================================================
+THEME 10 — Validation (GAMP 5 / 21 CFR Part 11) + RISE with SAP
+================================================================================
+Main (scenario):
+Author validation deliverables for ATTP integration: Functional Spec, Configuration Spec,
+and UAT scripts under GAMP 5 and 21 CFR Part 11. What must be testable, and what is
+out of scope for electronic signature controls?
+
+Follow-up 1 (pressure):
+Auditor challenges that partner-facing configuration changes lack adequate audit trail
+and dual control. How do you remediate without freezing all partner onboarding?
+
+Follow-up 2 (corner — RISE):
+Leadership asks you to lead discovery for RISE with SAP impact on ATTP, interfaces,
+and validation. What risks do you put on the first slide for executives, and what
+you will not estimate in week one?
+
+Follow-up 3 (yes/no trap):
+Yes or no. Does moving to RISE automatically re-validate all ATTP partner interfaces?
+
+Follow-up 4 (single-word trap):
+One word. Biggest RISE risk to ATTP — Connectivity, Validation, MasterData, or Timeline.
+
+================================================================================
+END BANK — 10 themes × 5 prompts = 50 spoken items
+Use generate_sap_attp_audio.py to synthesize MP3/WAV for STT pipeline tests.
+================================================================================
