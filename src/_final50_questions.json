@@ -1,0 +1,166 @@
+[
+  {
+    "n": 1,
+    "q": "How will you map the basic enterprise structure of SAP FICO in the system?"
+  },
+  {
+    "n": 2,
+    "q": "What is your understanding of asset accounting in FICO? AUC Capitalization with PS /WBS Integration"
+  },
+  {
+    "n": 3,
+    "q": "What is your understanding of P2P, O2C and MTO? What is your understanding of FI-MM integration, FI-SD integration?"
+  },
+  {
+    "n": 4,
+    "q": "What is your understanding of Automatic payment program? Configuration and Run steps."
+  },
+  {
+    "n": 5,
+    "q": "What is your understanding of special GL indicators?  What is Vendor Down payment process flow?"
+  },
+  {
+    "n": 6,
+    "q": "What do you understand by Document splitting? Explain different types with example? What is New GL concept? Explain different types of ledgers in SAP FICO?"
+  },
+  {
+    "n": 7,
+    "q": "What is your understanding of Custom Interfaces, Enhancement of Inbound Idoc interfaces. (RICEFW)? What is your understanding of Functional specification? How to write Functional specification document? What are the FS you have work on and what was your approach?"
+  },
+  {
+    "n": 8,
+    "q": "What is your understanding of Dunning?  What are the configuration and accounting entries in EBS?"
+  },
+  {
+    "n": 9,
+    "q": "What is your understanding of intercompany transactions in SAP?"
+  },
+  {
+    "n": 10,
+    "q": "What is your understanding of taxation in SAP?"
+  },
+  {
+    "n": 11,
+    "q": "What do you mean by product costing run? 4 Month end activities in Product Costing(Overhead Cal, Variance calculation, WIP Calc, Settlement? Master Data used in Product Costing? Overhed key vs Orgin key? T-codes and Tables?"
+  },
+  {
+    "n": 12,
+    "q": "What is your understanding of Material Ledger? FI - MM integration for ML? Master Data requirements for ML?T-codes/ Tables for ML in ECC vs S4 HANA"
+  },
+  {
+    "n": 13,
+    "q": "What are major ECC to S4hana changes related to SAP FICO."
+  },
+  {
+    "n": 14,
+    "q": "What are the year end and month end activities in SAP FICO?"
+  },
+  {
+    "n": 15,
+    "q": "What is your understanding of Validations and Substitutions in SAP?"
+  },
+  {
+    "n": 16,
+    "q": "COPA Actual flows, Costing vs Account  COPA Differences? New features in COPA for  S4 HANA? Differences between Assessment, Distributions and Settlement?\nHow to actual values flow into COPA? ACCOUnt based vs Costing based COPA?"
+  },
+  {
+    "n": 17,
+    "q": "What are the major types of projects in SAP? What is your knowledge on ASAP vs Activate Methodology? Implementation vs Support?"
+  },
+  {
+    "n": 18,
+    "q": "What is your experience with FI-Concur integration? Fieldglass Integration"
+  },
+  {
+    "n": 19,
+    "q": "What is your experience with Opentext VIM?"
+  },
+  {
+    "n": 20,
+    "q": "What is your experience with SAP Ariba Integration?"
+  },
+  {
+    "n": 21,
+    "q": "What are the Cutover activities in SAP FICO?"
+  },
+  {
+    "n": 22,
+    "q": "What is your understanding of Universal Journal in SAP FICO?"
+  },
+  {
+    "n": 23,
+    "q": "What is your experience with SAP RAR?"
+  },
+  {
+    "n": 24,
+    "q": "What is your experience with SAP CFIN And MDG?"
+  },
+  {
+    "n": 25,
+    "q": "What is your understanding of GR/IR Clearing account?"
+  },
+  {
+    "n": 26,
+    "q": "What is your experience of foreign currency valuations in SAP?"
+  },
+  {
+    "n": 27,
+    "q": "Can you describe your experience with SAP FICO and highlight key projects where you played a critical role?"
+  },
+  {
+    "n": 28,
+    "q": "What are the most complex configurations you have handled in SAP FICO, and how did you approach them?"
+  },
+  {
+    "n": 29,
+    "q": "How do you ensure data accuracy and integrity within the SAP FICO module?"
+  },
+  {
+    "n": 30,
+    "q": "Can you discuss a time when you had to troubleshoot and resolve a significant issue within SAP FICO? What steps did you take?"
+  },
+  {
+    "n": 31,
+    "q": "How do you stay updated with the latest developments and updates in SAP FICO?"
+  },
+  {
+    "n": 32,
+    "q": "What strategies do you use for optimizing the financial processes within SAP FICO?"
+  },
+  {
+    "n": 33,
+    "q": "Can you explain your experience with SAP S/4HANA Finance, and how it differs from the traditional SAP FICO?"
+  },
+  {
+    "n": 34,
+    "q": "How do you manage change requests and ensure minimal disruption to ongoing processes in SAP FICO?"
+  },
+  {
+    "n": 35,
+    "q": "What is your approach to managing and executing SAP FICO migrations or upgrades?"
+  },
+  {
+    "n": 36,
+    "q": "Can you describe a time when you had to customize SAP FICO to meet specific business requirements?"
+  },
+  {
+    "n": 37,
+    "q": "How do you ensure compliance with financial regulations and standards within SAP FICO?"
+  },
+  {
+    "n": 38,
+    "q": "Can you discuss a situation where you improved financial performance or efficiency through SAP FICO?"
+  },
+  {
+    "n": 39,
+    "q": "How do you handle user training and support for SAP FICO to ensure optimal utilization by end-users?"
+  },
+  {
+    "n": 40,
+    "q": "What is your experience with Group Reporting and Inter Company Matching Reconciliation(ICMR)?"
+  },
+  {
+    "n": 41,
+    "q": "What is your experience with FSCM, TRM and Credit Management?"
+  }
+]

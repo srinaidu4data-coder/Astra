@@ -1,0 +1,419 @@
+{
+  "ok": true,
+  "tool": "latency_ai_agent",
+  "version": 1,
+  "generated_at": "2026-08-02T06:00:51Z",
+  "wall_ms": 11829.2,
+  "quick": true,
+  "config": {
+    "llm_provider": "openai",
+    "base_url": "default",
+    "key_present": true,
+    "key_prefix": "sk-p",
+    "answer_profile": "live",
+    "answer_model": "llama-3.3-70b-versatile",
+    "fast_model": "llama-3.1-8b-instant",
+    "fallback_model": "llama-3.1-8b-instant",
+    "fast_fallback": "llama-3.3-70b-versatile",
+    "remap_gpt4o": "gpt-4o",
+    "stt_provider_resolved": "deepgram",
+    "deepgram_key_present": true,
+    "whisper_model_env": "default"
+  },
+  "waterfall_ms": [
+    {
+      "stage": "llm_stream_ttft_full",
+      "avg_ms": 3452.07,
+      "min_ms": 3452.07,
+      "max_ms": 3452.07,
+      "share_pct": 25.7,
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "stage": "llm_full_stream",
+      "avg_ms": 3451.97,
+      "min_ms": 3451.97,
+      "max_ms": 3451.97,
+      "share_pct": 25.7,
+      "ok": true,
+      "detail": "attp_short"
+    },
+    {
+      "stage": "llm_ttft",
+      "avg_ms": 2519.12,
+      "min_ms": 2519.12,
+      "max_ms": 2519.12,
+      "share_pct": 18.8,
+      "ok": true,
+      "detail": "attp_short"
+    },
+    {
+      "stage": "llm_generate_answer",
+      "avg_ms": 2000.53,
+      "min_ms": 2000.53,
+      "max_ms": 2000.53,
+      "share_pct": 14.9,
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "stage": "llm_full_generate",
+      "avg_ms": 2000.46,
+      "min_ms": 2000.46,
+      "max_ms": 2000.46,
+      "share_pct": 14.9,
+      "ok": true,
+      "detail": "attp_short"
+    },
+    {
+      "stage": "common_sense_lock",
+      "avg_ms": 0.66,
+      "min_ms": 0.1,
+      "max_ms": 1.75,
+      "share_pct": 0.0,
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "stage": "template_answer",
+      "avg_ms": 0.3,
+      "min_ms": 0.23,
+      "max_ms": 0.38,
+      "share_pct": 0.0,
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "stage": "outline_skeleton",
+      "avg_ms": 0.13,
+      "min_ms": 0.13,
+      "max_ms": 0.13,
+      "share_pct": 0.0,
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "stage": "cache_lookup",
+      "avg_ms": 0.07,
+      "min_ms": 0.04,
+      "max_ms": 0.1,
+      "share_pct": 0.0,
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "stage": "python_overhead_1k_ops",
+      "avg_ms": 0.06,
+      "min_ms": 0.05,
+      "max_ms": 0.06,
+      "share_pct": 0.0,
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "stage": "classify_heuristic",
+      "avg_ms": 0.0,
+      "min_ms": 0.0,
+      "max_ms": 0.0,
+      "share_pct": 0.0,
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "stage": "rag_search",
+      "avg_ms": 0.0,
+      "min_ms": 0.0,
+      "max_ms": 0.0,
+      "share_pct": 0.0,
+      "ok": true,
+      "detail": "skipped (profile disables RAG)"
+    },
+    {
+      "stage": "llm_warm_connection",
+      "avg_ms": null,
+      "min_ms": null,
+      "max_ms": null,
+      "share_pct": null,
+      "ok": false,
+      "detail": null
+    }
+  ],
+  "stage_summary": {
+    "stages_ranked": [
+      {
+        "stage": "llm_stream_ttft_full",
+        "n": 1,
+        "min_ms": 3452.07,
+        "avg_ms": 3452.07,
+        "max_ms": 3452.07,
+        "p50_ms": 3452.07,
+        "share_of_sum_pct": 25.7,
+        "ok": true,
+        "last_detail": "",
+        "last_meta": {
+          "case": "attp_short"
+        }
+      },
+      {
+        "stage": "llm_full_stream",
+        "n": 1,
+        "min_ms": 3451.97,
+        "avg_ms": 3451.97,
+        "max_ms": 3451.97,
+        "p50_ms": 3451.97,
+        "share_of_sum_pct": 25.7,
+        "ok": true,
+        "last_detail": "attp_short",
+        "last_meta": {
+          "words": 104
+        }
+      },
+      {
+        "stage": "llm_ttft",
+        "n": 1,
+        "min_ms": 2519.12,
+        "avg_ms": 2519.12,
+        "max_ms": 2519.12,
+        "p50_ms": 2519.12,
+        "share_of_sum_pct": 18.8,
+        "ok": true,
+        "last_detail": "attp_short",
+        "last_meta": {
+          "ttft_ms": 2519.12,
+          "full_ms": 3451.97,
+          "chars": 751,
+          "words": 104,
+          "preview": "Hook: Yes.  \nApproach: Shipping should be blocked when parent-child aggregation is incomplete to ensure compliance with serialization regulations and prevent potential misalignment in the supply chain",
+          "source": "stream"
+        }
+      },
+      {
+        "stage": "llm_generate_answer",
+        "n": 1,
+        "min_ms": 2000.53,
+        "avg_ms": 2000.53,
+        "max_ms": 2000.53,
+        "p50_ms": 2000.53,
+        "share_of_sum_pct": 14.9,
+        "ok": true,
+        "last_detail": "",
+        "last_meta": {
+          "case": "attp_short"
+        }
+      },
+      {
+        "stage": "llm_full_generate",
+        "n": 1,
+        "min_ms": 2000.46,
+        "avg_ms": 2000.46,
+        "max_ms": 2000.46,
+        "p50_ms": 2000.46,
+        "share_of_sum_pct": 14.9,
+        "ok": true,
+        "last_detail": "attp_short",
+        "last_meta": {
+          "full_ms": 2000.46,
+          "source": "llm",
+          "words": 152,
+          "preview": "Hook: Yes.\nApproach: Shipping should be blocked when parent-child aggregation is incomplete to ensure compliance with serialization regulations and maintain the integrity of the supply chain. In SAP A"
+        }
+      },
+      {
+        "stage": "common_sense_lock",
+        "n": 3,
+        "min_ms": 0.1,
+        "avg_ms": 0.66,
+        "max_ms": 1.75,
+        "p50_ms": 0.13,
+        "share_of_sum_pct": 0.0,
+        "ok": true,
+        "last_detail": "",
+        "last_meta": {}
+      },
+      {
+        "stage": "template_answer",
+        "n": 2,
+        "min_ms": 0.23,
+        "avg_ms": 0.3,
+        "max_ms": 0.38,
+        "p50_ms": 0.38,
+        "share_of_sum_pct": 0.0,
+        "ok": true,
+        "last_detail": "",
+        "last_meta": {}
+      },
+      {
+        "stage": "outline_skeleton",
+        "n": 2,
+        "min_ms": 0.13,
+        "avg_ms": 0.13,
+        "max_ms": 0.13,
+        "p50_ms": 0.13,
+        "share_of_sum_pct": 0.0,
+        "ok": true,
+        "last_detail": "",
+        "last_meta": {}
+      },
+      {
+        "stage": "cache_lookup",
+        "n": 2,
+        "min_ms": 0.04,
+        "avg_ms": 0.07,
+        "max_ms": 0.1,
+        "p50_ms": 0.1,
+        "share_of_sum_pct": 0.0,
+        "ok": true,
+        "last_detail": "",
+        "last_meta": {}
+      },
+      {
+        "stage": "python_overhead_1k_ops",
+        "n": 3,
+        "min_ms": 0.05,
+        "avg_ms": 0.06,
+        "max_ms": 0.06,
+        "p50_ms": 0.06,
+        "share_of_sum_pct": 0.0,
+        "ok": true,
+        "last_detail": "",
+        "last_meta": {}
+      },
+      {
+        "stage": "classify_heuristic",
+        "n": 1,
+        "min_ms": 0.0,
+        "avg_ms": 0.0,
+        "max_ms": 0.0,
+        "p50_ms": 0.0,
+        "share_of_sum_pct": 0.0,
+        "ok": true,
+        "last_detail": "",
+        "last_meta": {
+          "profile": "live"
+        }
+      },
+      {
+        "stage": "rag_search",
+        "n": 1,
+        "min_ms": 0.0,
+        "avg_ms": 0.0,
+        "max_ms": 0.0,
+        "p50_ms": 0.0,
+        "share_of_sum_pct": 0.0,
+        "ok": true,
+        "last_detail": "skipped (profile disables RAG)",
+        "last_meta": {
+          "skipped": true
+        }
+      },
+      {
+        "stage": "llm_warm_connection",
+        "n": 2,
+        "ok": false,
+        "detail": "name 'time' is not defined"
+      }
+    ],
+    "sum_of_stage_avgs_ms": 13425.37,
+    "span_count": 21
+  },
+  "stt": {
+    "skipped": true
+  },
+  "llm": {
+    "cases": [
+      {
+        "id": "attp_short",
+        "stream": {
+          "ttft_ms": 2519.12,
+          "full_ms": 3451.97,
+          "chars": 751,
+          "words": 104,
+          "preview": "Hook: Yes.  \nApproach: Shipping should be blocked when parent-child aggregation is incomplete to ensure compliance with serialization regulations and prevent potential misalignment in the supply chain",
+          "source": "stream"
+        },
+        "wall_ms": 3452.07,
+        "generate": {
+          "full_ms": 2000.46,
+          "source": "llm",
+          "words": 152,
+          "preview": "Hook: Yes.\nApproach: Shipping should be blocked when parent-child aggregation is incomplete to ensure compliance with serialization regulations and maintain the integrity of the supply chain. In SAP A"
+        }
+      }
+    ],
+    "model_ttft": null
+  },
+  "ai_analysis": {
+    "primary_bottleneck": "llm_stream_ttft_full",
+    "secondary_bottleneck": "llm_ttft",
+    "invest_in": "model",
+    "confidence": 0.9,
+    "headline": "The LLM processing time is excessively high, indicating a need for optimization.",
+    "why": "The average time for LLM stages is over 3 seconds, significantly exceeding acceptable limits for responsiveness. The TTFT stage also takes over 2.5 seconds, which is not optimal for user experience. Investing in a more efficient model or optimizing the current one could drastically reduce latency.",
+    "next_actions": [
+      "Evaluate alternative LLM models with better performance metrics.",
+      "Optimize the current LLM usage to reduce processing time.",
+      "Consider reducing the complexity of prompts to improve response times."
+    ],
+    "ms_budget": {
+      "stt_ms": null,
+      "llm_ttft_ms": 2519.12,
+      "llm_full_ms": 3451.97,
+      "local_ms": null,
+      "waste_ms": null
+    },
+    "should_upgrade_stt": false,
+    "should_upgrade_model": true,
+    "should_change_provider": false,
+    "analyst": "llm",
+    "analyst_ms": 3765.39,
+    "analyst_model": "gpt-4o-mini",
+    "numbers": {
+      "stt_ms": 0.0,
+      "llm_ttft_ms": 2519.12,
+      "llm_full_ms": 2000.46,
+      "cache_ms": 0.07,
+      "outline_ms": 0.13
+    },
+    "rule_based_backup": {
+      "primary_bottleneck": "model",
+      "primary_ms": 2519.12,
+      "secondary_bottleneck": "other_python",
+      "why": "Provider/model mismatch: OpenAI endpoint cannot serve Llama model IDs efficiently (failover/retries inflate TTFT).",
+      "invest_in": "model",
+      "confidence": 0.72,
+      "next_actions": [
+        "CONFIG BUG: ASTRA_LLM_PROVIDER=openai but models are Llama (llama-3.3-70b-versatile / llama-3.1-8b-instant). Set ASTRA_LLM_PROVIDER=groq + GROQ_API_KEY for sub-second TTFT, or switch models to gpt-4o-mini on OpenAI.",
+        "Prefer faster draft model for live TTFT (current fast=llama-3.1-8b-instant)",
+        "Keep outline-first + cache warm; reduce max_tokens in fast depth",
+        "Confirm provider is Groq/Flash-class for live, not a slow OpenAI o-series",
+        "TTFT >1.5s: check network/region and model remap"
+      ],
+      "numbers": {
+        "stt_ms": 0.0,
+        "llm_ttft_ms": 2519.12,
+        "llm_full_ms": 2000.46,
+        "cache_ms": 0.07,
+        "outline_ms": 0.13
+      },
+      "analyst": "rule_based"
+    }
+  },
+  "recommendation": {
+    "invest_in": "model",
+    "headline": "The LLM processing time is excessively high, indicating a need for optimization.",
+    "should_upgrade_stt": false,
+    "should_upgrade_model": true,
+    "should_change_provider": false,
+    "next_actions": [
+      "Evaluate alternative LLM models with better performance metrics.",
+      "Optimize the current LLM usage to reduce processing time.",
+      "Consider reducing the complexity of prompts to improve response times."
+    ],
+    "confidence": 0.9
+  },
+  "how_to_read": {
+    "unit": "milliseconds (ms), 0.01 precision",
+    "rule": "If stt_* avg >> llm_ttft → upgrade STT/streaming ASR, not the LLM. If llm_ttft is the top bar → faster model/provider or shorter prompts. If cache/outline/common_sense are <5ms they are not the problem."
+  }
+}
