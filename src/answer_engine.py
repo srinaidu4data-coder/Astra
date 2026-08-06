@@ -132,6 +132,12 @@ _CORE = (
     "Do NOT use RAG, prior interviews, or any stored skill/domain pack.\n"
     "Do NOT invent product names, modules, tools, or stack jargon that do not appear "
     "in those materials or the question. Prefer plain English when unsure.\n"
+    "METRIC RULE (strict): Never invent baseline/final numbers from a percentage. "
+    "If the resume says '30% reduction', say '30% reduction' — never 'from 10 days to 7 days' "
+    "unless both numbers appear in materials. Never invent secondary metrics "
+    "(e.g. 40% fewer discrepancies), training sessions, workshops, or actions not in materials.\n"
+    "Missing personal evidence → use 'I would approach this by…' or 'A strong approach would be…' "
+    "— do not invent candidate history.\n"
     "Blank materials → answer the question only; do not invent a job title or product family.\n"
     "No markdown #. Labels exactly like Hook: (never /Hook:).\n"
     "Ban filler: basically, just, simply, leverage, synergy, excited to, circle back, "
@@ -160,8 +166,18 @@ FAST_TECH_SYSTEM = (
 )
 FAST_SHORTER_SYSTEM = (
     _CORE
-    + "Exactly 4 short lines: 1) Punchline 2) Mechanism 3) Tradeoff or metric 4) Close. "
-    "Max 70 words."
+    + "MODE = SHORTER but EXTREMELY TECHNICAL (architect register).\n"
+    "This is NOT dumbed-down or casual. Compress density; do not water down jargon.\n"
+    "Voice: principal / staff architect — precise vocabulary, zero soft coach-speak.\n"
+    "Use domain terms from Role/JD/Resume/question aggressively when present "
+    "(interfaces, contracts, invariants, failure domains, consistency, idempotency, "
+    "latency budgets, blast radius, control plane vs data plane, etc. when on-topic).\n"
+    "Structure as 7–9 dense speakable sentences (or labeled lines that read as sentences).\n"
+    "Minimum 7 complete sentences. Target ~140–220 words (fast path).\n"
+    "Optional labels: Hook: / Mechanism: / Constraint: / Tradeoff: / Close:\n"
+    "Hook = the architectural decision or mechanism, not a slogan.\n"
+    "Every sentence must carry a mechanism, constraint, interface, or failure mode — "
+    "no empty claims."
 )
 FAST_CODE_SYSTEM = (
     _CORE
@@ -185,8 +201,20 @@ RICH_TECHNICAL_SYSTEM = (
 )
 RICH_SHORTER_SYSTEM = (
     _CORE
-    + "Exactly 6 speakable lines: punchline, mechanism, action, refuse/tradeoff, "
-    "proof, close. 70–120 words. At least 3 precise terms from Q/role/context."
+    + "MODE = SHORTER but EXTREMELY TECHNICAL (architect register).\n"
+    "Compressed signal — not simplified English. Principal-architect diction.\n"
+    "Extreme technical vocabulary grounded in Role / Job Context / JD / Resume / Q only "
+    "(no invented product families). Prefer: contracts, invariants, coupling, cohesion, "
+    "consistency models, failure domains, blast radius, backpressure, idempotency, "
+    "orchestration vs choreography, control vs data plane, SLO/error budgets, "
+    "observability signals, migration seams, rollback surfaces — when relevant.\n"
+    "HARD RULE: at least 7 full sentences (count terminal . ! ?).\n"
+    "Target 160–280 words; multi-part Q 220–340. Density over storytelling fluff.\n"
+    "Labels (recommended): Hook: / Thesis: / Mechanism: / Constraint: / "
+    "Tradeoff: / Validation: / Close: — each body is 1–2 hard sentences.\n"
+    "Hook = the technical claim or design choice (mechanism-level).\n"
+    "Refuse corporate fog. Prefer causal chains (because / so that / under load / "
+    "when X fails). End on Close: with a decisive technical stance."
 )
 RICH_CODE_SYSTEM = (
     _CORE
@@ -196,8 +224,10 @@ RICH_CODE_SYSTEM = (
 
 REGEN_STRICT_SUFFIX = (
     "PREVIOUS DRAFT WAS TOO SOFT, LONG, GENERIC, OR OFF-DOMAIN.\n"
-    "Regenerate: sharper Hook, fewer words, more real mechanisms, harder tradeoffs, "
-    "only terms from Role/question/context. Zero filler. One-word Q → Hook token only first."
+    "Regenerate: sharper Hook, more real mechanisms, harder tradeoffs, "
+    "only terms from Role/question/context. Zero filler. One-word Q → Hook token only first.\n"
+    "If mode is shorter: keep EXTREMELY TECHNICAL architect diction, ≥7 sentences, "
+    "dense vocabulary — compress, do not simplify."
 )
 
 REGEN_PRODUCT_BLEED_SUFFIX = (
@@ -783,6 +813,21 @@ def _normalize_answer_text(
         t = strip_off_domain_filler(t, question=question, job_context=job_context)
     except Exception:
         pass
+    # Layer-2 evidence sanitizer — strips invented metrics / unsupported history
+    try:
+        from evidence_grounding import (
+            bundle_from_session_pack,
+            sanitize_answer_against_evidence,
+        )
+
+        bundle = bundle_from_session_pack(job_context)
+        result = sanitize_answer_against_evidence(
+            t, bundle, question=question
+        )
+        t = result.text
+        _normalize_answer_text.last_grounding = result.to_dict()  # type: ignore[attr-defined]
+    except Exception:
+        _normalize_answer_text.last_grounding = None  # type: ignore[attr-defined]
     return t
 
 
@@ -795,9 +840,19 @@ def score_answer_quality(
     score = 0
     reasons: list[str] = []
 
-    min_words = {"shorter": 60, "code": 70, "technical": 120, "star": 120}.get(
+    min_words = {"shorter": 140, "code": 70, "technical": 120, "star": 120}.get(
         mode, 120
     )
+    # Shorter mode must stay dense + multi-sentence (architect register)
+    if mode == "shorter":
+        sentences = len(re.findall(r"[.!?]+", t))
+        if sentences >= 7:
+            score += 15
+        elif sentences >= 5:
+            score += 6
+            reasons.append(f"few sentences ({sentences})")
+        else:
+            reasons.append(f"need ≥7 sentences ({sentences})")
     if words >= min_words:
         score += 25
     elif words >= int(min_words * 0.65):
@@ -923,27 +978,28 @@ def _answer_depth() -> str:
 def _max_tokens_for_mode(mode: str, *, question: str = "") -> int:
     long_q = _is_long_or_multipart_question(question)
     depth = _answer_depth()
+    # Shorter = dense architect prose (≥7 sentences), needs real token room
     if depth == "fast" or ANSWER_PROFILE in ("ultra", "fast"):
-        base = {"shorter": 90, "technical": 280, "code": 240, "star": 220}.get(
+        base = {"shorter": 320, "technical": 280, "code": 240, "star": 220}.get(
             mode, 220
         )
         return base + (120 if long_q else 0)
     if depth == "deep":
-        base = {"shorter": 320, "technical": 900, "code": 900, "star": 950}.get(
+        base = {"shorter": 700, "technical": 900, "code": 900, "star": 950}.get(
             mode, 900
         )
         return base + (200 if long_q else 0)
     if ANSWER_PROFILE == "live":
-        base = {"shorter": 150, "technical": 520, "code": 420, "star": 450}.get(
+        base = {"shorter": 480, "technical": 520, "code": 420, "star": 450}.get(
             mode, 450
         )
         return base + (200 if long_q else 0)
     if ANSWER_PROFILE == "balanced":
-        base = {"shorter": 300, "technical": 800, "code": 800, "star": 850}.get(
+        base = {"shorter": 560, "technical": 800, "code": 800, "star": 850}.get(
             mode, 800
         )
         return base + (150 if long_q else 0)
-    return {"shorter": 400, "technical": 1000, "code": 1100, "star": 1100}.get(
+    return {"shorter": 650, "technical": 1000, "code": 1100, "star": 1100}.get(
         mode, 1000
     )
 
@@ -1041,6 +1097,34 @@ def _build_user_prompt(
         "No RAG, no prior interviews, no stored domain answers, no other products."
     )
 
+    # Evidence-safe block (compact selected facts + metric policy)
+    evidence_block = ""
+    try:
+        from evidence_grounding import (
+            bundle_from_session_pack,
+            classify_answer_mode,
+            evidence_policy_block,
+            select_relevant_evidence,
+        )
+
+        _bundle = bundle_from_session_pack(user_job)
+        _rel = select_relevant_evidence(_bundle, q, max_facts=8)
+        _mode = classify_answer_mode(q, _rel)
+        evidence_block = evidence_policy_block(_mode, _rel)
+        # Prefer compact evidence over dumping full resume when evidence exists
+        if _rel.facts or any(m.approved for m in _rel.metrics):
+            if len(pre) > 900:
+                pre = (
+                    f"Role / Job context: {user_job[:180]}\n"
+                    + evidence_block
+                )
+            else:
+                pre = (pre + "\n" + evidence_block).strip()
+        else:
+            pre = (pre + "\n" + evidence_block).strip() if pre else evidence_block
+    except Exception:
+        evidence_block = ""
+
     if _is_fast_profile() and not strict_regen:
         q_budget = 1800 if long_q else 900
         parts = [
@@ -1050,7 +1134,8 @@ def _build_user_prompt(
             f"Depth: {depth}",
         ]
         if pre:
-            parts.append(pre)
+            # Cap materials in fast path for latency (selected evidence preferred)
+            parts.append(pre[:2200] if len(pre) > 2200 else pre)
         if jargon:
             parts.append("Prefer these materials terms when accurate: " + ", ".join(jargon))
         if must:
@@ -1112,7 +1197,11 @@ def _build_user_prompt(
     }.get((tone or "confident").lower(), "decisive, short sentences, mechanism + proof")
 
     instruct = {
-        "shorter": "Write 4–6 high-signal speakable lines now.",
+        "shorter": (
+            "Write the SHORTER answer now as EXTREMELY TECHNICAL architect speech: "
+            "≥7 full sentences, dense mechanisms, extreme precise vocabulary from "
+            "Role/JD/Resume/question, zero soft filler. Compress — do not simplify."
+        ),
         "technical": "Write the technical answer now.",
         "code": "Write approach + code + walkthrough + tradeoff now.",
         "star": "Write Hook/STAR/Close now.",
@@ -1628,6 +1717,8 @@ def to_bullets(text: str, mode: str = "star") -> list[str]:
         "close",
         "approach",
         "mechanism",
+        "thesis",
+        "constraint",
         "tradeoffs",
         "tradeoff",
         "validation",

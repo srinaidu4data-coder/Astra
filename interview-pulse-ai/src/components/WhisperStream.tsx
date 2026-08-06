@@ -57,7 +57,11 @@ import {
 type Spotlight = 'all' | 'hook' | 'proof' | 'close' | 'ask' | 'cool'
 
 const modes: { id: AnswerMode; label: string; hint: string }[] = [
-  { id: 'shorter', label: 'Shorter', hint: '3 tight lines' },
+  {
+    id: 'shorter',
+    label: 'Shorter',
+    hint: 'Dense architect tech · ≥7 sentences',
+  },
   { id: 'technical', label: 'Technical', hint: 'depth + tradeoffs' },
   { id: 'star', label: 'STAR', hint: 'S/T/A/R story' },
   { id: 'code', label: 'Code', hint: 'sketch + speak' },

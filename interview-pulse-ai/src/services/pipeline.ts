@@ -235,14 +235,21 @@ function buildAnswer(
   }
 
   if (mode === 'shorter') {
+    // Offline fallback: dense architect-register technical stack (≥7 sentences)
+    const m0 = metrics[0] || 'measurable latency/error budget'
+    const bullets = [
+      `Hook — Treat the problem as a constrained control-plane decision under failure domains, not a feature request.`,
+      `Thesis — I bind the design to explicit contracts, invariants, and an SLO so coupling stays intentional.`,
+      `Mechanism — Isolate the critical path: ingress validation, idempotent state transitions, and backpressure at the boundary so blast radius stays local.`,
+      `Constraint — Prefer deterministic local signals over opaque remote heuristics when turn-time or correctness budgets are tight.`,
+      `Tradeoff — Accept higher operational surface (instrumentation, replay, dual-write seams) to keep consistency and rollback coherent.`,
+      `Validation — Prove it with production-shaped load, contract tests, and ${m0} against the error budget — not demo-only happy paths.`,
+      `Close — If the invariant breaks under load, I fail closed, surface the contract violation, and cut scope before corrupting the data plane.`,
+    ]
     return {
       id: uid('ans'),
       mode,
-      bullets: [
-        `Context: ${star.situation}`,
-        `Action: ${star.action}`,
-        `Result: ${star.result}`,
-      ],
+      bullets,
       metrics,
       streaming: false,
     }
