@@ -218,10 +218,17 @@ export async function devBypassLogin(): Promise<{ token: string; user: AuthUser 
   return data
 }
 
-export async function startCheckout(): Promise<string> {
+export async function startCheckout(
+  productCode: string = 'pro_monthly',
+  opportunityId?: number,
+): Promise<string> {
   const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
     method: 'POST',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      product_code: productCode,
+      opportunity_id: opportunityId ?? null,
+    }),
   })
   if (!res.ok) throw new Error(await parseError(res))
   const data = await res.json()

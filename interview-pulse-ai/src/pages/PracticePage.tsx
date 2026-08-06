@@ -369,6 +369,42 @@ export function PracticePage() {
     setPhase('audio')
   }
 
+  // Handoff from Company Twin Sprint → fixed mock plan
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('ip_sprint_mock_plan')
+      if (!raw) return
+      sessionStorage.removeItem('ip_sprint_mock_plan')
+      const plan = JSON.parse(raw) as {
+        questions?: MockQuestion[]
+        intro_script?: string
+        closing_script?: string
+        job_title?: string
+      }
+      if (!plan.questions?.length) return
+      setJobTitle(plan.job_title || 'Company Twin mock')
+      setBusy(true)
+      void beginLiveSession({
+        sessionId: uid('sprint_mock'),
+        questions: plan.questions.map((q, i) => ({
+          id: q.id || `twin_${i}`,
+          text: q.text,
+          spoken_text: q.spoken_text || q.text,
+          category: q.category || 'twin',
+        })),
+        tips: ['Company Twin mock — use only verified experience'],
+        source: 'sprint-twin-mock',
+        intro:
+          plan.intro_script ||
+          'Company Twin mock. Answer with evidence only from your materials.',
+        closing: plan.closing_script || 'Twin mock complete.',
+      })
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const startSession = async () => {
     setBusy(true)
     setError(null)
@@ -561,6 +597,36 @@ export function PracticePage() {
         summary: rep.summary,
         practicePlan: rep.practice_plan,
       })
+      // Company Twin debrief (editable follow-up email stored server-side; never auto-sent)
+      if (source.startsWith('sprint') || source.includes('twin')) {
+        try {
+          const { submitDebrief } = await import('@/services/sprint')
+          const oppRaw = sessionStorage.getItem('ip_sprint_opportunity_id')
+          const oppId = oppRaw ? Number(oppRaw) : NaN
+          if (Number.isFinite(oppId)) {
+            const twin = await submitDebrief({
+              opportunity_id: oppId,
+              kind: 'mock',
+              readiness_before: undefined,
+              turns: allTurns.map((t) => ({
+                question: t.question,
+                answer: t.answer,
+                scores: t.scores as unknown as Record<string, unknown>,
+              })),
+            })
+            try {
+              sessionStorage.setItem(
+                'ip_sprint_last_debrief',
+                JSON.stringify(twin.debrief),
+              )
+            } catch {
+              /* ignore */
+            }
+          }
+        } catch {
+          /* debrief optional if unpaid / offline */
+        }
+      }
     } catch (e) {
       // Keep a local debrief so a report API blip doesn't wipe the session
       const allTurns = turnsRef.current

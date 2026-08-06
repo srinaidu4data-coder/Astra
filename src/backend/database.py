@@ -39,7 +39,7 @@ def _sqlite_add_column_if_missing(table: str, column: str, coltype: str) -> None
 
 
 def migrate_schema() -> None:
-    """Apply additive column migrations for users table."""
+    """Apply additive column migrations for users table + Sprint tables via create_all."""
     _sqlite_add_column_if_missing("users", "last_email_error", "TEXT")
     _sqlite_add_column_if_missing("users", "access_revoked_reason", "TEXT")
     _sqlite_add_column_if_missing("users", "last_refund_at", "DATETIME")
@@ -58,6 +58,11 @@ def migrate_schema() -> None:
     _sqlite_add_column_if_missing("users", "is_admin", "BOOLEAN DEFAULT 0")
     _sqlite_add_column_if_missing("users", "answer_model", "TEXT")
     _sqlite_add_column_if_missing("users", "fallback_model", "TEXT")
+    _sqlite_add_column_if_missing("users", "plan_code", "TEXT")
+    _sqlite_add_column_if_missing("users", "referral_code", "TEXT")
+    _sqlite_add_column_if_missing("users", "referred_by_user_id", "INTEGER")
+    _sqlite_add_column_if_missing("users", "complimentary_until", "DATETIME")
+    _sqlite_add_column_if_missing("users", "complimentary_reason", "TEXT")
     _sqlite_add_column_if_missing("license_keys", "user_id", "INTEGER")
 
 

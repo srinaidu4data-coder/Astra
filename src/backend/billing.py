@@ -291,25 +291,57 @@ async def billing_status(
     )
 
 
+class CheckoutRequest(BaseModel):
+    """product_code: interview_pass | interview_sprint | pro_monthly (default)."""
+
+    product_code: str = Field(default="pro_monthly")
+    opportunity_id: int | None = None
+
+
+@router.get("/products")
+async def list_products(
+    user: User = Depends(get_current_user),
+) -> dict:
+    """Public product catalog for paywall / Sprint UI (no secrets)."""
+    from backend.products import product_catalog
+
+    return {
+        "products": [p.public_dict() for p in product_catalog() if p.active],
+        "stripe_configured": settings.stripe_configured,
+    }
+
+
 @router.post("/checkout", response_model=CheckoutResponse)
 async def create_checkout(
+    body: CheckoutRequest | None = None,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> CheckoutResponse:
-    """Create a Stripe Checkout session for the monthly plan."""
-    if not settings.stripe_configured:
+    """Create Stripe Checkout for subscription or one-time Sprint products."""
+    from backend.products import get_product
+
+    body = body or CheckoutRequest()
+    product = get_product(body.product_code) or get_product("pro_monthly")
+    if product is None or product.billing_mode == "free":
+        raise HTTPException(status_code=400, detail="Invalid product")
+
+    price_id = (product.stripe_price_id or "").strip()
+    # Legacy fallback for pro monthly
+    if not price_id and product.code == "pro_monthly":
+        price_id = (settings.STRIPE_PRICE_ID or "").strip()
+    if not settings.STRIPE_SECRET_KEY.strip() or not price_id:
         raise HTTPException(
             status_code=503,
             detail={
                 "error": {
                     "code": "stripe_not_configured",
-                    "message": "Stripe monthly price is not configured.",
+                    "message": f"Stripe price not configured for {product.code}.",
                 }
             },
         )
     _stripe()
 
-    if user_has_active_subscription(user):
+    if product.billing_mode == "subscription" and user_has_active_subscription(user):
         raise HTTPException(
             status_code=400,
             detail={
@@ -323,29 +355,43 @@ async def create_checkout(
     customer_id = _ensure_customer(user, session)
     success_url = settings.STRIPE_SUCCESS_URL
     if "{CHECKOUT_SESSION_ID}" not in success_url:
-        # Guarantee session id for post-pay confirm (fixes webhook race)
-        sep = "&" if "?" in success_url else "?"
         if "#" in success_url:
-            # HashRouter: inject before end
             base, frag = success_url.split("#", 1)
             if "?" in frag:
                 success_url = f"{base}#{frag}&session_id={{CHECKOUT_SESSION_ID}}"
             else:
                 success_url = f"{base}#{frag}?session_id={{CHECKOUT_SESSION_ID}}"
         else:
+            sep = "&" if "?" in success_url else "?"
             success_url = f"{success_url}{sep}session_id={{CHECKOUT_SESSION_ID}}"
 
-    checkout = stripe.checkout.Session.create(
-        customer=customer_id,
-        mode="subscription",
-        line_items=[{"price": settings.STRIPE_PRICE_ID.strip(), "quantity": 1}],
-        success_url=success_url,
-        cancel_url=settings.STRIPE_CANCEL_URL,
-        client_reference_id=str(user.id),
-        metadata={"astra_user_id": str(user.id)},
-        subscription_data={"metadata": {"astra_user_id": str(user.id)}},
-        allow_promotion_codes=True,
-    )
+    meta = {
+        "astra_user_id": str(user.id),
+        "product_code": product.code,
+    }
+    if body.opportunity_id:
+        meta["opportunity_id"] = str(body.opportunity_id)
+
+    kwargs: dict = {
+        "customer": customer_id,
+        "mode": "subscription" if product.billing_mode == "subscription" else "payment",
+        "line_items": [{"price": price_id, "quantity": 1}],
+        "success_url": success_url,
+        "cancel_url": settings.STRIPE_CANCEL_URL,
+        "client_reference_id": str(user.id),
+        "metadata": meta,
+        "allow_promotion_codes": True,
+    }
+    if product.billing_mode == "subscription":
+        kwargs["subscription_data"] = {
+            "metadata": {"astra_user_id": str(user.id), "product_code": product.code}
+        }
+    else:
+        kwargs["payment_intent_data"] = {
+            "metadata": {"astra_user_id": str(user.id), "product_code": product.code}
+        }
+
+    checkout = stripe.checkout.Session.create(**kwargs)
     url = checkout.get("url") if isinstance(checkout, dict) else checkout.url
     if not url:
         raise HTTPException(status_code=500, detail="Stripe did not return a checkout URL.")
@@ -451,13 +497,59 @@ async def confirm_checkout_session(
     if sub and sub.get("id"):
         _apply_subscription(session, db_user, sub, clear_revocation=True)
         source = "checkout_session"
+        try:
+            from backend.entitlements import grant_entitlement
+            from backend.products import get_product
+
+            pcode = (cs_d.get("metadata") or {}).get("product_code") or "pro_monthly"
+            prod = get_product(pcode) or get_product("pro_monthly")
+            if prod:
+                grant_entitlement(
+                    session,
+                    db_user,
+                    prod,
+                    checkout_session_id=body.session_id,
+                    subscription_id=str(sub.get("id")),
+                )
+        except Exception:
+            logger.exception("confirm-session grant sub entitlement failed")
+    elif cs_d.get("mode") == "payment" and cs_d.get("payment_status") == "paid":
+        source = "checkout_session_payment"
+        try:
+            from backend.entitlements import grant_entitlement, user_has_paid_access
+            from backend.products import get_product
+
+            pcode = (cs_d.get("metadata") or {}).get("product_code") or "interview_pass"
+            prod = get_product(pcode)
+            if prod:
+                oid = (cs_d.get("metadata") or {}).get("opportunity_id")
+                grant_entitlement(
+                    session,
+                    db_user,
+                    prod,
+                    checkout_session_id=body.session_id,
+                    payment_intent_id=str(cs_d.get("payment_intent") or ""),
+                    opportunity_id=int(oid) if oid else None,
+                )
+                db_user.access_revoked_reason = None
+                session.add(db_user)
+                session.commit()
+            # Reflect paid access in subscription_active for FE gate (pass holders)
+            if user_has_paid_access(session, db_user):
+                # Do not fake Stripe status; FE uses entitlements endpoint too
+                pass
+        except Exception:
+            logger.exception("confirm-session grant payment entitlement failed")
     else:
         source = _sync_user_from_stripe(session, db_user)
 
     session.refresh(db_user)
+    from backend.entitlements import user_has_paid_access
+
+    paid = user_has_active_subscription(db_user) or user_has_paid_access(session, db_user)
     return SyncResponse(
         user=user_public_dict(db_user),
-        subscription_active=user_has_active_subscription(db_user),
+        subscription_active=paid,
         source=source,
     )
 
@@ -501,11 +593,51 @@ async def stripe_webhook(
         user_id = (data.get("metadata") or {}).get("astra_user_id") or data.get(
             "client_reference_id"
         )
-        if user_id and sub_id:
+        product_code = (data.get("metadata") or {}).get("product_code") or ""
+        opportunity_id = (data.get("metadata") or {}).get("opportunity_id")
+        session_id = data.get("id")
+        if user_id:
             user = session.get(User, int(user_id))
-            if user:
+            if user and sub_id:
                 sub = stripe.Subscription.retrieve(sub_id)
                 _apply_subscription(session, user, _as_dict(sub), clear_revocation=True)
+                try:
+                    from backend.entitlements import grant_entitlement
+                    from backend.products import get_product
+
+                    prod = get_product(product_code) or get_product("pro_monthly")
+                    if prod:
+                        grant_entitlement(
+                            session,
+                            user,
+                            prod,
+                            checkout_session_id=str(session_id or ""),
+                            subscription_id=str(sub_id),
+                        )
+                except Exception:
+                    logger.exception("Failed to grant subscription entitlement")
+            elif user and data.get("mode") == "payment":
+                # One-time Interview Pass / Sprint
+                try:
+                    from backend.entitlements import grant_entitlement
+                    from backend.products import get_product
+
+                    prod = get_product(product_code)
+                    if prod:
+                        pi = data.get("payment_intent")
+                        grant_entitlement(
+                            session,
+                            user,
+                            prod,
+                            checkout_session_id=str(session_id or ""),
+                            payment_intent_id=str(pi) if pi else None,
+                            opportunity_id=int(opportunity_id) if opportunity_id else None,
+                        )
+                        user.access_revoked_reason = None
+                        session.add(user)
+                        session.commit()
+                except Exception:
+                    logger.exception("Failed to grant one-time entitlement")
 
     elif etype in (
         "customer.subscription.created",

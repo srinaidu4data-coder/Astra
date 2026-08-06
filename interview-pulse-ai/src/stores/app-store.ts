@@ -120,7 +120,7 @@ let _levelsSyncAt = 0
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      route: 'copilot',
+      route: 'sprint',
       setRoute: (route) => {
         // Legacy Knowledge tab → Interview with Materials open (no feature lost)
         if (route === 'knowledge') {

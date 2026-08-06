@@ -9,10 +9,12 @@ import {
   Radar,
   Settings2,
   Shield,
+  Target,
 } from 'lucide-react'
 import { useMemo } from 'react'
 
 const baseItems: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
+  { id: 'sprint', label: 'Sprint', icon: Target },
   { id: 'copilot', label: 'Interview', icon: Mic2 },
   { id: 'practice', label: 'Mock', icon: BrainCircuit },
   { id: 'analytics', label: 'Analytics', icon: Activity },

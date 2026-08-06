@@ -18,18 +18,24 @@ import {
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-const BENEFITS = [
+const PLANS = [
   {
-    title: 'Live interview copilot',
-    body: 'Speakers-only capture · answers grounded in your role, resume, and JD',
+    code: 'interview_pass',
+    title: 'Interview Pass',
+    price: '$19',
+    body: 'One opportunity · 72 hours · 120 live minutes · full Company Twin',
   },
   {
-    title: 'Speak rails under pressure',
-    body: 'Hook · Proof · Close (and Ask when earned) — designed for real calls',
+    code: 'interview_sprint',
+    title: 'Interview Sprint',
+    price: '$39',
+    body: 'One opportunity · 14 days · unlimited mocks · 180 live minutes',
   },
   {
-    title: 'Mock practice + stats',
-    body: 'Spoken interviewer, scores, and progress when you are not live',
+    code: 'pro_monthly',
+    title: 'Pro Monthly',
+    price: '$59/mo',
+    body: 'Multiple opportunities · fair-use live minutes · packs',
   },
 ]
 
@@ -85,11 +91,11 @@ export function PaywallPage({ user }: { user: AuthUser }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params])
 
-  const checkout = async () => {
+  const checkout = async (productCode: string = 'interview_pass') => {
     setBusy(true)
     setError(null)
     try {
-      const url = await startCheckout()
+      const url = await startCheckout(productCode)
       window.location.href = url
     } catch (e) {
       setError((e as Error).message)
@@ -144,8 +150,8 @@ export function PaywallPage({ user }: { user: AuthUser }) {
           <p className="mt-2 text-[14px] leading-relaxed text-white/45">
             Signed in as <span className="text-white/80">{user.email}</span>
             {revoked === 'refund'
-              ? '. Subscribe again to restore access.'
-              : '. Monthly access unlocks the full Live kit.'}
+              ? '. Purchase again to restore access.'
+              : '. Pick prep for one job (Pass/Sprint) or Pro monthly.'}
           </p>
         </div>
 
@@ -155,21 +161,33 @@ export function PaywallPage({ user }: { user: AuthUser }) {
             aria-hidden
           />
 
-          <ul className="mb-6 space-y-2.5" aria-label="Plan includes">
-            {BENEFITS.map((b) => (
+          <ul className="mb-6 space-y-2.5" aria-label="Plans">
+            {PLANS.map((b) => (
               <li
-                key={b.title}
-                className="flex gap-3 rounded-2xl border border-white/[0.06] bg-black/20 px-3.5 py-3"
+                key={b.code}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-black/20 px-3.5 py-3"
               >
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#20B8CD]/15 text-[#5DD5E3]">
-                  <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-                </span>
-                <div>
-                  <p className="text-[13px] font-medium text-white/90">{b.title}</p>
-                  <p className="mt-0.5 text-[12px] leading-relaxed text-white/40">
-                    {b.body}
-                  </p>
+                <div className="flex min-w-0 gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#20B8CD]/15 text-[#5DD5E3]">
+                    <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                  </span>
+                  <div>
+                    <p className="text-[13px] font-medium text-white/90">
+                      {b.title}{' '}
+                      <span className="text-[#5DD5E3]">{b.price}</span>
+                    </p>
+                    <p className="mt-0.5 text-[12px] leading-relaxed text-white/40">
+                      {b.body}
+                    </p>
+                  </div>
                 </div>
+                <Button
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => void checkout(b.code)}
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Buy'}
+                </Button>
               </li>
             ))}
           </ul>
@@ -218,7 +236,7 @@ export function PaywallPage({ user }: { user: AuthUser }) {
               ) : (
                 <CreditCard className="h-4 w-4" strokeWidth={1.75} />
               )}
-              {revoked ? 'Subscribe again' : 'Subscribe monthly'}
+              {revoked ? 'Buy Interview Pass' : 'Buy Interview Pass · $19'}
             </Button>
             <Button
               size="lg"

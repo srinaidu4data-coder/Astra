@@ -157,3 +157,68 @@ async def admin_me(admin: User = Depends(require_admin)) -> dict[str, Any]:
         "default_answer_model": settings.DEFAULT_ANSWER_MODEL or "gpt-4.1-mini",
         "default_fallback_model": settings.DEFAULT_FALLBACK_MODEL or "gpt-4.1-nano",
     }
+
+
+class ComplimentaryIn(BaseModel):
+    days: int = Field(default=14, ge=1, le=365)
+    reason: str = Field(default="support_comp", max_length=200)
+    live_minutes: int = Field(default=120, ge=0, le=10000)
+
+
+@router.post("/users/{user_id}/complimentary")
+async def grant_complimentary(
+    user_id: int,
+    body: ComplimentaryIn,
+    admin: User = Depends(require_admin),
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    """Admin-issued complimentary Sprint access (server-side entitlement)."""
+    from datetime import datetime, timedelta
+
+    from backend.entitlements import grant_entitlement
+    from backend.products import ProductDef
+
+    target = session.get(User, user_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    until = datetime.utcnow() + timedelta(days=int(body.days))
+    target.complimentary_until = until
+    target.complimentary_reason = (body.reason or "support_comp")[:200]
+    target.access_revoked_reason = None
+    session.add(target)
+    session.commit()
+
+    prod = ProductDef(
+        code="admin_comp",
+        name="Admin complimentary",
+        description=body.reason,
+        price_cents=0,
+        currency="usd",
+        billing_mode="free",
+        stripe_price_id="",
+        duration_hours=24 * int(body.days),
+        live_minutes=int(body.live_minutes),
+        max_opportunities=3,
+        unlimited_mocks=True,
+        features=["company_dossier", "story_bank", "adaptive_mock", "live_sprint", "debrief"],
+        sort_order=90,
+        active=False,
+    )
+    ent = grant_entitlement(session, target, prod)
+    # Audit without secrets or private materials
+    logger = __import__("logging").getLogger("astra.admin")
+    logger.info(
+        "admin_comp admin_id=%s target_id=%s days=%s minutes=%s entitlement_id=%s",
+        admin.id,
+        target.id,
+        body.days,
+        body.live_minutes,
+        ent.id,
+    )
+    return {
+        "ok": True,
+        "user": user_public_dict(target, session),
+        "entitlement_id": ent.id,
+        "complimentary_until": until.isoformat(),
+    }

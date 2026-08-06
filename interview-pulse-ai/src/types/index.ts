@@ -1,6 +1,7 @@
 export type NavRoute =
   | 'copilot'
   | 'knowledge'
+  | 'sprint'
   | 'practice'
   | 'analytics'
   | 'settings'

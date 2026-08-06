@@ -86,14 +86,16 @@ try:
     from backend.billing import router as billing_router  # noqa: E402
     from backend.google_oauth import router as oauth_router  # noqa: E402
     from backend.password_auth import router as password_router  # noqa: E402
+    from backend.sprint import router as sprint_router  # noqa: E402
 
     create_db_and_tables()
     app.include_router(oauth_router)
     app.include_router(password_router)
     app.include_router(billing_router)
     app.include_router(admin_router)
+    app.include_router(sprint_router)
 except Exception as _auth_import_err:  # pragma: no cover - optional until deps installed
-    print(f"[auth] Google/Stripe/password/admin routers not loaded: {_auth_import_err}")
+    print(f"[auth] Google/Stripe/password/admin/sprint routers not loaded: {_auth_import_err}")
 
 # Job Search AI lab (localhost-gated) — does not touch interview/answer path
 try:

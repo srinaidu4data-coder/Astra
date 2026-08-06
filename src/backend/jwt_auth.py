@@ -114,8 +114,11 @@ def user_has_active_subscription(user: User) -> bool:
     return end > datetime.now(timezone.utc)
 
 
-def user_public_dict(user: User) -> dict[str, Any]:
-    """Safe user payload for the frontend."""
+def user_public_dict(user: User, session: Session | None = None) -> dict[str, Any]:
+    """Safe user payload for the frontend.
+
+    subscription_active means paid access: Stripe sub OR active Pass/Sprint entitlement.
+    """
     from backend.config import settings as _settings
 
     primary = (
@@ -128,13 +131,21 @@ def user_public_dict(user: User) -> dict[str, Any]:
         or _settings.DEFAULT_FALLBACK_MODEL
         or "gpt-4.1-nano"
     )
+    paid = user_has_active_subscription(user)
+    if not paid and session is not None:
+        try:
+            from backend.entitlements import user_has_paid_access
+
+            paid = user_has_paid_access(session, user)
+        except Exception:
+            pass
     return {
         "id": user.id,
         "email": user.email,
         "name": user.name,
         "picture_url": user.picture_url,
         "subscription_status": user.subscription_status,
-        "subscription_active": user_has_active_subscription(user),
+        "subscription_active": paid,
         "subscription_current_period_end": (
             user.subscription_current_period_end.isoformat()
             if user.subscription_current_period_end
@@ -149,6 +160,8 @@ def user_public_dict(user: User) -> dict[str, Any]:
         "fallback_model": getattr(user, "fallback_model", None),
         "effective_answer_model": primary,
         "effective_fallback_model": fallback,
+        "plan_code": getattr(user, "plan_code", None),
+        "referral_code": getattr(user, "referral_code", None),
     }
 
 

@@ -132,10 +132,13 @@ class Settings(BaseSettings):
     WELCOME_EMAIL_ENABLED: bool = True
     BILLING_EMAIL_ENABLED: bool = True
 
-    # --- Stripe monthly subscription ---
+    # --- Stripe (monthly + one-time Sprint products) ---
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
-    STRIPE_PRICE_ID: str = ""  # price_... for monthly plan
+    STRIPE_PRICE_ID: str = ""  # legacy monthly plan (maps to pro_monthly)
+    STRIPE_PRICE_PRO_MONTHLY: str = ""
+    STRIPE_PRICE_INTERVIEW_PASS: str = ""
+    STRIPE_PRICE_INTERVIEW_SPRINT: str = ""
     # {CHECKOUT_SESSION_ID} is filled by Stripe — required for post-pay sync without webhook race
     STRIPE_SUCCESS_URL: str = (
         "http://localhost:5173/#/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}"

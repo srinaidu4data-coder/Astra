@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react'
 import { useMemo } from 'react'
 
 const titles: Record<string, string> = {
+  sprint: 'Sprint',
   copilot: 'Interview',
   knowledge: 'Interview',
   practice: 'Mock interview',

@@ -11,6 +11,7 @@ import { OverlayPage } from '@/pages/OverlayPage'
 import { PaywallPage } from '@/pages/PaywallPage'
 import { PracticePage } from '@/pages/PracticePage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { SprintPage } from '@/pages/SprintPage'
 import { useIsMobile } from '@/lib/mobile'
 import {
   confirmCheckoutSession,
@@ -76,6 +77,7 @@ function PageBody() {
 
   return (
     <>
+      {route === 'sprint' && <SprintPage />}
       {(route === 'copilot' || route === 'knowledge') && <CopilotPage />}
       {route === 'practice' && <PracticePage />}
       {route === 'analytics' && <AnalyticsPage />}
@@ -175,6 +177,7 @@ function GatedApp() {
   const authReady = useAppStore((s) => s.authReady)
   const authConfig = useAppStore((s) => s.authConfig)
   const user = useAppStore((s) => s.user)
+  const route = useAppStore((s) => s.route)
   const bootstrapAuth = useAppStore((s) => s.bootstrapAuth)
   const setAuthFromUser = useAppStore((s) => s.setAuthFromUser)
   const refreshAuth = useAppStore((s) => s.refreshAuth)
@@ -256,8 +259,17 @@ function GatedApp() {
     return <AuthPage mode="login" />
   }
 
-  // Paywall only when Stripe is configured; Google login alone is enough until then
-  if (mustAuth && signedIn && authConfig?.stripe_configured && !subscribed) {
+  // Soft paywall: free diagnostic (Sprint) + Settings + Mock without full plan.
+  // Live Interview still requires subscription_active or Pass/Sprint entitlement.
+  const freeRoutes =
+    route === 'sprint' || route === 'settings' || route === 'practice'
+  if (
+    mustAuth &&
+    signedIn &&
+    authConfig?.stripe_configured &&
+    !subscribed &&
+    !freeRoutes
+  ) {
     return <PaywallPage user={user!} />
   }
 
