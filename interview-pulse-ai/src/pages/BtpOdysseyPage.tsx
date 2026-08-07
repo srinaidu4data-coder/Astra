@@ -53,7 +53,7 @@ export function BtpOdysseyPage() {
                 SAP BTP Odyssey
               </div>
               <div className="truncate text-[10px] text-white/35">
-                Architect · Build · Operate · Defend — under Mock Interview
+                Architect · Build · Operate · Defend · under Mock Interview
               </div>
             </div>
           </div>

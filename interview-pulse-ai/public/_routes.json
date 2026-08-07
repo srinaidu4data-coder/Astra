@@ -1,5 +1,12 @@
 {
   "version": 1,
   "include": ["/*"],
-  "exclude": ["/assets/*", "/downloads/*", "/mocks/*", "/favicon.svg", "/icons.svg"]
+  "exclude": [
+    "/static-v2/*",
+    "/assets/*",
+    "/downloads/*",
+    "/mocks/*",
+    "/favicon.svg",
+    "/icons.svg"
+  ]
 }

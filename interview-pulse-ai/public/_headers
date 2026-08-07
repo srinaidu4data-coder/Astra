@@ -11,22 +11,27 @@
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
 
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
+# Hashed bundles — long cache is OK because filenames change per build
+/static-v2/*
+  Cache-Control: public, max-age=86400
   X-Content-Type-Options: nosniff
 
-# Ensure JS/CSS never get SPA HTML fallback MIME
-/assets/*.js
+/static-v2/*.js
   Content-Type: application/javascript; charset=utf-8
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=86400
 
-/assets/*.css
+/static-v2/*.css
   Content-Type: text/css; charset=utf-8
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=86400
 
-/assets/*.mjs
+/static-v2/*.mjs
   Content-Type: application/javascript; charset=utf-8
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=86400
+
+# Legacy assets path (older deploys)
+/assets/*
+  Cache-Control: public, max-age=3600
+  X-Content-Type-Options: nosniff
 
 # Ready-made mock panel audio
 /mocks/*

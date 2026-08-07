@@ -38,5 +38,9 @@ export default defineConfig({
     emptyOutDir: true,
     // Jobs hub + pdf.js are intentionally large; main app chunk stays lean via lazy routes.
     chunkSizeWarningLimit: 1200,
+    // New asset path avoids poisoned Cloudflare CDN entries for old /assets/* hashes
+    // (SPA HTML was immutably cached as application/javascript on the custom domain).
+    assetsDir: 'static-v2',
   },
 })
+
