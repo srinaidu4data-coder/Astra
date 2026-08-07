@@ -1,0 +1,82 @@
+{
+  "id": "principal-hybrid",
+  "title": "Principal propagation hybrid",
+  "domainId": "integration",
+  "level": "advanced",
+  "summary": "User identity to on-prem",
+  "explain": "Complex trust setup; high value and high misconfig risk. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Principal propagation hybrid\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Principal propagation hybrid, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "User identity to on-prem"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Principal propagation hybrid without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing integration"
+  ],
+  "howToApply": [
+    "Use Principal propagation hybrid explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "integration"
+  ],
+  "mnemonic": "NAME TAG TRAVELS: The human's name tag must ride every hop for audit.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Principal propagation hybrid” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Principal propagation hybrid” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Principal propagation hybrid”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-principal-hybrid-intro",
+      "title": "Intro game: Principal propagation hybrid",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-principal-hybrid-mastery",
+      "title": "Mastery game: Principal propagation hybrid",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME TAG TRAVELS: The human's name tag must ride every hop for audit."
+}

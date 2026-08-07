@@ -1,0 +1,86 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Model + binding path + entity set",
+    "Destination mediates runtime connectivity",
+    "Distinguish UI bug vs backend vs auth"
+  ],
+  "commonMistakes": [
+    "Always blaming the XML view first",
+    "Ignoring browser network 401/403"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on UI5 OData Binding via Destination.",
+    "List one metric or log that would prove UI5 OData Binding via Destination is healthy."
+  ],
+  "relatedIds": [
+    "c-destination",
+    "c-cap-odata"
+  ],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "ui5"
+  ],
+  "id": "c-ui5-odata",
+  "title": "UI5 OData Binding via Destination",
+  "domainId": "ui5-fiori",
+  "summary": "UI5 models bind controls to OData paths; connectivity often goes through a destination.",
+  "explain": "SAPUI5 applications use models (JSON, OData V2/V4, etc.). An OData model is configured with a service URL — frequently a relative path resolved through a destination on BTP. Binding paths connect controls to entity sets and properties. Failures may be binding paths, metadata mismatch, network, CSRF, or auth — evidence decides.",
+  "analogy": "The UI is a dashboard glass; OData is the wiring; destination is the fuse box.",
+  "whyItMatters": "UI blank screens are rarely 'React-style state bugs' — check network and auth first in enterprise Fiori.",
+  "mnemonic": "COURIER BAG: Destination is the sealed bag (URL+auth) between apps.",
+  "useCases": [
+    "Fiori app calls CAP and gets 401 after login — apply UI5 OData Binding via Destination to fix the trust chain.",
+    "Incident bridge: symptoms appear; use “UI5 OData Binding via Destination” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “UI5 OData Binding via Destination”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Query shape",
+      "optionA": "Bound $expand + $select + page",
+      "optionB": "Unbounded deep expand",
+      "whenChooseA": "Any list UX",
+      "whenChooseB": "Never for large graphs",
+      "risk": "p99 collapse"
+    },
+    {
+      "decision": "Chatty vs chunky",
+      "optionA": "Fewer round-trips with projections",
+      "optionB": "N+1 from UI",
+      "whenChooseA": "Mobile/high latency",
+      "whenChooseB": "LAN demos",
+      "risk": "Latency budget death"
+    },
+    {
+      "decision": "Caching",
+      "optionA": "Cache stable reference data",
+      "optionB": "Cache personalized secured data carelessly",
+      "whenChooseA": "Reference data",
+      "whenChooseB": "Sensitive per-user",
+      "risk": "Stale or leak"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-ui5-odata-intro",
+      "title": "Intro game: UI5 OData Binding via Destination",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-ui5-odata-mastery",
+      "title": "Mastery game: UI5 OData Binding via Destination",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "COURIER BAG: Destination is the sealed bag (URL+auth) between apps."
+}

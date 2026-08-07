@@ -1,0 +1,82 @@
+{
+  "id": "sec-oauth-oidc",
+  "title": "OAuth 2.0 and OIDC basics",
+  "domainId": "security",
+  "level": "basic",
+  "summary": "Tokens and identity layers",
+  "explain": "OAuth delegates access; OIDC adds identity layer. Tokens carry claims resources validate. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"OAuth 2.0 and OIDC basics\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without OAuth 2.0 and OIDC basics, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Tokens and identity layers"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of OAuth 2.0 and OIDC basics without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing security"
+  ],
+  "howToApply": [
+    "Use OAuth 2.0 and OIDC basics explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "security"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “OAuth 2.0 and OIDC basics” + one failure mode out loud — if you can't, you don't own it yet. (OAuth → mechanism → failure)",
+  "useCases": [
+    "Fiori app calls CAP and gets 401 after login — apply OAuth 2.0 and OIDC basics to fix the trust chain.",
+    "Incident bridge: symptoms appear; use “OAuth 2.0 and OIDC basics” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “OAuth 2.0 and OIDC basics”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sec-oauth-oidc-intro",
+      "title": "Intro game: OAuth 2.0 and OIDC basics",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sec-oauth-oidc-mastery",
+      "title": "Mastery game: OAuth 2.0 and OIDC basics",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “OAuth 2.0 and OIDC basics” + one failure mode out loud — if you can't, you don't own it yet. (OAuth → mechanism → failure)"
+}

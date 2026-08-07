@@ -1,0 +1,160 @@
+{
+  "version": "0.2.0",
+  "specializations": [
+    {
+      "id": "spec-ui5",
+      "title": "SAPUI5/Fiori Developer",
+      "competencyIds": [
+        "ui5-mvc",
+        "ui5-odata-bind",
+        "ui5-a11y",
+        "ui5-perf",
+        "found-appdev"
+      ]
+    },
+    {
+      "id": "spec-cap",
+      "title": "CAP Developer",
+      "competencyIds": [
+        "cap-odata-basics",
+        "cap-auth",
+        "cap-events",
+        "cap-multitenant",
+        "found-appdev"
+      ]
+    },
+    {
+      "id": "spec-rap",
+      "title": "RAP/ABAP Cloud Developer",
+      "competencyIds": [
+        "rap-managed",
+        "rap-vs-cap",
+        "rap-clean-core"
+      ]
+    },
+    {
+      "id": "spec-int",
+      "title": "Integration Developer",
+      "competencyIds": [
+        "int-iflow",
+        "int-api-mgmt",
+        "int-hybrid",
+        "evt-mesh"
+      ]
+    },
+    {
+      "id": "spec-event",
+      "title": "Event-Driven Architect",
+      "competencyIds": [
+        "evt-mesh",
+        "evt-saga",
+        "cap-events"
+      ]
+    },
+    {
+      "id": "spec-bpa",
+      "title": "Process Automation Specialist",
+      "competencyIds": [
+        "bpa-workflow",
+        "found-appdev"
+      ]
+    },
+    {
+      "id": "spec-wz",
+      "title": "Work Zone Experience Specialist",
+      "competencyIds": [
+        "wz-sites",
+        "ui5-mvc",
+        "found-identity"
+      ]
+    },
+    {
+      "id": "spec-hana",
+      "title": "HANA Cloud Developer",
+      "competencyIds": [
+        "hana-hdi",
+        "hana-perf",
+        "found-data"
+      ]
+    },
+    {
+      "id": "spec-data",
+      "title": "Data Engineer",
+      "competencyIds": [
+        "ds-semantic",
+        "bdc-products",
+        "hana-hdi",
+        "found-data"
+      ]
+    },
+    {
+      "id": "spec-analytics",
+      "title": "Analytics Specialist",
+      "competencyIds": [
+        "sac-stories",
+        "ds-semantic",
+        "found-data"
+      ]
+    },
+    {
+      "id": "spec-admin",
+      "title": "BTP Administrator",
+      "competencyIds": [
+        "ops-entitlements",
+        "found-ops",
+        "found-landscape",
+        "ops-finops"
+      ]
+    },
+    {
+      "id": "spec-sec",
+      "title": "Security Architect",
+      "competencyIds": [
+        "sec-threat-model",
+        "sec-jwt-audience",
+        "sec-tenant",
+        "found-identity"
+      ]
+    },
+    {
+      "id": "spec-sa",
+      "title": "Solution Architect",
+      "competencyIds": [
+        "arch-side-by-side",
+        "arch-board",
+        "rap-vs-cap",
+        "found-architecture"
+      ]
+    },
+    {
+      "id": "spec-ea",
+      "title": "Enterprise Architect",
+      "competencyIds": [
+        "arch-board",
+        "arch-regulated",
+        "arch-reverse",
+        "ops-finops"
+      ]
+    },
+    {
+      "id": "spec-sre",
+      "title": "Platform/SRE",
+      "competencyIds": [
+        "ops-sre",
+        "ops-incident-basics",
+        "ops-finops",
+        "found-ops"
+      ]
+    },
+    {
+      "id": "spec-support",
+      "title": "Technical Support and Incident Specialist",
+      "competencyIds": [
+        "ops-incident-basics",
+        "found-debug",
+        "sec-jwt-audience",
+        "int-iflow"
+      ]
+    }
+  ]
+}

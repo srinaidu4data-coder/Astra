@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.coverage/
+coverage/
+*.log
+.env
+.env.local
+.DS_Store
+data/runtime/
+data/*.db
+.turbo/
+.vite/
+*.tsbuildinfo
+.control-center.local.json

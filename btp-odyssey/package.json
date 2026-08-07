@@ -1,0 +1,35 @@
+{
+  "name": "btp-odyssey",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SAP BTP Odyssey — Architect, Build, Operate, Defend, and Master the Intelligent Enterprise",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "generate:content": "node scripts/generate-curriculum.mjs ; node scripts/generate-mega-teach.mjs ; node scripts/generate-full-curriculum.mjs ; node scripts/enrich-and-wire-content.mjs ; node scripts/generate-full-curriculum-spine.mjs",
+    "generate:spine": "node scripts/generate-full-curriculum-spine.mjs",
+    "enrich:memory": "node scripts/enrich-concepts-memory.mjs",
+    "build:web": "npm run build -w @btp-odyssey/web",
+    "build": "npm run generate:content && npm run build:web",
+    "dev": "npm run dev:api",
+    "dev:api": "npm run dev -w @btp-odyssey/api",
+    "dev:web": "npm run dev -w @btp-odyssey/web",
+    "start": "npm run start -w @btp-odyssey/api",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate:content": "node scripts/validate-content.mjs",
+    "seed": "node scripts/seed.mjs",
+    "product": "npm run generate:content && npm test && npm run validate:content && npm run build:web"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
+  }
+}

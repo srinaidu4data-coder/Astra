@@ -1,0 +1,82 @@
+{
+  "id": "hana-vector",
+  "title": "Vector / multi-model awareness",
+  "domainId": "hana-cloud",
+  "level": "expert",
+  "summary": "Where supported",
+  "explain": "Multi-model features evolve — verify current capability. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Vector / multi-model awareness\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Vector / multi-model awareness, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Where supported"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Vector / multi-model awareness without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing hana-cloud"
+  ],
+  "howToApply": [
+    "Use Vector / multi-model awareness explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "hana-cloud"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Vector / multi-model awareness” + one failure mode out loud — if you can't, you don't own it yet. (Vector → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Vector / multi-model awareness” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Vector / multi-model awareness” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Vector / multi-model awareness”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Compute placement",
+      "optionA": "Push heavy logic to DB carefully",
+      "optionB": "Pull huge sets to app",
+      "whenChooseA": "Analytical aggregates",
+      "whenChooseB": "Tiny datasets",
+      "risk": "Network and memory blow up"
+    },
+    {
+      "decision": "HDI isolation",
+      "optionA": "Containerized deployable artifacts",
+      "optionB": "Shared wild schema",
+      "whenChooseA": "Team CI/CD",
+      "whenChooseB": "Throwaway",
+      "risk": "No safe ownership"
+    },
+    {
+      "decision": "Privileges",
+      "optionA": "Least privilege DB roles",
+      "optionB": "SAP_ALL style access",
+      "whenChooseA": "Always production",
+      "whenChooseB": "Never",
+      "risk": "Data exfil risk"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-hana-vector-intro",
+      "title": "Intro game: Vector / multi-model awareness",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-hana-vector-mastery",
+      "title": "Mastery game: Vector / multi-model awareness",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Vector / multi-model awareness” + one failure mode out loud — if you can't, you don't own it yet. (Vector → mechanism → failure)"
+}

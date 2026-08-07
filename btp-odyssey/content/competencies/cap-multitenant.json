@@ -1,0 +1,42 @@
+{
+  "id": "cap-multitenant",
+  "title": "Multitenancy isolation concepts",
+  "domainId": "cap",
+  "description": "Multitenancy isolation concepts. Evidence is demonstration-based in simulation, not XP.",
+  "level": "expert",
+  "prerequisites": [
+    "cap-auth"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Multitenancy isolation concepts in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Multitenancy isolation concepts in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Multitenancy isolation concepts after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP CAP",
+      "sourceUrl": "https://cap.cloud.sap/",
+      "sourceTitle": "SAP CAP documentation",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

@@ -1,0 +1,82 @@
+{
+  "id": "cap-multitenant",
+  "title": "CAP multitenancy concepts",
+  "domainId": "cap",
+  "level": "expert",
+  "summary": "SaaS isolation",
+  "explain": "Tenant onboarding, data isolation, subscription lifecycle — advanced platform concern. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"CAP multitenancy concepts\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without CAP multitenancy concepts, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "SaaS isolation"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of CAP multitenancy concepts without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing cap"
+  ],
+  "howToApply": [
+    "Use CAP multitenancy concepts explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "cap"
+  ],
+  "mnemonic": "HOTEL WALLS: Tenant walls are load-bearing — not curtains (UI filters).",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using CAP multitenancy concepts without core mods.",
+    "Multi-tenant SaaS demo: Tenant B token must not read Tenant A orders — prove CAP multitenancy concepts.",
+    "Architecture review board: defend why you accepted residual risk around “CAP multitenancy concepts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Isolation layer",
+      "optionA": "App + DB predicates",
+      "optionB": "UI hide only",
+      "whenChooseA": "Shared tenancy",
+      "whenChooseB": "Dedicated single-tenant infra",
+      "risk": "Cross-tenant read"
+    },
+    {
+      "decision": "Testing",
+      "optionA": "Negative tests with foreign IDs",
+      "optionB": "Happy path only",
+      "whenChooseA": "Always",
+      "whenChooseB": "Never",
+      "risk": "False confidence"
+    },
+    {
+      "decision": "Ops access",
+      "optionA": "Break-glass audited",
+      "optionB": "Standing admin across tenants",
+      "whenChooseA": "Support needs",
+      "whenChooseB": "Never standing",
+      "risk": "Insider risk"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-cap-multitenant-intro",
+      "title": "Intro game: CAP multitenancy concepts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-cap-multitenant-mastery",
+      "title": "Mastery game: CAP multitenancy concepts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "HOTEL WALLS: Tenant walls are load-bearing — not curtains (UI filters)."
+}

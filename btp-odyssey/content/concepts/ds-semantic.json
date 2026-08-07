@@ -1,0 +1,82 @@
+{
+  "id": "ds-semantic",
+  "title": "Semantic models",
+  "domainId": "datasphere",
+  "level": "advanced",
+  "summary": "Business meaning",
+  "explain": "Metrics and entities with owned definitions. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Semantic models\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Semantic models, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Business meaning"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Semantic models without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing datasphere"
+  ],
+  "howToApply": [
+    "Use Semantic models explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "datasphere"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Semantic models” + one failure mode out loud — if you can't, you don't own it yet. (Semantic → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Semantic models” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Semantic models” to classify the failing hop before changing config.",
+    "Finance and Sales disagree on “revenue” — Semantic models forces one productized definition."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Semantic layer",
+      "optionA": "Governed metrics in semantic models",
+      "optionB": "Each report invents definitions",
+      "whenChooseA": "Enterprise KPIs",
+      "whenChooseB": "Personal sandbox",
+      "risk": "Conflicting numbers destroy trust"
+    },
+    {
+      "decision": "Federation vs replicate",
+      "optionA": "Federate when freshness + governance allow",
+      "optionB": "Copy everything always",
+      "whenChooseA": "Latency/cost trade-offs",
+      "whenChooseB": "When offline/performance requires",
+      "risk": "Blind copies create residency/cost issues"
+    },
+    {
+      "decision": "Spaces",
+      "optionA": "Space boundaries by ownership",
+      "optionB": "One mega space",
+      "whenChooseA": "Multi-team data products",
+      "whenChooseB": "Tiny single team",
+      "risk": "Access and cost blur"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ds-semantic-intro",
+      "title": "Intro game: Semantic models",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ds-semantic-mastery",
+      "title": "Mastery game: Semantic models",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Semantic models” + one failure mode out loud — if you can't, you don't own it yet. (Semantic → mechanism → failure)"
+}

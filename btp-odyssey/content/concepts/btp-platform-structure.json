@@ -1,0 +1,100 @@
+{
+  "id": "btp-platform-structure",
+  "title": "BTP structure: accounts, directories, subaccounts",
+  "domainId": "operations",
+  "level": "basic",
+  "summary": "How a BTP landscape is organized: global account → directories → subaccounts → services & environments.",
+  "explain": "BTP structure is hierarchical so companies can separate billing, teams, and stages.\n\n1) Global account — commercial root (contracts, overall entitlements).\n2) Directories — optional folders for org units or regions.\n3) Subaccounts — isolation units where you enable services, assign members, create destinations, and deploy apps.\n4) Environments — e.g. Cloud Foundry / Kyma / ABAP environment inside a subaccount.\n5) Entitlements & service plans — what you are allowed to run and at which tier.\n\nRule of thumb: Dev / Test / Prod as separate subaccounts (or cleanly separated spaces with strong process) to avoid ‘works on my subaccount’ disasters.\n\nFidelity: conceptual — UI labels evolve; verify in your cockpit.",
+  "analogy": "Global account = company HQ. Directories = floors. Subaccounts = locked rooms for projects. Environments = workbenches inside a room. Entitlements = keys HQ issued for tools.",
+  "whyItMatters": "Most beginner confusion is not CAP vs RAP — it is ‘where do I create this service and who can see it?’ Wrong structure causes security and cost leaks.",
+  "formalPoints": [
+    "Global account is the commercial root",
+    "Subaccounts isolate apps, members, destinations, and service instances",
+    "Entitlements gate which services/plans exist where",
+    "Separate stages (dev/test/prod) reduce blast radius"
+  ],
+  "commonMistakes": [
+    "One shared subaccount for everything ‘to go faster’",
+    "Granting admin to everyone at global account for convenience",
+    "Forgetting destinations and identity are per-subaccount concerns"
+  ],
+  "howToRecognize": [
+    "Setup conversations, landing zone design, first service enablement"
+  ],
+  "howToApply": [
+    "Draw your landing zone: global → directories → dev/test/prod subaccounts",
+    "List who is admin at each level"
+  ],
+  "relatedIds": [
+    "btp-what",
+    "ops-accounts",
+    "c-global-account",
+    "c-subaccount",
+    "ops-entitlements",
+    "c-cf-space"
+  ],
+  "glossary": [
+    {
+      "term": "Subaccount",
+      "definition": "Isolation unit for services, apps, members, and integrations."
+    },
+    {
+      "term": "Entitlement",
+      "definition": "Assignment of a service plan quota to a subaccount or directory."
+    }
+  ],
+  "tags": [
+    "basic",
+    "beginner",
+    "btp",
+    "admin",
+    "operations"
+  ],
+  "mnemonic": "HQ → FLOORS → ROOMS: Global account HQ, directories floors, subaccounts locked rooms.",
+  "useCases": [
+    "Landing zone setup week: apply BTP structure: accounts, directories, subaccounts so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “BTP structure: accounts, directories, subaccounts” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “BTP structure: accounts, directories, subaccounts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-btp-platform-structure-intro",
+      "title": "Intro game: BTP structure: accounts, directories, subaccounts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-btp-platform-structure-mastery",
+      "title": "Mastery game: BTP structure: accounts, directories, subaccounts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "HQ → FLOORS → ROOMS: Global account HQ, directories floors, subaccounts locked rooms."
+}

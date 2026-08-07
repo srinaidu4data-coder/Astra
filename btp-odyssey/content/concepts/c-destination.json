@@ -1,0 +1,89 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Subaccount-level named connection",
+    "Separates connectivity from app code",
+    "Auth method must match target expectations"
+  ],
+  "commonMistakes": [
+    "Assuming destination only stores a URL",
+    "Assuming token endpoint 200 means backend will accept the token"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on Destination.",
+    "List one metric or log that would prove Destination is healthy."
+  ],
+  "relatedIds": [],
+  "glossary": [
+    {
+      "term": "OAuth2UserTokenExchange",
+      "definition": "User token exchanged for a token acceptable to the target resource (simplified teaching model)."
+    }
+  ],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "connectivity",
+    "security"
+  ],
+  "id": "c-destination",
+  "title": "Destination",
+  "domainId": "integration",
+  "summary": "Named connection config: URL + authentication + additional properties.",
+  "explain": "Destinations store how one component reaches another: base URL, proxy type, authentication method (NoAuth, Basic, OAuth2 variants, PrincipalPropagation, etc.), and extra properties. UI5 apps and Integration Suite often call backends through destinations so secrets and URLs are not hard-coded.",
+  "analogy": "A saved VPN profile: where to go + how to prove who you are — not the application itself.",
+  "whyItMatters": "Most 'app is down' UI failures are destination/auth misconfig, not missing buttons in the UI.",
+  "mnemonic": "COURIER BAG: Destination is the sealed bag (URL+auth) between apps.",
+  "useCases": [
+    "Fiori app calls CAP and gets 401 after login — apply Destination to fix the trust chain.",
+    "Incident bridge: symptoms appear; use “Destination” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Destination”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-destination-intro",
+      "title": "Intro game: Destination",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-destination-mastery",
+      "title": "Mastery game: Destination",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "COURIER BAG: Destination is the sealed bag (URL+auth) between apps."
+}

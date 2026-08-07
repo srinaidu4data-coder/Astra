@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Protocol endpoints (HTTPS, SFTP, IDoc, etc.) connecting flows to systems."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Adapters without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use Adapters explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-adapter",
+  "title": "Adapters",
+  "domainId": "integration",
+  "summary": "Protocol endpoints (HTTPS, SFTP, IDoc, etc.) connecting flows to systems.",
+  "explain": "Protocol endpoints (HTTPS, SFTP, IDoc, etc.) connecting flows to systems. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"Adapters\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain Adapters in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "NAME IT TO TAME IT: Say “Adapters” + one failure mode out loud — if you can't, you don't own it yet. (Adapters → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Adapters” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Adapters” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Adapters”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-adapter-intro",
+      "title": "Intro game: Adapters",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-adapter-mastery",
+      "title": "Mastery game: Adapters",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Adapters” + one failure mode out loud — if you can't, you don't own it yet. (Adapters → mechanism → failure)"
+}

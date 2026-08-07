@@ -1,0 +1,83 @@
+{
+  "level": "advanced",
+  "formalPoints": [
+    "Keep ERP core upgradeable; extend via released APIs and side-by-side patterns.",
+    "Domain: rap-abap",
+    "Level: advanced"
+  ],
+  "commonMistakes": [
+    "Memorizing the name without a concrete example of Clean Core Principles"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on Clean Core Principles.",
+    "List one metric or log that would prove Clean Core Principles is healthy."
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "architecture",
+    "rap"
+  ],
+  "id": "c-clean-core",
+  "title": "Clean Core Principles",
+  "domainId": "rap-abap",
+  "summary": "Keep ERP core upgradeable; extend via released APIs and side-by-side patterns.",
+  "explain": "Clean core encourages avoiding modifications that block upgrades. Prefer released APIs, key-user extensibility, RAP on-stack where appropriate, and side-by-side BTP apps for differentiating logic. Document upgrade impact explicitly in design defenses.",
+  "analogy": "Don't weld custom parts onto the car engine block if a roof rack accessory will do.",
+  "whyItMatters": "Unclean cores turn every upgrade into a multi-month crisis.",
+  "mnemonic": "DON'T CARVE THE CROWN: Extend the kingdom; don't chisel the crown jewels (standard code).",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using Clean Core Principles without core mods.",
+    "Incident bridge: symptoms appear; use “Clean Core Principles” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Clean Core Principles”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Logic placement",
+      "optionA": "RAP on-stack for BO fidelity",
+      "optionB": "CAP side-by-side for velocity",
+      "whenChooseA": "Transactional purity",
+      "whenChooseB": "Differentiating UX/API",
+      "risk": "Dual-write if both write same truth"
+    },
+    {
+      "decision": "Upgrade",
+      "optionA": "Released APIs only",
+      "optionB": "Implicit internal APIs",
+      "whenChooseA": "Clean core",
+      "whenChooseB": "Throwaway",
+      "risk": "Break on upgrade"
+    },
+    {
+      "decision": "Team fit",
+      "optionA": "Match to ABAP vs Node skills",
+      "optionB": "Ignore skills",
+      "whenChooseA": "Year-1 delivery",
+      "whenChooseB": "Never ignore",
+      "risk": "Schedule slip"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-clean-core-intro",
+      "title": "Intro game: Clean Core Principles",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-clean-core-mastery",
+      "title": "Mastery game: Clean Core Principles",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "DON'T CARVE THE CROWN: Extend the kingdom; don't chisel the crown jewels (standard code)."
+}

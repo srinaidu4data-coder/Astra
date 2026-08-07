@@ -1,0 +1,1779 @@
+{
+  "id": "r1-northwind-order-insights",
+  "title": "Northwind Order Insights — Mega Teaching Vertical",
+  "summary": "Granular teaching journey: landscape, CAP/UI5/destination identity, then diagnose JWT audience mismatch with full evidence discipline.",
+  "campaignId": "campaign-a-startup-to-enterprise",
+  "domainIds": [
+    "ui5-fiori",
+    "cap",
+    "hana-cloud",
+    "security",
+    "integration",
+    "events",
+    "operations",
+    "architecture"
+  ],
+  "competencyIds": [
+    "found-landscape",
+    "cap-odata-basics",
+    "ui5-odata-bind",
+    "sec-jwt-audience",
+    "arch-side-by-side",
+    "ops-incident-basics"
+  ],
+  "targetLevel": "basic",
+  "fidelity": {
+    "tier": "tier2_behavioral",
+    "behaviorsRepresented": [
+      "Landscape hierarchy",
+      "Auth configuration fields",
+      "Synthetic logs/metrics/traces",
+      "Health and dependency graphs"
+    ],
+    "behaviorsSimplified": [
+      "No real JWT crypto",
+      "No live SAP runtime",
+      "Illustrative costs"
+    ],
+    "behaviorsOmitted": [
+      "Real CF push",
+      "Cloud Connector crypto"
+    ],
+    "differencesFromReal": [
+      "Injected defects via config + telemetry"
+    ],
+    "lastVerificationDate": "2026-08-07",
+    "knownLimitations": [
+      "Not official SAP certification material",
+      "Verify live details in SAP docs"
+    ],
+    "sourceVersions": [
+      "mega-teach-1.0.0"
+    ]
+  },
+  "estimatedMinutes": 180,
+  "naturalStoppingPoints": [
+    "After requirements",
+    "After architecture",
+    "After evidence gather",
+    "After fix"
+  ],
+  "steps": [
+    {
+      "id": "s-001",
+      "title": "How Odyssey teaches",
+      "kind": "concept_teach",
+      "phase": "0 · Orient",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Learn → Check → Do → Evidence",
+        "explain": "Every micro-step teaches a concept, checks understanding, then asks you to apply it on a simulated landscape. Mastery is evidence, not XP. Simulation fidelity is Tier 2 — labeled, not live SAP.",
+        "analogy": "Flight simulator: procedures are real; the aircraft is synthetic.",
+        "whyItMatters": "Skipping teaching panels creates cargo-cult clicking.",
+        "formalPoints": [
+          "Read teach panel before answering checks",
+          "Use progressive reveals when stuck",
+          "Never disable security to 'pass'"
+        ],
+        "commonMistakes": [
+          "Rushing to fix without reading symptoms"
+        ],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "What is the correct learning order in Odyssey?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Learn concept → check understanding → apply on simulation → capture evidence",
+            "correct": true,
+            "feedback": "Correct — teaching precedes acting."
+          },
+          {
+            "id": "o2",
+            "text": "Click fix until green, ignore panels",
+            "correct": false,
+            "feedback": "That creates cargo-cult engineers."
+          },
+          {
+            "id": "o3",
+            "text": "Only multiple choice forever",
+            "correct": false,
+            "feedback": "Checks help, but application and diagnosis are required."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Odyssey is deliberate practice with evidence, not a slot machine.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-002",
+      "title": "Fidelity honesty",
+      "kind": "concept_teach",
+      "phase": "0 · Orient",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-shared-responsibility"
+      ],
+      "teach": {
+        "headline": "What this simulator is (and is not)",
+        "explain": "Tier 2 behavioral simulation models major inputs/outputs/failures with simplifications. It does not mint real JWTs, run OpenUI5, or bill real BTP. Always verify production decisions against official SAP documentation.",
+        "whyItMatters": "Confusing sim with prod creates dangerous overconfidence.",
+        "formalPoints": [
+          "Fidelity banner is mandatory reading",
+          "Not SAP certification"
+        ],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "A Tier 2 simulation means…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Major behaviors modeled with documented simplifications",
+            "correct": true,
+            "feedback": "Yes."
+          },
+          {
+            "id": "o2",
+            "text": "Bitwise identical to production SAP",
+            "correct": false,
+            "feedback": "That would be misleading; we never claim that."
+          },
+          {
+            "id": "o3",
+            "text": "Official SAP exam questions",
+            "correct": false,
+            "feedback": "This product is independent and not certification."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Honesty about fidelity is part of professional ethics.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-003",
+      "title": "Business situation intake",
+      "kind": "business_situation",
+      "phase": "1 · Business & requirements",
+      "estimatedSeconds": 120,
+      "prompt": "Read the business brief in the teach panel. Restate goal + constraints in your own words.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-functional-nfr"
+      ],
+      "teach": {
+        "headline": "Start from business pain, not technology fashion",
+        "explain": "Northwind wants EU sales analysts to explore order KPIs in a Fiori-style app. ERP remains system of record. Side-by-side BTP extension preferred. OAuth access, near-real-time sync, analytics events, constrained budget.",
+        "analogy": "Build a glass dashboard on top of the warehouse ledger — don't rewrite the warehouse.",
+        "whyItMatters": "Solutioneering early locks teams into the wrong platform choices.",
+        "formalPoints": [
+          "Side-by-side on BTP",
+          "ERP system of record",
+          "EU analysts / residency sensitivity"
+        ],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "In one or two sentences, restate the business goal and one hard constraint.",
+        "options": [],
+        "acceptKeywords": [
+          "analyst",
+          "order",
+          "eu",
+          "side",
+          "erp",
+          "kpi",
+          "budget"
+        ],
+        "explanation": "Restating prevents solving the wrong problem.",
+        "passScore": 0.6
+      }
+    },
+    {
+      "id": "s-004",
+      "title": "Functional vs NFR",
+      "kind": "concept_check",
+      "phase": "1 · Business & requirements",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-functional-nfr"
+      ],
+      "teach": {
+        "headline": "Separate WHAT from HOW WELL",
+        "explain": "Functional requirements are capabilities. Non-functional requirements constrain quality: security, privacy, latency, cost, accessibility, audit. Stakeholders often hand you solutions disguised as requirements.",
+        "analogy": "Need: cross the river. Solution idea: buy a hovercraft. Keep them separate.",
+        "whyItMatters": "NFRs drive architecture more than feature lists.",
+        "formalPoints": [
+          "Flag solution-shaped 'requirements'",
+          "Write NFRs testably when possible"
+        ],
+        "commonMistakes": [
+          "Accepting 'use CAP' as a requirement without the underlying need"
+        ],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "Which is primarily an NFR?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Approvers must authorize discounts over 10%",
+            "correct": false,
+            "feedback": "That is functional behavior."
+          },
+          {
+            "id": "o2",
+            "text": "P95 API latency under 400ms for EU users",
+            "correct": true,
+            "feedback": "Latency is a classic NFR."
+          },
+          {
+            "id": "o3",
+            "text": "Show order list page",
+            "correct": false,
+            "feedback": "Functional capability."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "NFRs constrain the design space.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-005",
+      "title": "Stakeholder statements → needs",
+      "kind": "stakeholder_interview",
+      "phase": "1 · Business & requirements",
+      "estimatedSeconds": 150,
+      "prompt": "Write what each persona wants and flag one solution-shaped request.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-functional-nfr"
+      ],
+      "teach": {
+        "headline": "Interview for constraints and evidence",
+        "explain": "Sales ops wants 'real-time' (undefined). Security wants OAuth and least privilege. Integration wants reuse of existing ERP channels. Force definitions: how many seconds is real-time? which data classification?",
+        "whyItMatters": "Unspoken constraints kill projects late.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Name one functional need and one NFR you heard (or inferred) and one item still missing evidence.",
+        "options": [],
+        "acceptKeywords": [
+          "functional",
+          "nfr",
+          "missing",
+          "security",
+          "oauth",
+          "real"
+        ],
+        "explanation": "Professionals track unknowns explicitly.",
+        "passScore": 0.5
+      }
+    },
+    {
+      "id": "s-006",
+      "title": "Write requirements cleanly",
+      "kind": "requirements",
+      "phase": "1 · Business & requirements",
+      "estimatedSeconds": 180,
+      "prompt": "Write F / NFR / Constraints / Assumptions for this mission. Use the words functional and non-functional explicitly.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-functional-nfr"
+      ],
+      "teach": {
+        "headline": "Requirements artifact",
+        "explain": "Produce four lists: Functional, Non-functional, Constraints, Assumptions/Open questions. This artifact feeds architecture and test design.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Paste a compact requirements list using the headers Functional and Non-functional.",
+        "options": [],
+        "acceptKeywords": [
+          "functional",
+          "non-functional"
+        ],
+        "explanation": "Explicit headers prove you separated concerns.",
+        "passScore": 0.5
+      }
+    },
+    {
+      "id": "s-007",
+      "title": "Global account → subaccount",
+      "kind": "concept_teach",
+      "phase": "2 · Landscape literacy",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-global-account",
+        "c-subaccount"
+      ],
+      "teach": {
+        "headline": "Hierarchy before heroics",
+        "explain": "Global account is commercial root. Subaccounts isolate projects/stages/regions. You deploy into environments under subaccounts, not into the global account itself.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": [],
+        "miniDiagram": "Global Account → Directory? → Subaccount → Environment (CF/Kyma/ABAP) → Apps/Services"
+      },
+      "check": {
+        "type": "mc",
+        "question": "Where do you typically deploy a CAP app?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Into an environment under a subaccount",
+            "correct": true,
+            "feedback": "Correct."
+          },
+          {
+            "id": "o2",
+            "text": "Directly into the global account root with no subaccount",
+            "correct": false,
+            "feedback": "Global account is not the app runtime container."
+          },
+          {
+            "id": "o3",
+            "text": "Only inside SAP GUI",
+            "correct": false,
+            "feedback": "Not for CAP side-by-side cloud apps."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Hierarchy literacy prevents entitlement and isolation mistakes.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-008",
+      "title": "CF space ≠ subaccount",
+      "kind": "compare_terms",
+      "phase": "2 · Landscape literacy",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-cf-space"
+      ],
+      "teach": {
+        "headline": "Two different isolation axes",
+        "explain": "Subaccounts are BTP boundaries. CF spaces are runtime groupings inside a CF environment. Using the words interchangeably confuses ops and security reviews.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "A Cloud Foundry space is…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "A runtime grouping for apps/service instances inside CF",
+            "correct": true,
+            "feedback": "Yes."
+          },
+          {
+            "id": "o2",
+            "text": "The commercial root account",
+            "correct": false,
+            "feedback": "That is global account."
+          },
+          {
+            "id": "o3",
+            "text": "Always identical to a subaccount",
+            "correct": false,
+            "feedback": "Different layers."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Precise vocabulary is an operational safety tool.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-009",
+      "title": "Inspect the simulated landscape",
+      "kind": "landscape_inspect",
+      "phase": "2 · Landscape literacy",
+      "estimatedSeconds": 120,
+      "prompt": "List degraded resources and one dependency edge that looks suspicious. Mentions health states.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Inventory before inference",
+        "explain": "Open the fleet/graph. Note health, owners, dependencies, costs, security posture. Mark degraded nodes. Do not invent root cause yet.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Name at least one degraded component you see.",
+        "options": [],
+        "acceptKeywords": [
+          "degraded",
+          "ui",
+          "destination",
+          "order",
+          "cap",
+          "401"
+        ],
+        "explanation": "Observation precedes explanation.",
+        "passScore": 0.34
+      }
+    },
+    {
+      "id": "s-010",
+      "title": "Map components to concerns",
+      "kind": "map_components",
+      "phase": "2 · Landscape literacy",
+      "estimatedSeconds": 150,
+      "prompt": "Map each hop in the chain to a landscape resource name.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-cap-odata",
+        "c-ui5-odata",
+        "c-destination",
+        "c-xsuaa-roles"
+      ],
+      "teach": {
+        "headline": "Who owns which risk?",
+        "explain": "Typical chain: UI5 app → destination → CAP OData API → HANA; identity via XSUAA-style scopes; iflow sync from ERP; events for analytics projection.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Map UI / API / identity / data / integration (as applicable) to component names from the landscape.",
+        "options": [],
+        "acceptKeywords": [
+          "ui",
+          "destination",
+          "cap",
+          "hana",
+          "xsuaa",
+          "iflow",
+          "event"
+        ],
+        "explanation": "Mapping builds a mental model for incident response.",
+        "passScore": 0.4
+      }
+    },
+    {
+      "id": "s-011",
+      "title": "Core pattern teaching",
+      "kind": "guided_example",
+      "phase": "3 · Architecture",
+      "estimatedSeconds": 150,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-cap-odata",
+        "c-ui5-odata",
+        "c-cap-vs-rap"
+      ],
+      "teach": {
+        "headline": "Side-by-side analytics UX with CAP",
+        "explain": "For a new analytics UX beside ERP, CAP + UI5 on BTP is a common side-by-side pattern. RAP may be better for deep transactional core extensions. Here, KPI exploration and OData V4 to a side-by-side model fit CAP teaching path — still document why not pure batch Excel dumps or ungoverned scripts.",
+        "analogy": "Annex building for analytics, warehouse stays system of record.",
+        "whyItMatters": "Pattern choice drives identity, ops, and upgrade paths.",
+        "formalPoints": [
+          "UI5 for Fiori UX",
+          "CAP OData API",
+          "HANA persistence sim",
+          "Events optional fan-out"
+        ],
+        "commonMistakes": [
+          "Hard-coding backend URLs in UI",
+          "Skipping role design"
+        ],
+        "workedExample": {
+          "setup": "Analyst needs Orders list + KPI cards.",
+          "steps": [
+            "Model Order entities in CAP CDS",
+            "Expose service projection OData V4",
+            "Bind CAP to HANA + auth service",
+            "UI5 OData model via destination",
+            "Role: Order.Read / Analytics.View"
+          ],
+          "takeaway": "End-to-end identity-aware read path before fancy visuals."
+        },
+        "revealLevels": [
+          {
+            "title": "Deeper: destination auth",
+            "body": "UI never stores client secrets if destination handles OAuth flows appropriately."
+          },
+          {
+            "title": "Expert nuance",
+            "body": "Audience and client IDs must stay aligned when auth applications are renamed."
+          }
+        ]
+      },
+      "check": {
+        "type": "mc",
+        "question": "Why prefer destination-mediated calls from UI5?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Centralize URL/auth config and avoid hard-coded secrets in UI",
+            "correct": true,
+            "feedback": "Correct."
+          },
+          {
+            "id": "o2",
+            "text": "Destinations make SQL faster inside HANA",
+            "correct": false,
+            "feedback": "Wrong layer."
+          },
+          {
+            "id": "o3",
+            "text": "They replace the need for authorization",
+            "correct": false,
+            "feedback": "Authz still required."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Destinations are connectivity+auth config, not business authz complete solution.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-012",
+      "title": "Draft architecture hypothesis",
+      "kind": "architecture_hypothesis",
+      "phase": "3 · Architecture",
+      "estimatedSeconds": 200,
+      "prompt": "Propose UI5→destination→CAP→HANA plus identity and one rejected alternative (e.g., only nightly CSV).",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-cap-odata",
+        "c-ui5-odata",
+        "c-cap-vs-rap"
+      ],
+      "teach": {
+        "headline": "Multiple options, explicit rejects",
+        "explain": "Write a hypothesis including major components, trust boundaries, and at least one rejected alternative with rationale. Architecture without rejected alternatives is marketing.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Describe your design and one rejected alternative.",
+        "options": [],
+        "acceptKeywords": [
+          "ui5",
+          "cap",
+          "destination",
+          "hana",
+          "reject",
+          "oauth",
+          "xsuaa",
+          "event"
+        ],
+        "explanation": "Rejected alternatives prove thinking.",
+        "passScore": 0.35
+      }
+    },
+    {
+      "id": "s-013",
+      "title": "Trade-off matrix",
+      "kind": "option_compare",
+      "phase": "3 · Architecture",
+      "estimatedSeconds": 160,
+      "prompt": "Compare at least two options across security, cost, resilience, complexity, operational ownership. Pick one.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-finops",
+        "c-least-privilege"
+      ],
+      "teach": {
+        "headline": "Score options on security, cost, resilience, complexity, ownership",
+        "explain": "Cheap designs that skip observability shift cost into incidents. Over-secure designs that block business need iteration. Make trade-offs explicit.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Write two options and which you pick with one security and one cost note.",
+        "options": [],
+        "acceptKeywords": [
+          "security",
+          "cost"
+        ],
+        "explanation": "Trade-off language is architect literacy.",
+        "passScore": 0.5
+      }
+    },
+    {
+      "id": "s-014",
+      "title": "Identity design checkpoint",
+      "kind": "security_review",
+      "phase": "3 · Architecture",
+      "estimatedSeconds": 90,
+      "prompt": "List actors and required permissions/scopes at a high level for this scenario.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-xsuaa-roles",
+        "c-destination"
+      ],
+      "teach": {
+        "headline": "Authn/authz is part of the architecture diagram",
+        "explain": "List actors, role collections/scopes, and how the UI reaches the API (destination auth). Missing identity design becomes 401/403 production theater.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Name at least one actor and one permission/scope idea.",
+        "options": [],
+        "acceptKeywords": [
+          "scope",
+          "role",
+          "read",
+          "approve",
+          "analyst",
+          "user",
+          "admin",
+          "order.read",
+          "analyst",
+          "scope"
+        ],
+        "explanation": "Identity belongs in v1 design, not as a patch.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-015",
+      "title": "Bindings & destinations (concept)",
+      "kind": "concept_teach",
+      "phase": "4 · Build & verify",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-binding",
+        "c-destination"
+      ],
+      "teach": {
+        "headline": "Configuration is code's twin",
+        "explain": "Service bindings inject credentials into runtimes. Destinations externalize connectivity. Most 'code bugs' in first deploys are binding/destination mistakes.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "A destination primarily stores…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Connection URL + authentication configuration for callers",
+            "correct": true,
+            "feedback": "Correct."
+          },
+          {
+            "id": "o2",
+            "text": "Only CSS themes for Fiori",
+            "correct": false,
+            "feedback": "No."
+          },
+          {
+            "id": "o3",
+            "text": "HANA column store compression settings only",
+            "correct": false,
+            "feedback": "Wrong layer."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Connectivity config is a first-class artifact.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-016",
+      "title": "Configure the solution (sim)",
+      "kind": "configure",
+      "phase": "4 · Build & verify",
+      "estimatedSeconds": 140,
+      "prompt": "List configuration checks you will perform before go-live.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-cap-odata",
+        "c-ui5-odata",
+        "c-destination",
+        "c-xsuaa-roles"
+      ],
+      "teach": {
+        "headline": "Apply configuration deliberately",
+        "explain": "Verify CAP bound to auth + HANA; destination auth mode; audience field; event topic name; analyst role only has read scopes.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "List the key bindings/config checks you would verify.",
+        "options": [],
+        "acceptKeywords": [
+          "bind",
+          "destination",
+          "audience",
+          "role",
+          "scope",
+          "hana"
+        ],
+        "explanation": "Checklists beat memory.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-017",
+      "title": "Happy-path test design",
+      "kind": "test_expected",
+      "phase": "4 · Build & verify",
+      "estimatedSeconds": 90,
+      "prompt": "Describe the happy-path test in 3–5 steps.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Define expected behavior before chaos",
+        "explain": "Write the user journey that must work: actor, auth, data seen, side effects. Without expected behavior, you cannot recognize failure modes.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Outline happy path including login/access and successful data/action.",
+        "options": [],
+        "acceptKeywords": [
+          "login",
+          "order",
+          "approve",
+          "view",
+          "success",
+          "analyst",
+          "user"
+        ],
+        "explanation": "Tests encode expected behavior.",
+        "passScore": 0.2
+      }
+    },
+    {
+      "id": "s-018",
+      "title": "Symptoms vs root cause",
+      "kind": "concept_teach",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Symptoms are not causes",
+        "explain": "A blank UI is a symptom. 401 is a symptom class. Audience mismatch may be a root cause. Incident skill is moving down the causal chain with evidence.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "Best next step after users report 'app broken'?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Gather symptoms + telemetry before naming root cause",
+            "correct": true,
+            "feedback": "Yes — evidence first."
+          },
+          {
+            "id": "o2",
+            "text": "Immediately rewrite the UI in another framework",
+            "correct": false,
+            "feedback": "Catastrophic overreaction."
+          },
+          {
+            "id": "o3",
+            "text": "Disable authentication globally",
+            "correct": false,
+            "feedback": "Unsafe and unprofessional."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Triage discipline prevents self-inflicted outages.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-019",
+      "title": "Failure appears",
+      "kind": "test_failure",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "Describe user-visible failure and where you will look first.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-jwt-audience",
+        "c-destination",
+        "c-ui5-odata"
+      ],
+      "teach": {
+        "headline": "Analysts report Order Insights broken",
+        "explain": "Users can log into the landscape but Orders fail to load. Treat as a distributed failure until proven otherwise.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "List the user-visible symptom and one technical symptom.",
+        "options": [],
+        "acceptKeywords": [
+          "401",
+          "load",
+          "order",
+          "fail",
+          "blank",
+          "error",
+          "auth"
+        ],
+        "explanation": "Capture both business and technical views.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-020",
+      "title": "401 vs 403 clinic",
+      "kind": "concept_check",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-jwt-audience",
+        "c-scope-403"
+      ],
+      "teach": {
+        "headline": "Authn failure vs authz failure",
+        "explain": "401: not authenticated or token rejected (including audience mismatch). 403: authenticated but missing permission/scope. Mixing them sends you to the wrong runbook.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "Missing Discount.Approve scope typically surfaces as…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "403 Forbidden",
+            "correct": true,
+            "feedback": "Authorization failure."
+          },
+          {
+            "id": "o2",
+            "text": "DNS NXDOMAIN",
+            "correct": false,
+            "feedback": "Networking, not authz."
+          },
+          {
+            "id": "o3",
+            "text": "CSS 404",
+            "correct": false,
+            "feedback": "Unrelated."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Status codes are diagnostic gold.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-021",
+      "title": "Gather evidence — logs",
+      "kind": "evidence_gather",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 120,
+      "prompt": "Quote or paraphrase the most important error log line you see.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Read error logs before theorizing",
+        "explain": "Filter errors/warnings. Note resource IDs and messages. Separate primary evidence from distractors (healthy components).",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "What does the strongest error log suggest?",
+        "options": [],
+        "acceptKeywords": [
+          "401",
+          "audience",
+          "jwt",
+          "token",
+          "destination"
+        ],
+        "explanation": "Logs anchor hypotheses.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-022",
+      "title": "Gather evidence — metrics & traces",
+      "kind": "observe",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "Note one metric and one trace span that support your emerging theory.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Correlate pillars",
+        "explain": "Metrics show magnitude (failure rates). Traces show path. A good hypothesis explains all three pillars without ignoring contradicting evidence.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Mention a metric or trace observation.",
+        "options": [],
+        "acceptKeywords": [
+          "metric",
+          "trace",
+          "span",
+          "rate",
+          "401",
+          "403",
+          "latency",
+          "count",
+          "failure"
+        ],
+        "explanation": "Multi-signal reasoning.",
+        "passScore": 0.2
+      }
+    },
+    {
+      "id": "s-023",
+      "title": "Form hypothesis",
+      "kind": "hypothesis_form",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 140,
+      "prompt": "Write: If <mechanism> in <component>, then we should see <evidence>.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-jwt-audience",
+        "c-destination",
+        "c-ui5-odata"
+      ],
+      "teach": {
+        "headline": "Falsifiable statement",
+        "explain": "Write a hypothesis that could be wrong. Include the component and mechanism. Avoid vague 'network issue'.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "State hypothesis with component + mechanism.",
+        "options": [],
+        "acceptKeywords": [
+          "audience",
+          "destination",
+          "jwt",
+          "token"
+        ],
+        "explanation": "Falsifiable hypotheses can be tested.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-024",
+      "title": "Eliminate distractors",
+      "kind": "concept_check",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Healthy nodes can still waste your time",
+        "explain": "HANA healthy and iflow success are distractors if the failing path is UI→destination→CAP auth validation.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "A recently successful integration flow means…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "It may be a distractor if the failing path is UI→destination→API",
+            "correct": true,
+            "feedback": "Correct — scope the failing chain."
+          },
+          {
+            "id": "o2",
+            "text": "It always proves the UI auth is fine",
+            "correct": false,
+            "feedback": "Different path."
+          },
+          {
+            "id": "o3",
+            "text": "You should delete HANA next",
+            "correct": false,
+            "feedback": "Destructive and baseless."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Scope the failing dependency chain.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-025",
+      "title": "Root-cause diagnosis",
+      "kind": "diagnose",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 180,
+      "prompt": "State root cause with evidence terms: destination, audience/JWT, CAP rejection.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [
+        "Token endpoint 200 ≠ API accepts token",
+        "Compare destination audience to CAP accepted audiences",
+        "Trace one request across hops"
+      ],
+      "conceptIds": [
+        "c-jwt-audience",
+        "c-destination",
+        "c-ui5-odata"
+      ],
+      "teach": {
+        "headline": "Commit to a cause with evidence",
+        "explain": "Root cause class: JWT audience mismatch. Destination still mints/presents tokens for wrong-audience-legacy while CAP accepts order-service!t1.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "State root cause using precise terms from this mission.",
+        "options": [],
+        "acceptKeywords": [
+          "audience",
+          "destination",
+          "jwt",
+          "token",
+          "aud"
+        ],
+        "explanation": "Precision enables correct remediation.",
+        "passScore": 0.35
+      }
+    },
+    {
+      "id": "s-026",
+      "title": "Mitigate business impact",
+      "kind": "mitigate",
+      "phase": "6 · Mitigate & remediate",
+      "estimatedSeconds": 90,
+      "prompt": "Write a 3-line status update to business stakeholders + one mitigation action.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-change-mgmt"
+      ],
+      "teach": {
+        "headline": "Stop the bleeding before perfect surgery",
+        "explain": "Communicate status, freeze related risky changes, offer workarounds if any, protect data. Mitigation ≠ root-cause fix, but it buys safety.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Include communication or workaround language.",
+        "options": [],
+        "acceptKeywords": [
+          "communicat",
+          "workaround",
+          "freeze",
+          "status",
+          "impact",
+          "customer",
+          "user"
+        ],
+        "explanation": "Communication is part of ops excellence.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-027",
+      "title": "Least privilege remediation rule",
+      "kind": "security_review",
+      "phase": "6 · Mitigate & remediate",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-least-privilege"
+      ],
+      "teach": {
+        "headline": "Never 'fix' security by removing it",
+        "explain": "Disabling JWT validation, granting Admin.All, or opening anonymous access are not remediations — they are new incidents. Fix the misaligned config with minimum rights.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "Acceptable remediation for audience mismatch?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Align destination audience with API accepted audience",
+            "correct": true,
+            "feedback": "Correct."
+          },
+          {
+            "id": "o2",
+            "text": "Disable authentication on the API",
+            "correct": false,
+            "feedback": "Creates a worse incident."
+          },
+          {
+            "id": "o3",
+            "text": "Email passwords in Slack",
+            "correct": false,
+            "feedback": "Never."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Secure remediation only.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-028",
+      "title": "Apply secure fix in simulation",
+      "kind": "resolve",
+      "phase": "6 · Mitigate & remediate",
+      "estimatedSeconds": 120,
+      "prompt": "Describe the secure config change. Use the Apply secure fix control when ready.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-jwt-audience",
+        "c-destination",
+        "c-ui5-odata"
+      ],
+      "teach": {
+        "headline": "Change the causal config",
+        "explain": "Set destination audience to order-service!t1 (simulation). Re-check health. Do not disable JWT validation.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Describe the fix you applied (or will apply) without disabling auth.",
+        "options": [],
+        "acceptKeywords": [
+          "audience",
+          "destination",
+          "order-service",
+          "fix"
+        ],
+        "explanation": "Name the config change.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-029",
+      "title": "Verify recovery",
+      "kind": "test_expected",
+      "phase": "6 · Mitigate & remediate",
+      "estimatedSeconds": 90,
+      "prompt": "What evidence shows the incident is mitigated/fixed?",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Prove health restored",
+        "explain": "Re-check resource health, re-read logs, confirm user journey. Declare victory only with evidence.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Mention health, log, or user journey verification.",
+        "options": [],
+        "acceptKeywords": [
+          "health",
+          "healthy",
+          "log",
+          "success",
+          "200",
+          "user",
+          "journey",
+          "metric"
+        ],
+        "explanation": "Verification closes the loop.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-030",
+      "title": "Architecture board defense",
+      "kind": "architecture_defense",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 180,
+      "prompt": "Defend CAP side-by-side choice, identity, monitoring for auth_failure_count, and rollback of destination config.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-cap-odata",
+        "c-ui5-odata",
+        "c-cap-vs-rap"
+      ],
+      "teach": {
+        "headline": "Adversarial questions are a gift",
+        "explain": "Boards attack weak assumptions: CAP vs RAP, identity propagation, retries, residency, cost, rollback, monitoring, ownership. Answer with verified vs assumed.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Defend identity + one operational concern (monitoring/rollback/cost).",
+        "options": [],
+        "acceptKeywords": [
+          "identity",
+          "monitor",
+          "rollback",
+          "cost",
+          "security",
+          "resilience"
+        ],
+        "explanation": "Defense trains clarity.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-031",
+      "title": "Production readiness",
+      "kind": "production_readiness",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 90,
+      "prompt": "List alert + owner + one runbook step + fidelity note.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-slo",
+        "c-finops"
+      ],
+      "teach": {
+        "headline": "Alerts, owners, runbooks, fidelity disclosure",
+        "explain": "Name alert signals, on-call owner, runbook link (conceptual), backup note, and tell stakeholders what is simulated vs real if demoing.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Include alert and owner.",
+        "options": [],
+        "acceptKeywords": [
+          "alert",
+          "owner"
+        ],
+        "explanation": "Operability is part of done.",
+        "passScore": 0.5
+      }
+    },
+    {
+      "id": "s-032",
+      "title": "Prevention control",
+      "kind": "concept_check",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-jwt-audience",
+        "c-destination",
+        "c-ui5-odata"
+      ],
+      "teach": {
+        "headline": "Make recurrence expensive to ignore",
+        "explain": "Add CI validation that destination audience matches xs-security/app identity; alert on auth_failure_count; change checklist for client renames.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Propose one prevention control (CI check, alert, review gate).",
+        "options": [],
+        "acceptKeywords": [
+          "ci",
+          "alert",
+          "test",
+          "review",
+          "monitor",
+          "gate",
+          "checklist",
+          "policy"
+        ],
+        "explanation": "Prevention is senior behavior.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-033",
+      "title": "Transfer scenario",
+      "kind": "transfer",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 160,
+      "prompt": "How would your method change for a 403 missing scope incident?",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-jwt-audience",
+        "c-destination",
+        "c-ui5-odata"
+      ],
+      "teach": {
+        "headline": "Same structure, different skin",
+        "explain": "Tomorrow the symptom might be missing scope (403). Same method: classify status code, inspect claims/roles, fix mapping — don't rebuild UI.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Explain how today's mechanism transfers to the new scenario.",
+        "options": [],
+        "acceptKeywords": [
+          "403",
+          "scope",
+          "role",
+          "authoriz"
+        ],
+        "explanation": "Transfer proves learning, not memorization.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-034",
+      "title": "Spaced recall",
+      "kind": "spaced_practice",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 90,
+      "prompt": "List 3 concepts + the root cause class in your own words.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-cap-odata",
+        "c-ui5-odata",
+        "c-destination",
+        "c-xsuaa-roles"
+      ],
+      "teach": {
+        "headline": "Force retrieval",
+        "explain": "Without notes, restate the three most important concepts from this mission and the root cause class.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Three concepts + cause class.",
+        "options": [],
+        "acceptKeywords": [
+          "destination",
+          "audience",
+          "cap",
+          "odata",
+          "subaccount",
+          "401"
+        ],
+        "explanation": "Retrieval strengthens memory.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-035",
+      "title": "Reflection journal",
+      "kind": "reflection",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 200,
+      "prompt": "Write reflection covering assumption, evidence, prevention, transfer. Use those words.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Metacognition",
+        "explain": "What assumption failed? Which evidence corrected you? What will you do differently? Consider a break — Odyssey never punishes rest.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Reflection with assumption/evidence/prevent/transfer ideas.",
+        "options": [],
+        "acceptKeywords": [
+          "assumption",
+          "evidence",
+          "prevent",
+          "transfer"
+        ],
+        "explanation": "Reflection consolidates learning.",
+        "passScore": 0.5
+      }
+    }
+  ],
+  "injectedDefects": [
+    {
+      "id": "defect-audience",
+      "description": "Destination audience wrong-audience-legacy",
+      "symptoms": [
+        "UI 401",
+        "JWT audience validation failed"
+      ],
+      "rootCause": "Destination audience not updated after client id rename",
+      "distractors": [
+        "HANA healthy",
+        "iflow success"
+      ]
+    }
+  ],
+  "assessmentRubric": [
+    {
+      "dimension": "conceptual",
+      "criteria": "Concept checks + requirements language",
+      "weight": 0.2
+    },
+    {
+      "dimension": "architecture",
+      "criteria": "Design quality",
+      "weight": 0.2
+    },
+    {
+      "dimension": "debugging",
+      "criteria": "Evidence-aligned diagnosis",
+      "weight": 0.25
+    },
+    {
+      "dimension": "operations",
+      "criteria": "Secure remediation",
+      "weight": 0.2
+    },
+    {
+      "dimension": "communication",
+      "criteria": "Reflection",
+      "weight": 0.15
+    }
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "version": "2.0.0",
+  "reviewStatus": "in_review",
+  "meta": {
+    "incidentId": "inc-audience-mismatch",
+    "landscapeId": "startup-northwind"
+  }
+}

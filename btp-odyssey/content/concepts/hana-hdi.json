@@ -1,0 +1,82 @@
+{
+  "id": "hana-hdi",
+  "title": "HDI containers",
+  "domainId": "hana-cloud",
+  "level": "basic",
+  "summary": "Deploy DB design-time",
+  "explain": "Isolated deployments with privileges. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"HDI containers\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without HDI containers, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Deploy DB design-time"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of HDI containers without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing hana-cloud"
+  ],
+  "howToApply": [
+    "Use HDI containers explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "hana-cloud"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “HDI containers” + one failure mode out loud — if you can't, you don't own it yet. (HDI → mechanism → failure)",
+  "useCases": [
+    "Support chatbot answers policy — HDI containers forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “HDI containers” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “HDI containers”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Answer policy",
+      "optionA": "Ground + cite or abstain",
+      "optionB": "Always invent fluent answers",
+      "whenChooseA": "Enterprise Q&A",
+      "whenChooseB": "Fiction writing",
+      "risk": "Wrong actions"
+    },
+    {
+      "decision": "Actions",
+      "optionA": "Confirm high-risk tool calls",
+      "optionB": "Autonomous spend/change",
+      "whenChooseA": "Agents with tools",
+      "whenChooseB": "Never auto high-risk",
+      "risk": "Runaway changes"
+    },
+    {
+      "decision": "Data in context",
+      "optionA": "Minimize PII in prompts",
+      "optionB": "Paste full customer records",
+      "whenChooseA": "Privacy regimes",
+      "whenChooseB": "Never paste freely",
+      "risk": "Leak via logs/providers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-hana-hdi-intro",
+      "title": "Intro game: HDI containers",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-hana-hdi-mastery",
+      "title": "Mastery game: HDI containers",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “HDI containers” + one failure mode out loud — if you can't, you don't own it yet. (HDI → mechanism → failure)"
+}

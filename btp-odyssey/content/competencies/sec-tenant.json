@@ -1,0 +1,43 @@
+{
+  "id": "sec-tenant",
+  "title": "Tenant isolation review",
+  "domainId": "security",
+  "description": "Tenant isolation review. Evidence is demonstration-based in simulation, not XP.",
+  "level": "expert",
+  "prerequisites": [
+    "sec-threat-model",
+    "cap-multitenant"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Tenant isolation review in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Tenant isolation review in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Tenant isolation review after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

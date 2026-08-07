@@ -33,6 +33,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Gamepad2,
   Headphones,
   Lightbulb,
   Mic,
@@ -88,6 +89,7 @@ export function PracticePage() {
     addSession,
     settings,
     memories,
+    setRoute,
   } = useAppStore()
 
   const [phase, setPhase] = useState<Phase>('setup')
@@ -755,8 +757,42 @@ export function PracticePage() {
             </h2>
           </div>
           <p className="mb-6 max-w-xl text-[13px] leading-relaxed text-white/40">
-            Pick a ready-made pack (SAP FICO Final 50) or build a custom mock.
+            Pick a ready-made pack (SAP FICO Final 50), launch SAP BTP Odyssey, or
+            build a custom mock.
           </p>
+
+          {/* Featured: SAP BTP Odyssey learning game */}
+          <button
+            type="button"
+            onClick={() => setRoute('btp-odyssey')}
+            className="group mb-8 flex w-full items-start gap-4 rounded-[20px] border border-[#20B8CD]/30 bg-gradient-to-br from-[#20B8CD]/12 via-[#0a1520] to-transparent p-5 text-left transition hover:border-[#5DD5E3]/50 hover:shadow-[0_0_40px_rgba(32,184,205,0.12)]"
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#20B8CD]/18 ring-1 ring-[#20B8CD]/35">
+              <Gamepad2
+                className="h-6 w-6 text-[#5DD5E3] transition group-hover:scale-110"
+                strokeWidth={1.75}
+              />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-[15px] font-medium tracking-tight text-white/95">
+                  SAP BTP Odyssey
+                </h3>
+                <span className="rounded-full bg-[#20B8CD]/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#5DD5E3] ring-1 ring-[#20B8CD]/30">
+                  New · under Mock
+                </span>
+              </div>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-white/45">
+                300+ sequenced challenges: Architect, Build, Operate, Debug, Defend.
+                Concept cards with mnemonics, use cases, and design trade-offs — evidence-based
+                mastery, no certification claims.
+              </p>
+              <span className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-[#5DD5E3]">
+                Launch game
+                <ChevronRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+              </span>
+            </div>
+          </button>
 
           {/* Setup tabs — Ready-made is default */}
           <div

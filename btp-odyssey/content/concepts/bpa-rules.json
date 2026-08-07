@@ -1,0 +1,82 @@
+{
+  "id": "bpa-rules",
+  "title": "Business rules and decisions",
+  "domainId": "bpa",
+  "level": "advanced",
+  "summary": "Separate decision logic",
+  "explain": "Rules change faster than process graphs. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Business rules and decisions\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Business rules and decisions, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Separate decision logic"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Business rules and decisions without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing bpa"
+  ],
+  "howToApply": [
+    "Use Business rules and decisions explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "bpa"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Business rules and decisions” + one failure mode out loud — if you can't, you don't own it yet. (Business → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Business rules and decisions” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Business rules and decisions” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Business rules and decisions”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Workflow vs full app",
+      "optionA": "BPA for human approval chains",
+      "optionB": "Full CAP/RAP app",
+      "whenChooseA": "Form+approve dominant",
+      "whenChooseB": "Rich domain UX/API needed",
+      "risk": "Wrong tool under/overbuilds"
+    },
+    {
+      "decision": "Rules location",
+      "optionA": "Versioned decision rules",
+      "optionB": "Hardcode in UI scripts",
+      "whenChooseA": "Changing policy",
+      "whenChooseB": "Static never-change rules",
+      "risk": "UI hardcode resists audit"
+    },
+    {
+      "decision": "Governance",
+      "optionA": "Publish rights + data access reviews",
+      "optionB": "Citizen automation free-for-all",
+      "whenChooseA": "Enterprise",
+      "whenChooseB": "Never long-term",
+      "risk": "Shadow IT and leaks"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-bpa-rules-intro",
+      "title": "Intro game: Business rules and decisions",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-bpa-rules-mastery",
+      "title": "Mastery game: Business rules and decisions",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Business rules and decisions” + one failure mode out loud — if you can't, you don't own it yet. (Business → mechanism → failure)"
+}

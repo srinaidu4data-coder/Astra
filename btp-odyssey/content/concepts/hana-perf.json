@@ -1,0 +1,82 @@
+{
+  "id": "hana-perf",
+  "title": "Expensive statements and plans",
+  "domainId": "hana-cloud",
+  "level": "advanced",
+  "summary": "Read the plan",
+  "explain": "Indexes, partitions, and plan analysis. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Expensive statements and plans\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Expensive statements and plans, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Read the plan"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Expensive statements and plans without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing hana-cloud"
+  ],
+  "howToApply": [
+    "Use Expensive statements and plans explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "hana-cloud"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Expensive statements and plans” + one failure mode out loud — if you can't, you don't own it yet. (Expensive → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Expensive statements and plans” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Expensive statements and plans” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Expensive statements and plans”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Query shape",
+      "optionA": "Bound $expand + $select + page",
+      "optionB": "Unbounded deep expand",
+      "whenChooseA": "Any list UX",
+      "whenChooseB": "Never for large graphs",
+      "risk": "p99 collapse"
+    },
+    {
+      "decision": "Chatty vs chunky",
+      "optionA": "Fewer round-trips with projections",
+      "optionB": "N+1 from UI",
+      "whenChooseA": "Mobile/high latency",
+      "whenChooseB": "LAN demos",
+      "risk": "Latency budget death"
+    },
+    {
+      "decision": "Caching",
+      "optionA": "Cache stable reference data",
+      "optionB": "Cache personalized secured data carelessly",
+      "whenChooseA": "Reference data",
+      "whenChooseB": "Sensitive per-user",
+      "risk": "Stale or leak"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-hana-perf-intro",
+      "title": "Intro game: Expensive statements and plans",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-hana-perf-mastery",
+      "title": "Mastery game: Expensive statements and plans",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Expensive statements and plans” + one failure mode out loud — if you can't, you don't own it yet. (Expensive → mechanism → failure)"
+}

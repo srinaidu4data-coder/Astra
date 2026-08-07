@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "packages/simulation" },
+    { "path": "packages/content-engine" },
+    { "path": "packages/competency" },
+    { "path": "packages/assessment" },
+    { "path": "apps/api" },
+    { "path": "apps/web" }
+  ]
+}

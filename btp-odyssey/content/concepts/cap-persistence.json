@@ -1,0 +1,82 @@
+{
+  "id": "cap-persistence",
+  "title": "CAP persistence and HANA",
+  "domainId": "cap",
+  "level": "advanced",
+  "summary": "Binding to databases",
+  "explain": "CAP binds to persistence (often HANA); deploy design-time artifacts carefully. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"CAP persistence and HANA\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without CAP persistence and HANA, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Binding to databases"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of CAP persistence and HANA without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing cap"
+  ],
+  "howToApply": [
+    "Use CAP persistence and HANA explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "cap"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “CAP persistence and HANA” + one failure mode out loud — if you can't, you don't own it yet. (CAP → mechanism → failure)",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using CAP persistence and HANA without core mods.",
+    "Incident bridge: symptoms appear; use “CAP persistence and HANA” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “CAP persistence and HANA”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Extension style",
+      "optionA": "CAP side-by-side service",
+      "optionB": "On-stack RAP near BO",
+      "whenChooseA": "Differentiating UX/API velocity, multi-cloud events",
+      "whenChooseB": "Tight transactional fidelity to S/4 BO",
+      "risk": "Wrong placement creates dual-write or upgrade pain"
+    },
+    {
+      "decision": "API surface",
+      "optionA": "Narrow projections + actions",
+      "optionB": "Expose full persistence model",
+      "whenChooseA": "Stable contracts for consumers",
+      "whenChooseB": "Internal-only tools with no external clients",
+      "risk": "Wide APIs couple consumers to schema churn"
+    },
+    {
+      "decision": "Persistence",
+      "optionA": "HDI-owned schema with least privilege",
+      "optionB": "Shared ad-hoc schema",
+      "whenChooseA": "Team isolation and CI deploys",
+      "whenChooseB": "Throwaway spike",
+      "risk": "Shared schemas block ownership and safe deploy"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-cap-persistence-intro",
+      "title": "Intro game: CAP persistence and HANA",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-cap-persistence-mastery",
+      "title": "Mastery game: CAP persistence and HANA",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “CAP persistence and HANA” + one failure mode out loud — if you can't, you don't own it yet. (CAP → mechanism → failure)"
+}

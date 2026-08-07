@@ -1,0 +1,1721 @@
+{
+  "id": "r6-regulated-expansion",
+  "title": "Regulated Expansion — Mega",
+  "summary": "Teach residency/privacy deeply; disable non-approved PII replica.",
+  "campaignId": "campaign-g-regulated",
+  "domainIds": [
+    "architecture",
+    "security",
+    "operations",
+    "hana-cloud"
+  ],
+  "competencyIds": [
+    "arch-regulated",
+    "sec-tenant",
+    "ops-finops",
+    "found-identity"
+  ],
+  "targetLevel": "expert",
+  "fidelity": {
+    "tier": "tier2_behavioral",
+    "behaviorsRepresented": [
+      "Landscape hierarchy",
+      "Auth configuration fields",
+      "Synthetic logs/metrics/traces",
+      "Health and dependency graphs"
+    ],
+    "behaviorsSimplified": [
+      "No real JWT crypto",
+      "No live SAP runtime",
+      "Illustrative costs"
+    ],
+    "behaviorsOmitted": [
+      "Real CF push",
+      "Cloud Connector crypto"
+    ],
+    "differencesFromReal": [
+      "Injected defects via config + telemetry"
+    ],
+    "lastVerificationDate": "2026-08-07",
+    "knownLimitations": [
+      "Not official SAP certification material",
+      "Verify live details in SAP docs"
+    ],
+    "sourceVersions": [
+      "mega-teach-1.0.0"
+    ]
+  },
+  "estimatedMinutes": 190,
+  "naturalStoppingPoints": [
+    "After architecture",
+    "After evidence",
+    "After fix",
+    "After defense"
+  ],
+  "steps": [
+    {
+      "id": "s-001",
+      "title": "How Odyssey teaches",
+      "kind": "concept_teach",
+      "phase": "0 · Orient",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Learn → Check → Do → Evidence",
+        "explain": "Every micro-step teaches a concept, checks understanding, then asks you to apply it on a simulated landscape. Mastery is evidence, not XP. Simulation fidelity is Tier 2 — labeled, not live SAP.",
+        "analogy": "Flight simulator: procedures are real; the aircraft is synthetic.",
+        "whyItMatters": "Skipping teaching panels creates cargo-cult clicking.",
+        "formalPoints": [
+          "Read teach panel before answering checks",
+          "Use progressive reveals when stuck",
+          "Never disable security to 'pass'"
+        ],
+        "commonMistakes": [
+          "Rushing to fix without reading symptoms"
+        ],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "What is the correct learning order in Odyssey?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Learn concept → check understanding → apply on simulation → capture evidence",
+            "correct": true,
+            "feedback": "Correct — teaching precedes acting."
+          },
+          {
+            "id": "o2",
+            "text": "Click fix until green, ignore panels",
+            "correct": false,
+            "feedback": "That creates cargo-cult engineers."
+          },
+          {
+            "id": "o3",
+            "text": "Only multiple choice forever",
+            "correct": false,
+            "feedback": "Checks help, but application and diagnosis are required."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Odyssey is deliberate practice with evidence, not a slot machine.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-002",
+      "title": "Fidelity honesty",
+      "kind": "concept_teach",
+      "phase": "0 · Orient",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-shared-responsibility"
+      ],
+      "teach": {
+        "headline": "What this simulator is (and is not)",
+        "explain": "Tier 2 behavioral simulation models major inputs/outputs/failures with simplifications. It does not mint real JWTs, run OpenUI5, or bill real BTP. Always verify production decisions against official SAP documentation.",
+        "whyItMatters": "Confusing sim with prod creates dangerous overconfidence.",
+        "formalPoints": [
+          "Fidelity banner is mandatory reading",
+          "Not SAP certification"
+        ],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "A Tier 2 simulation means…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Major behaviors modeled with documented simplifications",
+            "correct": true,
+            "feedback": "Yes."
+          },
+          {
+            "id": "o2",
+            "text": "Bitwise identical to production SAP",
+            "correct": false,
+            "feedback": "That would be misleading; we never claim that."
+          },
+          {
+            "id": "o3",
+            "text": "Official SAP exam questions",
+            "correct": false,
+            "feedback": "This product is independent and not certification."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Honesty about fidelity is part of professional ethics.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-003",
+      "title": "Business situation intake",
+      "kind": "business_situation",
+      "phase": "1 · Business & requirements",
+      "estimatedSeconds": 120,
+      "prompt": "Restate residency constraint.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-functional-nfr"
+      ],
+      "teach": {
+        "headline": "Start from business pain, not technology fashion",
+        "explain": "Expand Order Insights with residency constraints; audit finds PII in wrong region.",
+        "analogy": "Vault contents shipped abroad for prettier charts.",
+        "whyItMatters": "Solutioneering early locks teams into the wrong platform choices.",
+        "formalPoints": [
+          "Residency",
+          "Retention",
+          "Audit"
+        ],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "In one or two sentences, restate the business goal and one hard constraint.",
+        "options": [],
+        "acceptKeywords": [
+          "residency",
+          "pii",
+          "region",
+          "audit"
+        ],
+        "explanation": "Restating prevents solving the wrong problem.",
+        "passScore": 0.6
+      }
+    },
+    {
+      "id": "s-004",
+      "title": "Functional vs NFR",
+      "kind": "concept_check",
+      "phase": "1 · Business & requirements",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-functional-nfr"
+      ],
+      "teach": {
+        "headline": "Separate WHAT from HOW WELL",
+        "explain": "Functional requirements are capabilities. Non-functional requirements constrain quality: security, privacy, latency, cost, accessibility, audit. Stakeholders often hand you solutions disguised as requirements.",
+        "analogy": "Need: cross the river. Solution idea: buy a hovercraft. Keep them separate.",
+        "whyItMatters": "NFRs drive architecture more than feature lists.",
+        "formalPoints": [
+          "Flag solution-shaped 'requirements'",
+          "Write NFRs testably when possible"
+        ],
+        "commonMistakes": [
+          "Accepting 'use CAP' as a requirement without the underlying need"
+        ],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "Which is primarily an NFR?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Approvers must authorize discounts over 10%",
+            "correct": false,
+            "feedback": "That is functional behavior."
+          },
+          {
+            "id": "o2",
+            "text": "P95 API latency under 400ms for EU users",
+            "correct": true,
+            "feedback": "Latency is a classic NFR."
+          },
+          {
+            "id": "o3",
+            "text": "Show order list page",
+            "correct": false,
+            "feedback": "Functional capability."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "NFRs constrain the design space.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-005",
+      "title": "Stakeholder statements → needs",
+      "kind": "stakeholder_interview",
+      "phase": "1 · Business & requirements",
+      "estimatedSeconds": 150,
+      "prompt": "Whose constraint wins and why?",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-functional-nfr"
+      ],
+      "teach": {
+        "headline": "Interview for constraints and evidence",
+        "explain": "Privacy counsel vs analytics convenience.",
+        "whyItMatters": "Unspoken constraints kill projects late.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Name one functional need and one NFR you heard (or inferred) and one item still missing evidence.",
+        "options": [],
+        "acceptKeywords": [
+          "functional",
+          "nfr",
+          "missing",
+          "privacy",
+          "analytics",
+          "approv"
+        ],
+        "explanation": "Professionals track unknowns explicitly.",
+        "passScore": 0.5
+      }
+    },
+    {
+      "id": "s-006",
+      "title": "Write requirements cleanly",
+      "kind": "requirements",
+      "phase": "1 · Business & requirements",
+      "estimatedSeconds": 180,
+      "prompt": "Write F / NFR / Constraints / Assumptions for this mission. Use the words functional and non-functional explicitly.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-functional-nfr"
+      ],
+      "teach": {
+        "headline": "Requirements artifact",
+        "explain": "Produce four lists: Functional, Non-functional, Constraints, Assumptions/Open questions. This artifact feeds architecture and test design.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Paste a compact requirements list using the headers Functional and Non-functional.",
+        "options": [],
+        "acceptKeywords": [
+          "functional",
+          "non-functional"
+        ],
+        "explanation": "Explicit headers prove you separated concerns.",
+        "passScore": 0.5
+      }
+    },
+    {
+      "id": "s-007",
+      "title": "Global account → subaccount",
+      "kind": "concept_teach",
+      "phase": "2 · Landscape literacy",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-global-account",
+        "c-subaccount"
+      ],
+      "teach": {
+        "headline": "Hierarchy before heroics",
+        "explain": "Global account is commercial root. Subaccounts isolate projects/stages/regions. You deploy into environments under subaccounts, not into the global account itself.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": [],
+        "miniDiagram": "Global Account → Directory? → Subaccount → Environment (CF/Kyma/ABAP) → Apps/Services"
+      },
+      "check": {
+        "type": "mc",
+        "question": "Where do you typically deploy a CAP app?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Into an environment under a subaccount",
+            "correct": true,
+            "feedback": "Correct."
+          },
+          {
+            "id": "o2",
+            "text": "Directly into the global account root with no subaccount",
+            "correct": false,
+            "feedback": "Global account is not the app runtime container."
+          },
+          {
+            "id": "o3",
+            "text": "Only inside SAP GUI",
+            "correct": false,
+            "feedback": "Not for CAP side-by-side cloud apps."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Hierarchy literacy prevents entitlement and isolation mistakes.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-008",
+      "title": "CF space ≠ subaccount",
+      "kind": "compare_terms",
+      "phase": "2 · Landscape literacy",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-cf-space"
+      ],
+      "teach": {
+        "headline": "Two different isolation axes",
+        "explain": "Subaccounts are BTP boundaries. CF spaces are runtime groupings inside a CF environment. Using the words interchangeably confuses ops and security reviews.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "A Cloud Foundry space is…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "A runtime grouping for apps/service instances inside CF",
+            "correct": true,
+            "feedback": "Yes."
+          },
+          {
+            "id": "o2",
+            "text": "The commercial root account",
+            "correct": false,
+            "feedback": "That is global account."
+          },
+          {
+            "id": "o3",
+            "text": "Always identical to a subaccount",
+            "correct": false,
+            "feedback": "Different layers."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Precise vocabulary is an operational safety tool.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-009",
+      "title": "Inspect the simulated landscape",
+      "kind": "landscape_inspect",
+      "phase": "2 · Landscape literacy",
+      "estimatedSeconds": 120,
+      "prompt": "List degraded resources and one dependency edge that looks suspicious. Mentions health states.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Inventory before inference",
+        "explain": "Open the fleet/graph. Note health, owners, dependencies, costs, security posture. Mark degraded nodes. Do not invent root cause yet.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Name at least one degraded component you see.",
+        "options": [],
+        "acceptKeywords": [
+          "degraded",
+          "replica",
+          "us10",
+          "pii"
+        ],
+        "explanation": "Observation precedes explanation.",
+        "passScore": 0.34
+      }
+    },
+    {
+      "id": "s-010",
+      "title": "Map components to concerns",
+      "kind": "map_components",
+      "phase": "2 · Landscape literacy",
+      "estimatedSeconds": 150,
+      "prompt": "Identify non-compliant store.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency",
+        "c-least-privilege",
+        "c-finops"
+      ],
+      "teach": {
+        "headline": "Who owns which risk?",
+        "explain": "EU primary PII DB; unapproved US replica; regional app.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Map UI / API / identity / data / integration (as applicable) to component names from the landscape.",
+        "options": [],
+        "acceptKeywords": [
+          "eu",
+          "us",
+          "replica",
+          "pii"
+        ],
+        "explanation": "Mapping builds a mental model for incident response.",
+        "passScore": 0.4
+      }
+    },
+    {
+      "id": "s-011",
+      "title": "Core pattern teaching",
+      "kind": "guided_example",
+      "phase": "3 · Architecture",
+      "estimatedSeconds": 150,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency",
+        "c-finops"
+      ],
+      "teach": {
+        "headline": "Residency-aware topology",
+        "explain": "Design data flows with region overlays. Analytics may use anonymized aggregates instead of raw PII replicas.",
+        "analogy": "Keep passports in-country; share statistics, not identity pages.",
+        "whyItMatters": "Expansion dies on audit findings.",
+        "formalPoints": [
+          "Data flow diagrams",
+          "Approval gates",
+          "Anonymization"
+        ],
+        "commonMistakes": [
+          "Confusing language locale with residency"
+        ],
+        "workedExample": {
+          "setup": "Want US analytics",
+          "steps": [
+            "Check classification",
+            "Seek approval",
+            "Prefer aggregates",
+            "Disable raw PII replica"
+          ],
+          "takeaway": "Convenience never outranks lawful basis."
+        },
+        "revealLevels": [
+          {
+            "title": "Nuance",
+            "body": "CDN static assets ≠ PII database residency."
+          }
+        ]
+      },
+      "check": {
+        "type": "mc",
+        "question": "Residency primarily concerns…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Where regulated data is stored/processed",
+            "correct": true,
+            "feedback": "Yes."
+          },
+          {
+            "id": "o2",
+            "text": "UI language pack only",
+            "correct": false,
+            "feedback": "Localization ≠ residency."
+          },
+          {
+            "id": "o3",
+            "text": "Font selection",
+            "correct": false,
+            "feedback": "No."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Data location/processing.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-012",
+      "title": "Draft architecture hypothesis",
+      "kind": "architecture_hypothesis",
+      "phase": "3 · Architecture",
+      "estimatedSeconds": 200,
+      "prompt": "Propose compliant expansion options.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency",
+        "c-finops"
+      ],
+      "teach": {
+        "headline": "Multiple options, explicit rejects",
+        "explain": "Write a hypothesis including major components, trust boundaries, and at least one rejected alternative with rationale. Architecture without rejected alternatives is marketing.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Describe your design and one rejected alternative.",
+        "options": [],
+        "acceptKeywords": [
+          "residency",
+          "pii",
+          "aggreg",
+          "region",
+          "approv"
+        ],
+        "explanation": "Rejected alternatives prove thinking.",
+        "passScore": 0.35
+      }
+    },
+    {
+      "id": "s-013",
+      "title": "Trade-off matrix",
+      "kind": "option_compare",
+      "phase": "3 · Architecture",
+      "estimatedSeconds": 160,
+      "prompt": "Compare at least two options across security, cost, resilience, complexity, operational ownership. Pick one.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-finops",
+        "c-least-privilege"
+      ],
+      "teach": {
+        "headline": "Score options on security, cost, resilience, complexity, ownership",
+        "explain": "Cheap designs that skip observability shift cost into incidents. Over-secure designs that block business need iteration. Make trade-offs explicit.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Write two options and which you pick with one security and one cost note.",
+        "options": [],
+        "acceptKeywords": [
+          "security",
+          "cost"
+        ],
+        "explanation": "Trade-off language is architect literacy.",
+        "passScore": 0.5
+      }
+    },
+    {
+      "id": "s-014",
+      "title": "Identity design checkpoint",
+      "kind": "security_review",
+      "phase": "3 · Architecture",
+      "estimatedSeconds": 90,
+      "prompt": "List actors and required permissions/scopes at a high level for this scenario.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-xsuaa-roles",
+        "c-destination"
+      ],
+      "teach": {
+        "headline": "Authn/authz is part of the architecture diagram",
+        "explain": "List actors, role collections/scopes, and how the UI reaches the API (destination auth). Missing identity design becomes 401/403 production theater.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Name at least one actor and one permission/scope idea.",
+        "options": [],
+        "acceptKeywords": [
+          "scope",
+          "role",
+          "read",
+          "approve",
+          "analyst",
+          "user",
+          "admin"
+        ],
+        "explanation": "Identity belongs in v1 design, not as a patch.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-015",
+      "title": "Bindings & destinations (concept)",
+      "kind": "concept_teach",
+      "phase": "4 · Build & verify",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-binding",
+        "c-destination"
+      ],
+      "teach": {
+        "headline": "Configuration is code's twin",
+        "explain": "Service bindings inject credentials into runtimes. Destinations externalize connectivity. Most 'code bugs' in first deploys are binding/destination mistakes.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "A destination primarily stores…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Connection URL + authentication configuration for callers",
+            "correct": true,
+            "feedback": "Correct."
+          },
+          {
+            "id": "o2",
+            "text": "Only CSS themes for Fiori",
+            "correct": false,
+            "feedback": "No."
+          },
+          {
+            "id": "o3",
+            "text": "HANA column store compression settings only",
+            "correct": false,
+            "feedback": "Wrong layer."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Connectivity config is a first-class artifact.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-016",
+      "title": "Configure the solution (sim)",
+      "kind": "configure",
+      "phase": "4 · Build & verify",
+      "estimatedSeconds": 140,
+      "prompt": "List compliance config actions.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency",
+        "c-least-privilege",
+        "c-finops"
+      ],
+      "teach": {
+        "headline": "Apply configuration deliberately",
+        "explain": "Disable unapproved PII replica; document approval path.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "List the key bindings/config checks you would verify.",
+        "options": [],
+        "acceptKeywords": [
+          "disable",
+          "replica",
+          "pii",
+          "approv"
+        ],
+        "explanation": "Checklists beat memory.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-017",
+      "title": "Happy-path test design",
+      "kind": "test_expected",
+      "phase": "4 · Build & verify",
+      "estimatedSeconds": 90,
+      "prompt": "Describe the happy-path test in 3–5 steps.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Define expected behavior before chaos",
+        "explain": "Write the user journey that must work: actor, auth, data seen, side effects. Without expected behavior, you cannot recognize failure modes.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Outline happy path including login/access and successful data/action.",
+        "options": [],
+        "acceptKeywords": [
+          "login",
+          "order",
+          "approve",
+          "view",
+          "success",
+          "analyst",
+          "user"
+        ],
+        "explanation": "Tests encode expected behavior.",
+        "passScore": 0.2
+      }
+    },
+    {
+      "id": "s-018",
+      "title": "Symptoms vs root cause",
+      "kind": "concept_teach",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Symptoms are not causes",
+        "explain": "A blank UI is a symptom. 401 is a symptom class. Audience mismatch may be a root cause. Incident skill is moving down the causal chain with evidence.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "Best next step after users report 'app broken'?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Gather symptoms + telemetry before naming root cause",
+            "correct": true,
+            "feedback": "Yes — evidence first."
+          },
+          {
+            "id": "o2",
+            "text": "Immediately rewrite the UI in another framework",
+            "correct": false,
+            "feedback": "Catastrophic overreaction."
+          },
+          {
+            "id": "o3",
+            "text": "Disable authentication globally",
+            "correct": false,
+            "feedback": "Unsafe and unprofessional."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Triage discipline prevents self-inflicted outages.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-019",
+      "title": "Failure appears",
+      "kind": "test_failure",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "State the compliance symptom.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency"
+      ],
+      "teach": {
+        "headline": "Audit: PII replica in us10",
+        "explain": "Audit findings are incidents with legal clocks.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "List the user-visible symptom and one technical symptom.",
+        "options": [],
+        "acceptKeywords": [
+          "audit",
+          "pii",
+          "replica",
+          "us"
+        ],
+        "explanation": "Capture both business and technical views.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-020",
+      "title": "401 vs 403 clinic",
+      "kind": "concept_check",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-jwt-audience",
+        "c-scope-403"
+      ],
+      "teach": {
+        "headline": "Authn failure vs authz failure",
+        "explain": "401: not authenticated or token rejected (including audience mismatch). 403: authenticated but missing permission/scope. Mixing them sends you to the wrong runbook.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "Missing Discount.Approve scope typically surfaces as…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "403 Forbidden",
+            "correct": true,
+            "feedback": "Authorization failure."
+          },
+          {
+            "id": "o2",
+            "text": "DNS NXDOMAIN",
+            "correct": false,
+            "feedback": "Networking, not authz."
+          },
+          {
+            "id": "o3",
+            "text": "CSS 404",
+            "correct": false,
+            "feedback": "Unrelated."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Status codes are diagnostic gold.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-021",
+      "title": "Gather evidence — logs",
+      "kind": "evidence_gather",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 120,
+      "prompt": "Quote or paraphrase the most important error log line you see.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Read error logs before theorizing",
+        "explain": "Filter errors/warnings. Note resource IDs and messages. Separate primary evidence from distractors (healthy components).",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "What does the strongest error log suggest?",
+        "options": [],
+        "acceptKeywords": [
+          "pii",
+          "replica",
+          "approved",
+          "us10"
+        ],
+        "explanation": "Logs anchor hypotheses.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-022",
+      "title": "Gather evidence — metrics & traces",
+      "kind": "observe",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "Note one metric and one trace span that support your emerging theory.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Correlate pillars",
+        "explain": "Metrics show magnitude (failure rates). Traces show path. A good hypothesis explains all three pillars without ignoring contradicting evidence.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Mention a metric or trace observation.",
+        "options": [],
+        "acceptKeywords": [
+          "metric",
+          "trace",
+          "span",
+          "rate",
+          "401",
+          "403",
+          "latency",
+          "count",
+          "failure"
+        ],
+        "explanation": "Multi-signal reasoning.",
+        "passScore": 0.2
+      }
+    },
+    {
+      "id": "s-023",
+      "title": "Form hypothesis",
+      "kind": "hypothesis_form",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 140,
+      "prompt": "Write: If <mechanism> in <component>, then we should see <evidence>.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency"
+      ],
+      "teach": {
+        "headline": "Falsifiable statement",
+        "explain": "Write a hypothesis that could be wrong. Include the component and mechanism. Avoid vague 'network issue'.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "State hypothesis with component + mechanism.",
+        "options": [],
+        "acceptKeywords": [
+          "residency",
+          "replica",
+          "pii"
+        ],
+        "explanation": "Falsifiable hypotheses can be tested.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-024",
+      "title": "Eliminate distractors",
+      "kind": "concept_check",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Healthy nodes can still waste your time",
+        "explain": "Edge CDN for static JS is not the PII store.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "A recently successful integration flow means…",
+        "options": [
+          {
+            "id": "o1",
+            "text": "It may be a distractor if the failing path is UI→destination→API",
+            "correct": true,
+            "feedback": "Correct — scope the failing chain."
+          },
+          {
+            "id": "o2",
+            "text": "It always proves the UI auth is fine",
+            "correct": false,
+            "feedback": "Different path."
+          },
+          {
+            "id": "o3",
+            "text": "You should delete HANA next",
+            "correct": false,
+            "feedback": "Destructive and baseless."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Scope the failing dependency chain.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-025",
+      "title": "Root-cause diagnosis",
+      "kind": "diagnose",
+      "phase": "5 · Failure science",
+      "estimatedSeconds": 180,
+      "prompt": "State residency violation cause.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [
+        "approved:false",
+        "pii:true"
+      ],
+      "conceptIds": [
+        "c-residency"
+      ],
+      "teach": {
+        "headline": "Commit to a cause with evidence",
+        "explain": "US replica of PII enabled without approval.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "State root cause using precise terms from this mission.",
+        "options": [],
+        "acceptKeywords": [
+          "residency",
+          "pii",
+          "replica",
+          "region"
+        ],
+        "explanation": "Precision enables correct remediation.",
+        "passScore": 0.35
+      }
+    },
+    {
+      "id": "s-026",
+      "title": "Mitigate business impact",
+      "kind": "mitigate",
+      "phase": "6 · Mitigate & remediate",
+      "estimatedSeconds": 90,
+      "prompt": "Write a 3-line status update to business stakeholders + one mitigation action.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-change-mgmt"
+      ],
+      "teach": {
+        "headline": "Stop the bleeding before perfect surgery",
+        "explain": "Communicate status, freeze related risky changes, offer workarounds if any, protect data. Mitigation ≠ root-cause fix, but it buys safety.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Include communication or workaround language.",
+        "options": [],
+        "acceptKeywords": [
+          "communicat",
+          "workaround",
+          "freeze",
+          "status",
+          "impact",
+          "customer",
+          "user"
+        ],
+        "explanation": "Communication is part of ops excellence.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-027",
+      "title": "Least privilege remediation rule",
+      "kind": "security_review",
+      "phase": "6 · Mitigate & remediate",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-least-privilege"
+      ],
+      "teach": {
+        "headline": "Never 'fix' security by removing it",
+        "explain": "Disabling JWT validation, granting Admin.All, or opening anonymous access are not remediations — they are new incidents. Fix the misaligned config with minimum rights.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "mc",
+        "question": "Acceptable remediation for audience mismatch?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Align destination audience with API accepted audience",
+            "correct": true,
+            "feedback": "Correct."
+          },
+          {
+            "id": "o2",
+            "text": "Disable authentication on the API",
+            "correct": false,
+            "feedback": "Creates a worse incident."
+          },
+          {
+            "id": "o3",
+            "text": "Email passwords in Slack",
+            "correct": false,
+            "feedback": "Never."
+          }
+        ],
+        "acceptKeywords": [],
+        "explanation": "Secure remediation only.",
+        "passScore": 1
+      }
+    },
+    {
+      "id": "s-028",
+      "title": "Apply secure fix in simulation",
+      "kind": "resolve",
+      "phase": "6 · Mitigate & remediate",
+      "estimatedSeconds": 120,
+      "prompt": "Describe compliance fix.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency"
+      ],
+      "teach": {
+        "headline": "Change the causal config",
+        "explain": "Disable non-compliant replica pending approval.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Describe the fix you applied (or will apply) without disabling auth.",
+        "options": [],
+        "acceptKeywords": [
+          "disable",
+          "replica",
+          "pii",
+          "residency"
+        ],
+        "explanation": "Name the config change.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-029",
+      "title": "Verify recovery",
+      "kind": "test_expected",
+      "phase": "6 · Mitigate & remediate",
+      "estimatedSeconds": 90,
+      "prompt": "What evidence shows the incident is mitigated/fixed?",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Prove health restored",
+        "explain": "Re-check resource health, re-read logs, confirm user journey. Declare victory only with evidence.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Mention health, log, or user journey verification.",
+        "options": [],
+        "acceptKeywords": [
+          "health",
+          "healthy",
+          "log",
+          "success",
+          "200",
+          "user",
+          "journey",
+          "metric"
+        ],
+        "explanation": "Verification closes the loop.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-030",
+      "title": "Architecture board defense",
+      "kind": "architecture_defense",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 180,
+      "prompt": "Defend region topology to privacy board.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency",
+        "c-finops"
+      ],
+      "teach": {
+        "headline": "Adversarial questions are a gift",
+        "explain": "Boards attack weak assumptions: CAP vs RAP, identity propagation, retries, residency, cost, rollback, monitoring, ownership. Answer with verified vs assumed.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Defend identity + one operational concern (monitoring/rollback/cost).",
+        "options": [],
+        "acceptKeywords": [
+          "identity",
+          "monitor",
+          "rollback",
+          "cost",
+          "security",
+          "resilience"
+        ],
+        "explanation": "Defense trains clarity.",
+        "passScore": 0.3
+      }
+    },
+    {
+      "id": "s-031",
+      "title": "Production readiness",
+      "kind": "production_readiness",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 90,
+      "prompt": "List alert + owner + one runbook step + fidelity note.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-slo",
+        "c-finops"
+      ],
+      "teach": {
+        "headline": "Alerts, owners, runbooks, fidelity disclosure",
+        "explain": "Name alert signals, on-call owner, runbook link (conceptual), backup note, and tell stakeholders what is simulated vs real if demoing.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Include alert and owner.",
+        "options": [],
+        "acceptKeywords": [
+          "alert",
+          "owner"
+        ],
+        "explanation": "Operability is part of done.",
+        "passScore": 0.5
+      }
+    },
+    {
+      "id": "s-032",
+      "title": "Prevention control",
+      "kind": "concept_check",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 90,
+      "prompt": "Read the teaching panel carefully. When you understand it, continue. You will be checked.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency"
+      ],
+      "teach": {
+        "headline": "Make recurrence expensive to ignore",
+        "explain": "Pipeline policy-as-code residency gates.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Propose one prevention control (CI check, alert, review gate).",
+        "options": [],
+        "acceptKeywords": [
+          "ci",
+          "alert",
+          "test",
+          "review",
+          "monitor",
+          "gate",
+          "checklist",
+          "policy"
+        ],
+        "explanation": "Prevention is senior behavior.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-033",
+      "title": "Transfer scenario",
+      "kind": "transfer",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 160,
+      "prompt": "How is retention like residency?",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency"
+      ],
+      "teach": {
+        "headline": "Same structure, different skin",
+        "explain": "Retention schedules similarly need automated enforcement.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Explain how today's mechanism transfers to the new scenario.",
+        "options": [],
+        "acceptKeywords": [
+          "retention",
+          "policy",
+          "automat",
+          "data"
+        ],
+        "explanation": "Transfer proves learning, not memorization.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-034",
+      "title": "Spaced recall",
+      "kind": "spaced_practice",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 90,
+      "prompt": "List 3 concepts + the root cause class in your own words.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-residency",
+        "c-least-privilege",
+        "c-finops"
+      ],
+      "teach": {
+        "headline": "Force retrieval",
+        "explain": "Without notes, restate the three most important concepts from this mission and the root cause class.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Three concepts + cause class.",
+        "options": [],
+        "acceptKeywords": [
+          "residency",
+          "pii",
+          "replica",
+          "audit"
+        ],
+        "explanation": "Retrieval strengthens memory.",
+        "passScore": 0.25
+      }
+    },
+    {
+      "id": "s-035",
+      "title": "Reflection journal",
+      "kind": "reflection",
+      "phase": "7 · Defend & transfer",
+      "estimatedSeconds": 200,
+      "prompt": "Write reflection covering assumption, evidence, prevention, transfer. Use those words.",
+      "tools": [
+        "teach",
+        "glossary"
+      ],
+      "successCriteria": [
+        "Learner engages with concept before proceeding"
+      ],
+      "hints": [],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "teach": {
+        "headline": "Metacognition",
+        "explain": "What assumption failed? Which evidence corrected you? What will you do differently? Consider a break — Odyssey never punishes rest.",
+        "formalPoints": [],
+        "commonMistakes": [],
+        "revealLevels": []
+      },
+      "check": {
+        "type": "short",
+        "question": "Reflection with assumption/evidence/prevent/transfer ideas.",
+        "options": [],
+        "acceptKeywords": [
+          "assumption",
+          "evidence",
+          "prevent",
+          "transfer"
+        ],
+        "explanation": "Reflection consolidates learning.",
+        "passScore": 0.5
+      }
+    }
+  ],
+  "injectedDefects": [
+    {
+      "id": "defect-residency",
+      "description": "PII US replica unapproved",
+      "symptoms": [
+        "audit finding"
+      ],
+      "rootCause": "Replica enabled without residency approval",
+      "distractors": [
+        "CDN static assets"
+      ]
+    }
+  ],
+  "assessmentRubric": [
+    {
+      "dimension": "conceptual",
+      "criteria": "Concept checks + requirements language",
+      "weight": 0.2
+    },
+    {
+      "dimension": "architecture",
+      "criteria": "Design quality",
+      "weight": 0.2
+    },
+    {
+      "dimension": "debugging",
+      "criteria": "Evidence-aligned diagnosis",
+      "weight": 0.25
+    },
+    {
+      "dimension": "operations",
+      "criteria": "Secure remediation",
+      "weight": 0.2
+    },
+    {
+      "dimension": "communication",
+      "criteria": "Reflection",
+      "weight": 0.15
+    }
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "version": "2.0.0",
+  "reviewStatus": "in_review",
+  "meta": {
+    "incidentId": "inc-residency-violation",
+    "landscapeId": "regulated-global"
+  }
+}

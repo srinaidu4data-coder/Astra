@@ -1,0 +1,81 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Separate solution ideas from needs",
+    "NFRs drive service choice"
+  ],
+  "commonMistakes": [
+    "Memorizing the name without a concrete example of Functional vs Non-Functional Requirements"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on Functional vs Non-Functional Requirements.",
+    "List one metric or log that would prove Functional vs Non-Functional Requirements is healthy."
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "requirements"
+  ],
+  "id": "c-functional-nfr",
+  "title": "Functional vs Non-Functional Requirements",
+  "domainId": "architecture",
+  "summary": "What the system does vs how well/safe/fast/operable it must be.",
+  "explain": "Functional requirements describe capabilities (view orders, approve discount). Non-functional requirements (NFRs) constrain quality: security, privacy, latency, availability, cost, accessibility, auditability. Stakeholders often propose solutions ('use Kafka') as if they were requirements — separate ends from means.",
+  "analogy": "Functional: 'cross the river'. NFR: 'in under 5 minutes, safely, under $10'.",
+  "whyItMatters": "Architecture fails when NFRs are discovered in production incidents.",
+  "mnemonic": "NAME IT TO TAME IT: Say “Functional vs Non-Functional Requirements” + one failure mode out loud — if you can't, you don't own it yet. (Functional → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Functional vs Non-Functional Requirements” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Functional vs Non-Functional Requirements” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Functional vs Non-Functional Requirements”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Platform placement",
+      "optionA": "BTP for extension/integration",
+      "optionB": "Force all logic into core mods",
+      "whenChooseA": "Clean-core strategy",
+      "whenChooseB": "Never for sustainable ERP",
+      "risk": "Core mods block upgrades"
+    },
+    {
+      "decision": "Service count",
+      "optionA": "Few services, clear owners",
+      "optionB": "One service per team preference",
+      "whenChooseA": "Operability and cost",
+      "whenChooseB": "Hackathons only",
+      "risk": "Tool sprawl without architecture"
+    },
+    {
+      "decision": "Decision record",
+      "optionA": "Write trade-offs with constraints",
+      "optionB": "Tribal knowledge only",
+      "whenChooseA": "Always for enterprise",
+      "whenChooseB": "Never",
+      "risk": "Re-litigate every review"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-functional-nfr-intro",
+      "title": "Intro game: Functional vs Non-Functional Requirements",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-functional-nfr-mastery",
+      "title": "Mastery game: Functional vs Non-Functional Requirements",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Functional vs Non-Functional Requirements” + one failure mode out loud — if you can't, you don't own it yet. (Functional → mechanism → failure)"
+}

@@ -1,0 +1,82 @@
+{
+  "id": "bdc-governance",
+  "title": "Data governance",
+  "domainId": "bdc",
+  "level": "advanced",
+  "summary": "Catalog, quality, access",
+  "explain": "Without governance, KPI wars begin. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Data governance\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Data governance, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Catalog, quality, access"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Data governance without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing bdc"
+  ],
+  "howToApply": [
+    "Use Data governance explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "bdc"
+  ],
+  "mnemonic": "PRODUCT not DUMP: Owner + contract + quality — not a pile of tables.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Data governance” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Data governance” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Data governance”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Data product",
+      "optionA": "Owned product with SLA + interface",
+      "optionB": "Raw table dump",
+      "whenChooseA": "Cross-team consumption",
+      "whenChooseB": "Never for shared enterprise use",
+      "risk": "Dumps have no contract"
+    },
+    {
+      "decision": "Governance",
+      "optionA": "Steward + quality metrics",
+      "optionB": "Hope and tribal knowledge",
+      "whenChooseA": "Always",
+      "whenChooseB": "Never",
+      "risk": "Silent quality decay"
+    },
+    {
+      "decision": "Lakehouse layers",
+      "optionA": "Bronze/silver/gold progression",
+      "optionB": "Consumers on raw only",
+      "whenChooseA": "Scale analytics",
+      "whenChooseB": "Tiny files",
+      "risk": "Raw access bypasses quality"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-bdc-governance-intro",
+      "title": "Intro game: Data governance",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-bdc-governance-mastery",
+      "title": "Mastery game: Data governance",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "PRODUCT not DUMP: Owner + contract + quality — not a pile of tables."
+}

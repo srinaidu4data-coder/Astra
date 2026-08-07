@@ -1,0 +1,61 @@
+{
+  "version": "0.2.0",
+  "campaigns": [
+    {
+      "id": "campaign-a-startup-to-enterprise",
+      "title": "Startup to Enterprise",
+      "missionIds": [
+        "r1-northwind-order-insights"
+      ]
+    },
+    {
+      "id": "campaign-b-clean-core",
+      "title": "Clean-Core Transformation",
+      "missionIds": [
+        "r2-cap-rap-extension-lab"
+      ]
+    },
+    {
+      "id": "campaign-c-integration-crisis",
+      "title": "Global Integration Crisis",
+      "missionIds": [
+        "r3-integration-crisis"
+      ]
+    },
+    {
+      "id": "campaign-d-data-enterprise",
+      "title": "Intelligent Data Enterprise",
+      "missionIds": [
+        "r4-data-galaxy"
+      ]
+    },
+    {
+      "id": "campaign-e-security-siege",
+      "title": "Security Siege",
+      "missionIds": [
+        "r5-security-siege"
+      ]
+    },
+    {
+      "id": "campaign-f-inherited",
+      "title": "Inherited Landscape",
+      "missionIds": [
+        "r6-inherited-landscape"
+      ]
+    },
+    {
+      "id": "campaign-g-regulated",
+      "title": "Regulated Expansion",
+      "missionIds": [
+        "r6-regulated-expansion"
+      ]
+    },
+    {
+      "id": "campaign-grand",
+      "title": "Grand Enterprise",
+      "missionIds": [
+        "r-grand-enterprise"
+      ]
+    }
+  ]
+}

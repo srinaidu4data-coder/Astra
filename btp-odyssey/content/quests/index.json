@@ -1,0 +1,475 @@
+{
+  "version": "5.0.0",
+  "ethics": "Full-spine quests track domain phases. Progress is mastery of sequenced challenges — no shame streaks.",
+  "quests": [
+    {
+      "id": "q-phase-1-operations",
+      "title": "1. operations path (1 concepts)",
+      "tier": "starter",
+      "order": 1,
+      "objective": "Clear intro+mastery PLAY for every concept in operations (btp-what → btp-what).",
+      "challengeId": "ch-btp-what-mastery",
+      "conceptIds": [
+        "btp-what"
+      ],
+      "rewardLabel": "Unlock architecture",
+      "nextQuestId": "q-phase-2-architecture"
+    },
+    {
+      "id": "q-phase-2-architecture",
+      "title": "2. architecture path (1 concepts)",
+      "tier": "starter",
+      "order": 2,
+      "objective": "Clear intro+mastery PLAY for every concept in architecture (btp-services-map → btp-services-map).",
+      "challengeId": "ch-btp-services-map-mastery",
+      "conceptIds": [
+        "btp-services-map"
+      ],
+      "rewardLabel": "Unlock operations",
+      "nextQuestId": "q-phase-3-operations"
+    },
+    {
+      "id": "q-phase-3-operations",
+      "title": "3. operations path (8 concepts)",
+      "tier": "starter",
+      "order": 3,
+      "objective": "Clear intro+mastery PLAY for every concept in operations (btp-platform-structure → ops-cf).",
+      "challengeId": "ch-ops-cf-mastery",
+      "conceptIds": [
+        "btp-platform-structure",
+        "ops-accounts",
+        "c-global-account",
+        "c-subaccount",
+        "ops-entitlements",
+        "c-service-plan",
+        "c-cf-space",
+        "ops-cf"
+      ],
+      "rewardLabel": "Unlock cap",
+      "nextQuestId": "q-phase-4-cap"
+    },
+    {
+      "id": "q-phase-4-cap",
+      "title": "4. cap path (2 concepts)",
+      "tier": "basic",
+      "order": 4,
+      "objective": "Clear intro+mastery PLAY for every concept in cap (c-mta → c-binding).",
+      "challengeId": "ch-c-binding-mastery",
+      "conceptIds": [
+        "c-mta",
+        "c-binding"
+      ],
+      "rewardLabel": "Unlock security",
+      "nextQuestId": "q-phase-5-security"
+    },
+    {
+      "id": "q-phase-5-security",
+      "title": "5. security path (7 concepts)",
+      "tier": "basic",
+      "order": 5,
+      "objective": "Clear intro+mastery PLAY for every concept in security (btp-security-admin → sec-destinations).",
+      "challengeId": "ch-sec-destinations-mastery",
+      "conceptIds": [
+        "btp-security-admin",
+        "sec-shared-resp",
+        "c-shared-responsibility",
+        "sec-authn-authz",
+        "sec-oauth-oidc",
+        "sec-ias-ips",
+        "sec-destinations"
+      ],
+      "rewardLabel": "Unlock integration",
+      "nextQuestId": "q-phase-6-integration"
+    },
+    {
+      "id": "q-phase-6-integration",
+      "title": "6. integration path (1 concepts)",
+      "tier": "basic",
+      "order": 6,
+      "objective": "Clear intro+mastery PLAY for every concept in integration (c-destination → c-destination).",
+      "challengeId": "ch-c-destination-mastery",
+      "conceptIds": [
+        "c-destination"
+      ],
+      "rewardLabel": "Unlock security",
+      "nextQuestId": "q-phase-7-security"
+    },
+    {
+      "id": "q-phase-7-security",
+      "title": "7. security path (8 concepts)",
+      "tier": "basic",
+      "order": 7,
+      "objective": "Clear intro+mastery PLAY for every concept in security (sec-xsuaa-roles → c-principal-propagation).",
+      "challengeId": "ch-c-principal-propagation-mastery",
+      "conceptIds": [
+        "sec-xsuaa-roles",
+        "c-xsuaa-roles",
+        "c-least-privilege",
+        "c-scope-403",
+        "sec-jwt-claims",
+        "c-jwt-audience",
+        "sec-principal-prop",
+        "c-principal-propagation"
+      ],
+      "rewardLabel": "Unlock integration",
+      "nextQuestId": "q-phase-8-integration"
+    },
+    {
+      "id": "q-phase-8-integration",
+      "title": "8. integration path (2 concepts)",
+      "tier": "basic",
+      "order": 8,
+      "objective": "Clear intro+mastery PLAY for every concept in integration (principal-hybrid → cloud-connector).",
+      "challengeId": "ch-cloud-connector-mastery",
+      "conceptIds": [
+        "principal-hybrid",
+        "cloud-connector"
+      ],
+      "rewardLabel": "Unlock security",
+      "nextQuestId": "q-phase-9-security"
+    },
+    {
+      "id": "q-phase-9-security",
+      "title": "9. security path (1 concepts)",
+      "tier": "advanced",
+      "order": 9,
+      "objective": "Clear intro+mastery PLAY for every concept in security (sec-secrets → sec-secrets).",
+      "challengeId": "ch-sec-secrets-mastery",
+      "conceptIds": [
+        "sec-secrets"
+      ],
+      "rewardLabel": "Unlock ui5-fiori",
+      "nextQuestId": "q-phase-10-ui5-fiori"
+    },
+    {
+      "id": "q-phase-10-ui5-fiori",
+      "title": "10. ui5-fiori path (1 concepts)",
+      "tier": "advanced",
+      "order": 10,
+      "objective": "Clear intro+mastery PLAY for every concept in ui5-fiori (c-csrf → c-csrf).",
+      "challengeId": "ch-c-csrf-mastery",
+      "conceptIds": [
+        "c-csrf"
+      ],
+      "rewardLabel": "Unlock security",
+      "nextQuestId": "q-phase-11-security"
+    },
+    {
+      "id": "q-phase-11-security",
+      "title": "11. security path (9 concepts)",
+      "tier": "advanced",
+      "order": 11,
+      "objective": "Clear intro+mastery PLAY for every concept in security (sec-threat-model → sec-incident-ir).",
+      "challengeId": "ch-sec-incident-ir-mastery",
+      "conceptIds": [
+        "sec-threat-model",
+        "c-threat-model",
+        "sec-tenant-isolation",
+        "c-tenant-isolation",
+        "sec-zero-trust",
+        "sec-supply-chain",
+        "c-residency",
+        "c-audit-log",
+        "sec-incident-ir"
+      ],
+      "rewardLabel": "Unlock operations",
+      "nextQuestId": "q-phase-12-operations"
+    },
+    {
+      "id": "q-phase-12-operations",
+      "title": "12. operations path (8 concepts)",
+      "tier": "advanced",
+      "order": 12,
+      "objective": "Clear intro+mastery PLAY for every concept in operations (c-change-mgmt → ops-sre).",
+      "challengeId": "ch-ops-sre-mastery",
+      "conceptIds": [
+        "c-change-mgmt",
+        "c-entitlement",
+        "c-finops",
+        "c-rto-rpo",
+        "c-slo",
+        "ops-finops",
+        "ops-observability",
+        "ops-sre"
+      ],
+      "rewardLabel": "Unlock architecture",
+      "nextQuestId": "q-phase-13-architecture"
+    },
+    {
+      "id": "q-phase-13-architecture",
+      "title": "13. architecture path (2 concepts)",
+      "tier": "expert",
+      "order": 13,
+      "objective": "Clear intro+mastery PLAY for every concept in architecture (c-functional-nfr → c-cap-vs-rap).",
+      "challengeId": "ch-c-cap-vs-rap-mastery",
+      "conceptIds": [
+        "c-functional-nfr",
+        "c-cap-vs-rap"
+      ],
+      "rewardLabel": "Unlock cap",
+      "nextQuestId": "q-phase-14-cap"
+    },
+    {
+      "id": "q-phase-14-cap",
+      "title": "14. cap path (15 concepts)",
+      "tier": "expert",
+      "order": 14,
+      "objective": "Clear intro+mastery PLAY for every concept in cap (c-cap-odata → cap-resilience).",
+      "challengeId": "ch-cap-resilience-mastery",
+      "conceptIds": [
+        "c-cap-odata",
+        "cap-cds-entities",
+        "c-odata-metadata",
+        "odata-v2-vs-v4",
+        "odata-v4-basics",
+        "cap-services",
+        "cap-what",
+        "cap-actions",
+        "cap-auth",
+        "cap-events",
+        "cap-persistence",
+        "odata-query-perf",
+        "cap-extensibility",
+        "cap-multitenant",
+        "cap-resilience"
+      ],
+      "rewardLabel": "Unlock rap-abap",
+      "nextQuestId": "q-phase-15-rap-abap"
+    },
+    {
+      "id": "q-phase-15-rap-abap",
+      "title": "15. rap-abap path (15 concepts)",
+      "tier": "expert",
+      "order": 15,
+      "objective": "Clear intro+mastery PLAY for every concept in rap-abap (c-behavior-def → rap-performance).",
+      "challengeId": "ch-rap-performance-mastery",
+      "conceptIds": [
+        "c-behavior-def",
+        "c-draft",
+        "rap-managed",
+        "rap-cds-bo",
+        "rap-fiori-elements",
+        "rap-what",
+        "c-clean-core",
+        "rap-determinations",
+        "rap-draft",
+        "rap-eml",
+        "rap-vs-cap",
+        "rap-unmanaged",
+        "rap-extensibility",
+        "rap-clean-core",
+        "rap-performance"
+      ],
+      "rewardLabel": "Unlock ui5-fiori",
+      "nextQuestId": "q-phase-16-ui5-fiori"
+    },
+    {
+      "id": "q-phase-16-ui5-fiori",
+      "title": "16. ui5-fiori path (3 concepts)",
+      "tier": "expert",
+      "order": 16,
+      "objective": "Clear intro+mastery PLAY for every concept in ui5-fiori (c-accessibility → c-ui5-odata).",
+      "challengeId": "ch-c-ui5-odata-mastery",
+      "conceptIds": [
+        "c-accessibility",
+        "c-fiori-elements",
+        "c-ui5-odata"
+      ],
+      "rewardLabel": "Unlock integration",
+      "nextQuestId": "q-phase-17-integration"
+    },
+    {
+      "id": "q-phase-17-integration",
+      "title": "17. integration path (15 concepts)",
+      "tier": "expert",
+      "order": 17,
+      "objective": "Clear intro+mastery PLAY for every concept in integration (c-adapter → is-tpm).",
+      "challengeId": "ch-is-tpm-mastery",
+      "conceptIds": [
+        "c-adapter",
+        "cpi-adapters",
+        "c-api-mgmt",
+        "cpi-iflow",
+        "c-iflow",
+        "is-what",
+        "cpi-mapping",
+        "c-retry-backoff",
+        "api-mgmt",
+        "cpi-exception",
+        "cpi-idempotency",
+        "c-idempotency",
+        "is-governance",
+        "is-observability",
+        "is-tpm"
+      ],
+      "rewardLabel": "Unlock events",
+      "nextQuestId": "q-phase-18-events"
+    },
+    {
+      "id": "q-phase-18-events",
+      "title": "18. events path (9 concepts)",
+      "tier": "expert",
+      "order": 18,
+      "objective": "Clear intro+mastery PLAY for every concept in events (c-dlq → evt-saga).",
+      "challengeId": "ch-evt-saga-mastery",
+      "conceptIds": [
+        "c-dlq",
+        "evt-mesh-concepts",
+        "evt-vs-cmd",
+        "c-events-mesh",
+        "c-saga",
+        "c-schema-evolution",
+        "evt-dlq",
+        "evt-schema",
+        "evt-saga"
+      ],
+      "rewardLabel": "Unlock bpa",
+      "nextQuestId": "q-phase-19-bpa"
+    },
+    {
+      "id": "q-phase-19-bpa",
+      "title": "19. bpa path (8 concepts)",
+      "tier": "expert",
+      "order": 19,
+      "objective": "Clear intro+mastery PLAY for every concept in bpa (bpa-what → bpa-scale).",
+      "challengeId": "ch-bpa-scale-mastery",
+      "conceptIds": [
+        "bpa-what",
+        "bpa-forms",
+        "bpa-workflow",
+        "c-workflow",
+        "bpa-api",
+        "bpa-rules",
+        "bpa-governance",
+        "bpa-scale"
+      ],
+      "rewardLabel": "Unlock workzone",
+      "nextQuestId": "q-phase-20-workzone"
+    },
+    {
+      "id": "q-phase-20-workzone",
+      "title": "20. workzone path (5 concepts)",
+      "tier": "expert",
+      "order": 20,
+      "objective": "Clear intro+mastery PLAY for every concept in workzone (wz-what → wz-perf).",
+      "challengeId": "ch-wz-perf-mastery",
+      "conceptIds": [
+        "wz-what",
+        "wz-roles",
+        "c-workzone",
+        "wz-federation",
+        "wz-perf"
+      ],
+      "rewardLabel": "Unlock hana-cloud",
+      "nextQuestId": "q-phase-21-hana-cloud"
+    },
+    {
+      "id": "q-phase-21-hana-cloud",
+      "title": "21. hana-cloud path (10 concepts)",
+      "tier": "expert",
+      "order": 21,
+      "objective": "Clear intro+mastery PLAY for every concept in hana-cloud (c-calc-view → hana-vector).",
+      "challengeId": "ch-hana-vector-mastery",
+      "conceptIds": [
+        "c-calc-view",
+        "hana-what",
+        "c-hana-hdi",
+        "hana-hdi",
+        "hana-sql",
+        "hana-calc",
+        "hana-perf",
+        "hana-privileges",
+        "hana-ha",
+        "hana-vector"
+      ],
+      "rewardLabel": "Unlock datasphere",
+      "nextQuestId": "q-phase-22-datasphere"
+    },
+    {
+      "id": "q-phase-22-datasphere",
+      "title": "22. datasphere path (6 concepts)",
+      "tier": "expert",
+      "order": 22,
+      "objective": "Clear intro+mastery PLAY for every concept in datasphere (c-lineage → ds-lineage).",
+      "challengeId": "ch-ds-lineage-mastery",
+      "conceptIds": [
+        "c-lineage",
+        "ds-what",
+        "ds-spaces",
+        "ds-federation",
+        "ds-semantic",
+        "ds-lineage"
+      ],
+      "rewardLabel": "Unlock bdc",
+      "nextQuestId": "q-phase-23-bdc"
+    },
+    {
+      "id": "q-phase-23-bdc",
+      "title": "23. bdc path (5 concepts)",
+      "tier": "expert",
+      "order": 23,
+      "objective": "Clear intro+mastery PLAY for every concept in bdc (bdc-what → bdc-lakehouse).",
+      "challengeId": "ch-bdc-lakehouse-mastery",
+      "conceptIds": [
+        "bdc-what",
+        "bdc-data-product",
+        "bdc-governance",
+        "c-data-product",
+        "bdc-lakehouse"
+      ],
+      "rewardLabel": "Unlock sac",
+      "nextQuestId": "q-phase-24-sac"
+    },
+    {
+      "id": "q-phase-24-sac",
+      "title": "24. sac path (6 concepts)",
+      "tier": "expert",
+      "order": 24,
+      "objective": "Clear intro+mastery PLAY for every concept in sac (c-sac-story → sac-security).",
+      "challengeId": "ch-sac-security-mastery",
+      "conceptIds": [
+        "c-sac-story",
+        "sac-what",
+        "sac-stories",
+        "sac-live-vs-import",
+        "sac-planning",
+        "sac-security"
+      ],
+      "rewardLabel": "Unlock ai",
+      "nextQuestId": "q-phase-25-ai"
+    },
+    {
+      "id": "q-phase-25-ai",
+      "title": "25. ai path (8 concepts)",
+      "tier": "expert",
+      "order": 25,
+      "objective": "Clear intro+mastery PLAY for every concept in ai (ai-hallucination → ai-eval).",
+      "challengeId": "ch-ai-eval-mastery",
+      "conceptIds": [
+        "ai-hallucination",
+        "ai-joule-concepts",
+        "ai-responsible",
+        "ai-cost-latency",
+        "ai-prompt",
+        "ai-rag",
+        "ai-agent-risks",
+        "ai-eval"
+      ],
+      "rewardLabel": "Unlock incident",
+      "nextQuestId": "q-phase-26-incident"
+    },
+    {
+      "id": "q-phase-26-incident",
+      "title": "26. incident path (1 concepts)",
+      "tier": "expert",
+      "order": 26,
+      "objective": "Clear intro+mastery PLAY for every concept in incident (c-observability → c-observability).",
+      "challengeId": "ch-c-observability-mastery",
+      "conceptIds": [
+        "c-observability"
+      ],
+      "rewardLabel": "Curriculum complete",
+      "nextQuestId": null
+    }
+  ]
+}

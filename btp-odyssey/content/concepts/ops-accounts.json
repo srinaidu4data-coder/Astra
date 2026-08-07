@@ -1,0 +1,82 @@
+{
+  "id": "ops-accounts",
+  "title": "Global accounts and subaccounts",
+  "domainId": "operations",
+  "level": "basic",
+  "summary": "Landscape hierarchy",
+  "explain": "Commercial root vs isolation slices. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Global accounts and subaccounts\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Global accounts and subaccounts, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Landscape hierarchy"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Global accounts and subaccounts without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing operations"
+  ],
+  "howToApply": [
+    "Use Global accounts and subaccounts explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "operations"
+  ],
+  "mnemonic": "HQ → FLOORS → ROOMS: Global account HQ, directories floors, subaccounts locked rooms.",
+  "useCases": [
+    "Landing zone setup week: apply Global accounts and subaccounts so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “Global accounts and subaccounts” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Global accounts and subaccounts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ops-accounts-intro",
+      "title": "Intro game: Global accounts and subaccounts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ops-accounts-mastery",
+      "title": "Mastery game: Global accounts and subaccounts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "HQ → FLOORS → ROOMS: Global account HQ, directories floors, subaccounts locked rooms."
+}

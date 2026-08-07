@@ -9,6 +9,7 @@ import { AuthPage } from '@/pages/AuthPage'
 import { CopilotPage } from '@/pages/CopilotPage'
 import { OverlayPage } from '@/pages/OverlayPage'
 import { PaywallPage } from '@/pages/PaywallPage'
+import { BtpOdysseyPage } from '@/pages/BtpOdysseyPage'
 import { PracticePage } from '@/pages/PracticePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SprintPage } from '@/pages/SprintPage'
@@ -47,6 +48,16 @@ function PageBody() {
       const raw = (window.location.hash || '').replace(/^#\/?/, '')
       const path = raw.split('?')[0]?.toLowerCase() || ''
       if (
+        path === 'btp-odyssey' ||
+        path === 'btp' ||
+        path === 'odyssey' ||
+        path === 'btp-odyssey/' ||
+        path.startsWith('btp-odyssey')
+      ) {
+        setRoute('btp-odyssey')
+        return
+      }
+      if (
         path === 'jobsearch' ||
         path === 'job-search' ||
         path === 'jobs' ||
@@ -80,6 +91,7 @@ function PageBody() {
       {route === 'sprint' && <SprintPage />}
       {(route === 'copilot' || route === 'knowledge') && <CopilotPage />}
       {route === 'practice' && <PracticePage />}
+      {route === 'btp-odyssey' && <BtpOdysseyPage />}
       {route === 'analytics' && <AnalyticsPage />}
       {route === 'settings' && <SettingsPage />}
       {route === 'admin' && <AdminPage />}
@@ -262,7 +274,10 @@ function GatedApp() {
   // Soft paywall: free diagnostic (Sprint) + Settings + Mock without full plan.
   // Live Interview still requires subscription_active or Pass/Sprint entitlement.
   const freeRoutes =
-    route === 'sprint' || route === 'settings' || route === 'practice'
+    route === 'sprint' ||
+    route === 'settings' ||
+    route === 'practice' ||
+    route === 'btp-odyssey'
   if (
     mustAuth &&
     signedIn &&

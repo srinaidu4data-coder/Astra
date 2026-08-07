@@ -1,0 +1,82 @@
+{
+  "id": "cloud-connector",
+  "title": "Cloud Connector concepts",
+  "domainId": "integration",
+  "level": "advanced",
+  "summary": "Hybrid connectivity",
+  "explain": "Secure tunnel patterns for on-prem systems (conceptual). (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Cloud Connector concepts\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Cloud Connector concepts, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Hybrid connectivity"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Cloud Connector concepts without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing integration"
+  ],
+  "howToApply": [
+    "Use Cloud Connector concepts explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "integration"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Cloud Connector concepts” + one failure mode out loud — if you can't, you don't own it yet. (Cloud → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Cloud Connector concepts” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Cloud Connector concepts” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Cloud Connector concepts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-cloud-connector-intro",
+      "title": "Intro game: Cloud Connector concepts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-cloud-connector-mastery",
+      "title": "Mastery game: Cloud Connector concepts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Cloud Connector concepts” + one failure mode out loud — if you can't, you don't own it yet. (Cloud → mechanism → failure)"
+}

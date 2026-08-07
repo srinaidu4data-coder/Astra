@@ -1,0 +1,82 @@
+{
+  "id": "ds-spaces",
+  "title": "Spaces and isolation",
+  "domainId": "datasphere",
+  "level": "basic",
+  "summary": "Data workspaces",
+  "explain": "Separate teams and data products. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Spaces and isolation\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Spaces and isolation, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Data workspaces"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Spaces and isolation without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing datasphere"
+  ],
+  "howToApply": [
+    "Use Spaces and isolation explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "datasphere"
+  ],
+  "mnemonic": "HOTEL WALLS: Tenant walls are load-bearing — not curtains (UI filters).",
+  "useCases": [
+    "Greenfield design workshop: decide if “Spaces and isolation” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Spaces and isolation” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Spaces and isolation”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Semantic layer",
+      "optionA": "Governed metrics in semantic models",
+      "optionB": "Each report invents definitions",
+      "whenChooseA": "Enterprise KPIs",
+      "whenChooseB": "Personal sandbox",
+      "risk": "Conflicting numbers destroy trust"
+    },
+    {
+      "decision": "Federation vs replicate",
+      "optionA": "Federate when freshness + governance allow",
+      "optionB": "Copy everything always",
+      "whenChooseA": "Latency/cost trade-offs",
+      "whenChooseB": "When offline/performance requires",
+      "risk": "Blind copies create residency/cost issues"
+    },
+    {
+      "decision": "Spaces",
+      "optionA": "Space boundaries by ownership",
+      "optionB": "One mega space",
+      "whenChooseA": "Multi-team data products",
+      "whenChooseB": "Tiny single team",
+      "risk": "Access and cost blur"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ds-spaces-intro",
+      "title": "Intro game: Spaces and isolation",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ds-spaces-mastery",
+      "title": "Mastery game: Spaces and isolation",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "HOTEL WALLS: Tenant walls are load-bearing — not curtains (UI filters)."
+}

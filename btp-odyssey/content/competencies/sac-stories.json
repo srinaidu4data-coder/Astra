@@ -1,0 +1,42 @@
+{
+  "id": "sac-stories",
+  "title": "Analytical stories and planning concepts",
+  "domainId": "sac",
+  "description": "Analytical stories and planning concepts. Evidence is demonstration-based in simulation, not XP.",
+  "level": "basic",
+  "prerequisites": [
+    "found-data"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Analytical stories and planning concepts in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Analytical stories and planning concepts in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Analytical stories and planning concepts after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

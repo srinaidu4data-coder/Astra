@@ -1,0 +1,82 @@
+{
+  "id": "sac-stories",
+  "title": "Stories and dashboards",
+  "domainId": "sac",
+  "level": "basic",
+  "summary": "Visual analytics",
+  "explain": "Garbage models produce executive chaos. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Stories and dashboards\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Stories and dashboards, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Visual analytics"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Stories and dashboards without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing sac"
+  ],
+  "howToApply": [
+    "Use Stories and dashboards explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "sac"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Stories and dashboards” + one failure mode out loud — if you can't, you don't own it yet. (Stories → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Stories and dashboards” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Stories and dashboards” to classify the failing hop before changing config.",
+    "Finance and Sales disagree on “revenue” — Stories and dashboards forces one productized definition."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Live vs import",
+      "optionA": "Live for current operational truth",
+      "optionB": "Import for snapshot performance",
+      "whenChooseA": "Need freshness",
+      "whenChooseB": "Need offline/perf snapshots",
+      "risk": "Wrong mode misleads decisions"
+    },
+    {
+      "decision": "Security",
+      "optionA": "Model + folder + row constraints",
+      "optionB": "Share all stories widely",
+      "whenChooseA": "Sensitive KPIs",
+      "whenChooseB": "Public non-sensitive only",
+      "risk": "Export leaks"
+    },
+    {
+      "decision": "Metric ownership",
+      "optionA": "One definition in semantic layer",
+      "optionB": "Story-local calculations",
+      "whenChooseA": "Enterprise reporting",
+      "whenChooseB": "Personal exploration",
+      "risk": "Conflicting revenue numbers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sac-stories-intro",
+      "title": "Intro game: Stories and dashboards",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sac-stories-mastery",
+      "title": "Mastery game: Stories and dashboards",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Stories and dashboards” + one failure mode out loud — if you can't, you don't own it yet. (Stories → mechanism → failure)"
+}

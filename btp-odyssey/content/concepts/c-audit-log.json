@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Immutable-enough records of security-relevant actions for investigations."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Audit Logging without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use Audit Logging explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-audit-log",
+  "title": "Audit Logging",
+  "domainId": "security",
+  "summary": "Immutable-enough records of security-relevant actions for investigations.",
+  "explain": "Immutable-enough records of security-relevant actions for investigations. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"Audit Logging\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain Audit Logging in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "THREE CAMERAS: Logs dialogue, metrics score, traces camera moves — correlate them.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Audit Logging” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Audit Logging” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Audit Logging”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-audit-log-intro",
+      "title": "Intro game: Audit Logging",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-audit-log-mastery",
+      "title": "Mastery game: Audit Logging",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "THREE CAMERAS: Logs dialogue, metrics score, traces camera moves — correlate them."
+}

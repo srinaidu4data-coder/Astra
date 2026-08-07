@@ -1,0 +1,100 @@
+{
+  "id": "btp-security-admin",
+  "title": "BTP security & admin starter pack",
+  "domainId": "security",
+  "level": "basic",
+  "summary": "Who can do what: admins, members, identity, roles, destinations — the controls beginners must not skip.",
+  "explain": "Security and admin on BTP are about control planes and data planes.\n\nAdmin control plane:\n• Who is global account admin vs subaccount admin vs space developer.\n• Entitlements: who can enable expensive services.\n• Members: least privilege for humans.\n\nIdentity & access:\n• Users authenticate (IAS / IdP concepts).\n• Apps get roles/scopes (XSUAA patterns).\n• Destinations carry how apps call other systems (auth type, audience).\n• Principal propagation keeps the human identity for audit.\n\nGolden beginner rules:\n1) Separate prod subaccounts and prod admins.\n2) Never Admin.All for convenience.\n3) Destinations and secrets are security artifacts.\n4) Authn ≠ authz — login success can still be 403.\n5) Test negative paths (wrong tenant, missing scope).",
+  "analogy": "Building security: keys to the building (admin), badges for rooms (roles), sealed courier bags between buildings (destinations), and cameras (audit).",
+  "whyItMatters": "Most production incidents in early BTP projects are mis-admins, open roles, or broken identity hops — not exotic zero-days.",
+  "formalPoints": [
+    "Split admin duties by stage and blast radius",
+    "Authn proves identity; authz grants action rights",
+    "Destinations and secrets are first-class security config",
+    "Least privilege and negative tests are mandatory"
+  ],
+  "commonMistakes": [
+    "Shared admin accounts",
+    "Technical user with god rights for ‘propagation later’",
+    "Putting secrets in code or tickets"
+  ],
+  "howToRecognize": [
+    "Landing zone setup, first Fiori app to CAP call, partner integration design"
+  ],
+  "howToApply": [
+    "Write an admin RACI for global vs subaccount",
+    "List scopes for one approve action — none should be Admin.All"
+  ],
+  "relatedIds": [
+    "btp-platform-structure",
+    "sec-authn-authz",
+    "sec-destinations",
+    "sec-xsuaa-roles",
+    "c-least-privilege",
+    "sec-shared-resp"
+  ],
+  "glossary": [
+    {
+      "term": "Authn",
+      "definition": "Authentication — who you are."
+    },
+    {
+      "term": "Authz",
+      "definition": "Authorization — what you may do."
+    }
+  ],
+  "tags": [
+    "basic",
+    "beginner",
+    "btp",
+    "security",
+    "admin"
+  ],
+  "mnemonic": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone.",
+  "useCases": [
+    "Greenfield design workshop: decide if “BTP security & admin starter pack” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “BTP security & admin starter pack” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “BTP security & admin starter pack”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-btp-security-admin-intro",
+      "title": "Intro game: BTP security & admin starter pack",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-btp-security-admin-mastery",
+      "title": "Mastery game: BTP security & admin starter pack",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone."
+}

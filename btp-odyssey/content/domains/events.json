@@ -1,0 +1,24 @@
+{
+  "id": "events",
+  "title": "Event-Driven Architecture",
+  "districtName": "Event Constellation",
+  "summary": "Event-Driven Architecture learning district in the Odyssey universe.",
+  "sapProducts": [
+    "SAP Event Mesh / event services"
+  ],
+  "specializations": [
+    "Event-Driven Architect"
+  ],
+  "confidence": "medium",
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ]
+}

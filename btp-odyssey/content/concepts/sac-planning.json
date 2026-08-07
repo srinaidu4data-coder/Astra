@@ -1,0 +1,82 @@
+{
+  "id": "sac-planning",
+  "title": "Planning basics",
+  "domainId": "sac",
+  "level": "advanced",
+  "summary": "Budget and forecast cycles",
+  "explain": "Process + model + security. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Planning basics\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Planning basics, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Budget and forecast cycles"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Planning basics without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing sac"
+  ],
+  "howToApply": [
+    "Use Planning basics explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "sac"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Planning basics” + one failure mode out loud — if you can't, you don't own it yet. (Planning → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Planning basics” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Planning basics” to classify the failing hop before changing config.",
+    "Finance and Sales disagree on “revenue” — Planning basics forces one productized definition."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Live vs import",
+      "optionA": "Live for current operational truth",
+      "optionB": "Import for snapshot performance",
+      "whenChooseA": "Need freshness",
+      "whenChooseB": "Need offline/perf snapshots",
+      "risk": "Wrong mode misleads decisions"
+    },
+    {
+      "decision": "Security",
+      "optionA": "Model + folder + row constraints",
+      "optionB": "Share all stories widely",
+      "whenChooseA": "Sensitive KPIs",
+      "whenChooseB": "Public non-sensitive only",
+      "risk": "Export leaks"
+    },
+    {
+      "decision": "Metric ownership",
+      "optionA": "One definition in semantic layer",
+      "optionB": "Story-local calculations",
+      "whenChooseA": "Enterprise reporting",
+      "whenChooseB": "Personal exploration",
+      "risk": "Conflicting revenue numbers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sac-planning-intro",
+      "title": "Intro game: Planning basics",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sac-planning-mastery",
+      "title": "Mastery game: Planning basics",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Planning basics” + one failure mode out loud — if you can't, you don't own it yet. (Planning → mechanism → failure)"
+}

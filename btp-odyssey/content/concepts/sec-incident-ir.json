@@ -1,0 +1,82 @@
+{
+  "id": "sec-incident-ir",
+  "title": "Security incident response",
+  "domainId": "security",
+  "level": "expert",
+  "summary": "Contain, eradicate, learn",
+  "explain": "Triage, forensics evidence, customer comms, root cause, prevention controls. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Security incident response\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Security incident response, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Contain, eradicate, learn"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Security incident response without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing security"
+  ],
+  "howToApply": [
+    "Use Security incident response explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "security"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Security incident response” + one failure mode out loud — if you can't, you don't own it yet. (Security → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Security incident response” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Security incident response” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Security incident response”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sec-incident-ir-intro",
+      "title": "Intro game: Security incident response",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sec-incident-ir-mastery",
+      "title": "Mastery game: Security incident response",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Security incident response” + one failure mode out loud — if you can't, you don't own it yet. (Security → mechanism → failure)"
+}

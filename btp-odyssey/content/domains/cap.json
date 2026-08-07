@@ -1,0 +1,24 @@
+{
+  "id": "cap",
+  "title": "SAP Cloud Application Programming Model",
+  "districtName": "Cloud Application Foundry",
+  "summary": "SAP Cloud Application Programming Model learning district in the Odyssey universe.",
+  "sapProducts": [
+    "SAP CAP"
+  ],
+  "specializations": [
+    "CAP Developer"
+  ],
+  "confidence": "medium",
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ]
+}

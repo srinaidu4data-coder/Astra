@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Graph of processing steps: adapters, mappings, routers, exception subprocesses."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Integration Flow without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use Integration Flow explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-iflow",
+  "title": "Integration Flow",
+  "domainId": "integration",
+  "summary": "Graph of processing steps: adapters, mappings, routers, exception subprocesses.",
+  "explain": "Graph of processing steps: adapters, mappings, routers, exception subprocesses. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"Integration Flow\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain Integration Flow in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "NAME IT TO TAME IT: Say “Integration Flow” + one failure mode out loud — if you can't, you don't own it yet. (Integration → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Integration Flow” is required given constraints (latency, clean-core, team skills).",
+    "Partner retries the same order POST — Integration Flow prevents double billing.",
+    "Architecture review board: defend why you accepted residual risk around “Integration Flow”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-iflow-intro",
+      "title": "Intro game: Integration Flow",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-iflow-mastery",
+      "title": "Mastery game: Integration Flow",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Integration Flow” + one failure mode out loud — if you can't, you don't own it yet. (Integration → mechanism → failure)"
+}

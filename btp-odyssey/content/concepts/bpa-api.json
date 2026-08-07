@@ -1,0 +1,82 @@
+{
+  "id": "bpa-api",
+  "title": "API integration in automations",
+  "domainId": "bpa",
+  "level": "advanced",
+  "summary": "Call systems safely",
+  "explain": "Auth, retries, error handling for automations. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"API integration in automations\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without API integration in automations, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Call systems safely"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of API integration in automations without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing bpa"
+  ],
+  "howToApply": [
+    "Use API integration in automations explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "bpa"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “API integration in automations” + one failure mode out loud — if you can't, you don't own it yet. (API → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “API integration in automations” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “API integration in automations” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “API integration in automations”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Workflow vs full app",
+      "optionA": "BPA for human approval chains",
+      "optionB": "Full CAP/RAP app",
+      "whenChooseA": "Form+approve dominant",
+      "whenChooseB": "Rich domain UX/API needed",
+      "risk": "Wrong tool under/overbuilds"
+    },
+    {
+      "decision": "Rules location",
+      "optionA": "Versioned decision rules",
+      "optionB": "Hardcode in UI scripts",
+      "whenChooseA": "Changing policy",
+      "whenChooseB": "Static never-change rules",
+      "risk": "UI hardcode resists audit"
+    },
+    {
+      "decision": "Governance",
+      "optionA": "Publish rights + data access reviews",
+      "optionB": "Citizen automation free-for-all",
+      "whenChooseA": "Enterprise",
+      "whenChooseB": "Never long-term",
+      "risk": "Shadow IT and leaks"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-bpa-api-intro",
+      "title": "Intro game: API integration in automations",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-bpa-api-mastery",
+      "title": "Mastery game: API integration in automations",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “API integration in automations” + one failure mode out loud — if you can't, you don't own it yet. (API → mechanism → failure)"
+}

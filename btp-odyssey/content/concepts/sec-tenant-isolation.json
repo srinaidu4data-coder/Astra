@@ -1,0 +1,82 @@
+{
+  "id": "sec-tenant-isolation",
+  "title": "Tenant isolation patterns",
+  "domainId": "security",
+  "level": "expert",
+  "summary": "Hard multi-tenant boundaries",
+  "explain": "Mandatory tenant predicates, isolation tests, break-glass, audit — Admin.All is an anti-pattern. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Tenant isolation patterns\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Tenant isolation patterns, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Hard multi-tenant boundaries"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Tenant isolation patterns without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing security"
+  ],
+  "howToApply": [
+    "Use Tenant isolation patterns explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "security"
+  ],
+  "mnemonic": "HOTEL WALLS: Tenant walls are load-bearing — not curtains (UI filters).",
+  "useCases": [
+    "Greenfield design workshop: decide if “Tenant isolation patterns” is required given constraints (latency, clean-core, team skills).",
+    "Multi-tenant SaaS demo: Tenant B token must not read Tenant A orders — prove Tenant isolation patterns.",
+    "Architecture review board: defend why you accepted residual risk around “Tenant isolation patterns”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Isolation layer",
+      "optionA": "App + DB predicates",
+      "optionB": "UI hide only",
+      "whenChooseA": "Shared tenancy",
+      "whenChooseB": "Dedicated single-tenant infra",
+      "risk": "Cross-tenant read"
+    },
+    {
+      "decision": "Testing",
+      "optionA": "Negative tests with foreign IDs",
+      "optionB": "Happy path only",
+      "whenChooseA": "Always",
+      "whenChooseB": "Never",
+      "risk": "False confidence"
+    },
+    {
+      "decision": "Ops access",
+      "optionA": "Break-glass audited",
+      "optionB": "Standing admin across tenants",
+      "whenChooseA": "Support needs",
+      "whenChooseB": "Never standing",
+      "risk": "Insider risk"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sec-tenant-isolation-intro",
+      "title": "Intro game: Tenant isolation patterns",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sec-tenant-isolation-mastery",
+      "title": "Mastery game: Tenant isolation patterns",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "HOTEL WALLS: Tenant walls are load-bearing — not curtains (UI filters)."
+}

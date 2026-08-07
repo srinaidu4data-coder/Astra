@@ -1,0 +1,83 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Design-time vs runtime artifacts",
+    "Schema isolation",
+    "Least-privilege DB access"
+  ],
+  "commonMistakes": [
+    "Granting broad DB admin to app users"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on HANA HDI Containers (concept).",
+    "List one metric or log that would prove HANA HDI Containers (concept) is healthy."
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "hana",
+    "data"
+  ],
+  "id": "c-hana-hdi",
+  "title": "HANA HDI Containers (concept)",
+  "domainId": "hana-cloud",
+  "summary": "Isolated DB development deployments with controlled privileges.",
+  "explain": "HDI (HANA Deployment Infrastructure) containers package design-time DB artifacts and deploy them into isolated runtime schemas with managed privileges. CAP projects often bind to HANA HDI for persistence. Teaching simulation shows health and bindings — not a full SQL engine.",
+  "analogy": "A sealed lab kit: schema objects arrive together with rules about who may touch them.",
+  "whyItMatters": "Privilege and container isolation errors look like app bugs if you only stare at UI.",
+  "mnemonic": "NAME IT TO TAME IT: Say “HANA HDI Containers (concept)” + one failure mode out loud — if you can't, you don't own it yet. (HANA → mechanism → failure)",
+  "useCases": [
+    "Support chatbot answers policy — HANA HDI Containers (concept) forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “HANA HDI Containers (concept)” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “HANA HDI Containers (concept)”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Answer policy",
+      "optionA": "Ground + cite or abstain",
+      "optionB": "Always invent fluent answers",
+      "whenChooseA": "Enterprise Q&A",
+      "whenChooseB": "Fiction writing",
+      "risk": "Wrong actions"
+    },
+    {
+      "decision": "Actions",
+      "optionA": "Confirm high-risk tool calls",
+      "optionB": "Autonomous spend/change",
+      "whenChooseA": "Agents with tools",
+      "whenChooseB": "Never auto high-risk",
+      "risk": "Runaway changes"
+    },
+    {
+      "decision": "Data in context",
+      "optionA": "Minimize PII in prompts",
+      "optionB": "Paste full customer records",
+      "whenChooseA": "Privacy regimes",
+      "whenChooseB": "Never paste freely",
+      "risk": "Leak via logs/providers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-hana-hdi-intro",
+      "title": "Intro game: HANA HDI Containers (concept)",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-hana-hdi-mastery",
+      "title": "Mastery game: HANA HDI Containers (concept)",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “HANA HDI Containers (concept)” + one failure mode out loud — if you can't, you don't own it yet. (HANA → mechanism → failure)"
+}

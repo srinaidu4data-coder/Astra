@@ -1,0 +1,82 @@
+{
+  "id": "cap-resilience",
+  "title": "CAP resilience patterns",
+  "domainId": "cap",
+  "level": "expert",
+  "summary": "Timeouts, retries, bulkheads",
+  "explain": "External calls need resilience; pair retries with idempotency. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"CAP resilience patterns\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without CAP resilience patterns, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Timeouts, retries, bulkheads"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of CAP resilience patterns without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing cap"
+  ],
+  "howToApply": [
+    "Use CAP resilience patterns explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "cap"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “CAP resilience patterns” + one failure mode out loud — if you can't, you don't own it yet. (CAP → mechanism → failure)",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using CAP resilience patterns without core mods.",
+    "Incident bridge: symptoms appear; use “CAP resilience patterns” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “CAP resilience patterns”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Extension style",
+      "optionA": "CAP side-by-side service",
+      "optionB": "On-stack RAP near BO",
+      "whenChooseA": "Differentiating UX/API velocity, multi-cloud events",
+      "whenChooseB": "Tight transactional fidelity to S/4 BO",
+      "risk": "Wrong placement creates dual-write or upgrade pain"
+    },
+    {
+      "decision": "API surface",
+      "optionA": "Narrow projections + actions",
+      "optionB": "Expose full persistence model",
+      "whenChooseA": "Stable contracts for consumers",
+      "whenChooseB": "Internal-only tools with no external clients",
+      "risk": "Wide APIs couple consumers to schema churn"
+    },
+    {
+      "decision": "Persistence",
+      "optionA": "HDI-owned schema with least privilege",
+      "optionB": "Shared ad-hoc schema",
+      "whenChooseA": "Team isolation and CI deploys",
+      "whenChooseB": "Throwaway spike",
+      "risk": "Shared schemas block ownership and safe deploy"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-cap-resilience-intro",
+      "title": "Intro game: CAP resilience patterns",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-cap-resilience-mastery",
+      "title": "Mastery game: CAP resilience patterns",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “CAP resilience patterns” + one failure mode out loud — if you can't, you don't own it yet. (CAP → mechanism → failure)"
+}

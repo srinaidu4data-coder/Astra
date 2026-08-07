@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Interactive analytic narratives consuming governed models — garbage in, executive chaos out."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Analytics Stories without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use Analytics Stories explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-sac-story",
+  "title": "Analytics Stories",
+  "domainId": "sac",
+  "summary": "Interactive analytic narratives consuming governed models — garbage in, executive chaos out.",
+  "explain": "Interactive analytic narratives consuming governed models — garbage in, executive chaos out. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"Analytics Stories\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain Analytics Stories in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "NAME IT TO TAME IT: Say “Analytics Stories” + one failure mode out loud — if you can't, you don't own it yet. (Analytics → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Analytics Stories” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Analytics Stories” to classify the failing hop before changing config.",
+    "Finance and Sales disagree on “revenue” — Analytics Stories forces one productized definition."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Live vs import",
+      "optionA": "Live for current operational truth",
+      "optionB": "Import for snapshot performance",
+      "whenChooseA": "Need freshness",
+      "whenChooseB": "Need offline/perf snapshots",
+      "risk": "Wrong mode misleads decisions"
+    },
+    {
+      "decision": "Security",
+      "optionA": "Model + folder + row constraints",
+      "optionB": "Share all stories widely",
+      "whenChooseA": "Sensitive KPIs",
+      "whenChooseB": "Public non-sensitive only",
+      "risk": "Export leaks"
+    },
+    {
+      "decision": "Metric ownership",
+      "optionA": "One definition in semantic layer",
+      "optionB": "Story-local calculations",
+      "whenChooseA": "Enterprise reporting",
+      "whenChooseB": "Personal exploration",
+      "risk": "Conflicting revenue numbers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-sac-story-intro",
+      "title": "Intro game: Analytics Stories",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-sac-story-mastery",
+      "title": "Mastery game: Analytics Stories",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Analytics Stories” + one failure mode out loud — if you can't, you don't own it yet. (Analytics → mechanism → failure)"
+}

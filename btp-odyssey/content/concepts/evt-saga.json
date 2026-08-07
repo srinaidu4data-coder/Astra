@@ -1,0 +1,82 @@
+{
+  "id": "evt-saga",
+  "title": "Sagas and compensations",
+  "domainId": "events",
+  "level": "expert",
+  "summary": "Long-running consistency",
+  "explain": "Coordinate steps with compensations instead of distributed locks. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Sagas and compensations\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Sagas and compensations, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Long-running consistency"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Sagas and compensations without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing events"
+  ],
+  "howToApply": [
+    "Use Sagas and compensations explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "events"
+  ],
+  "mnemonic": "TV SEASON not MOVIE: Long business tx as episodes with compensations, not one 2PC film.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Sagas and compensations” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Sagas and compensations” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Sagas and compensations”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Event vs command",
+      "optionA": "Events as facts, many consumers",
+      "optionB": "Commands as intent, one handler",
+      "whenChooseA": "Broadcast state changes",
+      "whenChooseB": "Directed do-this actions",
+      "risk": "Mixing styles confuses ownership"
+    },
+    {
+      "decision": "Schema evolution",
+      "optionA": "Additive compatible changes",
+      "optionB": "Breaking fields without version",
+      "whenChooseA": "Multi-consumer landscapes",
+      "whenChooseB": "Single controlled consumer only",
+      "risk": "Breaks silent consumers"
+    },
+    {
+      "decision": "Ordering",
+      "optionA": "Partition keys + consumer design for out-of-order",
+      "optionB": "Global total order everywhere",
+      "whenChooseA": "Scale and availability",
+      "whenChooseB": "Tiny volumes where order is free",
+      "risk": "Global order kills throughput"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-evt-saga-intro",
+      "title": "Intro game: Sagas and compensations",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-evt-saga-mastery",
+      "title": "Mastery game: Sagas and compensations",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "TV SEASON not MOVIE: Long business tx as episodes with compensations, not one 2PC film."
+}

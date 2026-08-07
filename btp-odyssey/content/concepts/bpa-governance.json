@@ -1,0 +1,82 @@
+{
+  "id": "bpa-governance",
+  "title": "Citizen development guardrails",
+  "domainId": "bpa",
+  "level": "advanced",
+  "summary": "Guard the factory",
+  "explain": "Environments, transport, review boards, least privilege. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Citizen development guardrails\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Citizen development guardrails, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Guard the factory"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Citizen development guardrails without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing bpa"
+  ],
+  "howToApply": [
+    "Use Citizen development guardrails explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "bpa"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Citizen development guardrails” + one failure mode out loud — if you can't, you don't own it yet. (Citizen → mechanism → failure)",
+  "useCases": [
+    "Support chatbot answers policy — Citizen development guardrails forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “Citizen development guardrails” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Citizen development guardrails”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Answer policy",
+      "optionA": "Ground + cite or abstain",
+      "optionB": "Always invent fluent answers",
+      "whenChooseA": "Enterprise Q&A",
+      "whenChooseB": "Fiction writing",
+      "risk": "Wrong actions"
+    },
+    {
+      "decision": "Actions",
+      "optionA": "Confirm high-risk tool calls",
+      "optionB": "Autonomous spend/change",
+      "whenChooseA": "Agents with tools",
+      "whenChooseB": "Never auto high-risk",
+      "risk": "Runaway changes"
+    },
+    {
+      "decision": "Data in context",
+      "optionA": "Minimize PII in prompts",
+      "optionB": "Paste full customer records",
+      "whenChooseA": "Privacy regimes",
+      "whenChooseB": "Never paste freely",
+      "risk": "Leak via logs/providers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-bpa-governance-intro",
+      "title": "Intro game: Citizen development guardrails",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-bpa-governance-mastery",
+      "title": "Mastery game: Citizen development guardrails",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Citizen development guardrails” + one failure mode out loud — if you can't, you don't own it yet. (Citizen → mechanism → failure)"
+}

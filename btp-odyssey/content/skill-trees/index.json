@@ -1,0 +1,535 @@
+{
+  "version": "3.0.0",
+  "trees": {
+    "security": {
+      "basic": [
+        {
+          "id": "sec-shared-resp",
+          "title": "Shared responsibility on BTP"
+        },
+        {
+          "id": "sec-authn-authz",
+          "title": "Authentication vs authorization"
+        },
+        {
+          "id": "sec-ias-ips",
+          "title": "Cloud Identity Services concepts"
+        },
+        {
+          "id": "sec-oauth-oidc",
+          "title": "OAuth 2.0 and OIDC basics"
+        },
+        {
+          "id": "sec-destinations",
+          "title": "Destinations security role"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "sec-jwt-claims",
+          "title": "JWT claims deep dive"
+        },
+        {
+          "id": "sec-xsuaa-roles",
+          "title": "Role templates and role collections"
+        },
+        {
+          "id": "sec-principal-prop",
+          "title": "Principal propagation concepts"
+        },
+        {
+          "id": "sec-secrets",
+          "title": "Secrets and key rotation"
+        },
+        {
+          "id": "sec-threat-model",
+          "title": "Threat modeling BTP apps"
+        }
+      ],
+      "expert": [
+        {
+          "id": "sec-tenant-isolation",
+          "title": "Tenant isolation patterns"
+        },
+        {
+          "id": "sec-zero-trust",
+          "title": "Zero trust on BTP landscapes"
+        },
+        {
+          "id": "sec-supply-chain",
+          "title": "Supply-chain and dependency security"
+        },
+        {
+          "id": "sec-incident-ir",
+          "title": "Security incident response"
+        }
+      ]
+    },
+    "cap": {
+      "basic": [
+        {
+          "id": "cap-what",
+          "title": "What is CAP"
+        },
+        {
+          "id": "cap-cds-entities",
+          "title": "CDS entities and associations"
+        },
+        {
+          "id": "cap-services",
+          "title": "Service definitions and projections"
+        },
+        {
+          "id": "odata-v4-basics",
+          "title": "OData V4 basics"
+        },
+        {
+          "id": "odata-v2-vs-v4",
+          "title": "OData V2 vs V4"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "cap-auth",
+          "title": "CAP authentication and authorization"
+        },
+        {
+          "id": "cap-persistence",
+          "title": "CAP persistence and HANA"
+        },
+        {
+          "id": "cap-actions",
+          "title": "Actions and functions"
+        },
+        {
+          "id": "cap-events",
+          "title": "CAP messaging and events"
+        },
+        {
+          "id": "odata-query-perf",
+          "title": "OData query performance"
+        }
+      ],
+      "expert": [
+        {
+          "id": "cap-multitenant",
+          "title": "CAP multitenancy concepts"
+        },
+        {
+          "id": "cap-extensibility",
+          "title": "CAP extensibility"
+        },
+        {
+          "id": "cap-resilience",
+          "title": "CAP resilience patterns"
+        }
+      ]
+    },
+    "rap-abap": {
+      "basic": [
+        {
+          "id": "rap-what",
+          "title": "What is RAP"
+        },
+        {
+          "id": "rap-cds-bo",
+          "title": "RAP business objects"
+        },
+        {
+          "id": "rap-managed",
+          "title": "Managed RAP scenario"
+        },
+        {
+          "id": "rap-fiori-elements",
+          "title": "RAP with Fiori elements"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "rap-unmanaged",
+          "title": "Unmanaged RAP"
+        },
+        {
+          "id": "rap-draft",
+          "title": "Draft handling"
+        },
+        {
+          "id": "rap-determinations",
+          "title": "Determinations and validations"
+        },
+        {
+          "id": "rap-eml",
+          "title": "EML basics"
+        },
+        {
+          "id": "rap-vs-cap",
+          "title": "RAP vs CAP decision criteria"
+        }
+      ],
+      "expert": [
+        {
+          "id": "rap-clean-core",
+          "title": "Clean-core extension strategy"
+        },
+        {
+          "id": "rap-performance",
+          "title": "RAP performance"
+        },
+        {
+          "id": "rap-extensibility",
+          "title": "ABAP Cloud extensibility"
+        }
+      ]
+    },
+    "integration": {
+      "basic": [
+        {
+          "id": "is-what",
+          "title": "Integration Suite overview"
+        },
+        {
+          "id": "cpi-iflow",
+          "title": "Cloud Integration iflows"
+        },
+        {
+          "id": "cpi-adapters",
+          "title": "Adapters basics"
+        },
+        {
+          "id": "cpi-mapping",
+          "title": "Mapping and transformation"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "cpi-exception",
+          "title": "Exception subprocesses"
+        },
+        {
+          "id": "cpi-idempotency",
+          "title": "Idempotency in CPI"
+        },
+        {
+          "id": "api-mgmt",
+          "title": "API Management concepts"
+        },
+        {
+          "id": "cloud-connector",
+          "title": "Cloud Connector concepts"
+        },
+        {
+          "id": "principal-hybrid",
+          "title": "Principal propagation hybrid"
+        }
+      ],
+      "expert": [
+        {
+          "id": "is-governance",
+          "title": "Integration governance"
+        },
+        {
+          "id": "is-tpm",
+          "title": "Trading Partner Management concepts"
+        },
+        {
+          "id": "is-observability",
+          "title": "Integration observability"
+        }
+      ]
+    },
+    "events": {
+      "basic": [
+        {
+          "id": "evt-vs-cmd",
+          "title": "Events vs commands"
+        },
+        {
+          "id": "evt-mesh-concepts",
+          "title": "Event Mesh style concepts"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "evt-schema",
+          "title": "Event schema evolution"
+        },
+        {
+          "id": "evt-dlq",
+          "title": "Dead-letter queues"
+        }
+      ],
+      "expert": [
+        {
+          "id": "evt-saga",
+          "title": "Sagas and compensations"
+        }
+      ]
+    },
+    "bpa": {
+      "basic": [
+        {
+          "id": "bpa-what",
+          "title": "Build Process Automation overview"
+        },
+        {
+          "id": "bpa-workflow",
+          "title": "Workflow modeling basics"
+        },
+        {
+          "id": "bpa-forms",
+          "title": "Forms and approvals"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "bpa-rules",
+          "title": "Business rules and decisions"
+        },
+        {
+          "id": "bpa-api",
+          "title": "API integration in automations"
+        },
+        {
+          "id": "bpa-governance",
+          "title": "Citizen development guardrails"
+        }
+      ],
+      "expert": [
+        {
+          "id": "bpa-scale",
+          "title": "BPA at enterprise scale"
+        }
+      ]
+    },
+    "workzone": {
+      "basic": [
+        {
+          "id": "wz-what",
+          "title": "Build Work Zone concepts"
+        },
+        {
+          "id": "wz-roles",
+          "title": "Roles and content assignment"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "wz-federation",
+          "title": "Content federation"
+        },
+        {
+          "id": "wz-perf",
+          "title": "Work Zone performance"
+        }
+      ],
+      "expert": []
+    },
+    "hana-cloud": {
+      "basic": [
+        {
+          "id": "hana-what",
+          "title": "HANA Cloud architecture basics"
+        },
+        {
+          "id": "hana-sql",
+          "title": "SQL fundamentals on HANA"
+        },
+        {
+          "id": "hana-hdi",
+          "title": "HDI containers"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "hana-calc",
+          "title": "Calculation views concepts"
+        },
+        {
+          "id": "hana-privileges",
+          "title": "Privileges and schema isolation"
+        },
+        {
+          "id": "hana-perf",
+          "title": "Expensive statements and plans"
+        }
+      ],
+      "expert": [
+        {
+          "id": "hana-ha",
+          "title": "Availability and recovery concepts"
+        },
+        {
+          "id": "hana-vector",
+          "title": "Vector / multi-model awareness"
+        }
+      ]
+    },
+    "datasphere": {
+      "basic": [
+        {
+          "id": "ds-what",
+          "title": "Datasphere overview"
+        },
+        {
+          "id": "ds-spaces",
+          "title": "Spaces and isolation"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "ds-semantic",
+          "title": "Semantic models"
+        },
+        {
+          "id": "ds-federation",
+          "title": "Federation vs replication"
+        }
+      ],
+      "expert": [
+        {
+          "id": "ds-lineage",
+          "title": "Lineage and impact analysis"
+        }
+      ]
+    },
+    "bdc": {
+      "basic": [
+        {
+          "id": "bdc-what",
+          "title": "Business Data Cloud ecosystem"
+        },
+        {
+          "id": "bdc-data-product",
+          "title": "Data products"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "bdc-governance",
+          "title": "Data governance"
+        }
+      ],
+      "expert": [
+        {
+          "id": "bdc-lakehouse",
+          "title": "Lakehouse patterns with SAP Databricks concepts"
+        }
+      ]
+    },
+    "sac": {
+      "basic": [
+        {
+          "id": "sac-what",
+          "title": "SAP Analytics Cloud overview"
+        },
+        {
+          "id": "sac-stories",
+          "title": "Stories and dashboards"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "sac-planning",
+          "title": "Planning basics"
+        },
+        {
+          "id": "sac-live-vs-import",
+          "title": "Live vs import connections"
+        }
+      ],
+      "expert": [
+        {
+          "id": "sac-security",
+          "title": "SAC security and row-level"
+        }
+      ]
+    },
+    "ai": {
+      "basic": [
+        {
+          "id": "ai-responsible",
+          "title": "Responsible AI basics"
+        },
+        {
+          "id": "ai-joule-concepts",
+          "title": "Joule concepts (product-aware)"
+        },
+        {
+          "id": "ai-hallucination",
+          "title": "Hallucinations and grounding"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "ai-rag",
+          "title": "RAG concepts on enterprise data"
+        },
+        {
+          "id": "ai-prompt",
+          "title": "Prompt design for ops"
+        },
+        {
+          "id": "ai-cost-latency",
+          "title": "AI cost and latency trade-offs"
+        }
+      ],
+      "expert": [
+        {
+          "id": "ai-agent-risks",
+          "title": "Agentic AI risks on BTP landscapes"
+        },
+        {
+          "id": "ai-eval",
+          "title": "Evaluating AI in enterprise"
+        }
+      ]
+    },
+    "operations": {
+      "basic": [
+        {
+          "id": "ops-accounts",
+          "title": "Global accounts and subaccounts"
+        },
+        {
+          "id": "ops-entitlements",
+          "title": "Entitlements and quotas"
+        },
+        {
+          "id": "ops-cf",
+          "title": "Cloud Foundry basics"
+        }
+      ],
+      "advanced": [
+        {
+          "id": "ops-observability",
+          "title": "Logs metrics traces"
+        },
+        {
+          "id": "ops-finops",
+          "title": "FinOps on BTP"
+        }
+      ],
+      "expert": [
+        {
+          "id": "ops-sre",
+          "title": "SRE practices"
+        }
+      ]
+    }
+  },
+  "labels": {
+    "security": "Trust Fortress",
+    "cap": "CAP Foundry",
+    "rap-abap": "Clean Core Citadel",
+    "integration": "Integration Transit",
+    "events": "Event Constellation",
+    "bpa": "Automation Works",
+    "workzone": "Workplace Plaza",
+    "hana-cloud": "Data Core",
+    "datasphere": "Semantic Fabric",
+    "bdc": "Data Galaxy",
+    "sac": "Decision Observatory",
+    "ai": "Cognitive Lab",
+    "operations": "Mission Control"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Keyboard, contrast, labels — accessibility is a requirement, not polish."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Fiori Accessibility without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use Fiori Accessibility explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-accessibility",
+  "title": "Fiori Accessibility",
+  "domainId": "ui5-fiori",
+  "summary": "Keyboard, contrast, labels — accessibility is a requirement, not polish.",
+  "explain": "Keyboard, contrast, labels — accessibility is a requirement, not polish. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"Fiori Accessibility\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain Fiori Accessibility in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "NAME IT TO TAME IT: Say “Fiori Accessibility” + one failure mode out loud — if you can't, you don't own it yet. (Fiori → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Fiori Accessibility” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Fiori Accessibility” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Fiori Accessibility”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Fiori elements vs freestyle",
+      "optionA": "Elements when annotations suffice",
+      "optionB": "Freestyle for unique UX",
+      "whenChooseA": "Standard floorplans",
+      "whenChooseB": "Highly custom interaction",
+      "risk": "Freestyle multiplies cost"
+    },
+    {
+      "decision": "OData binding",
+      "optionA": "Server-side filter/page",
+      "optionB": "Load all then filter in UI",
+      "whenChooseA": "Large sets",
+      "whenChooseB": "Tiny lists",
+      "risk": "Browser memory death"
+    },
+    {
+      "decision": "Accessibility",
+      "optionA": "Keyboard/contrast as requirements",
+      "optionB": "Mouse-only demos",
+      "whenChooseA": "Always enterprise",
+      "whenChooseB": "Never",
+      "risk": "Legal and inclusion risk"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-accessibility-intro",
+      "title": "Intro game: Fiori Accessibility",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-accessibility-mastery",
+      "title": "Mastery game: Fiori Accessibility",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Fiori Accessibility” + one failure mode out loud — if you can't, you don't own it yet. (Fiori → mechanism → failure)"
+}

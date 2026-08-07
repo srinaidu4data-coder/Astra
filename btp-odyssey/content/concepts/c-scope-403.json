@@ -1,0 +1,86 @@
+{
+  "level": "advanced",
+  "formalPoints": [
+    "Authenticated but not authorized for the action.",
+    "Domain: security",
+    "Level: advanced"
+  ],
+  "commonMistakes": [
+    "Memorizing the name without a concrete example of HTTP 403 Missing Scope"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on HTTP 403 Missing Scope.",
+    "List one metric or log that would prove HTTP 403 Missing Scope is healthy."
+  ],
+  "relatedIds": [
+    "c-xsuaa-roles",
+    "c-jwt-audience"
+  ],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "security",
+    "debugging"
+  ],
+  "id": "c-scope-403",
+  "title": "HTTP 403 Missing Scope",
+  "domainId": "security",
+  "summary": "Authenticated but not authorized for the action.",
+  "explain": "403 typically means the platform knows who you are but your token lacks required scopes/roles for the action. Fix role collections — do not confuse with 401 (not authenticated / token rejected).",
+  "analogy": "You're in the building but your badge lacks the server-room flag.",
+  "whyItMatters": "Wrong fix path wastes hours (password resets won't help).",
+  "mnemonic": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone.",
+  "useCases": [
+    "Greenfield design workshop: decide if “HTTP 403 Missing Scope” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “HTTP 403 Missing Scope” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “HTTP 403 Missing Scope”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-scope-403-intro",
+      "title": "Intro game: HTTP 403 Missing Scope",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-scope-403-mastery",
+      "title": "Mastery game: HTTP 403 Missing Scope",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone."
+}

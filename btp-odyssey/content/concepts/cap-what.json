@@ -1,0 +1,82 @@
+{
+  "id": "cap-what",
+  "title": "What is CAP",
+  "domainId": "cap",
+  "level": "basic",
+  "summary": "Cloud Application Programming Model",
+  "explain": "CAP is a framework for services and domain models with CDS, supporting Node.js/Java runtimes. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"What is CAP\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without What is CAP, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Cloud Application Programming Model"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of What is CAP without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing cap"
+  ],
+  "howToApply": [
+    "Use What is CAP explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "cap"
+  ],
+  "mnemonic": "VAULT + BRANCHES: S/4 is the vault; BTP is the modern branches around it — don't demolish the vault.",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using What is CAP without core mods.",
+    "Incident bridge: symptoms appear; use “What is CAP” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “What is CAP”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Extension style",
+      "optionA": "CAP side-by-side service",
+      "optionB": "On-stack RAP near BO",
+      "whenChooseA": "Differentiating UX/API velocity, multi-cloud events",
+      "whenChooseB": "Tight transactional fidelity to S/4 BO",
+      "risk": "Wrong placement creates dual-write or upgrade pain"
+    },
+    {
+      "decision": "API surface",
+      "optionA": "Narrow projections + actions",
+      "optionB": "Expose full persistence model",
+      "whenChooseA": "Stable contracts for consumers",
+      "whenChooseB": "Internal-only tools with no external clients",
+      "risk": "Wide APIs couple consumers to schema churn"
+    },
+    {
+      "decision": "Persistence",
+      "optionA": "HDI-owned schema with least privilege",
+      "optionB": "Shared ad-hoc schema",
+      "whenChooseA": "Team isolation and CI deploys",
+      "whenChooseB": "Throwaway spike",
+      "risk": "Shared schemas block ownership and safe deploy"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-cap-what-intro",
+      "title": "Intro game: What is CAP",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-cap-what-mastery",
+      "title": "Mastery game: What is CAP",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "VAULT + BRANCHES: S/4 is the vault; BTP is the modern branches around it — don't demolish the vault."
+}

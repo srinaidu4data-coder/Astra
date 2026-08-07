@@ -1,0 +1,12 @@
+services:
+  btp-odyssey:
+    build: .
+    ports:
+      - "8787:8787"
+    volumes:
+      - odyssey-data:/app/data/runtime
+    environment:
+      - PORT=8787
+
+volumes:
+  odyssey-data:

@@ -1,0 +1,82 @@
+{
+  "id": "rap-performance",
+  "title": "RAP performance",
+  "domainId": "rap-abap",
+  "level": "expert",
+  "summary": "Buffers, EML patterns",
+  "explain": "Avoid chatty EML in loops; design for set-based operations. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"RAP performance\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without RAP performance, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Buffers, EML patterns"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of RAP performance without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing rap-abap"
+  ],
+  "howToApply": [
+    "Use RAP performance explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "rap-abap"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “RAP performance” + one failure mode out loud — if you can't, you don't own it yet. (RAP → mechanism → failure)",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using RAP performance without core mods.",
+    "Incident bridge: symptoms appear; use “RAP performance” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “RAP performance”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Query shape",
+      "optionA": "Bound $expand + $select + page",
+      "optionB": "Unbounded deep expand",
+      "whenChooseA": "Any list UX",
+      "whenChooseB": "Never for large graphs",
+      "risk": "p99 collapse"
+    },
+    {
+      "decision": "Chatty vs chunky",
+      "optionA": "Fewer round-trips with projections",
+      "optionB": "N+1 from UI",
+      "whenChooseA": "Mobile/high latency",
+      "whenChooseB": "LAN demos",
+      "risk": "Latency budget death"
+    },
+    {
+      "decision": "Caching",
+      "optionA": "Cache stable reference data",
+      "optionB": "Cache personalized secured data carelessly",
+      "whenChooseA": "Reference data",
+      "whenChooseB": "Sensitive per-user",
+      "risk": "Stale or leak"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-rap-performance-intro",
+      "title": "Intro game: RAP performance",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-rap-performance-mastery",
+      "title": "Mastery game: RAP performance",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “RAP performance” + one failure mode out loud — if you can't, you don't own it yet. (RAP → mechanism → failure)"
+}

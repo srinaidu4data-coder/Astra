@@ -1,0 +1,83 @@
+{
+  "level": "advanced",
+  "formalPoints": [
+    "At-least-once delivery needs idempotent consumers",
+    "DLQ for poison messages"
+  ],
+  "commonMistakes": [
+    "Infinite immediate retries",
+    "No correlation IDs"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on Idempotency in Integration.",
+    "List one metric or log that would prove Idempotency in Integration is healthy."
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "integration",
+    "events"
+  ],
+  "id": "c-idempotency",
+  "title": "Idempotency in Integration",
+  "domainId": "integration",
+  "summary": "Repeating the same request does not create duplicate business effects.",
+  "explain": "Networks retry. Partners resend. Without idempotency keys (e.g., orderId), retries create duplicate orders. Design receivers to detect duplicates, use natural business keys, and route poison messages to DLQ. Retries without idempotency amplify outages.",
+  "analogy": "Pressing 'pay' twice should not charge twice — the cashier checks the receipt number.",
+  "whyItMatters": "Duplicate business documents destroy trust faster than downtime.",
+  "mnemonic": "TWICE-CLICK ONCE: Retries may fire twice; business result must happen once.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Idempotency in Integration” is required given constraints (latency, clean-core, team skills).",
+    "Partner retries the same order POST — Idempotency in Integration prevents double billing.",
+    "Architecture review board: defend why you accepted residual risk around “Idempotency in Integration”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Key design",
+      "optionA": "Natural business key + idempotency store",
+      "optionB": "Random UUID each retry",
+      "whenChooseA": "Partners retry",
+      "whenChooseB": "Never",
+      "risk": "Duplicates"
+    },
+    {
+      "decision": "Side effects",
+      "optionA": "Dedupe before post to finance",
+      "optionB": "Post then hope",
+      "whenChooseA": "Money movements",
+      "whenChooseB": "Read-only probes",
+      "risk": "Double charge"
+    },
+    {
+      "decision": "Storage TTL",
+      "optionA": "Retain keys for retry window",
+      "optionB": "Forget immediately",
+      "whenChooseA": "At-least-once channels",
+      "whenChooseB": "Exactly-once mythical middleware only",
+      "risk": "Replay storms"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-idempotency-intro",
+      "title": "Intro game: Idempotency in Integration",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-idempotency-mastery",
+      "title": "Mastery game: Idempotency in Integration",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "TWICE-CLICK ONCE: Retries may fire twice; business result must happen once."
+}

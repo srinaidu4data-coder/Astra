@@ -1,0 +1,82 @@
+{
+  "id": "ai-rag",
+  "title": "RAG concepts on enterprise data",
+  "domainId": "ai",
+  "level": "advanced",
+  "summary": "Retrieve then generate",
+  "explain": "Ground answers in approved corpora with access control. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"RAG concepts on enterprise data\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without RAG concepts on enterprise data, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Retrieve then generate"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of RAG concepts on enterprise data without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing ai"
+  ],
+  "howToApply": [
+    "Use RAG concepts on enterprise data explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "ai"
+  ],
+  "mnemonic": "OPEN-BOOK TEST: Don't let the model guess closed-book — retrieve then answer.",
+  "useCases": [
+    "Support chatbot answers policy — RAG concepts on enterprise data forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “RAG concepts on enterprise data” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “RAG concepts on enterprise data”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Answer policy",
+      "optionA": "Ground + cite or abstain",
+      "optionB": "Always invent fluent answers",
+      "whenChooseA": "Enterprise Q&A",
+      "whenChooseB": "Fiction writing",
+      "risk": "Wrong actions"
+    },
+    {
+      "decision": "Actions",
+      "optionA": "Confirm high-risk tool calls",
+      "optionB": "Autonomous spend/change",
+      "whenChooseA": "Agents with tools",
+      "whenChooseB": "Never auto high-risk",
+      "risk": "Runaway changes"
+    },
+    {
+      "decision": "Data in context",
+      "optionA": "Minimize PII in prompts",
+      "optionB": "Paste full customer records",
+      "whenChooseA": "Privacy regimes",
+      "whenChooseB": "Never paste freely",
+      "risk": "Leak via logs/providers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ai-rag-intro",
+      "title": "Intro game: RAG concepts on enterprise data",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ai-rag-mastery",
+      "title": "Mastery game: RAG concepts on enterprise data",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "OPEN-BOOK TEST: Don't let the model guess closed-book — retrieve then answer."
+}

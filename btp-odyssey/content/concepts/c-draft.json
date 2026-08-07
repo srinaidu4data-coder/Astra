@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Temporary editable state before activation; improves UX for long transactional edits."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Draft Documents without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use Draft Documents explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-draft",
+  "title": "Draft Documents",
+  "domainId": "rap-abap",
+  "summary": "Temporary editable state before activation; improves UX for long transactional edits.",
+  "explain": "Temporary editable state before activation; improves UX for long transactional edits. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"Draft Documents\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain Draft Documents in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "SKETCH then INK: Draft is pencil; activate is ink.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Draft Documents” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Draft Documents” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Draft Documents”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "RAP managed vs unmanaged",
+      "optionA": "Managed RAP for standard CRUD patterns",
+      "optionB": "Unmanaged for special persistence control",
+      "whenChooseA": "Standard BO lifecycle with framework help",
+      "whenChooseB": "Complex legacy persistence you must own",
+      "risk": "Unmanaged increases maintenance surface"
+    },
+    {
+      "decision": "Clean core",
+      "optionA": "Released APIs + extensions",
+      "optionB": "Modify SAP standard",
+      "whenChooseA": "Always for sustainable landscapes",
+      "whenChooseB": "Never — false short-term speed",
+      "risk": "Core mods poison upgrades"
+    },
+    {
+      "decision": "Draft",
+      "optionA": "Draft-enabled long edits",
+      "optionB": "Immediate save only",
+      "whenChooseA": "Multi-step UX with exclusive locks",
+      "whenChooseB": "Simple atomic transactions",
+      "risk": "Draft without cleanup creates lock/orphan debt"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-draft-intro",
+      "title": "Intro game: Draft Documents",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-draft-mastery",
+      "title": "Mastery game: Draft Documents",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "SKETCH then INK: Draft is pencil; activate is ink."
+}

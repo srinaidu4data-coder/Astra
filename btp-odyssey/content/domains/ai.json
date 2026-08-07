@@ -1,0 +1,24 @@
+{
+  "id": "ai",
+  "title": "Responsible AI on BTP",
+  "districtName": "Cognitive Laboratory",
+  "summary": "Responsible AI on BTP learning district in the Odyssey universe.",
+  "sapProducts": [
+    "AI topics on BTP"
+  ],
+  "specializations": [
+    "Solution Architect"
+  ],
+  "confidence": "low",
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ]
+}

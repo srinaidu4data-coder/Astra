@@ -3,6 +3,7 @@ export type NavRoute =
   | 'knowledge'
   | 'sprint'
   | 'practice'
+  | 'btp-odyssey'
   | 'analytics'
   | 'settings'
   | 'admin'

@@ -1,0 +1,42 @@
+{
+  "id": "ui5-mvc",
+  "title": "UI5 MVC, views, controllers, routing",
+  "domainId": "ui5-fiori",
+  "description": "UI5 MVC, views, controllers, routing. Evidence is demonstration-based in simulation, not XP.",
+  "level": "basic",
+  "prerequisites": [
+    "found-appdev"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate UI5 MVC, views, controllers, routing in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply UI5 MVC, views, controllers, routing in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit UI5 MVC, views, controllers, routing after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAPUI5",
+      "sourceUrl": "https://ui5.sap.com/",
+      "sourceTitle": "SAPUI5 documentation",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

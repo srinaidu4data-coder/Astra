@@ -1,0 +1,82 @@
+{
+  "id": "ai-hallucination",
+  "title": "Hallucinations and grounding",
+  "domainId": "ai",
+  "level": "basic",
+  "summary": "Plausible but wrong",
+  "explain": "Require citations, tools, and verification for enterprise use. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Hallucinations and grounding\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Hallucinations and grounding, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Plausible but wrong"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Hallucinations and grounding without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing ai"
+  ],
+  "howToApply": [
+    "Use Hallucinations and grounding explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "ai"
+  ],
+  "mnemonic": "OPEN-BOOK TEST: Don't let the model guess closed-book — retrieve then answer.",
+  "useCases": [
+    "Support chatbot answers policy — Hallucinations and grounding forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “Hallucinations and grounding” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Hallucinations and grounding”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Answer policy",
+      "optionA": "Ground + cite or abstain",
+      "optionB": "Always invent fluent answers",
+      "whenChooseA": "Enterprise Q&A",
+      "whenChooseB": "Fiction writing",
+      "risk": "Wrong actions"
+    },
+    {
+      "decision": "Actions",
+      "optionA": "Confirm high-risk tool calls",
+      "optionB": "Autonomous spend/change",
+      "whenChooseA": "Agents with tools",
+      "whenChooseB": "Never auto high-risk",
+      "risk": "Runaway changes"
+    },
+    {
+      "decision": "Data in context",
+      "optionA": "Minimize PII in prompts",
+      "optionB": "Paste full customer records",
+      "whenChooseA": "Privacy regimes",
+      "whenChooseB": "Never paste freely",
+      "risk": "Leak via logs/providers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ai-hallucination-intro",
+      "title": "Intro game: Hallucinations and grounding",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ai-hallucination-mastery",
+      "title": "Mastery game: Hallucinations and grounding",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "OPEN-BOOK TEST: Don't let the model guess closed-book — retrieve then answer."
+}

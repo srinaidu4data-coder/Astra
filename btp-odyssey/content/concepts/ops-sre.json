@@ -1,0 +1,82 @@
+{
+  "id": "ops-sre",
+  "title": "SRE practices",
+  "domainId": "operations",
+  "level": "expert",
+  "summary": "SLOs and error budgets",
+  "explain": "Alert on user pain, not noise. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"SRE practices\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without SRE practices, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "SLOs and error budgets"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of SRE practices without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing operations"
+  ],
+  "howToApply": [
+    "Use SRE practices explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "operations"
+  ],
+  "mnemonic": "PROMISE + BUDGET: SLO is the promise; error budget is the fuel for change.",
+  "useCases": [
+    "Landing zone setup week: apply SRE practices so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “SRE practices” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “SRE practices”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ops-sre-intro",
+      "title": "Intro game: SRE practices",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ops-sre-mastery",
+      "title": "Mastery game: SRE practices",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "PROMISE + BUDGET: SLO is the promise; error budget is the fuel for change."
+}

@@ -1,0 +1,82 @@
+{
+  "id": "cpi-adapters",
+  "title": "Adapters basics",
+  "domainId": "integration",
+  "level": "basic",
+  "summary": "Protocol endpoints",
+  "explain": "HTTPS, SFTP, IDoc, etc. connect systems — config quality matters. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Adapters basics\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Adapters basics, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Protocol endpoints"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Adapters basics without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing integration"
+  ],
+  "howToApply": [
+    "Use Adapters basics explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "integration"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Adapters basics” + one failure mode out loud — if you can't, you don't own it yet. (Adapters → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Adapters basics” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Adapters basics” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Adapters basics”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-cpi-adapters-intro",
+      "title": "Intro game: Adapters basics",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-cpi-adapters-mastery",
+      "title": "Mastery game: Adapters basics",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Adapters basics” + one failure mode out loud — if you can't, you don't own it yet. (Adapters → mechanism → failure)"
+}

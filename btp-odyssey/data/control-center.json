@@ -1,0 +1,34 @@
+{
+  "currentRelease": "1.0.0-local-edition",
+  "phase": "shipped-local",
+  "updatedAt": "2026-08-07",
+  "completed": [
+    "product_brief",
+    "domain_map",
+    "competency_graph",
+    "specializations_16",
+    "fidelity_framework",
+    "architecture",
+    "threat_model",
+    "content_schema",
+    "simulation_kernel",
+    "incidents_8",
+    "assessment_mock_mentor",
+    "api_persistence",
+    "web_product_ui",
+    "campaigns_8",
+    "missions_8",
+    "docker_packaging",
+    "windows_launcher",
+    "export_delete_local_data"
+  ],
+  "inProgress": [],
+  "blocked": [],
+  "deferred": ["tier3_sandbox", "multi_tenant_sso", "live_ai_providers", "commercial_legal_final"],
+  "assumptions": [
+    "CF-like env default teaching model",
+    "Illustrative costs",
+    "English-only UI",
+    "local-learner single user file store"
+  ]
+}

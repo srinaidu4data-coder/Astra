@@ -1,0 +1,28 @@
+{
+  "id": "bdc",
+  "title": "Business Data Cloud Ecosystem",
+  "districtName": "Data Galaxy",
+  "summary": "Business Data Cloud Ecosystem learning district in the Odyssey universe.",
+  "sapProducts": [
+    "SAP Business Data Cloud",
+    "SAP Databricks",
+    "SAP Analytics Cloud"
+  ],
+  "specializations": [
+    "Data Engineer",
+    "Analytics Specialist"
+  ],
+  "confidence": "low",
+  "notes": "Business Data Cloud relationships require expert verification; not treated as a simple rename.",
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ]
+}

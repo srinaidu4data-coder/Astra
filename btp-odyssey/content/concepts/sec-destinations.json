@@ -1,0 +1,82 @@
+{
+  "id": "sec-destinations",
+  "title": "Destinations security role",
+  "domainId": "security",
+  "level": "basic",
+  "summary": "Connectivity + auth config",
+  "explain": "Destinations store URL and auth method so apps do not hard-code secrets. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Destinations security role\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Destinations security role, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Connectivity + auth config"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Destinations security role without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing security"
+  ],
+  "howToApply": [
+    "Use Destinations security role explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "security"
+  ],
+  "mnemonic": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone.",
+  "useCases": [
+    "Fiori app calls CAP and gets 401 after login — apply Destinations security role to fix the trust chain.",
+    "Incident bridge: symptoms appear; use “Destinations security role” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Destinations security role”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sec-destinations-intro",
+      "title": "Intro game: Destinations security role",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sec-destinations-mastery",
+      "title": "Mastery game: Destinations security role",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone."
+}

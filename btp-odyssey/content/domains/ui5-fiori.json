@@ -1,0 +1,26 @@
+{
+  "id": "ui5-fiori",
+  "title": "SAPUI5 and SAP Fiori",
+  "districtName": "Experience City",
+  "summary": "SAPUI5 and SAP Fiori learning district in the Odyssey universe.",
+  "sapProducts": [
+    "SAPUI5",
+    "SAP Fiori",
+    "Fiori elements"
+  ],
+  "specializations": [
+    "SAPUI5/Fiori Developer"
+  ],
+  "confidence": "medium",
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ]
+}

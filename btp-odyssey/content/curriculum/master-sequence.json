@@ -1,0 +1,1422 @@
+{
+  "version": "5.0.0",
+  "title": "Master concept sequence",
+  "description": "Pedagogical order: BTP intro → structure → security/admin → CAP → RAP → UI → Integration → Events → BPA → Work Zone → Data → AI.",
+  "conceptCount": 157,
+  "challengeCount": 314,
+  "sequence": [
+    {
+      "index": 1,
+      "id": "btp-what",
+      "title": "What is SAP BTP?",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-btp-what-intro",
+      "masteryChallengeId": "ch-btp-what-mastery"
+    },
+    {
+      "index": 2,
+      "id": "btp-services-map",
+      "title": "BTP services map: what lives where",
+      "domainId": "architecture",
+      "level": "basic",
+      "introChallengeId": "ch-btp-services-map-intro",
+      "masteryChallengeId": "ch-btp-services-map-mastery"
+    },
+    {
+      "index": 3,
+      "id": "btp-platform-structure",
+      "title": "BTP structure: accounts, directories, subaccounts",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-btp-platform-structure-intro",
+      "masteryChallengeId": "ch-btp-platform-structure-mastery"
+    },
+    {
+      "index": 4,
+      "id": "ops-accounts",
+      "title": "Global accounts and subaccounts",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-ops-accounts-intro",
+      "masteryChallengeId": "ch-ops-accounts-mastery"
+    },
+    {
+      "index": 5,
+      "id": "c-global-account",
+      "title": "Global Account",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-c-global-account-intro",
+      "masteryChallengeId": "ch-c-global-account-mastery"
+    },
+    {
+      "index": 6,
+      "id": "c-subaccount",
+      "title": "Subaccount",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-c-subaccount-intro",
+      "masteryChallengeId": "ch-c-subaccount-mastery"
+    },
+    {
+      "index": 7,
+      "id": "ops-entitlements",
+      "title": "Entitlements and quotas",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-ops-entitlements-intro",
+      "masteryChallengeId": "ch-ops-entitlements-mastery"
+    },
+    {
+      "index": 8,
+      "id": "c-service-plan",
+      "title": "Service Plans",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-c-service-plan-intro",
+      "masteryChallengeId": "ch-c-service-plan-mastery"
+    },
+    {
+      "index": 9,
+      "id": "c-cf-space",
+      "title": "Cloud Foundry Org & Space",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-c-cf-space-intro",
+      "masteryChallengeId": "ch-c-cf-space-mastery"
+    },
+    {
+      "index": 10,
+      "id": "ops-cf",
+      "title": "Cloud Foundry basics",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-ops-cf-intro",
+      "masteryChallengeId": "ch-ops-cf-mastery"
+    },
+    {
+      "index": 11,
+      "id": "c-mta",
+      "title": "Multi-Target Application (concept)",
+      "domainId": "cap",
+      "level": "basic",
+      "introChallengeId": "ch-c-mta-intro",
+      "masteryChallengeId": "ch-c-mta-mastery"
+    },
+    {
+      "index": 12,
+      "id": "c-binding",
+      "title": "Service Binding",
+      "domainId": "cap",
+      "level": "basic",
+      "introChallengeId": "ch-c-binding-intro",
+      "masteryChallengeId": "ch-c-binding-mastery"
+    },
+    {
+      "index": 13,
+      "id": "btp-security-admin",
+      "title": "BTP security & admin starter pack",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-btp-security-admin-intro",
+      "masteryChallengeId": "ch-btp-security-admin-mastery"
+    },
+    {
+      "index": 14,
+      "id": "sec-shared-resp",
+      "title": "Shared responsibility on BTP",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-sec-shared-resp-intro",
+      "masteryChallengeId": "ch-sec-shared-resp-mastery"
+    },
+    {
+      "index": 15,
+      "id": "c-shared-responsibility",
+      "title": "Shared Responsibility",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-c-shared-responsibility-intro",
+      "masteryChallengeId": "ch-c-shared-responsibility-mastery"
+    },
+    {
+      "index": 16,
+      "id": "sec-authn-authz",
+      "title": "Authentication vs authorization",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-sec-authn-authz-intro",
+      "masteryChallengeId": "ch-sec-authn-authz-mastery"
+    },
+    {
+      "index": 17,
+      "id": "sec-oauth-oidc",
+      "title": "OAuth 2.0 and OIDC basics",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-sec-oauth-oidc-intro",
+      "masteryChallengeId": "ch-sec-oauth-oidc-mastery"
+    },
+    {
+      "index": 18,
+      "id": "sec-ias-ips",
+      "title": "Cloud Identity Services concepts",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-sec-ias-ips-intro",
+      "masteryChallengeId": "ch-sec-ias-ips-mastery"
+    },
+    {
+      "index": 19,
+      "id": "sec-destinations",
+      "title": "Destinations security role",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-sec-destinations-intro",
+      "masteryChallengeId": "ch-sec-destinations-mastery"
+    },
+    {
+      "index": 20,
+      "id": "c-destination",
+      "title": "Destination",
+      "domainId": "integration",
+      "level": "basic",
+      "introChallengeId": "ch-c-destination-intro",
+      "masteryChallengeId": "ch-c-destination-mastery"
+    },
+    {
+      "index": 21,
+      "id": "sec-xsuaa-roles",
+      "title": "Role templates and role collections",
+      "domainId": "security",
+      "level": "advanced",
+      "introChallengeId": "ch-sec-xsuaa-roles-intro",
+      "masteryChallengeId": "ch-sec-xsuaa-roles-mastery"
+    },
+    {
+      "index": 22,
+      "id": "c-xsuaa-roles",
+      "title": "XSUAA-style Roles, Scopes & Role Collections",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-c-xsuaa-roles-intro",
+      "masteryChallengeId": "ch-c-xsuaa-roles-mastery"
+    },
+    {
+      "index": 23,
+      "id": "c-least-privilege",
+      "title": "Least Privilege",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-c-least-privilege-intro",
+      "masteryChallengeId": "ch-c-least-privilege-mastery"
+    },
+    {
+      "index": 24,
+      "id": "c-scope-403",
+      "title": "HTTP 403 Missing Scope",
+      "domainId": "security",
+      "level": "advanced",
+      "introChallengeId": "ch-c-scope-403-intro",
+      "masteryChallengeId": "ch-c-scope-403-mastery"
+    },
+    {
+      "index": 25,
+      "id": "sec-jwt-claims",
+      "title": "JWT claims deep dive",
+      "domainId": "security",
+      "level": "advanced",
+      "introChallengeId": "ch-sec-jwt-claims-intro",
+      "masteryChallengeId": "ch-sec-jwt-claims-mastery"
+    },
+    {
+      "index": 26,
+      "id": "c-jwt-audience",
+      "title": "JWT Audience (aud) Mismatch",
+      "domainId": "security",
+      "level": "advanced",
+      "introChallengeId": "ch-c-jwt-audience-intro",
+      "masteryChallengeId": "ch-c-jwt-audience-mastery"
+    },
+    {
+      "index": 27,
+      "id": "sec-principal-prop",
+      "title": "Principal propagation concepts",
+      "domainId": "security",
+      "level": "advanced",
+      "introChallengeId": "ch-sec-principal-prop-intro",
+      "masteryChallengeId": "ch-sec-principal-prop-mastery"
+    },
+    {
+      "index": 28,
+      "id": "c-principal-propagation",
+      "title": "Principal Propagation (concept)",
+      "domainId": "security",
+      "level": "advanced",
+      "introChallengeId": "ch-c-principal-propagation-intro",
+      "masteryChallengeId": "ch-c-principal-propagation-mastery"
+    },
+    {
+      "index": 29,
+      "id": "principal-hybrid",
+      "title": "Principal propagation hybrid",
+      "domainId": "integration",
+      "level": "advanced",
+      "introChallengeId": "ch-principal-hybrid-intro",
+      "masteryChallengeId": "ch-principal-hybrid-mastery"
+    },
+    {
+      "index": 30,
+      "id": "cloud-connector",
+      "title": "Cloud Connector concepts",
+      "domainId": "integration",
+      "level": "advanced",
+      "introChallengeId": "ch-cloud-connector-intro",
+      "masteryChallengeId": "ch-cloud-connector-mastery"
+    },
+    {
+      "index": 31,
+      "id": "sec-secrets",
+      "title": "Secrets and key rotation",
+      "domainId": "security",
+      "level": "advanced",
+      "introChallengeId": "ch-sec-secrets-intro",
+      "masteryChallengeId": "ch-sec-secrets-mastery"
+    },
+    {
+      "index": 32,
+      "id": "c-csrf",
+      "title": "CSRF Protection (concept)",
+      "domainId": "ui5-fiori",
+      "level": "basic",
+      "introChallengeId": "ch-c-csrf-intro",
+      "masteryChallengeId": "ch-c-csrf-mastery"
+    },
+    {
+      "index": 33,
+      "id": "sec-threat-model",
+      "title": "Threat modeling BTP apps",
+      "domainId": "security",
+      "level": "advanced",
+      "introChallengeId": "ch-sec-threat-model-intro",
+      "masteryChallengeId": "ch-sec-threat-model-mastery"
+    },
+    {
+      "index": 34,
+      "id": "c-threat-model",
+      "title": "Threat Modeling Basics",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-c-threat-model-intro",
+      "masteryChallengeId": "ch-c-threat-model-mastery"
+    },
+    {
+      "index": 35,
+      "id": "sec-tenant-isolation",
+      "title": "Tenant isolation patterns",
+      "domainId": "security",
+      "level": "expert",
+      "introChallengeId": "ch-sec-tenant-isolation-intro",
+      "masteryChallengeId": "ch-sec-tenant-isolation-mastery"
+    },
+    {
+      "index": 36,
+      "id": "c-tenant-isolation",
+      "title": "Tenant Isolation",
+      "domainId": "security",
+      "level": "expert",
+      "introChallengeId": "ch-c-tenant-isolation-intro",
+      "masteryChallengeId": "ch-c-tenant-isolation-mastery"
+    },
+    {
+      "index": 37,
+      "id": "sec-zero-trust",
+      "title": "Zero trust on BTP landscapes",
+      "domainId": "security",
+      "level": "expert",
+      "introChallengeId": "ch-sec-zero-trust-intro",
+      "masteryChallengeId": "ch-sec-zero-trust-mastery"
+    },
+    {
+      "index": 38,
+      "id": "sec-supply-chain",
+      "title": "Supply-chain and dependency security",
+      "domainId": "security",
+      "level": "expert",
+      "introChallengeId": "ch-sec-supply-chain-intro",
+      "masteryChallengeId": "ch-sec-supply-chain-mastery"
+    },
+    {
+      "index": 39,
+      "id": "c-residency",
+      "title": "Data Residency",
+      "domainId": "security",
+      "level": "expert",
+      "introChallengeId": "ch-c-residency-intro",
+      "masteryChallengeId": "ch-c-residency-mastery"
+    },
+    {
+      "index": 40,
+      "id": "c-audit-log",
+      "title": "Audit Logging",
+      "domainId": "security",
+      "level": "basic",
+      "introChallengeId": "ch-c-audit-log-intro",
+      "masteryChallengeId": "ch-c-audit-log-mastery"
+    },
+    {
+      "index": 41,
+      "id": "sec-incident-ir",
+      "title": "Security incident response",
+      "domainId": "security",
+      "level": "expert",
+      "introChallengeId": "ch-sec-incident-ir-intro",
+      "masteryChallengeId": "ch-sec-incident-ir-mastery"
+    },
+    {
+      "index": 42,
+      "id": "c-change-mgmt",
+      "title": "Change Coordination",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-c-change-mgmt-intro",
+      "masteryChallengeId": "ch-c-change-mgmt-mastery"
+    },
+    {
+      "index": 43,
+      "id": "c-entitlement",
+      "title": "Entitlements & Quotas",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-c-entitlement-intro",
+      "masteryChallengeId": "ch-c-entitlement-mastery"
+    },
+    {
+      "index": 44,
+      "id": "c-finops",
+      "title": "FinOps Awareness",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-c-finops-intro",
+      "masteryChallengeId": "ch-c-finops-mastery"
+    },
+    {
+      "index": 45,
+      "id": "c-rto-rpo",
+      "title": "RTO/RPO Concepts",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-c-rto-rpo-intro",
+      "masteryChallengeId": "ch-c-rto-rpo-mastery"
+    },
+    {
+      "index": 46,
+      "id": "c-slo",
+      "title": "SLOs & Alerting",
+      "domainId": "operations",
+      "level": "basic",
+      "introChallengeId": "ch-c-slo-intro",
+      "masteryChallengeId": "ch-c-slo-mastery"
+    },
+    {
+      "index": 47,
+      "id": "ops-finops",
+      "title": "FinOps on BTP",
+      "domainId": "operations",
+      "level": "advanced",
+      "introChallengeId": "ch-ops-finops-intro",
+      "masteryChallengeId": "ch-ops-finops-mastery"
+    },
+    {
+      "index": 48,
+      "id": "ops-observability",
+      "title": "Logs metrics traces",
+      "domainId": "operations",
+      "level": "advanced",
+      "introChallengeId": "ch-ops-observability-intro",
+      "masteryChallengeId": "ch-ops-observability-mastery"
+    },
+    {
+      "index": 49,
+      "id": "ops-sre",
+      "title": "SRE practices",
+      "domainId": "operations",
+      "level": "expert",
+      "introChallengeId": "ch-ops-sre-intro",
+      "masteryChallengeId": "ch-ops-sre-mastery"
+    },
+    {
+      "index": 50,
+      "id": "c-functional-nfr",
+      "title": "Functional vs Non-Functional Requirements",
+      "domainId": "architecture",
+      "level": "basic",
+      "introChallengeId": "ch-c-functional-nfr-intro",
+      "masteryChallengeId": "ch-c-functional-nfr-mastery"
+    },
+    {
+      "index": 51,
+      "id": "c-cap-vs-rap",
+      "title": "CAP vs RAP Decision",
+      "domainId": "architecture",
+      "level": "advanced",
+      "introChallengeId": "ch-c-cap-vs-rap-intro",
+      "masteryChallengeId": "ch-c-cap-vs-rap-mastery"
+    },
+    {
+      "index": 52,
+      "id": "c-cap-odata",
+      "title": "CAP Service & OData Projection",
+      "domainId": "cap",
+      "level": "basic",
+      "introChallengeId": "ch-c-cap-odata-intro",
+      "masteryChallengeId": "ch-c-cap-odata-mastery"
+    },
+    {
+      "index": 53,
+      "id": "cap-cds-entities",
+      "title": "CDS entities and associations",
+      "domainId": "cap",
+      "level": "basic",
+      "introChallengeId": "ch-cap-cds-entities-intro",
+      "masteryChallengeId": "ch-cap-cds-entities-mastery"
+    },
+    {
+      "index": 54,
+      "id": "c-odata-metadata",
+      "title": "OData Metadata",
+      "domainId": "cap",
+      "level": "basic",
+      "introChallengeId": "ch-c-odata-metadata-intro",
+      "masteryChallengeId": "ch-c-odata-metadata-mastery"
+    },
+    {
+      "index": 55,
+      "id": "odata-v2-vs-v4",
+      "title": "OData V2 vs V4",
+      "domainId": "cap",
+      "level": "basic",
+      "introChallengeId": "ch-odata-v2-vs-v4-intro",
+      "masteryChallengeId": "ch-odata-v2-vs-v4-mastery"
+    },
+    {
+      "index": 56,
+      "id": "odata-v4-basics",
+      "title": "OData V4 basics",
+      "domainId": "cap",
+      "level": "basic",
+      "introChallengeId": "ch-odata-v4-basics-intro",
+      "masteryChallengeId": "ch-odata-v4-basics-mastery"
+    },
+    {
+      "index": 57,
+      "id": "cap-services",
+      "title": "Service definitions and projections",
+      "domainId": "cap",
+      "level": "basic",
+      "introChallengeId": "ch-cap-services-intro",
+      "masteryChallengeId": "ch-cap-services-mastery"
+    },
+    {
+      "index": 58,
+      "id": "cap-what",
+      "title": "What is CAP",
+      "domainId": "cap",
+      "level": "basic",
+      "introChallengeId": "ch-cap-what-intro",
+      "masteryChallengeId": "ch-cap-what-mastery"
+    },
+    {
+      "index": 59,
+      "id": "cap-actions",
+      "title": "Actions and functions",
+      "domainId": "cap",
+      "level": "advanced",
+      "introChallengeId": "ch-cap-actions-intro",
+      "masteryChallengeId": "ch-cap-actions-mastery"
+    },
+    {
+      "index": 60,
+      "id": "cap-auth",
+      "title": "CAP authentication and authorization",
+      "domainId": "cap",
+      "level": "advanced",
+      "introChallengeId": "ch-cap-auth-intro",
+      "masteryChallengeId": "ch-cap-auth-mastery"
+    },
+    {
+      "index": 61,
+      "id": "cap-events",
+      "title": "CAP messaging and events",
+      "domainId": "cap",
+      "level": "advanced",
+      "introChallengeId": "ch-cap-events-intro",
+      "masteryChallengeId": "ch-cap-events-mastery"
+    },
+    {
+      "index": 62,
+      "id": "cap-persistence",
+      "title": "CAP persistence and HANA",
+      "domainId": "cap",
+      "level": "advanced",
+      "introChallengeId": "ch-cap-persistence-intro",
+      "masteryChallengeId": "ch-cap-persistence-mastery"
+    },
+    {
+      "index": 63,
+      "id": "odata-query-perf",
+      "title": "OData query performance",
+      "domainId": "cap",
+      "level": "advanced",
+      "introChallengeId": "ch-odata-query-perf-intro",
+      "masteryChallengeId": "ch-odata-query-perf-mastery"
+    },
+    {
+      "index": 64,
+      "id": "cap-extensibility",
+      "title": "CAP extensibility",
+      "domainId": "cap",
+      "level": "expert",
+      "introChallengeId": "ch-cap-extensibility-intro",
+      "masteryChallengeId": "ch-cap-extensibility-mastery"
+    },
+    {
+      "index": 65,
+      "id": "cap-multitenant",
+      "title": "CAP multitenancy concepts",
+      "domainId": "cap",
+      "level": "expert",
+      "introChallengeId": "ch-cap-multitenant-intro",
+      "masteryChallengeId": "ch-cap-multitenant-mastery"
+    },
+    {
+      "index": 66,
+      "id": "cap-resilience",
+      "title": "CAP resilience patterns",
+      "domainId": "cap",
+      "level": "expert",
+      "introChallengeId": "ch-cap-resilience-intro",
+      "masteryChallengeId": "ch-cap-resilience-mastery"
+    },
+    {
+      "index": 67,
+      "id": "c-behavior-def",
+      "title": "Behavior Definition",
+      "domainId": "rap-abap",
+      "level": "basic",
+      "introChallengeId": "ch-c-behavior-def-intro",
+      "masteryChallengeId": "ch-c-behavior-def-mastery"
+    },
+    {
+      "index": 68,
+      "id": "c-draft",
+      "title": "Draft Documents",
+      "domainId": "rap-abap",
+      "level": "basic",
+      "introChallengeId": "ch-c-draft-intro",
+      "masteryChallengeId": "ch-c-draft-mastery"
+    },
+    {
+      "index": 69,
+      "id": "rap-managed",
+      "title": "Managed RAP scenario",
+      "domainId": "rap-abap",
+      "level": "basic",
+      "introChallengeId": "ch-rap-managed-intro",
+      "masteryChallengeId": "ch-rap-managed-mastery"
+    },
+    {
+      "index": 70,
+      "id": "rap-cds-bo",
+      "title": "RAP business objects",
+      "domainId": "rap-abap",
+      "level": "basic",
+      "introChallengeId": "ch-rap-cds-bo-intro",
+      "masteryChallengeId": "ch-rap-cds-bo-mastery"
+    },
+    {
+      "index": 71,
+      "id": "rap-fiori-elements",
+      "title": "RAP with Fiori elements",
+      "domainId": "rap-abap",
+      "level": "basic",
+      "introChallengeId": "ch-rap-fiori-elements-intro",
+      "masteryChallengeId": "ch-rap-fiori-elements-mastery"
+    },
+    {
+      "index": 72,
+      "id": "rap-what",
+      "title": "What is RAP",
+      "domainId": "rap-abap",
+      "level": "basic",
+      "introChallengeId": "ch-rap-what-intro",
+      "masteryChallengeId": "ch-rap-what-mastery"
+    },
+    {
+      "index": 73,
+      "id": "c-clean-core",
+      "title": "Clean Core Principles",
+      "domainId": "rap-abap",
+      "level": "advanced",
+      "introChallengeId": "ch-c-clean-core-intro",
+      "masteryChallengeId": "ch-c-clean-core-mastery"
+    },
+    {
+      "index": 74,
+      "id": "rap-determinations",
+      "title": "Determinations and validations",
+      "domainId": "rap-abap",
+      "level": "advanced",
+      "introChallengeId": "ch-rap-determinations-intro",
+      "masteryChallengeId": "ch-rap-determinations-mastery"
+    },
+    {
+      "index": 75,
+      "id": "rap-draft",
+      "title": "Draft handling",
+      "domainId": "rap-abap",
+      "level": "advanced",
+      "introChallengeId": "ch-rap-draft-intro",
+      "masteryChallengeId": "ch-rap-draft-mastery"
+    },
+    {
+      "index": 76,
+      "id": "rap-eml",
+      "title": "EML basics",
+      "domainId": "rap-abap",
+      "level": "advanced",
+      "introChallengeId": "ch-rap-eml-intro",
+      "masteryChallengeId": "ch-rap-eml-mastery"
+    },
+    {
+      "index": 77,
+      "id": "rap-vs-cap",
+      "title": "RAP vs CAP decision criteria",
+      "domainId": "rap-abap",
+      "level": "advanced",
+      "introChallengeId": "ch-rap-vs-cap-intro",
+      "masteryChallengeId": "ch-rap-vs-cap-mastery"
+    },
+    {
+      "index": 78,
+      "id": "rap-unmanaged",
+      "title": "Unmanaged RAP",
+      "domainId": "rap-abap",
+      "level": "advanced",
+      "introChallengeId": "ch-rap-unmanaged-intro",
+      "masteryChallengeId": "ch-rap-unmanaged-mastery"
+    },
+    {
+      "index": 79,
+      "id": "rap-extensibility",
+      "title": "ABAP Cloud extensibility",
+      "domainId": "rap-abap",
+      "level": "expert",
+      "introChallengeId": "ch-rap-extensibility-intro",
+      "masteryChallengeId": "ch-rap-extensibility-mastery"
+    },
+    {
+      "index": 80,
+      "id": "rap-clean-core",
+      "title": "Clean-core extension strategy",
+      "domainId": "rap-abap",
+      "level": "expert",
+      "introChallengeId": "ch-rap-clean-core-intro",
+      "masteryChallengeId": "ch-rap-clean-core-mastery"
+    },
+    {
+      "index": 81,
+      "id": "rap-performance",
+      "title": "RAP performance",
+      "domainId": "rap-abap",
+      "level": "expert",
+      "introChallengeId": "ch-rap-performance-intro",
+      "masteryChallengeId": "ch-rap-performance-mastery"
+    },
+    {
+      "index": 82,
+      "id": "c-accessibility",
+      "title": "Fiori Accessibility",
+      "domainId": "ui5-fiori",
+      "level": "basic",
+      "introChallengeId": "ch-c-accessibility-intro",
+      "masteryChallengeId": "ch-c-accessibility-mastery"
+    },
+    {
+      "index": 83,
+      "id": "c-fiori-elements",
+      "title": "Fiori Elements (concept)",
+      "domainId": "ui5-fiori",
+      "level": "basic",
+      "introChallengeId": "ch-c-fiori-elements-intro",
+      "masteryChallengeId": "ch-c-fiori-elements-mastery"
+    },
+    {
+      "index": 84,
+      "id": "c-ui5-odata",
+      "title": "UI5 OData Binding via Destination",
+      "domainId": "ui5-fiori",
+      "level": "basic",
+      "introChallengeId": "ch-c-ui5-odata-intro",
+      "masteryChallengeId": "ch-c-ui5-odata-mastery"
+    },
+    {
+      "index": 85,
+      "id": "c-adapter",
+      "title": "Adapters",
+      "domainId": "integration",
+      "level": "basic",
+      "introChallengeId": "ch-c-adapter-intro",
+      "masteryChallengeId": "ch-c-adapter-mastery"
+    },
+    {
+      "index": 86,
+      "id": "cpi-adapters",
+      "title": "Adapters basics",
+      "domainId": "integration",
+      "level": "basic",
+      "introChallengeId": "ch-cpi-adapters-intro",
+      "masteryChallengeId": "ch-cpi-adapters-mastery"
+    },
+    {
+      "index": 87,
+      "id": "c-api-mgmt",
+      "title": "API Management concepts",
+      "domainId": "integration",
+      "level": "basic",
+      "introChallengeId": "ch-c-api-mgmt-intro",
+      "masteryChallengeId": "ch-c-api-mgmt-mastery"
+    },
+    {
+      "index": 88,
+      "id": "cpi-iflow",
+      "title": "Cloud Integration iflows",
+      "domainId": "integration",
+      "level": "basic",
+      "introChallengeId": "ch-cpi-iflow-intro",
+      "masteryChallengeId": "ch-cpi-iflow-mastery"
+    },
+    {
+      "index": 89,
+      "id": "c-iflow",
+      "title": "Integration Flow",
+      "domainId": "integration",
+      "level": "basic",
+      "introChallengeId": "ch-c-iflow-intro",
+      "masteryChallengeId": "ch-c-iflow-mastery"
+    },
+    {
+      "index": 90,
+      "id": "is-what",
+      "title": "Integration Suite overview",
+      "domainId": "integration",
+      "level": "basic",
+      "introChallengeId": "ch-is-what-intro",
+      "masteryChallengeId": "ch-is-what-mastery"
+    },
+    {
+      "index": 91,
+      "id": "cpi-mapping",
+      "title": "Mapping and transformation",
+      "domainId": "integration",
+      "level": "basic",
+      "introChallengeId": "ch-cpi-mapping-intro",
+      "masteryChallengeId": "ch-cpi-mapping-mastery"
+    },
+    {
+      "index": 92,
+      "id": "c-retry-backoff",
+      "title": "Retry with Backoff",
+      "domainId": "integration",
+      "level": "basic",
+      "introChallengeId": "ch-c-retry-backoff-intro",
+      "masteryChallengeId": "ch-c-retry-backoff-mastery"
+    },
+    {
+      "index": 93,
+      "id": "api-mgmt",
+      "title": "API Management concepts",
+      "domainId": "integration",
+      "level": "advanced",
+      "introChallengeId": "ch-api-mgmt-intro",
+      "masteryChallengeId": "ch-api-mgmt-mastery"
+    },
+    {
+      "index": 94,
+      "id": "cpi-exception",
+      "title": "Exception subprocesses",
+      "domainId": "integration",
+      "level": "advanced",
+      "introChallengeId": "ch-cpi-exception-intro",
+      "masteryChallengeId": "ch-cpi-exception-mastery"
+    },
+    {
+      "index": 95,
+      "id": "cpi-idempotency",
+      "title": "Idempotency in CPI",
+      "domainId": "integration",
+      "level": "advanced",
+      "introChallengeId": "ch-cpi-idempotency-intro",
+      "masteryChallengeId": "ch-cpi-idempotency-mastery"
+    },
+    {
+      "index": 96,
+      "id": "c-idempotency",
+      "title": "Idempotency in Integration",
+      "domainId": "integration",
+      "level": "advanced",
+      "introChallengeId": "ch-c-idempotency-intro",
+      "masteryChallengeId": "ch-c-idempotency-mastery"
+    },
+    {
+      "index": 97,
+      "id": "is-governance",
+      "title": "Integration governance",
+      "domainId": "integration",
+      "level": "expert",
+      "introChallengeId": "ch-is-governance-intro",
+      "masteryChallengeId": "ch-is-governance-mastery"
+    },
+    {
+      "index": 98,
+      "id": "is-observability",
+      "title": "Integration observability",
+      "domainId": "integration",
+      "level": "expert",
+      "introChallengeId": "ch-is-observability-intro",
+      "masteryChallengeId": "ch-is-observability-mastery"
+    },
+    {
+      "index": 99,
+      "id": "is-tpm",
+      "title": "Trading Partner Management concepts",
+      "domainId": "integration",
+      "level": "expert",
+      "introChallengeId": "ch-is-tpm-intro",
+      "masteryChallengeId": "ch-is-tpm-mastery"
+    },
+    {
+      "index": 100,
+      "id": "c-dlq",
+      "title": "Dead-Letter Queue",
+      "domainId": "events",
+      "level": "basic",
+      "introChallengeId": "ch-c-dlq-intro",
+      "masteryChallengeId": "ch-c-dlq-mastery"
+    },
+    {
+      "index": 101,
+      "id": "evt-mesh-concepts",
+      "title": "Event Mesh style concepts",
+      "domainId": "events",
+      "level": "basic",
+      "introChallengeId": "ch-evt-mesh-concepts-intro",
+      "masteryChallengeId": "ch-evt-mesh-concepts-mastery"
+    },
+    {
+      "index": 102,
+      "id": "evt-vs-cmd",
+      "title": "Events vs commands",
+      "domainId": "events",
+      "level": "basic",
+      "introChallengeId": "ch-evt-vs-cmd-intro",
+      "masteryChallengeId": "ch-evt-vs-cmd-mastery"
+    },
+    {
+      "index": 103,
+      "id": "c-events-mesh",
+      "title": "Events vs Commands",
+      "domainId": "events",
+      "level": "basic",
+      "introChallengeId": "ch-c-events-mesh-intro",
+      "masteryChallengeId": "ch-c-events-mesh-mastery"
+    },
+    {
+      "index": 104,
+      "id": "c-saga",
+      "title": "Saga Pattern",
+      "domainId": "events",
+      "level": "basic",
+      "introChallengeId": "ch-c-saga-intro",
+      "masteryChallengeId": "ch-c-saga-mastery"
+    },
+    {
+      "index": 105,
+      "id": "c-schema-evolution",
+      "title": "Schema Evolution",
+      "domainId": "events",
+      "level": "basic",
+      "introChallengeId": "ch-c-schema-evolution-intro",
+      "masteryChallengeId": "ch-c-schema-evolution-mastery"
+    },
+    {
+      "index": 106,
+      "id": "evt-dlq",
+      "title": "Dead-letter queues",
+      "domainId": "events",
+      "level": "advanced",
+      "introChallengeId": "ch-evt-dlq-intro",
+      "masteryChallengeId": "ch-evt-dlq-mastery"
+    },
+    {
+      "index": 107,
+      "id": "evt-schema",
+      "title": "Event schema evolution",
+      "domainId": "events",
+      "level": "advanced",
+      "introChallengeId": "ch-evt-schema-intro",
+      "masteryChallengeId": "ch-evt-schema-mastery"
+    },
+    {
+      "index": 108,
+      "id": "evt-saga",
+      "title": "Sagas and compensations",
+      "domainId": "events",
+      "level": "expert",
+      "introChallengeId": "ch-evt-saga-intro",
+      "masteryChallengeId": "ch-evt-saga-mastery"
+    },
+    {
+      "index": 109,
+      "id": "bpa-what",
+      "title": "Build Process Automation overview",
+      "domainId": "bpa",
+      "level": "basic",
+      "introChallengeId": "ch-bpa-what-intro",
+      "masteryChallengeId": "ch-bpa-what-mastery"
+    },
+    {
+      "index": 110,
+      "id": "bpa-forms",
+      "title": "Forms and approvals",
+      "domainId": "bpa",
+      "level": "basic",
+      "introChallengeId": "ch-bpa-forms-intro",
+      "masteryChallengeId": "ch-bpa-forms-mastery"
+    },
+    {
+      "index": 111,
+      "id": "bpa-workflow",
+      "title": "Workflow modeling basics",
+      "domainId": "bpa",
+      "level": "basic",
+      "introChallengeId": "ch-bpa-workflow-intro",
+      "masteryChallengeId": "ch-bpa-workflow-mastery"
+    },
+    {
+      "index": 112,
+      "id": "c-workflow",
+      "title": "Workflow vs Rules",
+      "domainId": "bpa",
+      "level": "basic",
+      "introChallengeId": "ch-c-workflow-intro",
+      "masteryChallengeId": "ch-c-workflow-mastery"
+    },
+    {
+      "index": 113,
+      "id": "bpa-api",
+      "title": "API integration in automations",
+      "domainId": "bpa",
+      "level": "advanced",
+      "introChallengeId": "ch-bpa-api-intro",
+      "masteryChallengeId": "ch-bpa-api-mastery"
+    },
+    {
+      "index": 114,
+      "id": "bpa-rules",
+      "title": "Business rules and decisions",
+      "domainId": "bpa",
+      "level": "advanced",
+      "introChallengeId": "ch-bpa-rules-intro",
+      "masteryChallengeId": "ch-bpa-rules-mastery"
+    },
+    {
+      "index": 115,
+      "id": "bpa-governance",
+      "title": "Citizen development guardrails",
+      "domainId": "bpa",
+      "level": "advanced",
+      "introChallengeId": "ch-bpa-governance-intro",
+      "masteryChallengeId": "ch-bpa-governance-mastery"
+    },
+    {
+      "index": 116,
+      "id": "bpa-scale",
+      "title": "BPA at enterprise scale",
+      "domainId": "bpa",
+      "level": "expert",
+      "introChallengeId": "ch-bpa-scale-intro",
+      "masteryChallengeId": "ch-bpa-scale-mastery"
+    },
+    {
+      "index": 117,
+      "id": "wz-what",
+      "title": "Build Work Zone concepts",
+      "domainId": "workzone",
+      "level": "basic",
+      "introChallengeId": "ch-wz-what-intro",
+      "masteryChallengeId": "ch-wz-what-mastery"
+    },
+    {
+      "index": 118,
+      "id": "wz-roles",
+      "title": "Roles and content assignment",
+      "domainId": "workzone",
+      "level": "basic",
+      "introChallengeId": "ch-wz-roles-intro",
+      "masteryChallengeId": "ch-wz-roles-mastery"
+    },
+    {
+      "index": 119,
+      "id": "c-workzone",
+      "title": "Work Zone Sites",
+      "domainId": "workzone",
+      "level": "basic",
+      "introChallengeId": "ch-c-workzone-intro",
+      "masteryChallengeId": "ch-c-workzone-mastery"
+    },
+    {
+      "index": 120,
+      "id": "wz-federation",
+      "title": "Content federation",
+      "domainId": "workzone",
+      "level": "advanced",
+      "introChallengeId": "ch-wz-federation-intro",
+      "masteryChallengeId": "ch-wz-federation-mastery"
+    },
+    {
+      "index": 121,
+      "id": "wz-perf",
+      "title": "Work Zone performance",
+      "domainId": "workzone",
+      "level": "advanced",
+      "introChallengeId": "ch-wz-perf-intro",
+      "masteryChallengeId": "ch-wz-perf-mastery"
+    },
+    {
+      "index": 122,
+      "id": "c-calc-view",
+      "title": "Calculation Views (concept)",
+      "domainId": "hana-cloud",
+      "level": "basic",
+      "introChallengeId": "ch-c-calc-view-intro",
+      "masteryChallengeId": "ch-c-calc-view-mastery"
+    },
+    {
+      "index": 123,
+      "id": "hana-what",
+      "title": "HANA Cloud architecture basics",
+      "domainId": "hana-cloud",
+      "level": "basic",
+      "introChallengeId": "ch-hana-what-intro",
+      "masteryChallengeId": "ch-hana-what-mastery"
+    },
+    {
+      "index": 124,
+      "id": "c-hana-hdi",
+      "title": "HANA HDI Containers (concept)",
+      "domainId": "hana-cloud",
+      "level": "basic",
+      "introChallengeId": "ch-c-hana-hdi-intro",
+      "masteryChallengeId": "ch-c-hana-hdi-mastery"
+    },
+    {
+      "index": 125,
+      "id": "hana-hdi",
+      "title": "HDI containers",
+      "domainId": "hana-cloud",
+      "level": "basic",
+      "introChallengeId": "ch-hana-hdi-intro",
+      "masteryChallengeId": "ch-hana-hdi-mastery"
+    },
+    {
+      "index": 126,
+      "id": "hana-sql",
+      "title": "SQL fundamentals on HANA",
+      "domainId": "hana-cloud",
+      "level": "basic",
+      "introChallengeId": "ch-hana-sql-intro",
+      "masteryChallengeId": "ch-hana-sql-mastery"
+    },
+    {
+      "index": 127,
+      "id": "hana-calc",
+      "title": "Calculation views concepts",
+      "domainId": "hana-cloud",
+      "level": "advanced",
+      "introChallengeId": "ch-hana-calc-intro",
+      "masteryChallengeId": "ch-hana-calc-mastery"
+    },
+    {
+      "index": 128,
+      "id": "hana-perf",
+      "title": "Expensive statements and plans",
+      "domainId": "hana-cloud",
+      "level": "advanced",
+      "introChallengeId": "ch-hana-perf-intro",
+      "masteryChallengeId": "ch-hana-perf-mastery"
+    },
+    {
+      "index": 129,
+      "id": "hana-privileges",
+      "title": "Privileges and schema isolation",
+      "domainId": "hana-cloud",
+      "level": "advanced",
+      "introChallengeId": "ch-hana-privileges-intro",
+      "masteryChallengeId": "ch-hana-privileges-mastery"
+    },
+    {
+      "index": 130,
+      "id": "hana-ha",
+      "title": "Availability and recovery concepts",
+      "domainId": "hana-cloud",
+      "level": "expert",
+      "introChallengeId": "ch-hana-ha-intro",
+      "masteryChallengeId": "ch-hana-ha-mastery"
+    },
+    {
+      "index": 131,
+      "id": "hana-vector",
+      "title": "Vector / multi-model awareness",
+      "domainId": "hana-cloud",
+      "level": "expert",
+      "introChallengeId": "ch-hana-vector-intro",
+      "masteryChallengeId": "ch-hana-vector-mastery"
+    },
+    {
+      "index": 132,
+      "id": "c-lineage",
+      "title": "Data Lineage",
+      "domainId": "datasphere",
+      "level": "basic",
+      "introChallengeId": "ch-c-lineage-intro",
+      "masteryChallengeId": "ch-c-lineage-mastery"
+    },
+    {
+      "index": 133,
+      "id": "ds-what",
+      "title": "Datasphere overview",
+      "domainId": "datasphere",
+      "level": "basic",
+      "introChallengeId": "ch-ds-what-intro",
+      "masteryChallengeId": "ch-ds-what-mastery"
+    },
+    {
+      "index": 134,
+      "id": "ds-spaces",
+      "title": "Spaces and isolation",
+      "domainId": "datasphere",
+      "level": "basic",
+      "introChallengeId": "ch-ds-spaces-intro",
+      "masteryChallengeId": "ch-ds-spaces-mastery"
+    },
+    {
+      "index": 135,
+      "id": "ds-federation",
+      "title": "Federation vs replication",
+      "domainId": "datasphere",
+      "level": "advanced",
+      "introChallengeId": "ch-ds-federation-intro",
+      "masteryChallengeId": "ch-ds-federation-mastery"
+    },
+    {
+      "index": 136,
+      "id": "ds-semantic",
+      "title": "Semantic models",
+      "domainId": "datasphere",
+      "level": "advanced",
+      "introChallengeId": "ch-ds-semantic-intro",
+      "masteryChallengeId": "ch-ds-semantic-mastery"
+    },
+    {
+      "index": 137,
+      "id": "ds-lineage",
+      "title": "Lineage and impact analysis",
+      "domainId": "datasphere",
+      "level": "expert",
+      "introChallengeId": "ch-ds-lineage-intro",
+      "masteryChallengeId": "ch-ds-lineage-mastery"
+    },
+    {
+      "index": 138,
+      "id": "bdc-what",
+      "title": "Business Data Cloud ecosystem",
+      "domainId": "bdc",
+      "level": "basic",
+      "introChallengeId": "ch-bdc-what-intro",
+      "masteryChallengeId": "ch-bdc-what-mastery"
+    },
+    {
+      "index": 139,
+      "id": "bdc-data-product",
+      "title": "Data products",
+      "domainId": "bdc",
+      "level": "basic",
+      "introChallengeId": "ch-bdc-data-product-intro",
+      "masteryChallengeId": "ch-bdc-data-product-mastery"
+    },
+    {
+      "index": 140,
+      "id": "bdc-governance",
+      "title": "Data governance",
+      "domainId": "bdc",
+      "level": "advanced",
+      "introChallengeId": "ch-bdc-governance-intro",
+      "masteryChallengeId": "ch-bdc-governance-mastery"
+    },
+    {
+      "index": 141,
+      "id": "c-data-product",
+      "title": "Data Product & Semantic Ownership",
+      "domainId": "bdc",
+      "level": "advanced",
+      "introChallengeId": "ch-c-data-product-intro",
+      "masteryChallengeId": "ch-c-data-product-mastery"
+    },
+    {
+      "index": 142,
+      "id": "bdc-lakehouse",
+      "title": "Lakehouse patterns with SAP Databricks concepts",
+      "domainId": "bdc",
+      "level": "expert",
+      "introChallengeId": "ch-bdc-lakehouse-intro",
+      "masteryChallengeId": "ch-bdc-lakehouse-mastery"
+    },
+    {
+      "index": 143,
+      "id": "c-sac-story",
+      "title": "Analytics Stories",
+      "domainId": "sac",
+      "level": "basic",
+      "introChallengeId": "ch-c-sac-story-intro",
+      "masteryChallengeId": "ch-c-sac-story-mastery"
+    },
+    {
+      "index": 144,
+      "id": "sac-what",
+      "title": "SAP Analytics Cloud overview",
+      "domainId": "sac",
+      "level": "basic",
+      "introChallengeId": "ch-sac-what-intro",
+      "masteryChallengeId": "ch-sac-what-mastery"
+    },
+    {
+      "index": 145,
+      "id": "sac-stories",
+      "title": "Stories and dashboards",
+      "domainId": "sac",
+      "level": "basic",
+      "introChallengeId": "ch-sac-stories-intro",
+      "masteryChallengeId": "ch-sac-stories-mastery"
+    },
+    {
+      "index": 146,
+      "id": "sac-live-vs-import",
+      "title": "Live vs import connections",
+      "domainId": "sac",
+      "level": "advanced",
+      "introChallengeId": "ch-sac-live-vs-import-intro",
+      "masteryChallengeId": "ch-sac-live-vs-import-mastery"
+    },
+    {
+      "index": 147,
+      "id": "sac-planning",
+      "title": "Planning basics",
+      "domainId": "sac",
+      "level": "advanced",
+      "introChallengeId": "ch-sac-planning-intro",
+      "masteryChallengeId": "ch-sac-planning-mastery"
+    },
+    {
+      "index": 148,
+      "id": "sac-security",
+      "title": "SAC security and row-level",
+      "domainId": "sac",
+      "level": "expert",
+      "introChallengeId": "ch-sac-security-intro",
+      "masteryChallengeId": "ch-sac-security-mastery"
+    },
+    {
+      "index": 149,
+      "id": "ai-hallucination",
+      "title": "Hallucinations and grounding",
+      "domainId": "ai",
+      "level": "basic",
+      "introChallengeId": "ch-ai-hallucination-intro",
+      "masteryChallengeId": "ch-ai-hallucination-mastery"
+    },
+    {
+      "index": 150,
+      "id": "ai-joule-concepts",
+      "title": "Joule concepts (product-aware)",
+      "domainId": "ai",
+      "level": "basic",
+      "introChallengeId": "ch-ai-joule-concepts-intro",
+      "masteryChallengeId": "ch-ai-joule-concepts-mastery"
+    },
+    {
+      "index": 151,
+      "id": "ai-responsible",
+      "title": "Responsible AI basics",
+      "domainId": "ai",
+      "level": "basic",
+      "introChallengeId": "ch-ai-responsible-intro",
+      "masteryChallengeId": "ch-ai-responsible-mastery"
+    },
+    {
+      "index": 152,
+      "id": "ai-cost-latency",
+      "title": "AI cost and latency trade-offs",
+      "domainId": "ai",
+      "level": "advanced",
+      "introChallengeId": "ch-ai-cost-latency-intro",
+      "masteryChallengeId": "ch-ai-cost-latency-mastery"
+    },
+    {
+      "index": 153,
+      "id": "ai-prompt",
+      "title": "Prompt design for ops",
+      "domainId": "ai",
+      "level": "advanced",
+      "introChallengeId": "ch-ai-prompt-intro",
+      "masteryChallengeId": "ch-ai-prompt-mastery"
+    },
+    {
+      "index": 154,
+      "id": "ai-rag",
+      "title": "RAG concepts on enterprise data",
+      "domainId": "ai",
+      "level": "advanced",
+      "introChallengeId": "ch-ai-rag-intro",
+      "masteryChallengeId": "ch-ai-rag-mastery"
+    },
+    {
+      "index": 155,
+      "id": "ai-agent-risks",
+      "title": "Agentic AI risks on BTP landscapes",
+      "domainId": "ai",
+      "level": "expert",
+      "introChallengeId": "ch-ai-agent-risks-intro",
+      "masteryChallengeId": "ch-ai-agent-risks-mastery"
+    },
+    {
+      "index": 156,
+      "id": "ai-eval",
+      "title": "Evaluating AI in enterprise",
+      "domainId": "ai",
+      "level": "expert",
+      "introChallengeId": "ch-ai-eval-intro",
+      "masteryChallengeId": "ch-ai-eval-mastery"
+    },
+    {
+      "index": 157,
+      "id": "c-observability",
+      "title": "Logs, Metrics, Traces",
+      "domainId": "incident",
+      "level": "basic",
+      "introChallengeId": "ch-c-observability-intro",
+      "masteryChallengeId": "ch-c-observability-mastery"
+    }
+  ]
+}

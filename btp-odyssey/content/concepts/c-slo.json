@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Service level objectives drive alerts; alert on symptoms that matter, not noise."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of SLOs & Alerting without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use SLOs & Alerting explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-slo",
+  "title": "SLOs & Alerting",
+  "domainId": "operations",
+  "summary": "Service level objectives drive alerts; alert on symptoms that matter, not noise.",
+  "explain": "Service level objectives drive alerts; alert on symptoms that matter, not noise. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"SLOs & Alerting\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain SLOs & Alerting in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "PROMISE + BUDGET: SLO is the promise; error budget is the fuel for change.",
+  "useCases": [
+    "Landing zone setup week: apply SLOs & Alerting so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “SLOs & Alerting” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “SLOs & Alerting”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-slo-intro",
+      "title": "Intro game: SLOs & Alerting",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-slo-mastery",
+      "title": "Mastery game: SLOs & Alerting",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "PROMISE + BUDGET: SLO is the promise; error budget is the fuel for change."
+}

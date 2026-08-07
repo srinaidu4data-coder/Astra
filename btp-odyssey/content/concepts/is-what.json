@@ -1,0 +1,82 @@
+{
+  "id": "is-what",
+  "title": "Integration Suite overview",
+  "domainId": "integration",
+  "level": "basic",
+  "summary": "Suite of integration capabilities",
+  "explain": "Process integration, API management, trading partner, advisor, and more under one suite. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Integration Suite overview\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Integration Suite overview, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Suite of integration capabilities"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Integration Suite overview without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing integration"
+  ],
+  "howToApply": [
+    "Use Integration Suite overview explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "integration"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Integration Suite overview” + one failure mode out loud — if you can't, you don't own it yet. (Integration → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Integration Suite overview” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Integration Suite overview” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Integration Suite overview”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-is-what-intro",
+      "title": "Intro game: Integration Suite overview",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-is-what-mastery",
+      "title": "Mastery game: Integration Suite overview",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Integration Suite overview” + one failure mode out loud — if you can't, you don't own it yet. (Integration → mechanism → failure)"
+}

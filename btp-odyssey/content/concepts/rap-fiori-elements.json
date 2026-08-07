@@ -1,0 +1,82 @@
+{
+  "id": "rap-fiori-elements",
+  "title": "RAP with Fiori elements",
+  "domainId": "rap-abap",
+  "level": "basic",
+  "summary": "Metadata-driven UI",
+  "explain": "Annotations drive consistent UIs. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"RAP with Fiori elements\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without RAP with Fiori elements, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Metadata-driven UI"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of RAP with Fiori elements without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing rap-abap"
+  ],
+  "howToApply": [
+    "Use RAP with Fiori elements explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "rap-abap"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “RAP with Fiori elements” + one failure mode out loud — if you can't, you don't own it yet. (RAP → mechanism → failure)",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using RAP with Fiori elements without core mods.",
+    "Incident bridge: symptoms appear; use “RAP with Fiori elements” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “RAP with Fiori elements”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "RAP managed vs unmanaged",
+      "optionA": "Managed RAP for standard CRUD patterns",
+      "optionB": "Unmanaged for special persistence control",
+      "whenChooseA": "Standard BO lifecycle with framework help",
+      "whenChooseB": "Complex legacy persistence you must own",
+      "risk": "Unmanaged increases maintenance surface"
+    },
+    {
+      "decision": "Clean core",
+      "optionA": "Released APIs + extensions",
+      "optionB": "Modify SAP standard",
+      "whenChooseA": "Always for sustainable landscapes",
+      "whenChooseB": "Never — false short-term speed",
+      "risk": "Core mods poison upgrades"
+    },
+    {
+      "decision": "Draft",
+      "optionA": "Draft-enabled long edits",
+      "optionB": "Immediate save only",
+      "whenChooseA": "Multi-step UX with exclusive locks",
+      "whenChooseB": "Simple atomic transactions",
+      "risk": "Draft without cleanup creates lock/orphan debt"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-rap-fiori-elements-intro",
+      "title": "Intro game: RAP with Fiori elements",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-rap-fiori-elements-mastery",
+      "title": "Mastery game: RAP with Fiori elements",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “RAP with Fiori elements” + one failure mode out loud — if you can't, you don't own it yet. (RAP → mechanism → failure)"
+}

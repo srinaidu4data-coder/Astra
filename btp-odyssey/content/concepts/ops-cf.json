@@ -1,0 +1,82 @@
+{
+  "id": "ops-cf",
+  "title": "Cloud Foundry basics",
+  "domainId": "operations",
+  "level": "basic",
+  "summary": "Orgs, spaces, apps",
+  "explain": "Runtime grouping under environments. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Cloud Foundry basics\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Cloud Foundry basics, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Orgs, spaces, apps"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Cloud Foundry basics without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing operations"
+  ],
+  "howToApply": [
+    "Use Cloud Foundry basics explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "operations"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Cloud Foundry basics” + one failure mode out loud — if you can't, you don't own it yet. (Cloud → mechanism → failure)",
+  "useCases": [
+    "Landing zone setup week: apply Cloud Foundry basics so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “Cloud Foundry basics” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Cloud Foundry basics”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ops-cf-intro",
+      "title": "Intro game: Cloud Foundry basics",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ops-cf-mastery",
+      "title": "Mastery game: Cloud Foundry basics",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Cloud Foundry basics” + one failure mode out loud — if you can't, you don't own it yet. (Cloud → mechanism → failure)"
+}

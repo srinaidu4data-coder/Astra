@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Compatible changes to event payloads; version topics/contracts carefully."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Schema Evolution without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use Schema Evolution explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-schema-evolution",
+  "title": "Schema Evolution",
+  "domainId": "events",
+  "summary": "Compatible changes to event payloads; version topics/contracts carefully.",
+  "explain": "Compatible changes to event payloads; version topics/contracts carefully. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"Schema Evolution\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain Schema Evolution in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "NAME IT TO TAME IT: Say “Schema Evolution” + one failure mode out loud — if you can't, you don't own it yet. (Schema → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Schema Evolution” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Schema Evolution” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Schema Evolution”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Event vs command",
+      "optionA": "Events as facts, many consumers",
+      "optionB": "Commands as intent, one handler",
+      "whenChooseA": "Broadcast state changes",
+      "whenChooseB": "Directed do-this actions",
+      "risk": "Mixing styles confuses ownership"
+    },
+    {
+      "decision": "Schema evolution",
+      "optionA": "Additive compatible changes",
+      "optionB": "Breaking fields without version",
+      "whenChooseA": "Multi-consumer landscapes",
+      "whenChooseB": "Single controlled consumer only",
+      "risk": "Breaks silent consumers"
+    },
+    {
+      "decision": "Ordering",
+      "optionA": "Partition keys + consumer design for out-of-order",
+      "optionB": "Global total order everywhere",
+      "whenChooseA": "Scale and availability",
+      "whenChooseB": "Tiny volumes where order is free",
+      "risk": "Global order kills throughput"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-schema-evolution-intro",
+      "title": "Intro game: Schema Evolution",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-schema-evolution-mastery",
+      "title": "Mastery game: Schema Evolution",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Schema Evolution” + one failure mode out loud — if you can't, you don't own it yet. (Schema → mechanism → failure)"
+}

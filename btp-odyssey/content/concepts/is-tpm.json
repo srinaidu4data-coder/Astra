@@ -1,0 +1,82 @@
+{
+  "id": "is-tpm",
+  "title": "Trading Partner Management concepts",
+  "domainId": "integration",
+  "level": "expert",
+  "summary": "B2B partner setup",
+  "explain": "Partner profiles, agreements, monitoring for B2B. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Trading Partner Management concepts\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Trading Partner Management concepts, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "B2B partner setup"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Trading Partner Management concepts without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing integration"
+  ],
+  "howToApply": [
+    "Use Trading Partner Management concepts explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "integration"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Trading Partner Management concepts” + one failure mode out loud — if you can't, you don't own it yet. (Trading → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Trading Partner Management concepts” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Trading Partner Management concepts” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Trading Partner Management concepts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-is-tpm-intro",
+      "title": "Intro game: Trading Partner Management concepts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-is-tpm-mastery",
+      "title": "Mastery game: Trading Partner Management concepts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Trading Partner Management concepts” + one failure mode out loud — if you can't, you don't own it yet. (Trading → mechanism → failure)"
+}

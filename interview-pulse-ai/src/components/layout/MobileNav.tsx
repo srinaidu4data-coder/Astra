@@ -61,7 +61,10 @@ export function MobileNav() {
       <div className="mx-auto flex max-w-lg items-stretch justify-between px-0.5 pt-0.5">
         {items.map((item) => {
           const Icon = item.icon
-          const active = route === item.id
+          // BTP Odyssey lives under Mock — keep Mock tab highlighted
+          const active =
+            route === item.id ||
+            (item.id === 'practice' && route === 'btp-odyssey')
           const pulse = item.id === 'copilot' && listening
           return (
             <button

@@ -1,0 +1,13 @@
+# Railway: SAP BTP Odyssey (API + static SPA)
+# Deploy: railway up --path-as-root --service btp-odyssey
+# Or link GitHub with root directory btp-odyssey / Dockerfile
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

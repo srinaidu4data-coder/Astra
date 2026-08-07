@@ -1,0 +1,43 @@
+{
+  "id": "int-hybrid",
+  "title": "Hybrid connectivity and principal propagation concepts",
+  "domainId": "integration",
+  "description": "Hybrid connectivity and principal propagation concepts. Evidence is demonstration-based in simulation, not XP.",
+  "level": "advanced",
+  "prerequisites": [
+    "int-iflow",
+    "found-identity"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Hybrid connectivity and principal propagation concepts in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Hybrid connectivity and principal propagation concepts in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Hybrid connectivity and principal propagation concepts after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP Integration Suite",
+      "sourceUrl": "https://help.sap.com/docs/integration-suite",
+      "sourceTitle": "SAP Integration Suite docs",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

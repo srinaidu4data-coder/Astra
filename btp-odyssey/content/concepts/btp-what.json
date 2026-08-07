@@ -1,0 +1,98 @@
+{
+  "id": "btp-what",
+  "title": "What is SAP BTP?",
+  "domainId": "operations",
+  "level": "basic",
+  "summary": "The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of record.",
+  "explain": "SAP Business Technology Platform (BTP) is SAP’s cloud platform for application development, integration, data & analytics, automation, and AI — typically used beside S/4HANA and other systems of record.\n\nThink of three layers:\n1) Systems of record (S/4, success factors, etc.) hold core business truth.\n2) BTP is the innovation & integration layer: APIs, events, extensions, data products, workflows, AI assistants.\n3) Experience layer: Fiori, Work Zone, analytics stories people actually click.\n\nBTP is not “one app.” It is a set of services you entitle in accounts and assemble into landscapes. Fidelity: conceptual Tier 1–2 — always verify current commercial names in official SAP docs.",
+  "analogy": "If S/4 is the bank vault of business truth, BTP is the modern branch network + digital apps built around the vault without drilling holes in the vault walls (clean core).",
+  "whyItMatters": "Newcomers who skip this step jump into CAP/RAP tools without knowing why the platform exists — and design random microservices that fight the system of record.",
+  "formalPoints": [
+    "BTP is a multi-service platform (build, integrate, automate, data, AI), not a single product",
+    "Used mainly for side-by-side extension and integration with systems of record",
+    "Landscapes are assembled from accounts, entitlements, and services — not installed as one monolith",
+    "Clean-core strategy: extend without modifying SAP standard where possible"
+  ],
+  "commonMistakes": [
+    "Treating BTP as a replacement for S/4 instead of a complementary platform",
+    "Starting with a random service (CAP, CPI, BPA) without a business capability map",
+    "Assuming every workload must run on BTP"
+  ],
+  "howToRecognize": [
+    "Someone asks ‘where do we build the new approval app?’ or ‘how do we integrate partners?’",
+    "Clean-core and side-by-side discussions appear"
+  ],
+  "howToApply": [
+    "State the business capability first, then map to BTP service categories",
+    "Draw system of record vs platform vs experience in one slide"
+  ],
+  "relatedIds": [
+    "btp-platform-structure",
+    "btp-services-map",
+    "ops-accounts",
+    "c-clean-core"
+  ],
+  "glossary": [
+    {
+      "term": "System of record",
+      "definition": "Authoritative system for a business object (often S/4 for finance/logistics)."
+    },
+    {
+      "term": "Side-by-side extension",
+      "definition": "Build new capability next to the core system using APIs/events, not by changing core code."
+    }
+  ],
+  "tags": [
+    "basic",
+    "beginner",
+    "btp",
+    "operations"
+  ],
+  "mnemonic": "VAULT + BRANCHES: S/4 is the vault; BTP is the modern branches around it — don't demolish the vault.",
+  "useCases": [
+    "Landing zone setup week: apply What is SAP BTP? so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “What is SAP BTP?” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “What is SAP BTP?”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-btp-what-intro",
+      "title": "Intro game: What is SAP BTP?",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-btp-what-mastery",
+      "title": "Mastery game: What is SAP BTP?",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "VAULT + BRANCHES: S/4 is the vault; BTP is the modern branches around it — don't demolish the vault."
+}

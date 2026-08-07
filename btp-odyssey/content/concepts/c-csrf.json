@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Tokens protect state-changing requests; failures often appear as mysterious 403s."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of CSRF Protection (concept) without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use CSRF Protection (concept) explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-csrf",
+  "title": "CSRF Protection (concept)",
+  "domainId": "ui5-fiori",
+  "summary": "Tokens protect state-changing requests; failures often appear as mysterious 403s.",
+  "explain": "Tokens protect state-changing requests; failures often appear as mysterious 403s. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"CSRF Protection (concept)\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain CSRF Protection (concept) in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "FORGED ORDER SLIP: Browser tricked into action — token the writes.",
+  "useCases": [
+    "Greenfield design workshop: decide if “CSRF Protection (concept)” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “CSRF Protection (concept)” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “CSRF Protection (concept)”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Fiori elements vs freestyle",
+      "optionA": "Elements when annotations suffice",
+      "optionB": "Freestyle for unique UX",
+      "whenChooseA": "Standard floorplans",
+      "whenChooseB": "Highly custom interaction",
+      "risk": "Freestyle multiplies cost"
+    },
+    {
+      "decision": "OData binding",
+      "optionA": "Server-side filter/page",
+      "optionB": "Load all then filter in UI",
+      "whenChooseA": "Large sets",
+      "whenChooseB": "Tiny lists",
+      "risk": "Browser memory death"
+    },
+    {
+      "decision": "Accessibility",
+      "optionA": "Keyboard/contrast as requirements",
+      "optionB": "Mouse-only demos",
+      "whenChooseA": "Always enterprise",
+      "whenChooseB": "Never",
+      "risk": "Legal and inclusion risk"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-csrf-intro",
+      "title": "Intro game: CSRF Protection (concept)",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-csrf-mastery",
+      "title": "Mastery game: CSRF Protection (concept)",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "FORGED ORDER SLIP: Browser tricked into action — token the writes."
+}

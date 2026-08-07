@@ -1,0 +1,83 @@
+{
+  "level": "advanced",
+  "formalPoints": [
+    "A governed, owned, reusable data asset with a clear contract.",
+    "Domain: bdc",
+    "Level: advanced"
+  ],
+  "commonMistakes": [
+    "Memorizing the name without a concrete example of Data Product & Semantic Ownership"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on Data Product & Semantic Ownership.",
+    "List one metric or log that would prove Data Product & Semantic Ownership is healthy."
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "data",
+    "governance"
+  ],
+  "id": "c-data-product",
+  "title": "Data Product & Semantic Ownership",
+  "domainId": "bdc",
+  "summary": "A governed, owned, reusable data asset with a clear contract.",
+  "explain": "A data product has an owner, contract (fields/SLAs), quality rules, and consumers. When Finance and Sales each invent 'Net Revenue', dashboards conflict. Semantic ownership and lineage beat spreadsheet extracts.",
+  "analogy": "A product SKU with a spec sheet — not a mystery box of columns.",
+  "whyItMatters": "Contradictory KPIs destroy executive trust.",
+  "mnemonic": "PRODUCT not DUMP: Owner + contract + quality — not a pile of tables.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Data Product & Semantic Ownership” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Data Product & Semantic Ownership” to classify the failing hop before changing config.",
+    "Finance and Sales disagree on “revenue” — Data Product & Semantic Ownership forces one productized definition."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Data product",
+      "optionA": "Owned product with SLA + interface",
+      "optionB": "Raw table dump",
+      "whenChooseA": "Cross-team consumption",
+      "whenChooseB": "Never for shared enterprise use",
+      "risk": "Dumps have no contract"
+    },
+    {
+      "decision": "Governance",
+      "optionA": "Steward + quality metrics",
+      "optionB": "Hope and tribal knowledge",
+      "whenChooseA": "Always",
+      "whenChooseB": "Never",
+      "risk": "Silent quality decay"
+    },
+    {
+      "decision": "Lakehouse layers",
+      "optionA": "Bronze/silver/gold progression",
+      "optionB": "Consumers on raw only",
+      "whenChooseA": "Scale analytics",
+      "whenChooseB": "Tiny files",
+      "risk": "Raw access bypasses quality"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-data-product-intro",
+      "title": "Intro game: Data Product & Semantic Ownership",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-data-product-mastery",
+      "title": "Mastery game: Data Product & Semantic Ownership",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "PRODUCT not DUMP: Owner + contract + quality — not a pile of tables."
+}

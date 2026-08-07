@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Expose, secure, throttle, and version APIs with policies and products."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of API Management concepts without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use API Management concepts explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-api-mgmt",
+  "title": "API Management concepts",
+  "domainId": "integration",
+  "summary": "Expose, secure, throttle, and version APIs with policies and products.",
+  "explain": "Expose, secure, throttle, and version APIs with policies and products. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"API Management concepts\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain API Management concepts in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "NAME IT TO TAME IT: Say “API Management concepts” + one failure mode out loud — if you can't, you don't own it yet. (API → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “API Management concepts” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “API Management concepts” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “API Management concepts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-api-mgmt-intro",
+      "title": "Intro game: API Management concepts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-api-mgmt-mastery",
+      "title": "Mastery game: API Management concepts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “API Management concepts” + one failure mode out loud — if you can't, you don't own it yet. (API → mechanism → failure)"
+}

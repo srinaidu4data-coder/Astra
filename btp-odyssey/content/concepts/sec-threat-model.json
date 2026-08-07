@@ -1,0 +1,82 @@
+{
+  "id": "sec-threat-model",
+  "title": "Threat modeling BTP apps",
+  "domainId": "security",
+  "level": "advanced",
+  "summary": "STRIDE-lite for landscapes",
+  "explain": "Enumerate assets, trust boundaries, adversaries, and mitigations before coding. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Threat modeling BTP apps\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Threat modeling BTP apps, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "STRIDE-lite for landscapes"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Threat modeling BTP apps without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing security"
+  ],
+  "howToApply": [
+    "Use Threat modeling BTP apps explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "security"
+  ],
+  "mnemonic": "ASSUME BREACH: Verify every call; network location is not trust.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Threat modeling BTP apps” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Threat modeling BTP apps” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Threat modeling BTP apps”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sec-threat-model-intro",
+      "title": "Intro game: Threat modeling BTP apps",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sec-threat-model-mastery",
+      "title": "Mastery game: Threat modeling BTP apps",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "ASSUME BREACH: Verify every call; network location is not trust."
+}

@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Modeled analytical views in HANA for reusable semantics (simplified teaching)."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Calculation Views (concept) without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use Calculation Views (concept) explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-calc-view",
+  "title": "Calculation Views (concept)",
+  "domainId": "hana-cloud",
+  "summary": "Modeled analytical views in HANA for reusable semantics (simplified teaching).",
+  "explain": "Modeled analytical views in HANA for reusable semantics (simplified teaching). In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"Calculation Views (concept)\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain Calculation Views (concept) in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "NAME IT TO TAME IT: Say “Calculation Views (concept)” + one failure mode out loud — if you can't, you don't own it yet. (Calculation → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Calculation Views (concept)” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Calculation Views (concept)” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Calculation Views (concept)”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Compute placement",
+      "optionA": "Push heavy logic to DB carefully",
+      "optionB": "Pull huge sets to app",
+      "whenChooseA": "Analytical aggregates",
+      "whenChooseB": "Tiny datasets",
+      "risk": "Network and memory blow up"
+    },
+    {
+      "decision": "HDI isolation",
+      "optionA": "Containerized deployable artifacts",
+      "optionB": "Shared wild schema",
+      "whenChooseA": "Team CI/CD",
+      "whenChooseB": "Throwaway",
+      "risk": "No safe ownership"
+    },
+    {
+      "decision": "Privileges",
+      "optionA": "Least privilege DB roles",
+      "optionB": "SAP_ALL style access",
+      "whenChooseA": "Always production",
+      "whenChooseB": "Never",
+      "risk": "Data exfil risk"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-calc-view-intro",
+      "title": "Intro game: Calculation Views (concept)",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-calc-view-mastery",
+      "title": "Mastery game: Calculation Views (concept)",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Calculation Views (concept)” + one failure mode out loud — if you can't, you don't own it yet. (Calculation → mechanism → failure)"
+}

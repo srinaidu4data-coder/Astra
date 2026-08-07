@@ -1,0 +1,95 @@
+{
+  "id": "btp-services-map",
+  "title": "BTP services map: what lives where",
+  "domainId": "architecture",
+  "level": "basic",
+  "summary": "A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops.",
+  "explain": "Once you know BTP exists and how accounts work, learn the capability map (names evolve; categories stay useful):\n\n• Application development — CAP, HTML5/Fiori, mobile, ABAP environment / RAP patterns for extensions.\n• Integration — Integration Suite (iFlows, APIs, events, B2B).\n• Automation — Build Process Automation (workflows, forms, rules).\n• Data & analytics — HANA Cloud, Datasphere, Analytics Cloud, data product thinking.\n• AI — grounded assistants, RAG patterns, responsible use (product names change).\n• Identity & security — IAS/IPS concepts, XSUAA/roles, destinations, principal propagation.\n• Operations — observability, entitlements, FinOps, SRE practices.\n\nYou do not need every service. You need the category that fits the business capability, then the simplest service that meets constraints.",
+  "analogy": "A city map: not every trip uses the airport. Learn districts first (integration district, data district), then pick a street.",
+  "whyItMatters": "Without a map, teams pick familiar tools for every problem and create accidental complexity.",
+  "formalPoints": [
+    "Map business capability → platform category → service",
+    "Integration ≠ app dev ≠ data warehouse — different constraints",
+    "Identity and destinations cut across almost every design",
+    "Prefer fewer services with clear ownership"
+  ],
+  "commonMistakes": [
+    "Using CPI for pure UI apps or CAP for heavy B2B EDI without reason",
+    "Ignoring identity until go-live",
+    "Duplicating the same capability in three services"
+  ],
+  "howToRecognize": [
+    "Architecture workshops, portfolio rationalization, first landscape design"
+  ],
+  "howToApply": [
+    "For each initiative, write: capability, category, candidate service, rejected alternatives"
+  ],
+  "relatedIds": [
+    "btp-what",
+    "btp-platform-structure",
+    "is-what",
+    "cap-what",
+    "rap-what",
+    "bpa-what",
+    "hana-what"
+  ],
+  "glossary": [
+    {
+      "term": "Capability",
+      "definition": "Business ability (e.g., partner order intake) independent of a product name."
+    }
+  ],
+  "tags": [
+    "basic",
+    "beginner",
+    "btp",
+    "architecture"
+  ],
+  "mnemonic": "CITY MAP: Learn districts (integration, data, AI) before picking a street (service).",
+  "useCases": [
+    "Greenfield design workshop: decide if “BTP services map: what lives where” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “BTP services map: what lives where” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “BTP services map: what lives where”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Platform placement",
+      "optionA": "BTP for extension/integration",
+      "optionB": "Force all logic into core mods",
+      "whenChooseA": "Clean-core strategy",
+      "whenChooseB": "Never for sustainable ERP",
+      "risk": "Core mods block upgrades"
+    },
+    {
+      "decision": "Service count",
+      "optionA": "Few services, clear owners",
+      "optionB": "One service per team preference",
+      "whenChooseA": "Operability and cost",
+      "whenChooseB": "Hackathons only",
+      "risk": "Tool sprawl without architecture"
+    },
+    {
+      "decision": "Decision record",
+      "optionA": "Write trade-offs with constraints",
+      "optionB": "Tribal knowledge only",
+      "whenChooseA": "Always for enterprise",
+      "whenChooseB": "Never",
+      "risk": "Re-litigate every review"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-btp-services-map-intro",
+      "title": "Intro game: BTP services map: what lives where",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-btp-services-map-mastery",
+      "title": "Mastery game: BTP services map: what lives where",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "CITY MAP: Learn districts (integration, data, AI) before picking a street (service)."
+}

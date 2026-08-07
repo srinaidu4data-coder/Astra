@@ -1,0 +1,82 @@
+{
+  "id": "sec-shared-resp",
+  "title": "Shared responsibility on BTP",
+  "domainId": "security",
+  "level": "basic",
+  "summary": "Who secures what",
+  "explain": "SAP secures platform layers; you secure apps, identities, data, configs, and tenants. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Shared responsibility on BTP\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Shared responsibility on BTP, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Who secures what"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Shared responsibility on BTP without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing security"
+  ],
+  "howToApply": [
+    "Use Shared responsibility on BTP explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "security"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Shared responsibility on BTP” + one failure mode out loud — if you can't, you don't own it yet. (Shared → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Shared responsibility on BTP” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Shared responsibility on BTP” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Shared responsibility on BTP”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sec-shared-resp-intro",
+      "title": "Intro game: Shared responsibility on BTP",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sec-shared-resp-mastery",
+      "title": "Mastery game: Shared responsibility on BTP",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Shared responsibility on BTP” + one failure mode out loud — if you can't, you don't own it yet. (Shared → mechanism → failure)"
+}

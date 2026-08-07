@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Make cost a first-class design constraint with owners and budgets."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of FinOps Awareness without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use FinOps Awareness explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-finops",
+  "title": "FinOps Awareness",
+  "domainId": "operations",
+  "summary": "Make cost a first-class design constraint with owners and budgets.",
+  "explain": "Make cost a first-class design constraint with owners and budgets. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"FinOps Awareness\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain FinOps Awareness in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "ARCHITECTURE HAS A BILL: Every runtime is a monthly decision.",
+  "useCases": [
+    "Landing zone setup week: apply FinOps Awareness so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “FinOps Awareness” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “FinOps Awareness”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-finops-intro",
+      "title": "Intro game: FinOps Awareness",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-finops-mastery",
+      "title": "Mastery game: FinOps Awareness",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "ARCHITECTURE HAS A BILL: Every runtime is a monthly decision."
+}

@@ -1,0 +1,82 @@
+{
+  "id": "hana-ha",
+  "title": "Availability and recovery concepts",
+  "domainId": "hana-cloud",
+  "level": "expert",
+  "summary": "RPO/RTO thinking",
+  "explain": "Backup, replication concepts, workload classes. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Availability and recovery concepts\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Availability and recovery concepts, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "RPO/RTO thinking"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Availability and recovery concepts without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing hana-cloud"
+  ],
+  "howToApply": [
+    "Use Availability and recovery concepts explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "hana-cloud"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Availability and recovery concepts” + one failure mode out loud — if you can't, you don't own it yet. (Availability → mechanism → failure)",
+  "useCases": [
+    "Support chatbot answers policy — Availability and recovery concepts forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “Availability and recovery concepts” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Availability and recovery concepts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Answer policy",
+      "optionA": "Ground + cite or abstain",
+      "optionB": "Always invent fluent answers",
+      "whenChooseA": "Enterprise Q&A",
+      "whenChooseB": "Fiction writing",
+      "risk": "Wrong actions"
+    },
+    {
+      "decision": "Actions",
+      "optionA": "Confirm high-risk tool calls",
+      "optionB": "Autonomous spend/change",
+      "whenChooseA": "Agents with tools",
+      "whenChooseB": "Never auto high-risk",
+      "risk": "Runaway changes"
+    },
+    {
+      "decision": "Data in context",
+      "optionA": "Minimize PII in prompts",
+      "optionB": "Paste full customer records",
+      "whenChooseA": "Privacy regimes",
+      "whenChooseB": "Never paste freely",
+      "risk": "Leak via logs/providers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-hana-ha-intro",
+      "title": "Intro game: Availability and recovery concepts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-hana-ha-mastery",
+      "title": "Mastery game: Availability and recovery concepts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Availability and recovery concepts” + one failure mode out loud — if you can't, you don't own it yet. (Availability → mechanism → failure)"
+}

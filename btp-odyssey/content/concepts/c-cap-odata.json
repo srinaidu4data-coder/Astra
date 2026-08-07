@@ -1,0 +1,87 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Domain model vs service projection",
+    "OData as the common UI contract",
+    "Bindings connect runtime to DB and auth services"
+  ],
+  "commonMistakes": [
+    "Exposing whole domain model without projection discipline",
+    "Assuming CAP removes the need for authorization design"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on CAP Service & OData Projection.",
+    "List one metric or log that would prove CAP Service & OData Projection is healthy."
+  ],
+  "relatedIds": [
+    "c-ui5-odata",
+    "c-hana-hdi"
+  ],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "cap",
+    "api"
+  ],
+  "id": "c-cap-odata",
+  "title": "CAP Service & OData Projection",
+  "domainId": "cap",
+  "summary": "CDS models domain entities; services expose projections as OData APIs.",
+  "explain": "SAP Cloud Application Programming Model uses CDS to define entities, associations, and services. A service projection chooses what external consumers see. CAP can serve OData V4, handle persistence (e.g., HANA), and integrate auth. UI5 Fiori apps commonly consume CAP OData services.",
+  "analogy": "CDS is the warehouse inventory model; the service is the storefront window showing selected shelves.",
+  "whyItMatters": "Clean projections prevent leaking internal fields and clarify API contracts.",
+  "mnemonic": "EXPAND = EXPLOSION: Each $expand multiplies payload — bound it or p99 dies.",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using CAP Service & OData Projection without core mods.",
+    "Incident bridge: symptoms appear; use “CAP Service & OData Projection” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “CAP Service & OData Projection”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Query shape",
+      "optionA": "Bound $expand + $select + page",
+      "optionB": "Unbounded deep expand",
+      "whenChooseA": "Any list UX",
+      "whenChooseB": "Never for large graphs",
+      "risk": "p99 collapse"
+    },
+    {
+      "decision": "Chatty vs chunky",
+      "optionA": "Fewer round-trips with projections",
+      "optionB": "N+1 from UI",
+      "whenChooseA": "Mobile/high latency",
+      "whenChooseB": "LAN demos",
+      "risk": "Latency budget death"
+    },
+    {
+      "decision": "Caching",
+      "optionA": "Cache stable reference data",
+      "optionB": "Cache personalized secured data carelessly",
+      "whenChooseA": "Reference data",
+      "whenChooseB": "Sensitive per-user",
+      "risk": "Stale or leak"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-cap-odata-intro",
+      "title": "Intro game: CAP Service & OData Projection",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-cap-odata-mastery",
+      "title": "Mastery game: CAP Service & OData Projection",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "EXPAND = EXPLOSION: Each $expand multiplies payload — bound it or p99 dies."
+}

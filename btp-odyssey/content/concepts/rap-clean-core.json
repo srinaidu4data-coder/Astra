@@ -1,0 +1,82 @@
+{
+  "id": "rap-clean-core",
+  "title": "Clean-core extension strategy",
+  "domainId": "rap-abap",
+  "level": "expert",
+  "summary": "Upgrade-safe extensions",
+  "explain": "Prefer released APIs, key-user extensibility, RAP extensions; avoid core mods. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Clean-core extension strategy\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Clean-core extension strategy, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Upgrade-safe extensions"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Clean-core extension strategy without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing rap-abap"
+  ],
+  "howToApply": [
+    "Use Clean-core extension strategy explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "rap-abap"
+  ],
+  "mnemonic": "DON'T CARVE THE CROWN: Extend the kingdom; don't chisel the crown jewels (standard code).",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using Clean-core extension strategy without core mods.",
+    "Incident bridge: symptoms appear; use “Clean-core extension strategy” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Clean-core extension strategy”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Logic placement",
+      "optionA": "RAP on-stack for BO fidelity",
+      "optionB": "CAP side-by-side for velocity",
+      "whenChooseA": "Transactional purity",
+      "whenChooseB": "Differentiating UX/API",
+      "risk": "Dual-write if both write same truth"
+    },
+    {
+      "decision": "Upgrade",
+      "optionA": "Released APIs only",
+      "optionB": "Implicit internal APIs",
+      "whenChooseA": "Clean core",
+      "whenChooseB": "Throwaway",
+      "risk": "Break on upgrade"
+    },
+    {
+      "decision": "Team fit",
+      "optionA": "Match to ABAP vs Node skills",
+      "optionB": "Ignore skills",
+      "whenChooseA": "Year-1 delivery",
+      "whenChooseB": "Never ignore",
+      "risk": "Schedule slip"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-rap-clean-core-intro",
+      "title": "Intro game: Clean-core extension strategy",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-rap-clean-core-mastery",
+      "title": "Mastery game: Clean-core extension strategy",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "DON'T CARVE THE CROWN: Extend the kingdom; don't chisel the crown jewels (standard code)."
+}

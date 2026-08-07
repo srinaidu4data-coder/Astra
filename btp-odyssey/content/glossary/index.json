@@ -1,0 +1,65 @@
+{
+  "version": "1.0.0",
+  "terms": [
+    {
+      "term": "Entitlement",
+      "definition": "Right to use a service/plan up to a quota.",
+      "conceptId": "c-global-account",
+      "domainId": "operations"
+    },
+    {
+      "term": "Subaccount",
+      "definition": "Isolated slice for projects/stages/regions under a global account.",
+      "conceptId": "c-global-account",
+      "domainId": "operations"
+    },
+    {
+      "term": "OAuth2UserTokenExchange",
+      "definition": "User token exchanged for a token acceptable to the target resource (simplified teaching model).",
+      "conceptId": "c-destination",
+      "domainId": "integration"
+    },
+    {
+      "term": "Scope",
+      "definition": "A named permission a token may include.",
+      "conceptId": "c-xsuaa-roles",
+      "domainId": "security"
+    },
+    {
+      "term": "Audience (aud)",
+      "definition": "Intended recipient of the token; resource rejects wrong audience.",
+      "conceptId": "c-xsuaa-roles",
+      "domainId": "security"
+    },
+    {
+      "term": "Role collection",
+      "definition": "Admin-facing bundle assigned to users/groups.",
+      "conceptId": "c-xsuaa-roles",
+      "domainId": "security"
+    },
+    {
+      "term": "401 Unauthorized",
+      "definition": "Authentication failed or token rejected (simplified teaching).",
+      "conceptId": "c-jwt-audience",
+      "domainId": "security"
+    },
+    {
+      "term": "403 Forbidden",
+      "definition": "Authenticated but not authorized.",
+      "conceptId": "c-scope-403",
+      "domainId": "security"
+    },
+    {
+      "term": "OData",
+      "definition": "OASIS REST protocol commonly used by SAP UIs and CAP services.",
+      "conceptId": "c-cap-odata",
+      "domainId": "cap"
+    },
+    {
+      "term": "CDS",
+      "definition": "Core Data Services — declarative data/service modeling language used by CAP/RAP ecosystems.",
+      "conceptId": "c-cap-odata",
+      "domainId": "cap"
+    }
+  ]
+}

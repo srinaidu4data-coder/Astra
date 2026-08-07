@@ -1,0 +1,82 @@
+{
+  "id": "ds-federation",
+  "title": "Federation vs replication",
+  "domainId": "datasphere",
+  "level": "advanced",
+  "summary": "Move queries or move data",
+  "explain": "Trade latency, cost, residency. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Federation vs replication\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Federation vs replication, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Move queries or move data"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Federation vs replication without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing datasphere"
+  ],
+  "howToApply": [
+    "Use Federation vs replication explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "datasphere"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Federation vs replication” + one failure mode out loud — if you can't, you don't own it yet. (Federation → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Federation vs replication” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Federation vs replication” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Federation vs replication”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Semantic layer",
+      "optionA": "Governed metrics in semantic models",
+      "optionB": "Each report invents definitions",
+      "whenChooseA": "Enterprise KPIs",
+      "whenChooseB": "Personal sandbox",
+      "risk": "Conflicting numbers destroy trust"
+    },
+    {
+      "decision": "Federation vs replicate",
+      "optionA": "Federate when freshness + governance allow",
+      "optionB": "Copy everything always",
+      "whenChooseA": "Latency/cost trade-offs",
+      "whenChooseB": "When offline/performance requires",
+      "risk": "Blind copies create residency/cost issues"
+    },
+    {
+      "decision": "Spaces",
+      "optionA": "Space boundaries by ownership",
+      "optionB": "One mega space",
+      "whenChooseA": "Multi-team data products",
+      "whenChooseB": "Tiny single team",
+      "risk": "Access and cost blur"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ds-federation-intro",
+      "title": "Intro game: Federation vs replication",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ds-federation-mastery",
+      "title": "Mastery game: Federation vs replication",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Federation vs replication” + one failure mode out loud — if you can't, you don't own it yet. (Federation → mechanism → failure)"
+}

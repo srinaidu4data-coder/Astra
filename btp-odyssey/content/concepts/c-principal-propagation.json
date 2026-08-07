@@ -1,0 +1,83 @@
+{
+  "level": "advanced",
+  "formalPoints": [
+    "Forward the end-user identity across hops instead of a technical user everywhere.",
+    "Domain: security",
+    "Level: advanced"
+  ],
+  "commonMistakes": [
+    "Memorizing the name without a concrete example of Principal Propagation (concept)"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on Principal Propagation (concept).",
+    "List one metric or log that would prove Principal Propagation (concept) is healthy."
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "security",
+    "hybrid"
+  ],
+  "id": "c-principal-propagation",
+  "title": "Principal Propagation (concept)",
+  "domainId": "security",
+  "summary": "Forward the end-user identity across hops instead of a technical user everywhere.",
+  "explain": "Principal propagation passes the authenticated user identity to downstream systems so authorizations remain user-centric. Technical users are simpler but destroy accountability and over-privilege systems. Hybrid landscapes with Cloud Connector often involve propagation patterns (details simplified in this sim).",
+  "analogy": "Showing your own ID at each door vs sending a courier with a master skeleton key.",
+  "whyItMatters": "Audit trails and least privilege depend on who actually acted.",
+  "mnemonic": "NAME TAG TRAVELS: The human's name tag must ride every hop for audit.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Principal Propagation (concept)” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Principal Propagation (concept)” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Principal Propagation (concept)”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-principal-propagation-intro",
+      "title": "Intro game: Principal Propagation (concept)",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-principal-propagation-mastery",
+      "title": "Mastery game: Principal Propagation (concept)",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME TAG TRAVELS: The human's name tag must ride every hop for audit."
+}

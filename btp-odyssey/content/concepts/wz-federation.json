@@ -1,0 +1,82 @@
+{
+  "id": "wz-federation",
+  "title": "Content federation",
+  "domainId": "workzone",
+  "level": "advanced",
+  "summary": "Bring apps together",
+  "explain": "Integrate remote content with identity alignment. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Content federation\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Content federation, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Bring apps together"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Content federation without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing workzone"
+  ],
+  "howToApply": [
+    "Use Content federation explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "workzone"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Content federation” + one failure mode out loud — if you can't, you don't own it yet. (Content → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Content federation” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Content federation” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Content federation”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Content governance",
+      "optionA": "Role-based content + review",
+      "optionB": "Anyone publishes anywhere",
+      "whenChooseA": "Enterprise portal",
+      "whenChooseB": "Team wiki only",
+      "risk": "Stale/wrong content at scale"
+    },
+    {
+      "decision": "Federation",
+      "optionA": "Federate with trust + latency budgets",
+      "optionB": "Deep copy everything",
+      "whenChooseA": "Multi-source workplaces",
+      "whenChooseB": "Single source simple sites",
+      "risk": "Latency and auth debt"
+    },
+    {
+      "decision": "Perf",
+      "optionA": "Lazy load + measure RUM",
+      "optionB": "Ship giant bundles",
+      "whenChooseA": "Global users",
+      "whenChooseB": "LAN-only demos",
+      "risk": "UX SLO fails"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-wz-federation-intro",
+      "title": "Intro game: Content federation",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-wz-federation-mastery",
+      "title": "Mastery game: Content federation",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Content federation” + one failure mode out loud — if you can't, you don't own it yet. (Content → mechanism → failure)"
+}

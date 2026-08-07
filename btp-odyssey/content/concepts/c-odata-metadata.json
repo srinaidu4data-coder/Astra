@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Service describes entity sets/types; client/UI must match versions."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of OData Metadata without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use OData Metadata explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-odata-metadata",
+  "title": "OData Metadata",
+  "domainId": "cap",
+  "summary": "Service describes entity sets/types; client/UI must match versions.",
+  "explain": "Service describes entity sets/types; client/UI must match versions. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"OData Metadata\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain OData Metadata in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "EXPAND = EXPLOSION: Each $expand multiplies payload — bound it or p99 dies.",
+  "useCases": [
+    "Greenfield design workshop: decide if “OData Metadata” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “OData Metadata” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “OData Metadata”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Query shape",
+      "optionA": "Bound $expand + $select + page",
+      "optionB": "Unbounded deep expand",
+      "whenChooseA": "Any list UX",
+      "whenChooseB": "Never for large graphs",
+      "risk": "p99 collapse"
+    },
+    {
+      "decision": "Chatty vs chunky",
+      "optionA": "Fewer round-trips with projections",
+      "optionB": "N+1 from UI",
+      "whenChooseA": "Mobile/high latency",
+      "whenChooseB": "LAN demos",
+      "risk": "Latency budget death"
+    },
+    {
+      "decision": "Caching",
+      "optionA": "Cache stable reference data",
+      "optionB": "Cache personalized secured data carelessly",
+      "whenChooseA": "Reference data",
+      "whenChooseB": "Sensitive per-user",
+      "risk": "Stale or leak"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-odata-metadata-intro",
+      "title": "Intro game: OData Metadata",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-odata-metadata-mastery",
+      "title": "Mastery game: OData Metadata",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "EXPAND = EXPLOSION: Each $expand multiplies payload — bound it or p99 dies."
+}

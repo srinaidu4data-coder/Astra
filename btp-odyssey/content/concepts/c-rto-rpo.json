@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Recovery time and data loss objectives shape backup/HA design."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of RTO/RPO Concepts without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use RTO/RPO Concepts explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-rto-rpo",
+  "title": "RTO/RPO Concepts",
+  "domainId": "operations",
+  "summary": "Recovery time and data loss objectives shape backup/HA design.",
+  "explain": "Recovery time and data loss objectives shape backup/HA design. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"RTO/RPO Concepts\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain RTO/RPO Concepts in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "NAME IT TO TAME IT: Say “RTO/RPO Concepts” + one failure mode out loud — if you can't, you don't own it yet. (RTO/RPO → mechanism → failure)",
+  "useCases": [
+    "Landing zone setup week: apply RTO/RPO Concepts so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “RTO/RPO Concepts” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “RTO/RPO Concepts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-rto-rpo-intro",
+      "title": "Intro game: RTO/RPO Concepts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-rto-rpo-mastery",
+      "title": "Mastery game: RTO/RPO Concepts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “RTO/RPO Concepts” + one failure mode out loud — if you can't, you don't own it yet. (RTO/RPO → mechanism → failure)"
+}

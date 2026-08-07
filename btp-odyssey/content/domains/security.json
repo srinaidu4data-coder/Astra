@@ -1,0 +1,25 @@
+{
+  "id": "security",
+  "title": "BTP Security and Identity",
+  "districtName": "Trust Fortress",
+  "summary": "BTP Security and Identity learning district in the Odyssey universe.",
+  "sapProducts": [
+    "SAP Cloud Identity Services",
+    "XSUAA concepts"
+  ],
+  "specializations": [
+    "Security Architect"
+  ],
+  "confidence": "medium",
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ]
+}

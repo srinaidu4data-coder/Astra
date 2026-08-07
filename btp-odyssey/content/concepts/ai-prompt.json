@@ -1,0 +1,82 @@
+{
+  "id": "ai-prompt",
+  "title": "Prompt design for ops",
+  "domainId": "ai",
+  "level": "advanced",
+  "summary": "Clear tasks and constraints",
+  "explain": "Specify role, format, allowed tools, and refusal cases. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Prompt design for ops\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Prompt design for ops, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Clear tasks and constraints"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Prompt design for ops without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing ai"
+  ],
+  "howToApply": [
+    "Use Prompt design for ops explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "ai"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Prompt design for ops” + one failure mode out loud — if you can't, you don't own it yet. (Prompt → mechanism → failure)",
+  "useCases": [
+    "Support chatbot answers policy — Prompt design for ops forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “Prompt design for ops” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Prompt design for ops”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Answer policy",
+      "optionA": "Ground + cite or abstain",
+      "optionB": "Always invent fluent answers",
+      "whenChooseA": "Enterprise Q&A",
+      "whenChooseB": "Fiction writing",
+      "risk": "Wrong actions"
+    },
+    {
+      "decision": "Actions",
+      "optionA": "Confirm high-risk tool calls",
+      "optionB": "Autonomous spend/change",
+      "whenChooseA": "Agents with tools",
+      "whenChooseB": "Never auto high-risk",
+      "risk": "Runaway changes"
+    },
+    {
+      "decision": "Data in context",
+      "optionA": "Minimize PII in prompts",
+      "optionB": "Paste full customer records",
+      "whenChooseA": "Privacy regimes",
+      "whenChooseB": "Never paste freely",
+      "risk": "Leak via logs/providers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ai-prompt-intro",
+      "title": "Intro game: Prompt design for ops",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ai-prompt-mastery",
+      "title": "Mastery game: Prompt design for ops",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Prompt design for ops” + one failure mode out loud — if you can't, you don't own it yet. (Prompt → mechanism → failure)"
+}

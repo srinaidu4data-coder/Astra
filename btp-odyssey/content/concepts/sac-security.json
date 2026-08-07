@@ -1,0 +1,82 @@
+{
+  "id": "sac-security",
+  "title": "SAC security and row-level",
+  "domainId": "sac",
+  "level": "expert",
+  "summary": "Who sees which numbers",
+  "explain": "Misconfigured security leaks financials. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"SAC security and row-level\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without SAC security and row-level, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Who sees which numbers"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of SAC security and row-level without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing sac"
+  ],
+  "howToApply": [
+    "Use SAC security and row-level explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "sac"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “SAC security and row-level” + one failure mode out loud — if you can't, you don't own it yet. (SAC → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “SAC security and row-level” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “SAC security and row-level” to classify the failing hop before changing config.",
+    "Finance and Sales disagree on “revenue” — SAC security and row-level forces one productized definition."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Live vs import",
+      "optionA": "Live for current operational truth",
+      "optionB": "Import for snapshot performance",
+      "whenChooseA": "Need freshness",
+      "whenChooseB": "Need offline/perf snapshots",
+      "risk": "Wrong mode misleads decisions"
+    },
+    {
+      "decision": "Security",
+      "optionA": "Model + folder + row constraints",
+      "optionB": "Share all stories widely",
+      "whenChooseA": "Sensitive KPIs",
+      "whenChooseB": "Public non-sensitive only",
+      "risk": "Export leaks"
+    },
+    {
+      "decision": "Metric ownership",
+      "optionA": "One definition in semantic layer",
+      "optionB": "Story-local calculations",
+      "whenChooseA": "Enterprise reporting",
+      "whenChooseB": "Personal exploration",
+      "risk": "Conflicting revenue numbers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sac-security-intro",
+      "title": "Intro game: SAC security and row-level",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sac-security-mastery",
+      "title": "Mastery game: SAC security and row-level",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “SAC security and row-level” + one failure mode out loud — if you can't, you don't own it yet. (SAC → mechanism → failure)"
+}

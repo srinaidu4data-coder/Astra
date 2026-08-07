@@ -1,0 +1,43 @@
+{
+  "id": "cap-auth",
+  "title": "CAP authentication and authorization",
+  "domainId": "cap",
+  "description": "CAP authentication and authorization. Evidence is demonstration-based in simulation, not XP.",
+  "level": "advanced",
+  "prerequisites": [
+    "cap-odata-basics",
+    "found-identity"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate CAP authentication and authorization in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply CAP authentication and authorization in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit CAP authentication and authorization after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP CAP",
+      "sourceUrl": "https://cap.cloud.sap/",
+      "sourceTitle": "SAP CAP documentation",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "integration",
+  "title": "Integration Suite",
+  "districtName": "Integration Transit Network",
+  "summary": "Integration Suite learning district in the Odyssey universe.",
+  "sapProducts": [
+    "SAP Integration Suite",
+    "SAP Cloud Integration"
+  ],
+  "specializations": [
+    "Integration Developer"
+  ],
+  "confidence": "medium",
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ]
+}

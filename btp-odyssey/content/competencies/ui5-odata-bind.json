@@ -1,0 +1,43 @@
+{
+  "id": "ui5-odata-bind",
+  "title": "Connect UI5 to OData via destination",
+  "domainId": "ui5-fiori",
+  "description": "Connect UI5 to OData via destination. Evidence is demonstration-based in simulation, not XP.",
+  "level": "basic",
+  "prerequisites": [
+    "ui5-mvc",
+    "cap-odata-basics"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Connect UI5 to OData via destination in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Connect UI5 to OData via destination in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Connect UI5 to OData via destination after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAPUI5",
+      "sourceUrl": "https://ui5.sap.com/",
+      "sourceTitle": "SAPUI5 documentation",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

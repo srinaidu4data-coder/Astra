@@ -1,0 +1,82 @@
+{
+  "id": "is-observability",
+  "title": "Integration observability",
+  "domainId": "integration",
+  "level": "expert",
+  "summary": "MPls, traces, correlation",
+  "explain": "Correlate partner message IDs end-to-end. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Integration observability\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Integration observability, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "MPls, traces, correlation"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Integration observability without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing integration"
+  ],
+  "howToApply": [
+    "Use Integration observability explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "integration"
+  ],
+  "mnemonic": "THREE CAMERAS: Logs dialogue, metrics score, traces camera moves — correlate them.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Integration observability” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Integration observability” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Integration observability”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Sync vs event",
+      "optionA": "Event-driven projection from SoR",
+      "optionB": "Dual-write both systems in one UI tx",
+      "whenChooseA": "Loose coupling, fan-out consumers",
+      "whenChooseB": "Strict same-transaction need (rare & costly)",
+      "risk": "Dual-write desync under partial failure"
+    },
+    {
+      "decision": "Delivery",
+      "optionA": "At-least-once + idempotent handlers",
+      "optionB": "Assume exactly-once network",
+      "whenChooseA": "All partner and cloud integrations",
+      "whenChooseB": "Never assume — networks retry",
+      "risk": "Duplicates become double posts"
+    },
+    {
+      "decision": "Error path",
+      "optionA": "DLQ + owner + replay runbook",
+      "optionB": "Drop poison silently",
+      "whenChooseA": "Production integrations",
+      "whenChooseB": "Never",
+      "risk": "Silent loss destroys trust"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-is-observability-intro",
+      "title": "Intro game: Integration observability",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-is-observability-mastery",
+      "title": "Mastery game: Integration observability",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "THREE CAMERAS: Logs dialogue, metrics score, traces camera moves — correlate them."
+}

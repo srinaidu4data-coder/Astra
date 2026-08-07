@@ -1,0 +1,82 @@
+{
+  "id": "ai-cost-latency",
+  "title": "AI cost and latency trade-offs",
+  "domainId": "ai",
+  "level": "advanced",
+  "summary": "Budgets and model routing",
+  "explain": "Not every task needs the largest model. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"AI cost and latency trade-offs\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without AI cost and latency trade-offs, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Budgets and model routing"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of AI cost and latency trade-offs without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing ai"
+  ],
+  "howToApply": [
+    "Use AI cost and latency trade-offs explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "ai"
+  ],
+  "mnemonic": "ARCHITECTURE HAS A BILL: Every runtime is a monthly decision.",
+  "useCases": [
+    "Support chatbot answers policy — AI cost and latency trade-offs forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “AI cost and latency trade-offs” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “AI cost and latency trade-offs”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Answer policy",
+      "optionA": "Ground + cite or abstain",
+      "optionB": "Always invent fluent answers",
+      "whenChooseA": "Enterprise Q&A",
+      "whenChooseB": "Fiction writing",
+      "risk": "Wrong actions"
+    },
+    {
+      "decision": "Actions",
+      "optionA": "Confirm high-risk tool calls",
+      "optionB": "Autonomous spend/change",
+      "whenChooseA": "Agents with tools",
+      "whenChooseB": "Never auto high-risk",
+      "risk": "Runaway changes"
+    },
+    {
+      "decision": "Data in context",
+      "optionA": "Minimize PII in prompts",
+      "optionB": "Paste full customer records",
+      "whenChooseA": "Privacy regimes",
+      "whenChooseB": "Never paste freely",
+      "risk": "Leak via logs/providers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ai-cost-latency-intro",
+      "title": "Intro game: AI cost and latency trade-offs",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ai-cost-latency-mastery",
+      "title": "Mastery game: AI cost and latency trade-offs",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "ARCHITECTURE HAS A BILL: Every runtime is a monthly decision."
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@btp-odyssey/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@btp-odyssey/assessment": "0.1.0",
+    "@btp-odyssey/competency": "0.1.0",
+    "@btp-odyssey/content-engine": "0.1.0",
+    "@btp-odyssey/shared": "0.1.0",
+    "@btp-odyssey/simulation": "0.1.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

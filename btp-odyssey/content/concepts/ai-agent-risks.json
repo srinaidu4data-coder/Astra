@@ -1,0 +1,82 @@
+{
+  "id": "ai-agent-risks",
+  "title": "Agentic AI risks on BTP landscapes",
+  "domainId": "ai",
+  "level": "expert",
+  "summary": "Tools + autonomy",
+  "explain": "Tool calling needs authz, audit, and kill switches. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Agentic AI risks on BTP landscapes\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Agentic AI risks on BTP landscapes, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Tools + autonomy"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Agentic AI risks on BTP landscapes without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing ai"
+  ],
+  "howToApply": [
+    "Use Agentic AI risks on BTP landscapes explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "ai"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Agentic AI risks on BTP landscapes” + one failure mode out loud — if you can't, you don't own it yet. (Agentic → mechanism → failure)",
+  "useCases": [
+    "Support chatbot answers policy — Agentic AI risks on BTP landscapes forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “Agentic AI risks on BTP landscapes” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Agentic AI risks on BTP landscapes”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Answer policy",
+      "optionA": "Ground + cite or abstain",
+      "optionB": "Always invent fluent answers",
+      "whenChooseA": "Enterprise Q&A",
+      "whenChooseB": "Fiction writing",
+      "risk": "Wrong actions"
+    },
+    {
+      "decision": "Actions",
+      "optionA": "Confirm high-risk tool calls",
+      "optionB": "Autonomous spend/change",
+      "whenChooseA": "Agents with tools",
+      "whenChooseB": "Never auto high-risk",
+      "risk": "Runaway changes"
+    },
+    {
+      "decision": "Data in context",
+      "optionA": "Minimize PII in prompts",
+      "optionB": "Paste full customer records",
+      "whenChooseA": "Privacy regimes",
+      "whenChooseB": "Never paste freely",
+      "risk": "Leak via logs/providers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ai-agent-risks-intro",
+      "title": "Intro game: Agentic AI risks on BTP landscapes",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ai-agent-risks-mastery",
+      "title": "Mastery game: Agentic AI risks on BTP landscapes",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Agentic AI risks on BTP landscapes” + one failure mode out loud — if you can't, you don't own it yet. (Agentic → mechanism → failure)"
+}

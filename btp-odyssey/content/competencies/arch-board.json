@@ -1,0 +1,42 @@
+{
+  "id": "arch-board",
+  "title": "Defend design before architecture board",
+  "domainId": "architecture",
+  "description": "Defend design before architecture board. Evidence is demonstration-based in simulation, not XP.",
+  "level": "advanced",
+  "prerequisites": [
+    "arch-side-by-side"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Defend design before architecture board in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Defend design before architecture board in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Defend design before architecture board after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

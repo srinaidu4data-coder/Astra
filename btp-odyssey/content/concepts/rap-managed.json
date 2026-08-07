@@ -1,0 +1,82 @@
+{
+  "id": "rap-managed",
+  "title": "Managed RAP scenario",
+  "domainId": "rap-abap",
+  "level": "basic",
+  "summary": "Framework handles much persistence",
+  "explain": "Managed scenarios reduce boilerplate for standard CRUD. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Managed RAP scenario\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Managed RAP scenario, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Framework handles much persistence"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Managed RAP scenario without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing rap-abap"
+  ],
+  "howToApply": [
+    "Use Managed RAP scenario explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "rap-abap"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Managed RAP scenario” + one failure mode out loud — if you can't, you don't own it yet. (Managed → mechanism → failure)",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using Managed RAP scenario without core mods.",
+    "Incident bridge: symptoms appear; use “Managed RAP scenario” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Managed RAP scenario”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "RAP managed vs unmanaged",
+      "optionA": "Managed RAP for standard CRUD patterns",
+      "optionB": "Unmanaged for special persistence control",
+      "whenChooseA": "Standard BO lifecycle with framework help",
+      "whenChooseB": "Complex legacy persistence you must own",
+      "risk": "Unmanaged increases maintenance surface"
+    },
+    {
+      "decision": "Clean core",
+      "optionA": "Released APIs + extensions",
+      "optionB": "Modify SAP standard",
+      "whenChooseA": "Always for sustainable landscapes",
+      "whenChooseB": "Never — false short-term speed",
+      "risk": "Core mods poison upgrades"
+    },
+    {
+      "decision": "Draft",
+      "optionA": "Draft-enabled long edits",
+      "optionB": "Immediate save only",
+      "whenChooseA": "Multi-step UX with exclusive locks",
+      "whenChooseB": "Simple atomic transactions",
+      "risk": "Draft without cleanup creates lock/orphan debt"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-rap-managed-intro",
+      "title": "Intro game: Managed RAP scenario",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-rap-managed-mastery",
+      "title": "Mastery game: Managed RAP scenario",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Managed RAP scenario” + one failure mode out loud — if you can't, you don't own it yet. (Managed → mechanism → failure)"
+}

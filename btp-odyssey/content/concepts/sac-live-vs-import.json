@@ -1,0 +1,82 @@
+{
+  "id": "sac-live-vs-import",
+  "title": "Live vs import connections",
+  "domainId": "sac",
+  "level": "advanced",
+  "summary": "Latency and control trade-offs",
+  "explain": "Live hits source systems; import snapshots data. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Live vs import connections\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Live vs import connections, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Latency and control trade-offs"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Live vs import connections without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing sac"
+  ],
+  "howToApply": [
+    "Use Live vs import connections explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "sac"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Live vs import connections” + one failure mode out loud — if you can't, you don't own it yet. (Live → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Live vs import connections” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Live vs import connections” to classify the failing hop before changing config.",
+    "Finance and Sales disagree on “revenue” — Live vs import connections forces one productized definition."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Live vs import",
+      "optionA": "Live for current operational truth",
+      "optionB": "Import for snapshot performance",
+      "whenChooseA": "Need freshness",
+      "whenChooseB": "Need offline/perf snapshots",
+      "risk": "Wrong mode misleads decisions"
+    },
+    {
+      "decision": "Security",
+      "optionA": "Model + folder + row constraints",
+      "optionB": "Share all stories widely",
+      "whenChooseA": "Sensitive KPIs",
+      "whenChooseB": "Public non-sensitive only",
+      "risk": "Export leaks"
+    },
+    {
+      "decision": "Metric ownership",
+      "optionA": "One definition in semantic layer",
+      "optionB": "Story-local calculations",
+      "whenChooseA": "Enterprise reporting",
+      "whenChooseB": "Personal exploration",
+      "risk": "Conflicting revenue numbers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sac-live-vs-import-intro",
+      "title": "Intro game: Live vs import connections",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sac-live-vs-import-mastery",
+      "title": "Mastery game: Live vs import connections",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Live vs import connections” + one failure mode out loud — if you can't, you don't own it yet. (Live → mechanism → failure)"
+}

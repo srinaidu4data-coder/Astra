@@ -1,0 +1,83 @@
+{
+  "level": "advanced",
+  "formalPoints": [
+    "On-stack vs side-by-side",
+    "Clean-core alignment",
+    "Team skill & ops ownership matter"
+  ],
+  "commonMistakes": [
+    "CAP always / RAP always dogma",
+    "Ignoring identity propagation differences"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on CAP vs RAP Decision.",
+    "List one metric or log that would prove CAP vs RAP Decision is healthy."
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "architecture"
+  ],
+  "id": "c-cap-vs-rap",
+  "title": "CAP vs RAP Decision",
+  "domainId": "architecture",
+  "summary": "Choose side-by-side CAP vs on-stack RAP using constraints, not slogans.",
+  "explain": "RAP (ABAP RESTful Application Programming Model) excels for clean-core transactional extensions close to ABAP business objects. CAP excels for cloud-native side-by-side services, multi-target polyglot landscapes, and event-friendly APIs. Real decisions weigh data residency of core objects, team skills, upgrade impact, latency, UX channel, and integration style.",
+  "analogy": "Renovate the kitchen in-place (RAP) vs build a catering annex (CAP) — both feed guests; plumbing differs.",
+  "whyItMatters": "Wrong default creates upgrade pain or unnecessary dual stacks.",
+  "mnemonic": "KNIGHT vs BISHOP: RAP knight stays near the king (core); CAP bishop ranges side-by-side.",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using CAP vs RAP Decision without core mods.",
+    "Incident bridge: symptoms appear; use “CAP vs RAP Decision” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “CAP vs RAP Decision”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Platform placement",
+      "optionA": "BTP for extension/integration",
+      "optionB": "Force all logic into core mods",
+      "whenChooseA": "Clean-core strategy",
+      "whenChooseB": "Never for sustainable ERP",
+      "risk": "Core mods block upgrades"
+    },
+    {
+      "decision": "Service count",
+      "optionA": "Few services, clear owners",
+      "optionB": "One service per team preference",
+      "whenChooseA": "Operability and cost",
+      "whenChooseB": "Hackathons only",
+      "risk": "Tool sprawl without architecture"
+    },
+    {
+      "decision": "Decision record",
+      "optionA": "Write trade-offs with constraints",
+      "optionB": "Tribal knowledge only",
+      "whenChooseA": "Always for enterprise",
+      "whenChooseB": "Never",
+      "risk": "Re-litigate every review"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-cap-vs-rap-intro",
+      "title": "Intro game: CAP vs RAP Decision",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-cap-vs-rap-mastery",
+      "title": "Mastery game: CAP vs RAP Decision",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "KNIGHT vs BISHOP: RAP knight stays near the king (core); CAP bishop ranges side-by-side."
+}

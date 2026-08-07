@@ -1,0 +1,82 @@
+{
+  "id": "wz-what",
+  "title": "Build Work Zone concepts",
+  "domainId": "workzone",
+  "level": "basic",
+  "summary": "Digital workplace",
+  "explain": "Sites, workspaces, cards, federated content. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Build Work Zone concepts\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Build Work Zone concepts, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Digital workplace"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Build Work Zone concepts without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing workzone"
+  ],
+  "howToApply": [
+    "Use Build Work Zone concepts explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "workzone"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Build Work Zone concepts” + one failure mode out loud — if you can't, you don't own it yet. (Build → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “Build Work Zone concepts” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Build Work Zone concepts” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Build Work Zone concepts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Content governance",
+      "optionA": "Role-based content + review",
+      "optionB": "Anyone publishes anywhere",
+      "whenChooseA": "Enterprise portal",
+      "whenChooseB": "Team wiki only",
+      "risk": "Stale/wrong content at scale"
+    },
+    {
+      "decision": "Federation",
+      "optionA": "Federate with trust + latency budgets",
+      "optionB": "Deep copy everything",
+      "whenChooseA": "Multi-source workplaces",
+      "whenChooseB": "Single source simple sites",
+      "risk": "Latency and auth debt"
+    },
+    {
+      "decision": "Perf",
+      "optionA": "Lazy load + measure RUM",
+      "optionB": "Ship giant bundles",
+      "whenChooseA": "Global users",
+      "whenChooseB": "LAN-only demos",
+      "risk": "UX SLO fails"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-wz-what-intro",
+      "title": "Intro game: Build Work Zone concepts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-wz-what-mastery",
+      "title": "Mastery game: Build Work Zone concepts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Build Work Zone concepts” + one failure mode out loud — if you can't, you don't own it yet. (Build → mechanism → failure)"
+}

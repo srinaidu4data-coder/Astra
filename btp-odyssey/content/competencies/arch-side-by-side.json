@@ -1,0 +1,42 @@
+{
+  "id": "arch-side-by-side",
+  "title": "Propose a side-by-side BTP design",
+  "domainId": "architecture",
+  "description": "Propose a side-by-side BTP design. Evidence is demonstration-based in simulation, not XP.",
+  "level": "basic",
+  "prerequisites": [
+    "found-architecture"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Propose a side-by-side BTP design in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Propose a side-by-side BTP design in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Propose a side-by-side BTP design after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

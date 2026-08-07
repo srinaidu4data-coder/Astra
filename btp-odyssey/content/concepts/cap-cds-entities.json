@@ -1,0 +1,82 @@
+{
+  "id": "cap-cds-entities",
+  "title": "CDS entities and associations",
+  "domainId": "cap",
+  "level": "basic",
+  "summary": "Domain modeling",
+  "explain": "Entities model data; associations/compositions express relationships. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"CDS entities and associations\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without CDS entities and associations, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Domain modeling"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of CDS entities and associations without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing cap"
+  ],
+  "howToApply": [
+    "Use CDS entities and associations explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "cap"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “CDS entities and associations” + one failure mode out loud — if you can't, you don't own it yet. (CDS → mechanism → failure)",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using CDS entities and associations without core mods.",
+    "Incident bridge: symptoms appear; use “CDS entities and associations” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “CDS entities and associations”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Extension style",
+      "optionA": "CAP side-by-side service",
+      "optionB": "On-stack RAP near BO",
+      "whenChooseA": "Differentiating UX/API velocity, multi-cloud events",
+      "whenChooseB": "Tight transactional fidelity to S/4 BO",
+      "risk": "Wrong placement creates dual-write or upgrade pain"
+    },
+    {
+      "decision": "API surface",
+      "optionA": "Narrow projections + actions",
+      "optionB": "Expose full persistence model",
+      "whenChooseA": "Stable contracts for consumers",
+      "whenChooseB": "Internal-only tools with no external clients",
+      "risk": "Wide APIs couple consumers to schema churn"
+    },
+    {
+      "decision": "Persistence",
+      "optionA": "HDI-owned schema with least privilege",
+      "optionB": "Shared ad-hoc schema",
+      "whenChooseA": "Team isolation and CI deploys",
+      "whenChooseB": "Throwaway spike",
+      "risk": "Shared schemas block ownership and safe deploy"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-cap-cds-entities-intro",
+      "title": "Intro game: CDS entities and associations",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-cap-cds-entities-mastery",
+      "title": "Mastery game: CDS entities and associations",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “CDS entities and associations” + one failure mode out loud — if you can't, you don't own it yet. (CDS → mechanism → failure)"
+}

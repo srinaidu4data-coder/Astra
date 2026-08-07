@@ -1,0 +1,43 @@
+{
+  "id": "arch-reverse",
+  "title": "Reverse-engineer inherited landscape",
+  "domainId": "architecture",
+  "description": "Reverse-engineer inherited landscape. Evidence is demonstration-based in simulation, not XP.",
+  "level": "expert",
+  "prerequisites": [
+    "arch-board",
+    "ops-incident-basics"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Reverse-engineer inherited landscape in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Reverse-engineer inherited landscape in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Reverse-engineer inherited landscape after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

@@ -1,0 +1,82 @@
+{
+  "id": "ops-observability",
+  "title": "Logs metrics traces",
+  "domainId": "operations",
+  "level": "advanced",
+  "summary": "Three pillars",
+  "explain": "Correlate before guessing. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Logs metrics traces\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Logs metrics traces, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Three pillars"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Logs metrics traces without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing operations"
+  ],
+  "howToApply": [
+    "Use Logs metrics traces explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "operations"
+  ],
+  "mnemonic": "THREE CAMERAS: Logs dialogue, metrics score, traces camera moves — correlate them.",
+  "useCases": [
+    "Landing zone setup week: apply Logs metrics traces so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “Logs metrics traces” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Logs metrics traces”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-ops-observability-intro",
+      "title": "Intro game: Logs metrics traces",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-ops-observability-mastery",
+      "title": "Mastery game: Logs metrics traces",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "THREE CAMERAS: Logs dialogue, metrics score, traces camera moves — correlate them."
+}

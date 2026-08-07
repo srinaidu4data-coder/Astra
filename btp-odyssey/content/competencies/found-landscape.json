@@ -1,0 +1,40 @@
+{
+  "id": "found-landscape",
+  "title": "Explain BTP landscape structure",
+  "domainId": "operations",
+  "description": "Explain BTP landscape structure. Evidence is demonstration-based in simulation, not XP.",
+  "level": "basic",
+  "prerequisites": [],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Explain BTP landscape structure in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Explain BTP landscape structure in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Explain BTP landscape structure after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

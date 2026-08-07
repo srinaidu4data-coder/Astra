@@ -1,0 +1,96 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Commercial root of the BTP landscape",
+    "Holds directories and subaccounts",
+    "Entitlements flow down from here"
+  ],
+  "commonMistakes": [
+    "Treating global account as a runtime environment",
+    "Assuming all regions/services are automatically available everywhere"
+  ],
+  "howToRecognize": [
+    "Billing/commercial boundary",
+    "Root node in cockpit hierarchy"
+  ],
+  "howToApply": [
+    "Map who owns the global account",
+    "Plan subaccount strategy before first deploy"
+  ],
+  "relatedIds": [],
+  "glossary": [
+    {
+      "term": "Entitlement",
+      "definition": "Right to use a service/plan up to a quota."
+    },
+    {
+      "term": "Subaccount",
+      "definition": "Isolated slice for projects/stages/regions under a global account."
+    }
+  ],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "landscape",
+    "foundation"
+  ],
+  "id": "c-global-account",
+  "title": "Global Account",
+  "domainId": "operations",
+  "summary": "The commercial and administrative root of your SAP BTP estate.",
+  "explain": "A global account is the top-level container tied to your commercial relationship with SAP. Under it you create directories (optional) and subaccounts. Entitlements (what you may use) are assigned downward from the global account. You do not deploy apps directly into a global account — you deploy into environments inside subaccounts.",
+  "analogy": "Think of a global account as the company lease for an office campus. Floors and rooms (subaccounts/spaces) are where teams actually put desks (apps).",
+  "whyItMatters": "Misplacing resources at the wrong level causes entitlement chaos, unclear ownership, and security sprawl.",
+  "mnemonic": "HQ → FLOORS → ROOMS: Global account HQ, directories floors, subaccounts locked rooms.",
+  "useCases": [
+    "Landing zone setup week: apply Global Account so Dev/Test/Prod don't share blast radius.",
+    "Incident bridge: symptoms appear; use “Global Account” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Global Account”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Account structure",
+      "optionA": "Separate dev/test/prod subaccounts",
+      "optionB": "One shared subaccount",
+      "whenChooseA": "Any serious landscape",
+      "whenChooseB": "Personal sandbox only",
+      "risk": "Shared subaccounts maximize blast radius"
+    },
+    {
+      "decision": "Entitlements",
+      "optionA": "Least service plans per stage",
+      "optionB": "Enable everything everywhere",
+      "whenChooseA": "Cost and security control",
+      "whenChooseB": "Never long-term",
+      "risk": "Cost and attack surface grow"
+    },
+    {
+      "decision": "Observability",
+      "optionA": "Logs + metrics + traces with correlation",
+      "optionB": "CPU screenshots only",
+      "whenChooseA": "Operable production",
+      "whenChooseB": "Local demos",
+      "risk": "You cannot fix what you cannot see"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-global-account-intro",
+      "title": "Intro game: Global Account",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-global-account-mastery",
+      "title": "Mastery game: Global Account",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "HQ → FLOORS → ROOMS: Global account HQ, directories floors, subaccounts locked rooms."
+}

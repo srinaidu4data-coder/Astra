@@ -1,0 +1,82 @@
+{
+  "id": "rap-determinations",
+  "title": "Determinations and validations",
+  "domainId": "rap-abap",
+  "level": "advanced",
+  "summary": "Business rules hooks",
+  "explain": "Determinations derive fields; validations enforce invariants. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Determinations and validations\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Determinations and validations, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Business rules hooks"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Determinations and validations without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing rap-abap"
+  ],
+  "howToApply": [
+    "Use Determinations and validations explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "rap-abap"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Determinations and validations” + one failure mode out loud — if you can't, you don't own it yet. (Determinations → mechanism → failure)",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using Determinations and validations without core mods.",
+    "Incident bridge: symptoms appear; use “Determinations and validations” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Determinations and validations”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "RAP managed vs unmanaged",
+      "optionA": "Managed RAP for standard CRUD patterns",
+      "optionB": "Unmanaged for special persistence control",
+      "whenChooseA": "Standard BO lifecycle with framework help",
+      "whenChooseB": "Complex legacy persistence you must own",
+      "risk": "Unmanaged increases maintenance surface"
+    },
+    {
+      "decision": "Clean core",
+      "optionA": "Released APIs + extensions",
+      "optionB": "Modify SAP standard",
+      "whenChooseA": "Always for sustainable landscapes",
+      "whenChooseB": "Never — false short-term speed",
+      "risk": "Core mods poison upgrades"
+    },
+    {
+      "decision": "Draft",
+      "optionA": "Draft-enabled long edits",
+      "optionB": "Immediate save only",
+      "whenChooseA": "Multi-step UX with exclusive locks",
+      "whenChooseB": "Simple atomic transactions",
+      "risk": "Draft without cleanup creates lock/orphan debt"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-rap-determinations-intro",
+      "title": "Intro game: Determinations and validations",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-rap-determinations-mastery",
+      "title": "Mastery game: Determinations and validations",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Determinations and validations” + one failure mode out loud — if you can't, you don't own it yet. (Determinations → mechanism → failure)"
+}

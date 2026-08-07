@@ -1,0 +1,42 @@
+{
+  "id": "cap-odata-basics",
+  "title": "Design a basic CAP OData service",
+  "domainId": "cap",
+  "description": "Design a basic CAP OData service. Evidence is demonstration-based in simulation, not XP.",
+  "level": "basic",
+  "prerequisites": [
+    "found-appdev"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Design a basic CAP OData service in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Design a basic CAP OData service in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Design a basic CAP OData service after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP CAP",
+      "sourceUrl": "https://cap.cloud.sap/",
+      "sourceTitle": "SAP CAP documentation",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

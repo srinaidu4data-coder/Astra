@@ -1,0 +1,82 @@
+{
+  "id": "sac-what",
+  "title": "SAP Analytics Cloud overview",
+  "domainId": "sac",
+  "level": "basic",
+  "summary": "BI, planning, predictive features",
+  "explain": "Stories, models, planning processes. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"SAP Analytics Cloud overview\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without SAP Analytics Cloud overview, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "BI, planning, predictive features"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of SAP Analytics Cloud overview without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing sac"
+  ],
+  "howToApply": [
+    "Use SAP Analytics Cloud overview explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "sac"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “SAP Analytics Cloud overview” + one failure mode out loud — if you can't, you don't own it yet. (SAP → mechanism → failure)",
+  "useCases": [
+    "Greenfield design workshop: decide if “SAP Analytics Cloud overview” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “SAP Analytics Cloud overview” to classify the failing hop before changing config.",
+    "Finance and Sales disagree on “revenue” — SAP Analytics Cloud overview forces one productized definition."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Live vs import",
+      "optionA": "Live for current operational truth",
+      "optionB": "Import for snapshot performance",
+      "whenChooseA": "Need freshness",
+      "whenChooseB": "Need offline/perf snapshots",
+      "risk": "Wrong mode misleads decisions"
+    },
+    {
+      "decision": "Security",
+      "optionA": "Model + folder + row constraints",
+      "optionB": "Share all stories widely",
+      "whenChooseA": "Sensitive KPIs",
+      "whenChooseB": "Public non-sensitive only",
+      "risk": "Export leaks"
+    },
+    {
+      "decision": "Metric ownership",
+      "optionA": "One definition in semantic layer",
+      "optionB": "Story-local calculations",
+      "whenChooseA": "Enterprise reporting",
+      "whenChooseB": "Personal exploration",
+      "risk": "Conflicting revenue numbers"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sac-what-intro",
+      "title": "Intro game: SAP Analytics Cloud overview",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sac-what-mastery",
+      "title": "Mastery game: SAP Analytics Cloud overview",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “SAP Analytics Cloud overview” + one failure mode out loud — if you can't, you don't own it yet. (SAP → mechanism → failure)"
+}

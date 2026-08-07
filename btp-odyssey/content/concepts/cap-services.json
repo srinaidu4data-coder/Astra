@@ -1,0 +1,82 @@
+{
+  "id": "cap-services",
+  "title": "Service definitions and projections",
+  "domainId": "cap",
+  "level": "basic",
+  "summary": "API surface",
+  "explain": "Services expose projections of the domain model to consumers. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Service definitions and projections\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Service definitions and projections, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "API surface"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Service definitions and projections without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing cap"
+  ],
+  "howToApply": [
+    "Use Service definitions and projections explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "cap"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Service definitions and projections” + one failure mode out loud — if you can't, you don't own it yet. (Service → mechanism → failure)",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using Service definitions and projections without core mods.",
+    "Incident bridge: symptoms appear; use “Service definitions and projections” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Service definitions and projections”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Extension style",
+      "optionA": "CAP side-by-side service",
+      "optionB": "On-stack RAP near BO",
+      "whenChooseA": "Differentiating UX/API velocity, multi-cloud events",
+      "whenChooseB": "Tight transactional fidelity to S/4 BO",
+      "risk": "Wrong placement creates dual-write or upgrade pain"
+    },
+    {
+      "decision": "API surface",
+      "optionA": "Narrow projections + actions",
+      "optionB": "Expose full persistence model",
+      "whenChooseA": "Stable contracts for consumers",
+      "whenChooseB": "Internal-only tools with no external clients",
+      "risk": "Wide APIs couple consumers to schema churn"
+    },
+    {
+      "decision": "Persistence",
+      "optionA": "HDI-owned schema with least privilege",
+      "optionB": "Shared ad-hoc schema",
+      "whenChooseA": "Team isolation and CI deploys",
+      "whenChooseB": "Throwaway spike",
+      "risk": "Shared schemas block ownership and safe deploy"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-cap-services-intro",
+      "title": "Intro game: Service definitions and projections",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-cap-services-mastery",
+      "title": "Mastery game: Service definitions and projections",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Service definitions and projections” + one failure mode out loud — if you can't, you don't own it yet. (Service → mechanism → failure)"
+}

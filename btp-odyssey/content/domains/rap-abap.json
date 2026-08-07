@@ -1,0 +1,25 @@
+{
+  "id": "rap-abap",
+  "title": "RAP and ABAP Cloud",
+  "districtName": "Clean Core Citadel",
+  "summary": "RAP and ABAP Cloud learning district in the Odyssey universe.",
+  "sapProducts": [
+    "ABAP RESTful Application Programming Model",
+    "ABAP Cloud"
+  ],
+  "specializations": [
+    "RAP/ABAP Cloud Developer"
+  ],
+  "confidence": "medium",
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "id": "sec-jwt-claims",
+  "title": "JWT claims deep dive",
+  "domainId": "security",
+  "level": "advanced",
+  "summary": "aud, scope, exp, iss",
+  "explain": "Audience, scopes, expiry, issuer must match resource expectations; valid signature is not enough. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"JWT claims deep dive\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without JWT claims deep dive, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "aud, scope, exp, iss"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of JWT claims deep dive without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing security"
+  ],
+  "howToApply": [
+    "Use JWT claims deep dive explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "security"
+  ],
+  "mnemonic": "PASSPORT STAMP: Token is passport; audience is the visa country. Wrong visa → 401.",
+  "useCases": [
+    "Support chatbot answers policy — JWT claims deep dive forces grounding before actions.",
+    "Incident bridge: symptoms appear; use “JWT claims deep dive” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “JWT claims deep dive”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Audience config",
+      "optionA": "Destination/API audience aligned to resource",
+      "optionB": "Reuse one audience for all apps",
+      "whenChooseA": "Multi-app landscapes",
+      "whenChooseB": "Never in shared prod",
+      "risk": "Cross-app token acceptance"
+    },
+    {
+      "decision": "Token validation",
+      "optionA": "Validate iss, aud, exp, signature",
+      "optionB": "Trust any bearer string",
+      "whenChooseA": "All APIs",
+      "whenChooseB": "Never",
+      "risk": "Forged tokens"
+    },
+    {
+      "decision": "Error handling",
+      "optionA": "Distinct 401 vs 403 diagnostics",
+      "optionB": "Generic 500 for all auth fails",
+      "whenChooseA": "Operable IR",
+      "whenChooseB": "Never",
+      "risk": "Wrong fix path"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sec-jwt-claims-intro",
+      "title": "Intro game: JWT claims deep dive",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sec-jwt-claims-mastery",
+      "title": "Mastery game: JWT claims deep dive",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "PASSPORT STAMP: Token is passport; audience is the visa country. Wrong visa → 401."
+}

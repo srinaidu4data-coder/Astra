@@ -1,0 +1,82 @@
+{
+  "id": "evt-mesh-concepts",
+  "title": "Event Mesh style concepts",
+  "domainId": "events",
+  "level": "basic",
+  "summary": "Topics and subscriptions",
+  "explain": "Pub/sub decouples producers and consumers. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Event Mesh style concepts\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Event Mesh style concepts, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Topics and subscriptions"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Event Mesh style concepts without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing events"
+  ],
+  "howToApply": [
+    "Use Event Mesh style concepts explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "events"
+  ],
+  "mnemonic": "NEWSFLASH not PHONE CALL: Events broadcast facts; don't dual-write two editors.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Event Mesh style concepts” is required given constraints (latency, clean-core, team skills).",
+    "Partner retries the same order POST — Event Mesh style concepts prevents double billing.",
+    "Architecture review board: defend why you accepted residual risk around “Event Mesh style concepts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Event vs command",
+      "optionA": "Events as facts, many consumers",
+      "optionB": "Commands as intent, one handler",
+      "whenChooseA": "Broadcast state changes",
+      "whenChooseB": "Directed do-this actions",
+      "risk": "Mixing styles confuses ownership"
+    },
+    {
+      "decision": "Schema evolution",
+      "optionA": "Additive compatible changes",
+      "optionB": "Breaking fields without version",
+      "whenChooseA": "Multi-consumer landscapes",
+      "whenChooseB": "Single controlled consumer only",
+      "risk": "Breaks silent consumers"
+    },
+    {
+      "decision": "Ordering",
+      "optionA": "Partition keys + consumer design for out-of-order",
+      "optionB": "Global total order everywhere",
+      "whenChooseA": "Scale and availability",
+      "whenChooseB": "Tiny volumes where order is free",
+      "risk": "Global order kills throughput"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-evt-mesh-concepts-intro",
+      "title": "Intro game: Event Mesh style concepts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-evt-mesh-concepts-mastery",
+      "title": "Mastery game: Event Mesh style concepts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NEWSFLASH not PHONE CALL: Events broadcast facts; don't dual-write two editors."
+}

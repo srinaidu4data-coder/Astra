@@ -1,0 +1,42 @@
+{
+  "id": "int-api-mgmt",
+  "title": "API management and governance concepts",
+  "domainId": "integration",
+  "description": "API management and governance concepts. Evidence is demonstration-based in simulation, not XP.",
+  "level": "advanced",
+  "prerequisites": [
+    "int-iflow"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate API management and governance concepts in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply API management and governance concepts in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit API management and governance concepts after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP Integration Suite",
+      "sourceUrl": "https://help.sap.com/docs/integration-suite",
+      "sourceTitle": "SAP Integration Suite docs",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

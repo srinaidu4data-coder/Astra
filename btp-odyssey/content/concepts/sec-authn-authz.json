@@ -1,0 +1,82 @@
+{
+  "id": "sec-authn-authz",
+  "title": "Authentication vs authorization",
+  "domainId": "security",
+  "level": "basic",
+  "summary": "Identity proof vs permissions",
+  "explain": "Authn proves who you are; authz decides what you may do. 401 vs 403 diagnosis depends on this split. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Authentication vs authorization\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Authentication vs authorization, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Identity proof vs permissions"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Authentication vs authorization without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing security"
+  ],
+  "howToApply": [
+    "Use Authentication vs authorization explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "basic",
+    "security"
+  ],
+  "mnemonic": "WHO then WHAT: Authn proves who; Authz decides what. Login ≠ permission.",
+  "useCases": [
+    "Fiori app calls CAP and gets 401 after login — apply Authentication vs authorization to fix the trust chain.",
+    "Incident bridge: symptoms appear; use “Authentication vs authorization” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Authentication vs authorization”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-sec-authn-authz-intro",
+      "title": "Intro game: Authentication vs authorization",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-sec-authn-authz-mastery",
+      "title": "Mastery game: Authentication vs authorization",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "WHO then WHAT: Authn proves who; Authz decides what. Login ≠ permission."
+}

@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-08-07T20:15:00.307Z",
+  "concepts": 157,
+  "sequenced": 157,
+  "challenges": 314,
+  "missingFromChallenges": [],
+  "first": "btp-what",
+  "last": "c-observability",
+  "domainOrder": [
+    "operations",
+    "architecture",
+    "security",
+    "cap",
+    "rap-abap",
+    "ui5-fiori",
+    "integration",
+    "events",
+    "bpa",
+    "workzone",
+    "hana-cloud",
+    "datasphere",
+    "bdc",
+    "sac",
+    "ai",
+    "incident"
+  ]
+}

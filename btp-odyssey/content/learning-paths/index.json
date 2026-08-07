@@ -1,0 +1,670 @@
+{
+  "version": "5.0.0",
+  "paths": [
+    {
+      "id": "path-full-spine",
+      "title": "Full BTP Odyssey · every concept in order",
+      "domainId": "operations",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "btp-what",
+        "btp-services-map",
+        "btp-platform-structure",
+        "ops-accounts",
+        "c-global-account",
+        "c-subaccount",
+        "ops-entitlements",
+        "c-service-plan",
+        "c-cf-space",
+        "ops-cf",
+        "c-mta",
+        "c-binding",
+        "btp-security-admin",
+        "sec-shared-resp",
+        "c-shared-responsibility",
+        "sec-authn-authz",
+        "sec-oauth-oidc",
+        "sec-ias-ips",
+        "sec-destinations",
+        "c-destination",
+        "sec-xsuaa-roles",
+        "c-xsuaa-roles",
+        "c-least-privilege",
+        "c-scope-403",
+        "sec-jwt-claims",
+        "c-jwt-audience",
+        "sec-principal-prop",
+        "c-principal-propagation",
+        "principal-hybrid",
+        "cloud-connector",
+        "sec-secrets",
+        "c-csrf",
+        "sec-threat-model",
+        "c-threat-model",
+        "sec-tenant-isolation",
+        "c-tenant-isolation",
+        "sec-zero-trust",
+        "sec-supply-chain",
+        "c-residency",
+        "c-audit-log",
+        "sec-incident-ir",
+        "c-change-mgmt",
+        "c-entitlement",
+        "c-finops",
+        "c-rto-rpo",
+        "c-slo",
+        "ops-finops",
+        "ops-observability",
+        "ops-sre",
+        "c-functional-nfr",
+        "c-cap-vs-rap",
+        "c-cap-odata",
+        "cap-cds-entities",
+        "c-odata-metadata",
+        "odata-v2-vs-v4",
+        "odata-v4-basics",
+        "cap-services",
+        "cap-what",
+        "cap-actions",
+        "cap-auth",
+        "cap-events",
+        "cap-persistence",
+        "odata-query-perf",
+        "cap-extensibility",
+        "cap-multitenant",
+        "cap-resilience",
+        "c-behavior-def",
+        "c-draft",
+        "rap-managed",
+        "rap-cds-bo",
+        "rap-fiori-elements",
+        "rap-what",
+        "c-clean-core",
+        "rap-determinations",
+        "rap-draft",
+        "rap-eml",
+        "rap-vs-cap",
+        "rap-unmanaged",
+        "rap-extensibility",
+        "rap-clean-core",
+        "rap-performance",
+        "c-accessibility",
+        "c-fiori-elements",
+        "c-ui5-odata",
+        "c-adapter",
+        "cpi-adapters",
+        "c-api-mgmt",
+        "cpi-iflow",
+        "c-iflow",
+        "is-what",
+        "cpi-mapping",
+        "c-retry-backoff",
+        "api-mgmt",
+        "cpi-exception",
+        "cpi-idempotency",
+        "c-idempotency",
+        "is-governance",
+        "is-observability",
+        "is-tpm",
+        "c-dlq",
+        "evt-mesh-concepts",
+        "evt-vs-cmd",
+        "c-events-mesh",
+        "c-saga",
+        "c-schema-evolution",
+        "evt-dlq",
+        "evt-schema",
+        "evt-saga",
+        "bpa-what",
+        "bpa-forms",
+        "bpa-workflow",
+        "c-workflow",
+        "bpa-api",
+        "bpa-rules",
+        "bpa-governance",
+        "bpa-scale",
+        "wz-what",
+        "wz-roles",
+        "c-workzone",
+        "wz-federation",
+        "wz-perf",
+        "c-calc-view",
+        "hana-what",
+        "c-hana-hdi",
+        "hana-hdi",
+        "hana-sql",
+        "hana-calc",
+        "hana-perf",
+        "hana-privileges",
+        "hana-ha",
+        "hana-vector",
+        "c-lineage",
+        "ds-what",
+        "ds-spaces",
+        "ds-federation",
+        "ds-semantic",
+        "ds-lineage",
+        "bdc-what",
+        "bdc-data-product",
+        "bdc-governance",
+        "c-data-product",
+        "bdc-lakehouse",
+        "c-sac-story",
+        "sac-what",
+        "sac-stories",
+        "sac-live-vs-import",
+        "sac-planning",
+        "sac-security",
+        "ai-hallucination",
+        "ai-joule-concepts",
+        "ai-responsible",
+        "ai-cost-latency",
+        "ai-prompt",
+        "ai-rag",
+        "ai-agent-risks",
+        "ai-eval",
+        "c-observability"
+      ],
+      "nextHint": "Do not skip. After each Atlas card, clear its intro + mastery PLAY challenges."
+    },
+    {
+      "id": "path-operations",
+      "title": "operations · sequenced (1)",
+      "domainId": "operations",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "btp-what"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-architecture",
+      "title": "architecture · sequenced (1)",
+      "domainId": "architecture",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "btp-services-map"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-operations",
+      "title": "operations · sequenced (8)",
+      "domainId": "operations",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "btp-platform-structure",
+        "ops-accounts",
+        "c-global-account",
+        "c-subaccount",
+        "ops-entitlements",
+        "c-service-plan",
+        "c-cf-space",
+        "ops-cf"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-cap",
+      "title": "cap · sequenced (2)",
+      "domainId": "cap",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-mta",
+        "c-binding"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-security",
+      "title": "security · sequenced (7)",
+      "domainId": "security",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "btp-security-admin",
+        "sec-shared-resp",
+        "c-shared-responsibility",
+        "sec-authn-authz",
+        "sec-oauth-oidc",
+        "sec-ias-ips",
+        "sec-destinations"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-integration",
+      "title": "integration · sequenced (1)",
+      "domainId": "integration",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-destination"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-security",
+      "title": "security · sequenced (8)",
+      "domainId": "security",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "sec-xsuaa-roles",
+        "c-xsuaa-roles",
+        "c-least-privilege",
+        "c-scope-403",
+        "sec-jwt-claims",
+        "c-jwt-audience",
+        "sec-principal-prop",
+        "c-principal-propagation"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-integration",
+      "title": "integration · sequenced (2)",
+      "domainId": "integration",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "principal-hybrid",
+        "cloud-connector"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-security",
+      "title": "security · sequenced (1)",
+      "domainId": "security",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "sec-secrets"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-ui5-fiori",
+      "title": "ui5-fiori · sequenced (1)",
+      "domainId": "ui5-fiori",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-csrf"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-security",
+      "title": "security · sequenced (9)",
+      "domainId": "security",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "sec-threat-model",
+        "c-threat-model",
+        "sec-tenant-isolation",
+        "c-tenant-isolation",
+        "sec-zero-trust",
+        "sec-supply-chain",
+        "c-residency",
+        "c-audit-log",
+        "sec-incident-ir"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-operations",
+      "title": "operations · sequenced (8)",
+      "domainId": "operations",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-change-mgmt",
+        "c-entitlement",
+        "c-finops",
+        "c-rto-rpo",
+        "c-slo",
+        "ops-finops",
+        "ops-observability",
+        "ops-sre"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-architecture",
+      "title": "architecture · sequenced (2)",
+      "domainId": "architecture",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-functional-nfr",
+        "c-cap-vs-rap"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-cap",
+      "title": "cap · sequenced (15)",
+      "domainId": "cap",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-cap-odata",
+        "cap-cds-entities",
+        "c-odata-metadata",
+        "odata-v2-vs-v4",
+        "odata-v4-basics",
+        "cap-services",
+        "cap-what",
+        "cap-actions",
+        "cap-auth",
+        "cap-events",
+        "cap-persistence",
+        "odata-query-perf",
+        "cap-extensibility",
+        "cap-multitenant",
+        "cap-resilience"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-rap-abap",
+      "title": "rap-abap · sequenced (15)",
+      "domainId": "rap-abap",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-behavior-def",
+        "c-draft",
+        "rap-managed",
+        "rap-cds-bo",
+        "rap-fiori-elements",
+        "rap-what",
+        "c-clean-core",
+        "rap-determinations",
+        "rap-draft",
+        "rap-eml",
+        "rap-vs-cap",
+        "rap-unmanaged",
+        "rap-extensibility",
+        "rap-clean-core",
+        "rap-performance"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-ui5-fiori",
+      "title": "ui5-fiori · sequenced (3)",
+      "domainId": "ui5-fiori",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-accessibility",
+        "c-fiori-elements",
+        "c-ui5-odata"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-integration",
+      "title": "integration · sequenced (15)",
+      "domainId": "integration",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-adapter",
+        "cpi-adapters",
+        "c-api-mgmt",
+        "cpi-iflow",
+        "c-iflow",
+        "is-what",
+        "cpi-mapping",
+        "c-retry-backoff",
+        "api-mgmt",
+        "cpi-exception",
+        "cpi-idempotency",
+        "c-idempotency",
+        "is-governance",
+        "is-observability",
+        "is-tpm"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-events",
+      "title": "events · sequenced (9)",
+      "domainId": "events",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-dlq",
+        "evt-mesh-concepts",
+        "evt-vs-cmd",
+        "c-events-mesh",
+        "c-saga",
+        "c-schema-evolution",
+        "evt-dlq",
+        "evt-schema",
+        "evt-saga"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-bpa",
+      "title": "bpa · sequenced (8)",
+      "domainId": "bpa",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "bpa-what",
+        "bpa-forms",
+        "bpa-workflow",
+        "c-workflow",
+        "bpa-api",
+        "bpa-rules",
+        "bpa-governance",
+        "bpa-scale"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-workzone",
+      "title": "workzone · sequenced (5)",
+      "domainId": "workzone",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "wz-what",
+        "wz-roles",
+        "c-workzone",
+        "wz-federation",
+        "wz-perf"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-hana-cloud",
+      "title": "hana-cloud · sequenced (10)",
+      "domainId": "hana-cloud",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-calc-view",
+        "hana-what",
+        "c-hana-hdi",
+        "hana-hdi",
+        "hana-sql",
+        "hana-calc",
+        "hana-perf",
+        "hana-privileges",
+        "hana-ha",
+        "hana-vector"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-datasphere",
+      "title": "datasphere · sequenced (6)",
+      "domainId": "datasphere",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-lineage",
+        "ds-what",
+        "ds-spaces",
+        "ds-federation",
+        "ds-semantic",
+        "ds-lineage"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-bdc",
+      "title": "bdc · sequenced (5)",
+      "domainId": "bdc",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "bdc-what",
+        "bdc-data-product",
+        "bdc-governance",
+        "c-data-product",
+        "bdc-lakehouse"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-sac",
+      "title": "sac · sequenced (6)",
+      "domainId": "sac",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-sac-story",
+        "sac-what",
+        "sac-stories",
+        "sac-live-vs-import",
+        "sac-planning",
+        "sac-security"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-ai",
+      "title": "ai · sequenced (8)",
+      "domainId": "ai",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "ai-hallucination",
+        "ai-joule-concepts",
+        "ai-responsible",
+        "ai-cost-latency",
+        "ai-prompt",
+        "ai-rag",
+        "ai-agent-risks",
+        "ai-eval"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    },
+    {
+      "id": "path-incident",
+      "title": "incident · sequenced (1)",
+      "domainId": "incident",
+      "levels": [
+        "basic",
+        "advanced",
+        "expert"
+      ],
+      "conceptIds": [
+        "c-observability"
+      ],
+      "nextHint": "Follow order; each concept has intro then mastery game."
+    }
+  ]
+}

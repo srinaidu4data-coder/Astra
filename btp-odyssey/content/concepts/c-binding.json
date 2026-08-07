@@ -1,0 +1,79 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Binding injects credentials/URL of a service instance into an application runtime."
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Service Binding without a failure example"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Use Service Binding explicitly in an architecture defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "micro"
+  ],
+  "id": "c-binding",
+  "title": "Service Binding",
+  "domainId": "cap",
+  "summary": "Binding injects credentials/URL of a service instance into an application runtime.",
+  "explain": "Binding injects credentials/URL of a service instance into an application runtime. In Odyssey simulations this is modeled at Tier 1–2 fidelity with explicit labels — verify production details in official SAP documentation.",
+  "analogy": "Practical memory hook: associate \"Service Binding\" with a concrete failure mode you have seen or will simulate in a mission.",
+  "whyItMatters": "If you cannot explain Service Binding in one minute, you will mis-diagnose related incidents.",
+  "mnemonic": "BUNDLE + PLUG: MTA ships the bundle; binding plugs secrets without hardcode.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Service Binding” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Service Binding” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Service Binding”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Extension style",
+      "optionA": "CAP side-by-side service",
+      "optionB": "On-stack RAP near BO",
+      "whenChooseA": "Differentiating UX/API velocity, multi-cloud events",
+      "whenChooseB": "Tight transactional fidelity to S/4 BO",
+      "risk": "Wrong placement creates dual-write or upgrade pain"
+    },
+    {
+      "decision": "API surface",
+      "optionA": "Narrow projections + actions",
+      "optionB": "Expose full persistence model",
+      "whenChooseA": "Stable contracts for consumers",
+      "whenChooseB": "Internal-only tools with no external clients",
+      "risk": "Wide APIs couple consumers to schema churn"
+    },
+    {
+      "decision": "Persistence",
+      "optionA": "HDI-owned schema with least privilege",
+      "optionB": "Shared ad-hoc schema",
+      "whenChooseA": "Team isolation and CI deploys",
+      "whenChooseB": "Throwaway spike",
+      "risk": "Shared schemas block ownership and safe deploy"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-binding-intro",
+      "title": "Intro game: Service Binding",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-binding-mastery",
+      "title": "Mastery game: Service Binding",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "BUNDLE + PLUG: MTA ships the bundle; binding plugs secrets without hardcode."
+}

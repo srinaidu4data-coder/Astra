@@ -1,0 +1,82 @@
+{
+  "id": "evt-schema",
+  "title": "Event schema evolution",
+  "domainId": "events",
+  "level": "advanced",
+  "summary": "Compatible change",
+  "explain": "Version payloads carefully; consumers must not break. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Event schema evolution\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Event schema evolution, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Compatible change"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Event schema evolution without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing events"
+  ],
+  "howToApply": [
+    "Use Event schema evolution explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "events"
+  ],
+  "mnemonic": "NEWSFLASH not PHONE CALL: Events broadcast facts; don't dual-write two editors.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Event schema evolution” is required given constraints (latency, clean-core, team skills).",
+    "Partner retries the same order POST — Event schema evolution prevents double billing.",
+    "Architecture review board: defend why you accepted residual risk around “Event schema evolution”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Event vs command",
+      "optionA": "Events as facts, many consumers",
+      "optionB": "Commands as intent, one handler",
+      "whenChooseA": "Broadcast state changes",
+      "whenChooseB": "Directed do-this actions",
+      "risk": "Mixing styles confuses ownership"
+    },
+    {
+      "decision": "Schema evolution",
+      "optionA": "Additive compatible changes",
+      "optionB": "Breaking fields without version",
+      "whenChooseA": "Multi-consumer landscapes",
+      "whenChooseB": "Single controlled consumer only",
+      "risk": "Breaks silent consumers"
+    },
+    {
+      "decision": "Ordering",
+      "optionA": "Partition keys + consumer design for out-of-order",
+      "optionB": "Global total order everywhere",
+      "whenChooseA": "Scale and availability",
+      "whenChooseB": "Tiny volumes where order is free",
+      "risk": "Global order kills throughput"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-evt-schema-intro",
+      "title": "Intro game: Event schema evolution",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-evt-schema-mastery",
+      "title": "Mastery game: Event schema evolution",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NEWSFLASH not PHONE CALL: Events broadcast facts; don't dual-write two editors."
+}

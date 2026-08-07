@@ -1,0 +1,43 @@
+{
+  "id": "arch-regulated",
+  "title": "Regulated multi-jurisdiction expansion",
+  "domainId": "architecture",
+  "description": "Regulated multi-jurisdiction expansion. Evidence is demonstration-based in simulation, not XP.",
+  "level": "expert",
+  "prerequisites": [
+    "arch-board",
+    "sec-tenant"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Regulated multi-jurisdiction expansion in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Regulated multi-jurisdiction expansion in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Regulated multi-jurisdiction expansion after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

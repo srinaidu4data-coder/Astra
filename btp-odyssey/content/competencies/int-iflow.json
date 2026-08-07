@@ -1,0 +1,42 @@
+{
+  "id": "int-iflow",
+  "title": "Design integration flows with error handling",
+  "domainId": "integration",
+  "description": "Design integration flows with error handling. Evidence is demonstration-based in simulation, not XP.",
+  "level": "basic",
+  "prerequisites": [
+    "found-integration"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Design integration flows with error handling in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Design integration flows with error handling in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Design integration flows with error handling after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP Integration Suite",
+      "sourceUrl": "https://help.sap.com/docs/integration-suite",
+      "sourceTitle": "SAP Integration Suite docs",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

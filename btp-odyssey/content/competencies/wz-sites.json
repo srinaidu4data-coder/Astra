@@ -1,0 +1,43 @@
+{
+  "id": "wz-sites",
+  "title": "Work Zone sites, roles, content federation concepts",
+  "domainId": "workzone",
+  "description": "Work Zone sites, roles, content federation concepts. Evidence is demonstration-based in simulation, not XP.",
+  "level": "basic",
+  "prerequisites": [
+    "found-appdev",
+    "found-identity"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate Work Zone sites, roles, content federation concepts in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply Work Zone sites, roles, content federation concepts in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit Work Zone sites, roles, content federation concepts after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAP BTP",
+      "sourceUrl": "https://help.sap.com/docs/btp",
+      "sourceTitle": "SAP BTP documentation hub",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

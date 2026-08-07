@@ -1,0 +1,42 @@
+{
+  "id": "ui5-perf",
+  "title": "UI performance diagnosis",
+  "domainId": "ui5-fiori",
+  "description": "UI performance diagnosis. Evidence is demonstration-based in simulation, not XP.",
+  "level": "advanced",
+  "prerequisites": [
+    "ui5-odata-bind"
+  ],
+  "misconceptions": [
+    "Multiple-choice alone proves mastery",
+    "Simulation behaves identically to every live landscape"
+  ],
+  "practiceFormats": [
+    "explanation",
+    "configuration",
+    "debugging",
+    "architecture_construction"
+  ],
+  "evidenceRequirements": [
+    "Demonstrate UI performance diagnosis in a mission or assessment"
+  ],
+  "transferTasks": [
+    "Apply UI performance diagnosis in a structurally different scenario"
+  ],
+  "retentionChecks": [
+    "Revisit UI performance diagnosis after spaced interval"
+  ],
+  "sources": [
+    {
+      "productOrService": "SAPUI5",
+      "sourceUrl": "https://ui5.sap.com/",
+      "sourceTitle": "SAPUI5 documentation",
+      "retrievalDate": "2026-08-07",
+      "confidence": "medium",
+      "deprecationStatus": "current",
+      "contentOwner": "curriculum"
+    }
+  ],
+  "reviewStatus": "in_review",
+  "version": "0.2.0"
+}

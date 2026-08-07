@@ -1,0 +1,97 @@
+{
+  "level": "basic",
+  "formalPoints": [
+    "Authentication ≠ authorization",
+    "Scopes are fine-grained permissions",
+    "Role collections assign bundles of roles/scopes to people"
+  ],
+  "commonMistakes": [
+    "Treating every 401 as wrong password",
+    "Granting Admin to 'make it work'"
+  ],
+  "howToRecognize": [],
+  "howToApply": [
+    "Write one architecture sentence that depends on XSUAA-style Roles, Scopes & Role Collections.",
+    "List one metric or log that would prove XSUAA-style Roles, Scopes & Role Collections is healthy."
+  ],
+  "relatedIds": [],
+  "glossary": [
+    {
+      "term": "Scope",
+      "definition": "A named permission a token may include."
+    },
+    {
+      "term": "Audience (aud)",
+      "definition": "Intended recipient of the token; resource rejects wrong audience."
+    },
+    {
+      "term": "Role collection",
+      "definition": "Admin-facing bundle assigned to users/groups."
+    }
+  ],
+  "sources": [
+    {
+      "title": "SAP BTP documentation hub",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "security",
+    "identity"
+  ],
+  "id": "c-xsuaa-roles",
+  "title": "XSUAA-style Roles, Scopes & Role Collections",
+  "domainId": "security",
+  "summary": "Authorization building blocks: scopes grant abilities; role collections assign them to users.",
+  "explain": "In the classic BTP application security model (often associated with XSUAA), applications declare scopes (permissions like Order.Read). Role templates group scopes. Administrators create role collections and assign them to users/groups. A valid login (authentication) can still fail authorization (403) if scopes are missing. Token claims carry audience and scopes the resource checks.",
+  "analogy": "Badge gets you in the building (authn). Room keys on the badge (scopes) decide which doors open (authz).",
+  "whyItMatters": "401 vs 403 diagnosis depends on understanding authn vs authz and token claims.",
+  "mnemonic": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone.",
+  "useCases": [
+    "Greenfield design workshop: decide if “XSUAA-style Roles, Scopes & Role Collections” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “XSUAA-style Roles, Scopes & Role Collections” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “XSUAA-style Roles, Scopes & Role Collections”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Authn placement",
+      "optionA": "Central IdP + token validation at every edge",
+      "optionB": "App-local user stores",
+      "whenChooseA": "Enterprise SSO, audit, many apps",
+      "whenChooseB": "Tiny isolated prototype only",
+      "risk": "Local stores fragment identity and weaken IR"
+    },
+    {
+      "decision": "Authorization grain",
+      "optionA": "Fine scopes per action",
+      "optionB": "Broad Admin.All roles",
+      "whenChooseA": "Production multi-team landscapes",
+      "whenChooseB": "Never in prod — only throwaway sandboxes",
+      "risk": "Broad roles maximize blast radius"
+    },
+    {
+      "decision": "Tenant isolation",
+      "optionA": "Server-side tenant predicate on every query",
+      "optionB": "UI-only filtering",
+      "whenChooseA": "Multi-tenant SaaS / shared DB",
+      "whenChooseB": "Single-tenant dedicated DB (still validate)",
+      "risk": "UI filters are not a security boundary"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-c-xsuaa-roles-intro",
+      "title": "Intro game: XSUAA-style Roles, Scopes & Role Collections",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-c-xsuaa-roles-mastery",
+      "title": "Mastery game: XSUAA-style Roles, Scopes & Role Collections",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone."
+}

@@ -80,7 +80,10 @@ export function Sidebar({ compact = false }: { compact?: boolean }) {
       <nav className="flex flex-1 flex-col gap-1.5">
         {items.map((item) => {
           const Icon = item.icon
-          const active = route === item.id
+          // BTP Odyssey lives under Mock — keep Mock nav highlighted
+          const active =
+            route === item.id ||
+            (item.id === 'practice' && route === 'btp-odyssey')
           return (
             <button
               type="button"

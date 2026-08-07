@@ -1,0 +1,82 @@
+{
+  "id": "bdc-lakehouse",
+  "title": "Lakehouse patterns with SAP Databricks concepts",
+  "domainId": "bdc",
+  "level": "expert",
+  "summary": "Open formats + governance",
+  "explain": "Combine lake scale with business semantics carefully. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Lakehouse patterns with SAP Databricks concepts\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Lakehouse patterns with SAP Databricks concepts, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Open formats + governance"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Lakehouse patterns with SAP Databricks concepts without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing bdc"
+  ],
+  "howToApply": [
+    "Use Lakehouse patterns with SAP Databricks concepts explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "expert",
+    "bdc"
+  ],
+  "mnemonic": "PRODUCT not DUMP: Owner + contract + quality — not a pile of tables.",
+  "useCases": [
+    "Greenfield design workshop: decide if “Lakehouse patterns with SAP Databricks concepts” is required given constraints (latency, clean-core, team skills).",
+    "Incident bridge: symptoms appear; use “Lakehouse patterns with SAP Databricks concepts” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Lakehouse patterns with SAP Databricks concepts”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "Data product",
+      "optionA": "Owned product with SLA + interface",
+      "optionB": "Raw table dump",
+      "whenChooseA": "Cross-team consumption",
+      "whenChooseB": "Never for shared enterprise use",
+      "risk": "Dumps have no contract"
+    },
+    {
+      "decision": "Governance",
+      "optionA": "Steward + quality metrics",
+      "optionB": "Hope and tribal knowledge",
+      "whenChooseA": "Always",
+      "whenChooseB": "Never",
+      "risk": "Silent quality decay"
+    },
+    {
+      "decision": "Lakehouse layers",
+      "optionA": "Bronze/silver/gold progression",
+      "optionB": "Consumers on raw only",
+      "whenChooseA": "Scale analytics",
+      "whenChooseB": "Tiny files",
+      "risk": "Raw access bypasses quality"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-bdc-lakehouse-intro",
+      "title": "Intro game: Lakehouse patterns with SAP Databricks concepts",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-bdc-lakehouse-mastery",
+      "title": "Mastery game: Lakehouse patterns with SAP Databricks concepts",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "PRODUCT not DUMP: Owner + contract + quality — not a pile of tables."
+}

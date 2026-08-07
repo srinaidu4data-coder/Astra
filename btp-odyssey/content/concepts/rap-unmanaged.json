@@ -1,0 +1,82 @@
+{
+  "id": "rap-unmanaged",
+  "title": "Unmanaged RAP",
+  "domainId": "rap-abap",
+  "level": "advanced",
+  "summary": "Custom control",
+  "explain": "Unmanaged when you need full control of persistence logic. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+  "analogy": "Think of \"Unmanaged RAP\" as a named building block you must explain under pressure.",
+  "whyItMatters": "Without Unmanaged RAP, you mis-diagnose incidents and make weak architecture choices.",
+  "formalPoints": [
+    "Custom control"
+  ],
+  "commonMistakes": [
+    "Memorizing the name of Unmanaged RAP without a failure story"
+  ],
+  "howToRecognize": [
+    "Appears when discussing rap-abap"
+  ],
+  "howToApply": [
+    "Use Unmanaged RAP explicitly in a design defense sentence"
+  ],
+  "relatedIds": [],
+  "glossary": [],
+  "sources": [
+    {
+      "title": "SAP documentation hubs (verify current)",
+      "url": "https://help.sap.com/docs/btp",
+      "confidence": "medium"
+    }
+  ],
+  "tags": [
+    "advanced",
+    "rap-abap"
+  ],
+  "mnemonic": "NAME IT TO TAME IT: Say “Unmanaged RAP” + one failure mode out loud — if you can't, you don't own it yet. (Unmanaged → mechanism → failure)",
+  "useCases": [
+    "Discount approval near S/4 — choose placement using Unmanaged RAP without core mods.",
+    "Incident bridge: symptoms appear; use “Unmanaged RAP” to classify the failing hop before changing config.",
+    "Architecture review board: defend why you accepted residual risk around “Unmanaged RAP”."
+  ],
+  "designTradeoffs": [
+    {
+      "decision": "RAP managed vs unmanaged",
+      "optionA": "Managed RAP for standard CRUD patterns",
+      "optionB": "Unmanaged for special persistence control",
+      "whenChooseA": "Standard BO lifecycle with framework help",
+      "whenChooseB": "Complex legacy persistence you must own",
+      "risk": "Unmanaged increases maintenance surface"
+    },
+    {
+      "decision": "Clean core",
+      "optionA": "Released APIs + extensions",
+      "optionB": "Modify SAP standard",
+      "whenChooseA": "Always for sustainable landscapes",
+      "whenChooseB": "Never — false short-term speed",
+      "risk": "Core mods poison upgrades"
+    },
+    {
+      "decision": "Draft",
+      "optionA": "Draft-enabled long edits",
+      "optionB": "Immediate save only",
+      "whenChooseA": "Multi-step UX with exclusive locks",
+      "whenChooseB": "Simple atomic transactions",
+      "risk": "Draft without cleanup creates lock/orphan debt"
+    }
+  ],
+  "linkedGames": [
+    {
+      "id": "ch-rap-unmanaged-intro",
+      "title": "Intro game: Unmanaged RAP",
+      "role": "intro",
+      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+    },
+    {
+      "id": "ch-rap-unmanaged-mastery",
+      "title": "Mastery game: Unmanaged RAP",
+      "role": "mastery",
+      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+    }
+  ],
+  "memoryHook": "NAME IT TO TAME IT: Say “Unmanaged RAP” + one failure mode out loud — if you can't, you don't own it yet. (Unmanaged → mechanism → failure)"
+}
