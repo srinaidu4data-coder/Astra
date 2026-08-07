@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import {
+  confirmCheckoutSession,
   logout,
   openBillingPortal,
   startCheckout,
@@ -74,9 +75,30 @@ export function PaywallPage({ user }: { user: AuthUser }) {
 
   useEffect(() => {
     const checkout = params.get('checkout')
+    const sessionId = params.get('session_id')
     if (checkout === 'success') {
       setHint('Payment received — confirming with Stripe…')
-      void applySync('checkout_return')
+      const run = async () => {
+        setBusy(true)
+        setError(null)
+        try {
+          if (sessionId) {
+            const data = await confirmCheckoutSession(sessionId)
+            setAuthFromUser(data.user)
+            if (data.subscription_active) {
+              setHint('Payment confirmed — unlocking…')
+              return
+            }
+          }
+          await applySync('checkout_return')
+        } catch (e) {
+          setError((e as Error).message)
+          void applySync('checkout_fallback')
+        } finally {
+          setBusy(false)
+        }
+      }
+      void run()
       let n = 0
       const id = window.setInterval(() => {
         n += 1
