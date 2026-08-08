@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-bpa-workflow-intro",
-      "title": "Intro game: Workflow modeling basics",
+      "title": "Intro: What is Workflow modeling basics?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-bpa-workflow-when",
+      "title": "When to use: Workflow modeling basics",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-bpa-workflow-how",
+      "title": "How to use: Workflow modeling basics",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-bpa-workflow-trap",
+      "title": "Trap / misuse: Workflow modeling basics",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-bpa-workflow-mastery",
-      "title": "Mastery game: Workflow modeling basics",
+      "title": "Mastery: Workflow modeling basics",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Workflow modeling basics” + one failure mode out loud — if you can't, you don't own it yet. (Workflow → mechanism → failure)"

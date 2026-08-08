@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-slo-intro",
-      "title": "Intro game: SLOs & Alerting",
+      "title": "Intro: What is SLOs & Alerting?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-slo-when",
+      "title": "When to use: SLOs & Alerting",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-slo-how",
+      "title": "How to use: SLOs & Alerting",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-slo-trap",
+      "title": "Trap / misuse: SLOs & Alerting",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-slo-mastery",
-      "title": "Mastery game: SLOs & Alerting",
+      "title": "Mastery: SLOs & Alerting",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "PROMISE + BUDGET: SLO is the promise; error budget is the fuel for change."

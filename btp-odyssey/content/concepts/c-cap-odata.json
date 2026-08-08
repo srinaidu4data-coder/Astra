@@ -72,15 +72,33 @@
   "linkedGames": [
     {
       "id": "ch-c-cap-odata-intro",
-      "title": "Intro game: CAP Service & OData Projection",
+      "title": "Intro: What is CAP Service & OData Projection?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-cap-odata-when",
+      "title": "When to use: CAP Service & OData Projection",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-cap-odata-how",
+      "title": "How to use: CAP Service & OData Projection",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-cap-odata-trap",
+      "title": "Trap / misuse: CAP Service & OData Projection",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-cap-odata-mastery",
-      "title": "Mastery game: CAP Service & OData Projection",
+      "title": "Mastery: CAP Service & OData Projection",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "EXPAND = EXPLOSION: Each $expand multiplies payload — bound it or p99 dies."

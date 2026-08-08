@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-bpa-governance-intro",
-      "title": "Intro game: Citizen development guardrails",
+      "title": "Intro: What is Citizen development guardrails?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-bpa-governance-when",
+      "title": "When to use: Citizen development guardrails",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-bpa-governance-how",
+      "title": "How to use: Citizen development guardrails",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-bpa-governance-trap",
+      "title": "Trap / misuse: Citizen development guardrails",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-bpa-governance-mastery",
-      "title": "Mastery game: Citizen development guardrails",
+      "title": "Mastery: Citizen development guardrails",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Citizen development guardrails” + one failure mode out loud — if you can't, you don't own it yet. (Citizen → mechanism → failure)"

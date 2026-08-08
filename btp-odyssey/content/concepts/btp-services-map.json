@@ -80,15 +80,33 @@
   "linkedGames": [
     {
       "id": "ch-btp-services-map-intro",
-      "title": "Intro game: BTP services map: what lives where",
+      "title": "Intro: What is BTP services map: what lives where?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-btp-services-map-when",
+      "title": "When to use: BTP services map: what lives where",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-btp-services-map-how",
+      "title": "How to use: BTP services map: what lives where",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-btp-services-map-trap",
+      "title": "Trap / misuse: BTP services map: what lives where",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-btp-services-map-mastery",
-      "title": "Mastery game: BTP services map: what lives where",
+      "title": "Mastery: BTP services map: what lives where",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "CITY MAP: Learn districts (integration, data, AI) before picking a street (service)."

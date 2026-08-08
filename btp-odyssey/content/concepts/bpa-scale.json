@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-bpa-scale-intro",
-      "title": "Intro game: BPA at enterprise scale",
+      "title": "Intro: What is BPA at enterprise scale?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-bpa-scale-when",
+      "title": "When to use: BPA at enterprise scale",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-bpa-scale-how",
+      "title": "How to use: BPA at enterprise scale",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-bpa-scale-trap",
+      "title": "Trap / misuse: BPA at enterprise scale",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-bpa-scale-mastery",
-      "title": "Mastery game: BPA at enterprise scale",
+      "title": "Mastery: BPA at enterprise scale",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “BPA at enterprise scale” + one failure mode out loud — if you can't, you don't own it yet. (BPA → mechanism → failure)"

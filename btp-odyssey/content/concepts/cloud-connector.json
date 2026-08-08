@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-cloud-connector-intro",
-      "title": "Intro game: Cloud Connector concepts",
+      "title": "Intro: What is Cloud Connector concepts?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-cloud-connector-when",
+      "title": "When to use: Cloud Connector concepts",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-cloud-connector-how",
+      "title": "How to use: Cloud Connector concepts",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-cloud-connector-trap",
+      "title": "Trap / misuse: Cloud Connector concepts",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-cloud-connector-mastery",
-      "title": "Mastery game: Cloud Connector concepts",
+      "title": "Mastery: Cloud Connector concepts",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Cloud Connector concepts” + one failure mode out loud — if you can't, you don't own it yet. (Cloud → mechanism → failure)"

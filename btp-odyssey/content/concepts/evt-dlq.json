@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-evt-dlq-intro",
-      "title": "Intro game: Dead-letter queues",
+      "title": "Intro: What is Dead-letter queues?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-evt-dlq-when",
+      "title": "When to use: Dead-letter queues",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-evt-dlq-how",
+      "title": "How to use: Dead-letter queues",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-evt-dlq-trap",
+      "title": "Trap / misuse: Dead-letter queues",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-evt-dlq-mastery",
-      "title": "Mastery game: Dead-letter queues",
+      "title": "Mastery: Dead-letter queues",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "LOST & FOUND with OWNER: DLQ is not trash — named owner + replay."

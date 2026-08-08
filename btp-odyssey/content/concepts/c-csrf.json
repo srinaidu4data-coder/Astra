@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-csrf-intro",
-      "title": "Intro game: CSRF Protection (concept)",
+      "title": "Intro: What is CSRF Protection (concept)?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-csrf-when",
+      "title": "When to use: CSRF Protection (concept)",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-csrf-how",
+      "title": "How to use: CSRF Protection (concept)",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-csrf-trap",
+      "title": "Trap / misuse: CSRF Protection (concept)",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-csrf-mastery",
-      "title": "Mastery game: CSRF Protection (concept)",
+      "title": "Mastery: CSRF Protection (concept)",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "FORGED ORDER SLIP: Browser tricked into action — token the writes."

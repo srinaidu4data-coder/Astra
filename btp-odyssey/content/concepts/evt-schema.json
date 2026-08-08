@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-evt-schema-intro",
-      "title": "Intro game: Event schema evolution",
+      "title": "Intro: What is Event schema evolution?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-evt-schema-when",
+      "title": "When to use: Event schema evolution",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-evt-schema-how",
+      "title": "How to use: Event schema evolution",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-evt-schema-trap",
+      "title": "Trap / misuse: Event schema evolution",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-evt-schema-mastery",
-      "title": "Mastery game: Event schema evolution",
+      "title": "Mastery: Event schema evolution",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NEWSFLASH not PHONE CALL: Events broadcast facts; don't dual-write two editors."

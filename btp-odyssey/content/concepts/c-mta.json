@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-mta-intro",
-      "title": "Intro game: Multi-Target Application (concept)",
+      "title": "Intro: What is Multi-Target Application (concept)?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-mta-when",
+      "title": "When to use: Multi-Target Application (concept)",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-mta-how",
+      "title": "How to use: Multi-Target Application (concept)",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-mta-trap",
+      "title": "Trap / misuse: Multi-Target Application (concept)",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-mta-mastery",
-      "title": "Mastery game: Multi-Target Application (concept)",
+      "title": "Mastery: Multi-Target Application (concept)",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "BUNDLE + PLUG: MTA ships the bundle; binding plugs secrets without hardcode."

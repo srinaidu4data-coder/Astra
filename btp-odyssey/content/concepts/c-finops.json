@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-finops-intro",
-      "title": "Intro game: FinOps Awareness",
+      "title": "Intro: What is FinOps Awareness?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-finops-when",
+      "title": "When to use: FinOps Awareness",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-finops-how",
+      "title": "How to use: FinOps Awareness",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-finops-trap",
+      "title": "Trap / misuse: FinOps Awareness",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-finops-mastery",
-      "title": "Mastery game: FinOps Awareness",
+      "title": "Mastery: FinOps Awareness",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "ARCHITECTURE HAS A BILL: Every runtime is a monthly decision."

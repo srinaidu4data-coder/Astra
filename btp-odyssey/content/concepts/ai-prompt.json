@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-ai-prompt-intro",
-      "title": "Intro game: Prompt design for ops",
+      "title": "Intro: What is Prompt design for ops?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-ai-prompt-when",
+      "title": "When to use: Prompt design for ops",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-ai-prompt-how",
+      "title": "How to use: Prompt design for ops",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-ai-prompt-trap",
+      "title": "Trap / misuse: Prompt design for ops",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-ai-prompt-mastery",
-      "title": "Mastery game: Prompt design for ops",
+      "title": "Mastery: Prompt design for ops",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Prompt design for ops” + one failure mode out loud — if you can't, you don't own it yet. (Prompt → mechanism → failure)"

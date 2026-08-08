@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-cpi-iflow-intro",
-      "title": "Intro game: Cloud Integration iflows",
+      "title": "Intro: What is Cloud Integration iflows?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-cpi-iflow-when",
+      "title": "When to use: Cloud Integration iflows",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-cpi-iflow-how",
+      "title": "How to use: Cloud Integration iflows",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-cpi-iflow-trap",
+      "title": "Trap / misuse: Cloud Integration iflows",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-cpi-iflow-mastery",
-      "title": "Mastery game: Cloud Integration iflows",
+      "title": "Mastery: Cloud Integration iflows",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Cloud Integration iflows” + one failure mode out loud — if you can't, you don't own it yet. (Cloud → mechanism → failure)"

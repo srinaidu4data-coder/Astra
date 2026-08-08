@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-rap-fiori-elements-intro",
-      "title": "Intro game: RAP with Fiori elements",
+      "title": "Intro: What is RAP with Fiori elements?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-rap-fiori-elements-when",
+      "title": "When to use: RAP with Fiori elements",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-rap-fiori-elements-how",
+      "title": "How to use: RAP with Fiori elements",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-rap-fiori-elements-trap",
+      "title": "Trap / misuse: RAP with Fiori elements",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-rap-fiori-elements-mastery",
-      "title": "Mastery game: RAP with Fiori elements",
+      "title": "Mastery: RAP with Fiori elements",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “RAP with Fiori elements” + one failure mode out loud — if you can't, you don't own it yet. (RAP → mechanism → failure)"

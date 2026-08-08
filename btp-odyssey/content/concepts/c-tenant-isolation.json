@@ -68,15 +68,33 @@
   "linkedGames": [
     {
       "id": "ch-c-tenant-isolation-intro",
-      "title": "Intro game: Tenant Isolation",
+      "title": "Intro: What is Tenant Isolation?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-tenant-isolation-when",
+      "title": "When to use: Tenant Isolation",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-tenant-isolation-how",
+      "title": "How to use: Tenant Isolation",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-tenant-isolation-trap",
+      "title": "Trap / misuse: Tenant Isolation",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-tenant-isolation-mastery",
-      "title": "Mastery game: Tenant Isolation",
+      "title": "Mastery: Tenant Isolation",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "HOTEL WALLS: Tenant walls are load-bearing — not curtains (UI filters)."

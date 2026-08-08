@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-cap-events-intro",
-      "title": "Intro game: CAP messaging and events",
+      "title": "Intro: What is CAP messaging and events?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-cap-events-when",
+      "title": "When to use: CAP messaging and events",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-cap-events-how",
+      "title": "How to use: CAP messaging and events",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-cap-events-trap",
+      "title": "Trap / misuse: CAP messaging and events",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-cap-events-mastery",
-      "title": "Mastery game: CAP messaging and events",
+      "title": "Mastery: CAP messaging and events",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NEWSFLASH not PHONE CALL: Events broadcast facts; don't dual-write two editors."

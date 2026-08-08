@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-sac-story-intro",
-      "title": "Intro game: Analytics Stories",
+      "title": "Intro: What is Analytics Stories?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-sac-story-when",
+      "title": "When to use: Analytics Stories",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-sac-story-how",
+      "title": "How to use: Analytics Stories",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-sac-story-trap",
+      "title": "Trap / misuse: Analytics Stories",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-sac-story-mastery",
-      "title": "Mastery game: Analytics Stories",
+      "title": "Mastery: Analytics Stories",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Analytics Stories” + one failure mode out loud — if you can't, you don't own it yet. (Analytics → mechanism → failure)"

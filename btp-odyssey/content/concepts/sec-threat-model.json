@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-sec-threat-model-intro",
-      "title": "Intro game: Threat modeling BTP apps",
+      "title": "Intro: What is Threat modeling BTP apps?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-sec-threat-model-when",
+      "title": "When to use: Threat modeling BTP apps",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-sec-threat-model-how",
+      "title": "How to use: Threat modeling BTP apps",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-sec-threat-model-trap",
+      "title": "Trap / misuse: Threat modeling BTP apps",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-sec-threat-model-mastery",
-      "title": "Mastery game: Threat modeling BTP apps",
+      "title": "Mastery: Threat modeling BTP apps",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "ASSUME BREACH: Verify every call; network location is not trust."

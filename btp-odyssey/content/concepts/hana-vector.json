@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-hana-vector-intro",
-      "title": "Intro game: Vector / multi-model awareness",
+      "title": "Intro: What is Vector / multi-model awareness?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-hana-vector-when",
+      "title": "When to use: Vector / multi-model awareness",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-hana-vector-how",
+      "title": "How to use: Vector / multi-model awareness",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-hana-vector-trap",
+      "title": "Trap / misuse: Vector / multi-model awareness",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-hana-vector-mastery",
-      "title": "Mastery game: Vector / multi-model awareness",
+      "title": "Mastery: Vector / multi-model awareness",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Vector / multi-model awareness” + one failure mode out loud — if you can't, you don't own it yet. (Vector → mechanism → failure)"

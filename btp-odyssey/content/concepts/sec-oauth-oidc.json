@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-sec-oauth-oidc-intro",
-      "title": "Intro game: OAuth 2.0 and OIDC basics",
+      "title": "Intro: What is OAuth 2.0 and OIDC basics?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-sec-oauth-oidc-when",
+      "title": "When to use: OAuth 2.0 and OIDC basics",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-sec-oauth-oidc-how",
+      "title": "How to use: OAuth 2.0 and OIDC basics",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-sec-oauth-oidc-trap",
+      "title": "Trap / misuse: OAuth 2.0 and OIDC basics",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-sec-oauth-oidc-mastery",
-      "title": "Mastery game: OAuth 2.0 and OIDC basics",
+      "title": "Mastery: OAuth 2.0 and OIDC basics",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “OAuth 2.0 and OIDC basics” + one failure mode out loud — if you can't, you don't own it yet. (OAuth → mechanism → failure)"

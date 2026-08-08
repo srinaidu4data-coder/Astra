@@ -68,15 +68,33 @@
   "linkedGames": [
     {
       "id": "ch-c-cap-vs-rap-intro",
-      "title": "Intro game: CAP vs RAP Decision",
+      "title": "Intro: What is CAP vs RAP Decision?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-cap-vs-rap-when",
+      "title": "When to use: CAP vs RAP Decision",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-cap-vs-rap-how",
+      "title": "How to use: CAP vs RAP Decision",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-cap-vs-rap-trap",
+      "title": "Trap / misuse: CAP vs RAP Decision",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-cap-vs-rap-mastery",
-      "title": "Mastery game: CAP vs RAP Decision",
+      "title": "Mastery: CAP vs RAP Decision",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "KNIGHT vs BISHOP: RAP knight stays near the king (core); CAP bishop ranges side-by-side."

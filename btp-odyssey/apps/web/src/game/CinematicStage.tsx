@@ -220,6 +220,24 @@ export function CinematicBackdrop({
         ctx!.stroke();
       }
 
+      // aurora ribbons (modern motion layer on all biomes)
+      for (let i = 0; i < 3; i++) {
+        ctx!.beginPath();
+        for (let x = 0; x <= w; x += 8) {
+          const y =
+            h * (0.28 + i * 0.12) +
+            Math.sin(x * 0.015 + t * 1.2 + i) * (18 + i * 6) +
+            Math.sin(x * 0.006 - t * 0.8) * 10;
+          if (x === 0) ctx!.moveTo(x, y);
+          else ctx!.lineTo(x, y);
+        }
+        ctx!.strokeStyle = b.accent;
+        ctx!.globalAlpha = 0.07 + i * 0.02;
+        ctx!.lineWidth = 3 + i;
+        ctx!.stroke();
+      }
+      ctx!.globalAlpha = 1;
+
       // ambient particles
       for (const p of particles) {
         p.x += p.vx * 0.016;
@@ -234,6 +252,20 @@ export function CinematicBackdrop({
         ctx!.fill();
       }
       ctx!.globalAlpha = 1;
+
+      // floating orbs
+      for (let i = 0; i < 5; i++) {
+        const ox = ((Math.sin(t * 0.35 + i * 1.7) * 0.5 + 0.5) * w);
+        const oy = ((Math.cos(t * 0.28 + i * 1.1) * 0.5 + 0.5) * h);
+        const or = 30 + i * 8 + Math.sin(t + i) * 6;
+        const og = ctx!.createRadialGradient(ox, oy, 0, ox, oy, or);
+        og.addColorStop(0, b.secondary + "33");
+        og.addColorStop(1, "transparent");
+        ctx!.fillStyle = og;
+        ctx!.beginPath();
+        ctx!.arc(ox, oy, or, 0, Math.PI * 2);
+        ctx!.fill();
+      }
 
       // pulse rings
       const pl = pulseRef.current;

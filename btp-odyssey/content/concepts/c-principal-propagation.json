@@ -68,15 +68,33 @@
   "linkedGames": [
     {
       "id": "ch-c-principal-propagation-intro",
-      "title": "Intro game: Principal Propagation (concept)",
+      "title": "Intro: What is Principal Propagation (concept)?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-principal-propagation-when",
+      "title": "When to use: Principal Propagation (concept)",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-principal-propagation-how",
+      "title": "How to use: Principal Propagation (concept)",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-principal-propagation-trap",
+      "title": "Trap / misuse: Principal Propagation (concept)",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-principal-propagation-mastery",
-      "title": "Mastery game: Principal Propagation (concept)",
+      "title": "Mastery: Principal Propagation (concept)",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME TAG TRAVELS: The human's name tag must ride every hop for audit."

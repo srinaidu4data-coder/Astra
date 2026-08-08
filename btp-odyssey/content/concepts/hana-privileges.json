@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-hana-privileges-intro",
-      "title": "Intro game: Privileges and schema isolation",
+      "title": "Intro: What is Privileges and schema isolation?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-hana-privileges-when",
+      "title": "When to use: Privileges and schema isolation",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-hana-privileges-how",
+      "title": "How to use: Privileges and schema isolation",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-hana-privileges-trap",
+      "title": "Trap / misuse: Privileges and schema isolation",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-hana-privileges-mastery",
-      "title": "Mastery game: Privileges and schema isolation",
+      "title": "Mastery: Privileges and schema isolation",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "HOTEL WALLS: Tenant walls are load-bearing — not curtains (UI filters)."

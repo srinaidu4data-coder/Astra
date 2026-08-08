@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-07T20:15:00.307Z",
+  "generatedAt": "2026-08-08T07:38:38.682Z",
   "concepts": 157,
   "sequenced": 157,
-  "challenges": 314,
+  "challenges": 785,
   "missingFromChallenges": [],
   "first": "btp-what",
   "last": "c-observability",

@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-sac-stories-intro",
-      "title": "Intro game: Stories and dashboards",
+      "title": "Intro: What is Stories and dashboards?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-sac-stories-when",
+      "title": "When to use: Stories and dashboards",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-sac-stories-how",
+      "title": "How to use: Stories and dashboards",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-sac-stories-trap",
+      "title": "Trap / misuse: Stories and dashboards",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-sac-stories-mastery",
-      "title": "Mastery game: Stories and dashboards",
+      "title": "Mastery: Stories and dashboards",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Stories and dashboards” + one failure mode out loud — if you can't, you don't own it yet. (Stories → mechanism → failure)"

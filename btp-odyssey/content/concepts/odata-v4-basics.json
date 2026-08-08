@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-odata-v4-basics-intro",
-      "title": "Intro game: OData V4 basics",
+      "title": "Intro: What is OData V4 basics?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-odata-v4-basics-when",
+      "title": "When to use: OData V4 basics",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-odata-v4-basics-how",
+      "title": "How to use: OData V4 basics",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-odata-v4-basics-trap",
+      "title": "Trap / misuse: OData V4 basics",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-odata-v4-basics-mastery",
-      "title": "Mastery game: OData V4 basics",
+      "title": "Mastery: OData V4 basics",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "EXPAND = EXPLOSION: Each $expand multiplies payload — bound it or p99 dies."

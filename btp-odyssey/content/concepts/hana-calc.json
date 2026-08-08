@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-hana-calc-intro",
-      "title": "Intro game: Calculation views concepts",
+      "title": "Intro: What is Calculation views concepts?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-hana-calc-when",
+      "title": "When to use: Calculation views concepts",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-hana-calc-how",
+      "title": "How to use: Calculation views concepts",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-hana-calc-trap",
+      "title": "Trap / misuse: Calculation views concepts",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-hana-calc-mastery",
-      "title": "Mastery game: Calculation views concepts",
+      "title": "Mastery: Calculation views concepts",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Calculation views concepts” + one failure mode out loud — if you can't, you don't own it yet. (Calculation → mechanism → failure)"

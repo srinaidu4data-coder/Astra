@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-odata-metadata-intro",
-      "title": "Intro game: OData Metadata",
+      "title": "Intro: What is OData Metadata?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-odata-metadata-when",
+      "title": "When to use: OData Metadata",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-odata-metadata-how",
+      "title": "How to use: OData Metadata",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-odata-metadata-trap",
+      "title": "Trap / misuse: OData Metadata",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-odata-metadata-mastery",
-      "title": "Mastery game: OData Metadata",
+      "title": "Mastery: OData Metadata",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "EXPAND = EXPLOSION: Each $expand multiplies payload — bound it or p99 dies."

@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-is-observability-intro",
-      "title": "Intro game: Integration observability",
+      "title": "Intro: What is Integration observability?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-is-observability-when",
+      "title": "When to use: Integration observability",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-is-observability-how",
+      "title": "How to use: Integration observability",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-is-observability-trap",
+      "title": "Trap / misuse: Integration observability",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-is-observability-mastery",
-      "title": "Mastery game: Integration observability",
+      "title": "Mastery: Integration observability",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "THREE CAMERAS: Logs dialogue, metrics score, traces camera moves — correlate them."

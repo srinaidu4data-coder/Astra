@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-wz-roles-intro",
-      "title": "Intro game: Roles and content assignment",
+      "title": "Intro: What is Roles and content assignment?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-wz-roles-when",
+      "title": "When to use: Roles and content assignment",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-wz-roles-how",
+      "title": "How to use: Roles and content assignment",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-wz-roles-trap",
+      "title": "Trap / misuse: Roles and content assignment",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-wz-roles-mastery",
-      "title": "Mastery game: Roles and content assignment",
+      "title": "Mastery: Roles and content assignment",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone."

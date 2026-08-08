@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-sec-destinations-intro",
-      "title": "Intro game: Destinations security role",
+      "title": "Intro: What is Destinations security role?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-sec-destinations-when",
+      "title": "When to use: Destinations security role",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-sec-destinations-how",
+      "title": "How to use: Destinations security role",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-sec-destinations-trap",
+      "title": "Trap / misuse: Destinations security role",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-sec-destinations-mastery",
-      "title": "Mastery game: Destinations security role",
+      "title": "Mastery: Destinations security role",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone."

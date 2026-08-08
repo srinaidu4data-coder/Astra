@@ -68,15 +68,33 @@
   "linkedGames": [
     {
       "id": "ch-c-hana-hdi-intro",
-      "title": "Intro game: HANA HDI Containers (concept)",
+      "title": "Intro: What is HANA HDI Containers (concept)?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-hana-hdi-when",
+      "title": "When to use: HANA HDI Containers (concept)",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-hana-hdi-how",
+      "title": "How to use: HANA HDI Containers (concept)",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-hana-hdi-trap",
+      "title": "Trap / misuse: HANA HDI Containers (concept)",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-hana-hdi-mastery",
-      "title": "Mastery game: HANA HDI Containers (concept)",
+      "title": "Mastery: HANA HDI Containers (concept)",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “HANA HDI Containers (concept)” + one failure mode out loud — if you can't, you don't own it yet. (HANA → mechanism → failure)"

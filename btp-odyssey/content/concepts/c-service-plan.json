@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-service-plan-intro",
-      "title": "Intro game: Service Plans",
+      "title": "Intro: What is Service Plans?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-service-plan-when",
+      "title": "When to use: Service Plans",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-service-plan-how",
+      "title": "How to use: Service Plans",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-service-plan-trap",
+      "title": "Trap / misuse: Service Plans",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-service-plan-mastery",
-      "title": "Mastery game: Service Plans",
+      "title": "Mastery: Service Plans",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Service Plans” + one failure mode out loud — if you can't, you don't own it yet. (Service → mechanism → failure)"

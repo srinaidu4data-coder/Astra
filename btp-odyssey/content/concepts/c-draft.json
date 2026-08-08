@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-draft-intro",
-      "title": "Intro game: Draft Documents",
+      "title": "Intro: What is Draft Documents?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-draft-when",
+      "title": "When to use: Draft Documents",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-draft-how",
+      "title": "How to use: Draft Documents",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-draft-trap",
+      "title": "Trap / misuse: Draft Documents",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-draft-mastery",
-      "title": "Mastery game: Draft Documents",
+      "title": "Mastery: Draft Documents",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "SKETCH then INK: Draft is pencil; activate is ink."

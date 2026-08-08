@@ -393,6 +393,386 @@ function buildIntroChallenge(c, index, prevId, seq) {
   };
 }
 
+function useCaseLine(c, i = 0) {
+  const u = Array.isArray(c.useCases) && c.useCases[i] ? c.useCases[i] : null;
+  if (u) return String(u).slice(0, 160);
+  return `Use ${c.title} when the landscape decision hinges on this control.`;
+}
+
+function howLine(c, i = 0) {
+  const h = Array.isArray(c.howToApply) && c.howToApply[i] ? c.howToApply[i] : null;
+  if (h) return String(h).slice(0, 160);
+  return `Apply ${c.title} on the active hop, then verify with evidence.`;
+}
+
+function trapLine(c) {
+  const m = Array.isArray(c.commonMistakes) && c.commonMistakes[0] ? c.commonMistakes[0] : null;
+  if (m) return String(m).slice(0, 160);
+  return `Treating “${c.title}” as optional decoration instead of a designed control.`;
+}
+
+/** WHEN TO USE — scenario timing game */
+function buildWhenChallenge(c, index, prevId, seq) {
+  const h = hash(c.id + ":when");
+  const biome = BIOME_BY_DOMAIN[c.domainId] || "space";
+  const layout = mapLayout("chain", h + 1);
+  const tool = pickTool(c, h);
+  const uc0 = useCaseLine(c, 0);
+  const uc1 = useCaseLine(c, 1);
+  const why = c.whyItMatters || `Without ${c.title}, designs fail under pressure.`;
+
+  return {
+    id: `ch-${c.id}-when`,
+    title: `${seq}⏱ When: ${c.title}`,
+    tier: c.level || "basic",
+    domain: c.domainId || "operations",
+    biome,
+    challengeType: "when_to_use",
+    mapStyle: biome,
+    brief: `When-to-use game for ${c.title}. Pick the right moment; reject vanity timing.`,
+    unlockAfter: prevId,
+    concepts: [c.id],
+    curriculumIndex: seq,
+    conceptId: c.id,
+    variant: "when",
+    mapNodes: layout.nodes.map((n, i) =>
+      i === 1 ? { ...n, label: "Decision", broken: true } : n,
+    ),
+    edges: layout.edges,
+    steps: [
+      {
+        id: "s1",
+        title: "Spot the trigger",
+        teach: `WHEN to reach for “${c.title}”: ${uc0}`,
+        prompt: `Which situation is the right moment to apply ${c.title}?`,
+        mode: "choose",
+        hint: "Match a real trigger: landing zone, incident, design review, go-live.",
+        cinema: "when_radar",
+        formula: "WHEN = trigger + constraint + failure cost",
+        options: [
+          { id: "t", label: uc0, correct: true, why: "Correct trigger — use the concept here." },
+          {
+            id: "f1",
+            label: "Only after production is already on fire for weeks",
+            correct: false,
+            why: "Too late. Design-time and early ops use this concept before blast radius grows.",
+          },
+          {
+            id: "f2",
+            label: "Never — buzzwords belong only on marketing slides",
+            correct: false,
+            why: "This is an operational design control, not decoration.",
+          },
+        ],
+      },
+      {
+        id: "s2",
+        title: "Reject wrong timing",
+        teach: `Wrong timing wastes effort or misses risk. ${why}`.slice(0, 280),
+        prompt: "Which timing is a trap for this concept?",
+        mode: "choose",
+        hint: "Reject “skip until certification” and “only after outage”.",
+        cinema: "when_clock",
+        options: [
+          {
+            id: "t",
+            label: "Defer until after go-live with no residual-risk note",
+            correct: true,
+            why: "Trap identified — silent deferral is how debt becomes incidents.",
+          },
+          {
+            id: "f1",
+            label: uc1,
+            correct: false,
+            why: "That is a legitimate use window — not the trap.",
+          },
+          {
+            id: "f2",
+            label: "During architecture review when constraints are still cheap to change",
+            correct: false,
+            why: "That is excellent timing — not the trap.",
+          },
+        ],
+      },
+      {
+        id: "s3",
+        title: "Arm the decision hop",
+        teach: `On the timeline, the decision hop is where “${c.title}” enters the design.`,
+        prompt: "Drop the tool onto the Decision hop to mark WHEN you engage.",
+        mode: "drop",
+        hint: "Broken middle node = decision moment.",
+        toolId: tool,
+        targetNodeId: layout.dropTarget,
+        wrongTargets: Object.fromEntries(
+          layout.nodes
+            .filter((n) => n.id !== layout.dropTarget)
+            .map((n) => [n.id, "Not the decision hop — arm the moment you choose the control."]),
+        ),
+        successWhy: `When-to-use armed for ${c.title}.`,
+        cinema: "when_lock",
+      },
+      {
+        id: "s4",
+        title: "Confirm window",
+        teach: "Close the loop: the team can restate WHEN this concept is mandatory.",
+        prompt: "CHECK the decision hop — proof you can explain the use window.",
+        mode: "drop",
+        hint: "Verify the same decision node.",
+        toolId: "tool-check",
+        targetNodeId: layout.dropTarget,
+        wrongTargets: Object.fromEntries(
+          layout.nodes
+            .filter((n) => n.id !== layout.dropTarget)
+            .map((n) => [n.id, "Verify the decision hop you armed."]),
+        ),
+        successWhy: `When-game cleared: ${c.title}.`,
+        cinema: "when_seal",
+      },
+    ],
+  };
+}
+
+/** HOW TO USE — procedural apply game */
+function buildHowChallenge(c, index, prevId, seq) {
+  const h = hash(c.id + ":how");
+  const biome = BIOME_BY_DOMAIN[c.domainId] || "space";
+  const layout = mapLayout("layers", h + 2);
+  const tool = pickTool(c, h + 2);
+  const h0 = howLine(c, 0);
+  const h1 = howLine(c, 1);
+  const points = Array.isArray(c.formalPoints) ? c.formalPoints : [];
+
+  return {
+    id: `ch-${c.id}-how`,
+    title: `${seq}⚙ How: ${c.title}`,
+    tier: c.level || "basic",
+    domain: c.domainId || "operations",
+    biome,
+    challengeType: "how_to_use",
+    mapStyle: biome,
+    brief: `How-to-use game for ${c.title}. Sequence, place, verify — mechanism not buzzword.`,
+    unlockAfter: prevId,
+    concepts: [c.id],
+    curriculumIndex: seq,
+    conceptId: c.id,
+    variant: "how",
+    mapNodes: layout.nodes.map((n, i) =>
+      i === 1 ? { ...n, label: c.title.slice(0, 16), broken: true } : n,
+    ),
+    edges: layout.edges,
+    steps: [
+      {
+        id: "s1",
+        title: "Name the move",
+        teach: `HOW to use “${c.title}”: ${h0}`,
+        prompt: `Which action is the correct first move when using ${c.title}?`,
+        mode: "choose",
+        hint: points[0] || h0,
+        cinema: "how_pipeline",
+        formula: "HOW = locate hop → apply control → verify evidence",
+        options: [
+          { id: "t", label: h0, correct: true, why: "Correct procedure — this is how you use it." },
+          {
+            id: "f1",
+            label: "Skip design, paste a screenshot from another project",
+            correct: false,
+            why: "Copy-paste without landscape context fails under review.",
+          },
+          {
+            id: "f2",
+            label: "Grant Admin.All so you never need this concept",
+            correct: false,
+            why: "Privilege inflation is not a how-to — it is a trap.",
+          },
+        ],
+      },
+      {
+        id: "s2",
+        title: "Order the steps",
+        teach: `Second beat: ${h1}`,
+        prompt: "Which follow-through is correct after the first apply?",
+        mode: "choose",
+        hint: "Evidence, negative test, or ownership — not “hope”.",
+        cinema: "how_steps",
+        options: [
+          {
+            id: "t",
+            label: h1,
+            correct: true,
+            why: "Correct how-sequence.",
+          },
+          {
+            id: "f1",
+            label: "Ship to prod with no check and no owner",
+            correct: false,
+            why: "Missing verify + ownership is how silent debt ships.",
+          },
+          {
+            id: "f2",
+            label: "Delete logs so nobody can challenge the design",
+            correct: false,
+            why: "Never. Observability is part of how you use platform controls.",
+          },
+        ],
+      },
+      {
+        id: "s3",
+        title: "Place on the platform hop",
+        teach: `Drag the control onto the hop where ${c.title} actually lives in the stack.`,
+        prompt: "Drop the highlighted tool onto the broken platform/control node.",
+        mode: "drop",
+        hint: "Broken middle layer is the apply target.",
+        toolId: tool,
+        targetNodeId: layout.dropTarget,
+        wrongTargets: Object.fromEntries(
+          layout.nodes
+            .filter((n) => n.id !== layout.dropTarget)
+            .map((n) => [n.id, `Wrong layer for “${c.title}” apply.`]),
+        ),
+        successWhy: `How-to placement for ${c.title}.`,
+        cinema: "how_place",
+      },
+      {
+        id: "s4",
+        title: "Prove it",
+        teach: "HOW is incomplete without verification evidence.",
+        prompt: "CHECK the service/data node that proves the control works.",
+        mode: "drop",
+        hint: "Downstream verification target.",
+        toolId: "tool-check",
+        targetNodeId: layout.nodes[layout.nodes.length - 1].id,
+        wrongTargets: Object.fromEntries(
+          layout.nodes.slice(0, -1).map((n) => [
+            n.id,
+            "Useful later — this beat wants verification evidence.",
+          ]),
+        ),
+        successWhy: `How-game cleared: ${c.title}.`,
+        cinema: "how_prove",
+      },
+    ],
+  };
+}
+
+/** TRAP / WHEN NOT — misuse game */
+function buildTrapChallenge(c, index, prevId, seq) {
+  const h = hash(c.id + ":trap");
+  const biome = BIOME_BY_DOMAIN[c.domainId] || "war";
+  const layout = mapLayout("security", h + 5);
+  const tool = pickTool(c, h + 5);
+  const trap = trapLine(c);
+  const good = howLine(c, 0);
+
+  return {
+    id: `ch-${c.id}-trap`,
+    title: `${seq}⚠ Trap: ${c.title}`,
+    tier: c.level === "basic" ? "advanced" : c.level || "advanced",
+    domain: c.domainId || "operations",
+    biome: biome === "farm" ? "war" : biome,
+    challengeType: "trap_misuse",
+    mapStyle: biome === "farm" ? "war" : biome,
+    brief: `Trap game for ${c.title}. Name the misuse, reject it, re-arm the control.`,
+    unlockAfter: prevId,
+    concepts: [c.id],
+    curriculumIndex: seq,
+    conceptId: c.id,
+    variant: "trap",
+    mapNodes: layout.nodes,
+    edges: layout.edges,
+    steps: [
+      {
+        id: "s1",
+        title: "Name the anti-pattern",
+        teach: `Misuse of “${c.title}”: ${trap}`,
+        prompt: "Which option is the misuse to reject?",
+        mode: "choose",
+        hint: "Anti-pattern language — disable, skip, over-privilege, buzzword-only.",
+        cinema: "trap_alert",
+        formula: "TRAP = looks fast · hides risk · fails audit/incident",
+        options: [
+          { id: "t", label: trap, correct: true, why: "Correct — this is the trap to reject." },
+          {
+            id: "f1",
+            label: good,
+            correct: false,
+            why: "That is the good path — not the trap.",
+          },
+          {
+            id: "f2",
+            label: "Document residual risk when deferring with an owner and date",
+            correct: false,
+            why: "Healthy deferral practice — not a trap.",
+          },
+        ],
+      },
+      {
+        id: "s2",
+        title: "Why the trap fails",
+        teach: c.whyItMatters || `Skipping ${c.title} turns design debt into customer pain.`,
+        prompt: "Why does the trap fail under real pressure?",
+        mode: "choose",
+        hint: "Blast radius, audit, upgrade, or customer impact.",
+        cinema: "trap_blast",
+        options: [
+          {
+            id: "t",
+            label: (c.whyItMatters || `Silent failure until production proves you wrong.`).slice(
+              0,
+              140,
+            ),
+            correct: true,
+            why: "Risk framing locked.",
+          },
+          {
+            id: "f1",
+            label: "Traps only matter for exam questions",
+            correct: false,
+            why: "Operational failure, not exams.",
+          },
+          {
+            id: "f2",
+            label: "Nothing fails if you never look at logs",
+            correct: false,
+            why: "Customers and auditors still notice.",
+          },
+        ],
+      },
+      {
+        id: "s3",
+        title: "Re-arm the control",
+        teach: `Replace the trap with a real apply of ${c.title}.`,
+        prompt: "Drop the tool onto the broken API hop to re-arm the control.",
+        mode: "drop",
+        hint: "Broken API/control node.",
+        toolId: tool,
+        targetNodeId: layout.dropTarget,
+        wrongTargets: Object.fromEntries(
+          layout.nodes
+            .filter((n) => n.id !== layout.dropTarget)
+            .map((n) => [n.id, "Wrong hop — re-arm the broken control node."]),
+        ),
+        successWhy: `Trap rejected; control re-armed for ${c.title}.`,
+        cinema: "trap_rearm",
+      },
+      {
+        id: "s4",
+        title: "Seal against relapse",
+        teach: "Peak-end: verify so the trap memory includes the fix path.",
+        prompt: "CHECK the data/service end to prove the trap is gone.",
+        mode: "drop",
+        hint: "Downstream proof node.",
+        toolId: "tool-check",
+        targetNodeId: layout.nodes[layout.nodes.length - 1].id,
+        wrongTargets: Object.fromEntries(
+          layout.nodes.slice(0, -1).map((n) => [n.id, "Verify the end of the chain."]),
+        ),
+        successWhy: `Trap-game cleared: ${c.title}.`,
+        cinema: "trap_seal",
+      },
+    ],
+  };
+}
+
 function buildMasteryChallenge(c, index, prevId, seq) {
   const h = hash(c.id + ":mastery");
   const biome = BIOME_BY_DOMAIN[c.domainId] || "space";
@@ -517,18 +897,22 @@ function main() {
   let prev = null;
   let seq = 0;
 
-  // Gate 0 already via first concept challenges
+  // Per concept: intro → when → how → trap → mastery (5 games, linear)
   for (let i = 0; i < ordered.length; i++) {
     const c = ordered[i];
-    seq += 1;
-    const intro = buildIntroChallenge(c, i, prev, seq);
-    challenges.push(intro);
-    prev = intro.id;
-
-    seq += 1;
-    const mastery = buildMasteryChallenge(c, i, prev, seq);
-    challenges.push(mastery);
-    prev = mastery.id;
+    const builders = [
+      buildIntroChallenge,
+      buildWhenChallenge,
+      buildHowChallenge,
+      buildTrapChallenge,
+      buildMasteryChallenge,
+    ];
+    for (const build of builders) {
+      seq += 1;
+      const ch = build(c, i, prev, seq);
+      challenges.push(ch);
+      prev = ch.id;
+    }
   }
 
   // Fill brief totals
@@ -550,16 +934,18 @@ function main() {
   }
 
   const pack = {
-    version: "5.0.0",
+    version: "6.0.0",
     title: "Odyssey Full Curriculum Campaign",
     intro:
-      "Every concept is sequenced from What is SAP BTP? through advanced domains. Clear intro then mastery for each card. Wrong = RED + why. Right = unlock next. Nothing optional in the spine order.",
+      "Every concept has five games: Intro (what) → When (timing) → How (procedure) → Trap (misuse) → Mastery (pressure). Wrong = RED + why. Right = unlock next. Linear spine; progress always saves.",
     biomes: ["war", "chess", "farm", "roblox", "neural", "space", "market", "film"],
     ethics:
       "Linear mastery path for learning integrity. No FOMO punishment — progress saves; missing a day never costs.",
     tools: tools(),
     totalChallenges: challenges.length,
     totalConcepts: ordered.length,
+    gamesPerConcept: 5,
+    variants: ["intro", "when", "how", "trap", "mastery"],
     challenges,
   };
 
@@ -573,7 +959,17 @@ function main() {
     domainId: c.domainId,
     level: c.level,
     introChallengeId: `ch-${c.id}-intro`,
+    whenChallengeId: `ch-${c.id}-when`,
+    howChallengeId: `ch-${c.id}-how`,
+    trapChallengeId: `ch-${c.id}-trap`,
     masteryChallengeId: `ch-${c.id}-mastery`,
+    games: [
+      `ch-${c.id}-intro`,
+      `ch-${c.id}-when`,
+      `ch-${c.id}-how`,
+      `ch-${c.id}-trap`,
+      `ch-${c.id}-mastery`,
+    ],
   }));
 
   const curDir = join(root, "content/curriculum");
@@ -582,11 +978,12 @@ function main() {
     join(curDir, "master-sequence.json"),
     JSON.stringify(
       {
-        version: "5.0.0",
+        version: "6.0.0",
         title: "Master concept sequence",
         description:
-          "Pedagogical order: BTP intro → structure → security/admin → CAP → RAP → UI → Integration → Events → BPA → Work Zone → Data → AI.",
+          "Pedagogical order: BTP intro → structure → security/admin → CAP → RAP → UI → Integration → Events → BPA → Work Zone → Data → AI. Five games per concept (what / when / how / trap / mastery).",
         conceptCount: sequence.length,
+        gamesPerConcept: 5,
         challengeCount: challenges.length,
         sequence,
       },
@@ -622,7 +1019,7 @@ function main() {
       title: `${i + 1}. ${p.domainId} path (${p.concepts.length} concepts)`,
       tier: i < 3 ? "starter" : i < 8 ? "basic" : i < 12 ? "advanced" : "expert",
       order: i + 1,
-      objective: `Clear intro+mastery PLAY for every concept in ${p.domainId} (${first} → ${last}).`,
+      objective: `Clear all 5 games per concept (intro→when→how→trap→mastery) in ${p.domainId} (${first} → ${last}).`,
       challengeId: `ch-${last}-mastery`,
       conceptIds: p.concepts,
       rewardLabel: i + 1 < phases.length ? `Unlock ${phases[i + 1].domainId}` : "Curriculum complete",

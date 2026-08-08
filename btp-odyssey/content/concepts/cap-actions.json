@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-cap-actions-intro",
-      "title": "Intro game: Actions and functions",
+      "title": "Intro: What is Actions and functions?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-cap-actions-when",
+      "title": "When to use: Actions and functions",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-cap-actions-how",
+      "title": "How to use: Actions and functions",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-cap-actions-trap",
+      "title": "Trap / misuse: Actions and functions",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-cap-actions-mastery",
-      "title": "Mastery game: Actions and functions",
+      "title": "Mastery: Actions and functions",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Actions and functions” + one failure mode out loud — if you can't, you don't own it yet. (Actions → mechanism → failure)"

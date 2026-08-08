@@ -66,15 +66,33 @@
   "linkedGames": [
     {
       "id": "ch-c-functional-nfr-intro",
-      "title": "Intro game: Functional vs Non-Functional Requirements",
+      "title": "Intro: What is Functional vs Non-Functional Requirements?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-functional-nfr-when",
+      "title": "When to use: Functional vs Non-Functional Requirements",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-functional-nfr-how",
+      "title": "How to use: Functional vs Non-Functional Requirements",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-functional-nfr-trap",
+      "title": "Trap / misuse: Functional vs Non-Functional Requirements",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-functional-nfr-mastery",
-      "title": "Mastery game: Functional vs Non-Functional Requirements",
+      "title": "Mastery: Functional vs Non-Functional Requirements",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Functional vs Non-Functional Requirements” + one failure mode out loud — if you can't, you don't own it yet. (Functional → mechanism → failure)"

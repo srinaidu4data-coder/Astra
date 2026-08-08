@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-bdc-what-intro",
-      "title": "Intro game: Business Data Cloud ecosystem",
+      "title": "Intro: What is Business Data Cloud ecosystem?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-bdc-what-when",
+      "title": "When to use: Business Data Cloud ecosystem",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-bdc-what-how",
+      "title": "How to use: Business Data Cloud ecosystem",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-bdc-what-trap",
+      "title": "Trap / misuse: Business Data Cloud ecosystem",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-bdc-what-mastery",
-      "title": "Mastery game: Business Data Cloud ecosystem",
+      "title": "Mastery: Business Data Cloud ecosystem",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "PRODUCT not DUMP: Owner + contract + quality — not a pile of tables."

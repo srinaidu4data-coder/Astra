@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-ops-sre-intro",
-      "title": "Intro game: SRE practices",
+      "title": "Intro: What is SRE practices?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-ops-sre-when",
+      "title": "When to use: SRE practices",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-ops-sre-how",
+      "title": "How to use: SRE practices",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-ops-sre-trap",
+      "title": "Trap / misuse: SRE practices",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-ops-sre-mastery",
-      "title": "Mastery game: SRE practices",
+      "title": "Mastery: SRE practices",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "PROMISE + BUDGET: SLO is the promise; error budget is the fuel for change."

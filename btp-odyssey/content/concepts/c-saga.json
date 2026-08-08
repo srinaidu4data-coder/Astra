@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-saga-intro",
-      "title": "Intro game: Saga Pattern",
+      "title": "Intro: What is Saga Pattern?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-saga-when",
+      "title": "When to use: Saga Pattern",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-saga-how",
+      "title": "How to use: Saga Pattern",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-saga-trap",
+      "title": "Trap / misuse: Saga Pattern",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-saga-mastery",
-      "title": "Mastery game: Saga Pattern",
+      "title": "Mastery: Saga Pattern",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "TV SEASON not MOVIE: Long business tx as episodes with compensations, not one 2PC film."

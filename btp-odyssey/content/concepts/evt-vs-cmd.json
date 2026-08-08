@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-evt-vs-cmd-intro",
-      "title": "Intro game: Events vs commands",
+      "title": "Intro: What is Events vs commands?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-evt-vs-cmd-when",
+      "title": "When to use: Events vs commands",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-evt-vs-cmd-how",
+      "title": "How to use: Events vs commands",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-evt-vs-cmd-trap",
+      "title": "Trap / misuse: Events vs commands",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-evt-vs-cmd-mastery",
-      "title": "Mastery game: Events vs commands",
+      "title": "Mastery: Events vs commands",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NEWSFLASH not PHONE CALL: Events broadcast facts; don't dual-write two editors."

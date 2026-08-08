@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-bpa-forms-intro",
-      "title": "Intro game: Forms and approvals",
+      "title": "Intro: What is Forms and approvals?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-bpa-forms-when",
+      "title": "When to use: Forms and approvals",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-bpa-forms-how",
+      "title": "How to use: Forms and approvals",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-bpa-forms-trap",
+      "title": "Trap / misuse: Forms and approvals",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-bpa-forms-mastery",
-      "title": "Mastery game: Forms and approvals",
+      "title": "Mastery: Forms and approvals",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Forms and approvals” + one failure mode out loud — if you can't, you don't own it yet. (Forms → mechanism → failure)"

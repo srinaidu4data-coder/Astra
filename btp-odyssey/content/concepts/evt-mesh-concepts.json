@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-evt-mesh-concepts-intro",
-      "title": "Intro game: Event Mesh style concepts",
+      "title": "Intro: What is Event Mesh style concepts?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-evt-mesh-concepts-when",
+      "title": "When to use: Event Mesh style concepts",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-evt-mesh-concepts-how",
+      "title": "How to use: Event Mesh style concepts",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-evt-mesh-concepts-trap",
+      "title": "Trap / misuse: Event Mesh style concepts",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-evt-mesh-concepts-mastery",
-      "title": "Mastery game: Event Mesh style concepts",
+      "title": "Mastery: Event Mesh style concepts",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NEWSFLASH not PHONE CALL: Events broadcast facts; don't dual-write two editors."

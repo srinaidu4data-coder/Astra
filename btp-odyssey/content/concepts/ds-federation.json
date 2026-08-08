@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-ds-federation-intro",
-      "title": "Intro game: Federation vs replication",
+      "title": "Intro: What is Federation vs replication?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-ds-federation-when",
+      "title": "When to use: Federation vs replication",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-ds-federation-how",
+      "title": "How to use: Federation vs replication",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-ds-federation-trap",
+      "title": "Trap / misuse: Federation vs replication",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-ds-federation-mastery",
-      "title": "Mastery game: Federation vs replication",
+      "title": "Mastery: Federation vs replication",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Federation vs replication” + one failure mode out loud — if you can't, you don't own it yet. (Federation → mechanism → failure)"

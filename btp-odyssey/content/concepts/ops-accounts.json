@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-ops-accounts-intro",
-      "title": "Intro game: Global accounts and subaccounts",
+      "title": "Intro: What is Global accounts and subaccounts?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-ops-accounts-when",
+      "title": "When to use: Global accounts and subaccounts",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-ops-accounts-how",
+      "title": "How to use: Global accounts and subaccounts",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-ops-accounts-trap",
+      "title": "Trap / misuse: Global accounts and subaccounts",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-ops-accounts-mastery",
-      "title": "Mastery game: Global accounts and subaccounts",
+      "title": "Mastery: Global accounts and subaccounts",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "HQ → FLOORS → ROOMS: Global account HQ, directories floors, subaccounts locked rooms."

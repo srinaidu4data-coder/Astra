@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-sac-what-intro",
-      "title": "Intro game: SAP Analytics Cloud overview",
+      "title": "Intro: What is SAP Analytics Cloud overview?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-sac-what-when",
+      "title": "When to use: SAP Analytics Cloud overview",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-sac-what-how",
+      "title": "How to use: SAP Analytics Cloud overview",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-sac-what-trap",
+      "title": "Trap / misuse: SAP Analytics Cloud overview",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-sac-what-mastery",
-      "title": "Mastery game: SAP Analytics Cloud overview",
+      "title": "Mastery: SAP Analytics Cloud overview",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “SAP Analytics Cloud overview” + one failure mode out loud — if you can't, you don't own it yet. (SAP → mechanism → failure)"

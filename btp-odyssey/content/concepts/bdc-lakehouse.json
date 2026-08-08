@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-bdc-lakehouse-intro",
-      "title": "Intro game: Lakehouse patterns with SAP Databricks concepts",
+      "title": "Intro: What is Lakehouse patterns with SAP Databricks concepts?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-bdc-lakehouse-when",
+      "title": "When to use: Lakehouse patterns with SAP Databricks concepts",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-bdc-lakehouse-how",
+      "title": "How to use: Lakehouse patterns with SAP Databricks concepts",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-bdc-lakehouse-trap",
+      "title": "Trap / misuse: Lakehouse patterns with SAP Databricks concepts",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-bdc-lakehouse-mastery",
-      "title": "Mastery game: Lakehouse patterns with SAP Databricks concepts",
+      "title": "Mastery: Lakehouse patterns with SAP Databricks concepts",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "PRODUCT not DUMP: Owner + contract + quality — not a pile of tables."

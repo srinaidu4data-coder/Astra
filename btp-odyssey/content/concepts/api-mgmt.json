@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-api-mgmt-intro",
-      "title": "Intro game: API Management concepts",
+      "title": "Intro: What is API Management concepts?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-api-mgmt-when",
+      "title": "When to use: API Management concepts",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-api-mgmt-how",
+      "title": "How to use: API Management concepts",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-api-mgmt-trap",
+      "title": "Trap / misuse: API Management concepts",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-api-mgmt-mastery",
-      "title": "Mastery game: API Management concepts",
+      "title": "Mastery: API Management concepts",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “API Management concepts” + one failure mode out loud — if you can't, you don't own it yet. (API → mechanism → failure)"

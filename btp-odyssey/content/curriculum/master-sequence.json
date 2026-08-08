@@ -1,9 +1,10 @@
 {
-  "version": "5.0.0",
+  "version": "6.0.0",
   "title": "Master concept sequence",
-  "description": "Pedagogical order: BTP intro → structure → security/admin → CAP → RAP → UI → Integration → Events → BPA → Work Zone → Data → AI.",
+  "description": "Pedagogical order: BTP intro → structure → security/admin → CAP → RAP → UI → Integration → Events → BPA → Work Zone → Data → AI. Five games per concept (what / when / how / trap / mastery).",
   "conceptCount": 157,
-  "challengeCount": 314,
+  "gamesPerConcept": 5,
+  "challengeCount": 785,
   "sequence": [
     {
       "index": 1,
@@ -12,7 +13,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-btp-what-intro",
-      "masteryChallengeId": "ch-btp-what-mastery"
+      "whenChallengeId": "ch-btp-what-when",
+      "howChallengeId": "ch-btp-what-how",
+      "trapChallengeId": "ch-btp-what-trap",
+      "masteryChallengeId": "ch-btp-what-mastery",
+      "games": [
+        "ch-btp-what-intro",
+        "ch-btp-what-when",
+        "ch-btp-what-how",
+        "ch-btp-what-trap",
+        "ch-btp-what-mastery"
+      ]
     },
     {
       "index": 2,
@@ -21,7 +32,17 @@
       "domainId": "architecture",
       "level": "basic",
       "introChallengeId": "ch-btp-services-map-intro",
-      "masteryChallengeId": "ch-btp-services-map-mastery"
+      "whenChallengeId": "ch-btp-services-map-when",
+      "howChallengeId": "ch-btp-services-map-how",
+      "trapChallengeId": "ch-btp-services-map-trap",
+      "masteryChallengeId": "ch-btp-services-map-mastery",
+      "games": [
+        "ch-btp-services-map-intro",
+        "ch-btp-services-map-when",
+        "ch-btp-services-map-how",
+        "ch-btp-services-map-trap",
+        "ch-btp-services-map-mastery"
+      ]
     },
     {
       "index": 3,
@@ -30,7 +51,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-btp-platform-structure-intro",
-      "masteryChallengeId": "ch-btp-platform-structure-mastery"
+      "whenChallengeId": "ch-btp-platform-structure-when",
+      "howChallengeId": "ch-btp-platform-structure-how",
+      "trapChallengeId": "ch-btp-platform-structure-trap",
+      "masteryChallengeId": "ch-btp-platform-structure-mastery",
+      "games": [
+        "ch-btp-platform-structure-intro",
+        "ch-btp-platform-structure-when",
+        "ch-btp-platform-structure-how",
+        "ch-btp-platform-structure-trap",
+        "ch-btp-platform-structure-mastery"
+      ]
     },
     {
       "index": 4,
@@ -39,7 +70,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-ops-accounts-intro",
-      "masteryChallengeId": "ch-ops-accounts-mastery"
+      "whenChallengeId": "ch-ops-accounts-when",
+      "howChallengeId": "ch-ops-accounts-how",
+      "trapChallengeId": "ch-ops-accounts-trap",
+      "masteryChallengeId": "ch-ops-accounts-mastery",
+      "games": [
+        "ch-ops-accounts-intro",
+        "ch-ops-accounts-when",
+        "ch-ops-accounts-how",
+        "ch-ops-accounts-trap",
+        "ch-ops-accounts-mastery"
+      ]
     },
     {
       "index": 5,
@@ -48,7 +89,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-c-global-account-intro",
-      "masteryChallengeId": "ch-c-global-account-mastery"
+      "whenChallengeId": "ch-c-global-account-when",
+      "howChallengeId": "ch-c-global-account-how",
+      "trapChallengeId": "ch-c-global-account-trap",
+      "masteryChallengeId": "ch-c-global-account-mastery",
+      "games": [
+        "ch-c-global-account-intro",
+        "ch-c-global-account-when",
+        "ch-c-global-account-how",
+        "ch-c-global-account-trap",
+        "ch-c-global-account-mastery"
+      ]
     },
     {
       "index": 6,
@@ -57,7 +108,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-c-subaccount-intro",
-      "masteryChallengeId": "ch-c-subaccount-mastery"
+      "whenChallengeId": "ch-c-subaccount-when",
+      "howChallengeId": "ch-c-subaccount-how",
+      "trapChallengeId": "ch-c-subaccount-trap",
+      "masteryChallengeId": "ch-c-subaccount-mastery",
+      "games": [
+        "ch-c-subaccount-intro",
+        "ch-c-subaccount-when",
+        "ch-c-subaccount-how",
+        "ch-c-subaccount-trap",
+        "ch-c-subaccount-mastery"
+      ]
     },
     {
       "index": 7,
@@ -66,7 +127,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-ops-entitlements-intro",
-      "masteryChallengeId": "ch-ops-entitlements-mastery"
+      "whenChallengeId": "ch-ops-entitlements-when",
+      "howChallengeId": "ch-ops-entitlements-how",
+      "trapChallengeId": "ch-ops-entitlements-trap",
+      "masteryChallengeId": "ch-ops-entitlements-mastery",
+      "games": [
+        "ch-ops-entitlements-intro",
+        "ch-ops-entitlements-when",
+        "ch-ops-entitlements-how",
+        "ch-ops-entitlements-trap",
+        "ch-ops-entitlements-mastery"
+      ]
     },
     {
       "index": 8,
@@ -75,7 +146,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-c-service-plan-intro",
-      "masteryChallengeId": "ch-c-service-plan-mastery"
+      "whenChallengeId": "ch-c-service-plan-when",
+      "howChallengeId": "ch-c-service-plan-how",
+      "trapChallengeId": "ch-c-service-plan-trap",
+      "masteryChallengeId": "ch-c-service-plan-mastery",
+      "games": [
+        "ch-c-service-plan-intro",
+        "ch-c-service-plan-when",
+        "ch-c-service-plan-how",
+        "ch-c-service-plan-trap",
+        "ch-c-service-plan-mastery"
+      ]
     },
     {
       "index": 9,
@@ -84,7 +165,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-c-cf-space-intro",
-      "masteryChallengeId": "ch-c-cf-space-mastery"
+      "whenChallengeId": "ch-c-cf-space-when",
+      "howChallengeId": "ch-c-cf-space-how",
+      "trapChallengeId": "ch-c-cf-space-trap",
+      "masteryChallengeId": "ch-c-cf-space-mastery",
+      "games": [
+        "ch-c-cf-space-intro",
+        "ch-c-cf-space-when",
+        "ch-c-cf-space-how",
+        "ch-c-cf-space-trap",
+        "ch-c-cf-space-mastery"
+      ]
     },
     {
       "index": 10,
@@ -93,7 +184,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-ops-cf-intro",
-      "masteryChallengeId": "ch-ops-cf-mastery"
+      "whenChallengeId": "ch-ops-cf-when",
+      "howChallengeId": "ch-ops-cf-how",
+      "trapChallengeId": "ch-ops-cf-trap",
+      "masteryChallengeId": "ch-ops-cf-mastery",
+      "games": [
+        "ch-ops-cf-intro",
+        "ch-ops-cf-when",
+        "ch-ops-cf-how",
+        "ch-ops-cf-trap",
+        "ch-ops-cf-mastery"
+      ]
     },
     {
       "index": 11,
@@ -102,7 +203,17 @@
       "domainId": "cap",
       "level": "basic",
       "introChallengeId": "ch-c-mta-intro",
-      "masteryChallengeId": "ch-c-mta-mastery"
+      "whenChallengeId": "ch-c-mta-when",
+      "howChallengeId": "ch-c-mta-how",
+      "trapChallengeId": "ch-c-mta-trap",
+      "masteryChallengeId": "ch-c-mta-mastery",
+      "games": [
+        "ch-c-mta-intro",
+        "ch-c-mta-when",
+        "ch-c-mta-how",
+        "ch-c-mta-trap",
+        "ch-c-mta-mastery"
+      ]
     },
     {
       "index": 12,
@@ -111,7 +222,17 @@
       "domainId": "cap",
       "level": "basic",
       "introChallengeId": "ch-c-binding-intro",
-      "masteryChallengeId": "ch-c-binding-mastery"
+      "whenChallengeId": "ch-c-binding-when",
+      "howChallengeId": "ch-c-binding-how",
+      "trapChallengeId": "ch-c-binding-trap",
+      "masteryChallengeId": "ch-c-binding-mastery",
+      "games": [
+        "ch-c-binding-intro",
+        "ch-c-binding-when",
+        "ch-c-binding-how",
+        "ch-c-binding-trap",
+        "ch-c-binding-mastery"
+      ]
     },
     {
       "index": 13,
@@ -120,7 +241,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-btp-security-admin-intro",
-      "masteryChallengeId": "ch-btp-security-admin-mastery"
+      "whenChallengeId": "ch-btp-security-admin-when",
+      "howChallengeId": "ch-btp-security-admin-how",
+      "trapChallengeId": "ch-btp-security-admin-trap",
+      "masteryChallengeId": "ch-btp-security-admin-mastery",
+      "games": [
+        "ch-btp-security-admin-intro",
+        "ch-btp-security-admin-when",
+        "ch-btp-security-admin-how",
+        "ch-btp-security-admin-trap",
+        "ch-btp-security-admin-mastery"
+      ]
     },
     {
       "index": 14,
@@ -129,7 +260,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-sec-shared-resp-intro",
-      "masteryChallengeId": "ch-sec-shared-resp-mastery"
+      "whenChallengeId": "ch-sec-shared-resp-when",
+      "howChallengeId": "ch-sec-shared-resp-how",
+      "trapChallengeId": "ch-sec-shared-resp-trap",
+      "masteryChallengeId": "ch-sec-shared-resp-mastery",
+      "games": [
+        "ch-sec-shared-resp-intro",
+        "ch-sec-shared-resp-when",
+        "ch-sec-shared-resp-how",
+        "ch-sec-shared-resp-trap",
+        "ch-sec-shared-resp-mastery"
+      ]
     },
     {
       "index": 15,
@@ -138,7 +279,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-c-shared-responsibility-intro",
-      "masteryChallengeId": "ch-c-shared-responsibility-mastery"
+      "whenChallengeId": "ch-c-shared-responsibility-when",
+      "howChallengeId": "ch-c-shared-responsibility-how",
+      "trapChallengeId": "ch-c-shared-responsibility-trap",
+      "masteryChallengeId": "ch-c-shared-responsibility-mastery",
+      "games": [
+        "ch-c-shared-responsibility-intro",
+        "ch-c-shared-responsibility-when",
+        "ch-c-shared-responsibility-how",
+        "ch-c-shared-responsibility-trap",
+        "ch-c-shared-responsibility-mastery"
+      ]
     },
     {
       "index": 16,
@@ -147,7 +298,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-sec-authn-authz-intro",
-      "masteryChallengeId": "ch-sec-authn-authz-mastery"
+      "whenChallengeId": "ch-sec-authn-authz-when",
+      "howChallengeId": "ch-sec-authn-authz-how",
+      "trapChallengeId": "ch-sec-authn-authz-trap",
+      "masteryChallengeId": "ch-sec-authn-authz-mastery",
+      "games": [
+        "ch-sec-authn-authz-intro",
+        "ch-sec-authn-authz-when",
+        "ch-sec-authn-authz-how",
+        "ch-sec-authn-authz-trap",
+        "ch-sec-authn-authz-mastery"
+      ]
     },
     {
       "index": 17,
@@ -156,7 +317,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-sec-oauth-oidc-intro",
-      "masteryChallengeId": "ch-sec-oauth-oidc-mastery"
+      "whenChallengeId": "ch-sec-oauth-oidc-when",
+      "howChallengeId": "ch-sec-oauth-oidc-how",
+      "trapChallengeId": "ch-sec-oauth-oidc-trap",
+      "masteryChallengeId": "ch-sec-oauth-oidc-mastery",
+      "games": [
+        "ch-sec-oauth-oidc-intro",
+        "ch-sec-oauth-oidc-when",
+        "ch-sec-oauth-oidc-how",
+        "ch-sec-oauth-oidc-trap",
+        "ch-sec-oauth-oidc-mastery"
+      ]
     },
     {
       "index": 18,
@@ -165,7 +336,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-sec-ias-ips-intro",
-      "masteryChallengeId": "ch-sec-ias-ips-mastery"
+      "whenChallengeId": "ch-sec-ias-ips-when",
+      "howChallengeId": "ch-sec-ias-ips-how",
+      "trapChallengeId": "ch-sec-ias-ips-trap",
+      "masteryChallengeId": "ch-sec-ias-ips-mastery",
+      "games": [
+        "ch-sec-ias-ips-intro",
+        "ch-sec-ias-ips-when",
+        "ch-sec-ias-ips-how",
+        "ch-sec-ias-ips-trap",
+        "ch-sec-ias-ips-mastery"
+      ]
     },
     {
       "index": 19,
@@ -174,7 +355,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-sec-destinations-intro",
-      "masteryChallengeId": "ch-sec-destinations-mastery"
+      "whenChallengeId": "ch-sec-destinations-when",
+      "howChallengeId": "ch-sec-destinations-how",
+      "trapChallengeId": "ch-sec-destinations-trap",
+      "masteryChallengeId": "ch-sec-destinations-mastery",
+      "games": [
+        "ch-sec-destinations-intro",
+        "ch-sec-destinations-when",
+        "ch-sec-destinations-how",
+        "ch-sec-destinations-trap",
+        "ch-sec-destinations-mastery"
+      ]
     },
     {
       "index": 20,
@@ -183,7 +374,17 @@
       "domainId": "integration",
       "level": "basic",
       "introChallengeId": "ch-c-destination-intro",
-      "masteryChallengeId": "ch-c-destination-mastery"
+      "whenChallengeId": "ch-c-destination-when",
+      "howChallengeId": "ch-c-destination-how",
+      "trapChallengeId": "ch-c-destination-trap",
+      "masteryChallengeId": "ch-c-destination-mastery",
+      "games": [
+        "ch-c-destination-intro",
+        "ch-c-destination-when",
+        "ch-c-destination-how",
+        "ch-c-destination-trap",
+        "ch-c-destination-mastery"
+      ]
     },
     {
       "index": 21,
@@ -192,7 +393,17 @@
       "domainId": "security",
       "level": "advanced",
       "introChallengeId": "ch-sec-xsuaa-roles-intro",
-      "masteryChallengeId": "ch-sec-xsuaa-roles-mastery"
+      "whenChallengeId": "ch-sec-xsuaa-roles-when",
+      "howChallengeId": "ch-sec-xsuaa-roles-how",
+      "trapChallengeId": "ch-sec-xsuaa-roles-trap",
+      "masteryChallengeId": "ch-sec-xsuaa-roles-mastery",
+      "games": [
+        "ch-sec-xsuaa-roles-intro",
+        "ch-sec-xsuaa-roles-when",
+        "ch-sec-xsuaa-roles-how",
+        "ch-sec-xsuaa-roles-trap",
+        "ch-sec-xsuaa-roles-mastery"
+      ]
     },
     {
       "index": 22,
@@ -201,7 +412,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-c-xsuaa-roles-intro",
-      "masteryChallengeId": "ch-c-xsuaa-roles-mastery"
+      "whenChallengeId": "ch-c-xsuaa-roles-when",
+      "howChallengeId": "ch-c-xsuaa-roles-how",
+      "trapChallengeId": "ch-c-xsuaa-roles-trap",
+      "masteryChallengeId": "ch-c-xsuaa-roles-mastery",
+      "games": [
+        "ch-c-xsuaa-roles-intro",
+        "ch-c-xsuaa-roles-when",
+        "ch-c-xsuaa-roles-how",
+        "ch-c-xsuaa-roles-trap",
+        "ch-c-xsuaa-roles-mastery"
+      ]
     },
     {
       "index": 23,
@@ -210,7 +431,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-c-least-privilege-intro",
-      "masteryChallengeId": "ch-c-least-privilege-mastery"
+      "whenChallengeId": "ch-c-least-privilege-when",
+      "howChallengeId": "ch-c-least-privilege-how",
+      "trapChallengeId": "ch-c-least-privilege-trap",
+      "masteryChallengeId": "ch-c-least-privilege-mastery",
+      "games": [
+        "ch-c-least-privilege-intro",
+        "ch-c-least-privilege-when",
+        "ch-c-least-privilege-how",
+        "ch-c-least-privilege-trap",
+        "ch-c-least-privilege-mastery"
+      ]
     },
     {
       "index": 24,
@@ -219,7 +450,17 @@
       "domainId": "security",
       "level": "advanced",
       "introChallengeId": "ch-c-scope-403-intro",
-      "masteryChallengeId": "ch-c-scope-403-mastery"
+      "whenChallengeId": "ch-c-scope-403-when",
+      "howChallengeId": "ch-c-scope-403-how",
+      "trapChallengeId": "ch-c-scope-403-trap",
+      "masteryChallengeId": "ch-c-scope-403-mastery",
+      "games": [
+        "ch-c-scope-403-intro",
+        "ch-c-scope-403-when",
+        "ch-c-scope-403-how",
+        "ch-c-scope-403-trap",
+        "ch-c-scope-403-mastery"
+      ]
     },
     {
       "index": 25,
@@ -228,7 +469,17 @@
       "domainId": "security",
       "level": "advanced",
       "introChallengeId": "ch-sec-jwt-claims-intro",
-      "masteryChallengeId": "ch-sec-jwt-claims-mastery"
+      "whenChallengeId": "ch-sec-jwt-claims-when",
+      "howChallengeId": "ch-sec-jwt-claims-how",
+      "trapChallengeId": "ch-sec-jwt-claims-trap",
+      "masteryChallengeId": "ch-sec-jwt-claims-mastery",
+      "games": [
+        "ch-sec-jwt-claims-intro",
+        "ch-sec-jwt-claims-when",
+        "ch-sec-jwt-claims-how",
+        "ch-sec-jwt-claims-trap",
+        "ch-sec-jwt-claims-mastery"
+      ]
     },
     {
       "index": 26,
@@ -237,7 +488,17 @@
       "domainId": "security",
       "level": "advanced",
       "introChallengeId": "ch-c-jwt-audience-intro",
-      "masteryChallengeId": "ch-c-jwt-audience-mastery"
+      "whenChallengeId": "ch-c-jwt-audience-when",
+      "howChallengeId": "ch-c-jwt-audience-how",
+      "trapChallengeId": "ch-c-jwt-audience-trap",
+      "masteryChallengeId": "ch-c-jwt-audience-mastery",
+      "games": [
+        "ch-c-jwt-audience-intro",
+        "ch-c-jwt-audience-when",
+        "ch-c-jwt-audience-how",
+        "ch-c-jwt-audience-trap",
+        "ch-c-jwt-audience-mastery"
+      ]
     },
     {
       "index": 27,
@@ -246,7 +507,17 @@
       "domainId": "security",
       "level": "advanced",
       "introChallengeId": "ch-sec-principal-prop-intro",
-      "masteryChallengeId": "ch-sec-principal-prop-mastery"
+      "whenChallengeId": "ch-sec-principal-prop-when",
+      "howChallengeId": "ch-sec-principal-prop-how",
+      "trapChallengeId": "ch-sec-principal-prop-trap",
+      "masteryChallengeId": "ch-sec-principal-prop-mastery",
+      "games": [
+        "ch-sec-principal-prop-intro",
+        "ch-sec-principal-prop-when",
+        "ch-sec-principal-prop-how",
+        "ch-sec-principal-prop-trap",
+        "ch-sec-principal-prop-mastery"
+      ]
     },
     {
       "index": 28,
@@ -255,7 +526,17 @@
       "domainId": "security",
       "level": "advanced",
       "introChallengeId": "ch-c-principal-propagation-intro",
-      "masteryChallengeId": "ch-c-principal-propagation-mastery"
+      "whenChallengeId": "ch-c-principal-propagation-when",
+      "howChallengeId": "ch-c-principal-propagation-how",
+      "trapChallengeId": "ch-c-principal-propagation-trap",
+      "masteryChallengeId": "ch-c-principal-propagation-mastery",
+      "games": [
+        "ch-c-principal-propagation-intro",
+        "ch-c-principal-propagation-when",
+        "ch-c-principal-propagation-how",
+        "ch-c-principal-propagation-trap",
+        "ch-c-principal-propagation-mastery"
+      ]
     },
     {
       "index": 29,
@@ -264,7 +545,17 @@
       "domainId": "integration",
       "level": "advanced",
       "introChallengeId": "ch-principal-hybrid-intro",
-      "masteryChallengeId": "ch-principal-hybrid-mastery"
+      "whenChallengeId": "ch-principal-hybrid-when",
+      "howChallengeId": "ch-principal-hybrid-how",
+      "trapChallengeId": "ch-principal-hybrid-trap",
+      "masteryChallengeId": "ch-principal-hybrid-mastery",
+      "games": [
+        "ch-principal-hybrid-intro",
+        "ch-principal-hybrid-when",
+        "ch-principal-hybrid-how",
+        "ch-principal-hybrid-trap",
+        "ch-principal-hybrid-mastery"
+      ]
     },
     {
       "index": 30,
@@ -273,7 +564,17 @@
       "domainId": "integration",
       "level": "advanced",
       "introChallengeId": "ch-cloud-connector-intro",
-      "masteryChallengeId": "ch-cloud-connector-mastery"
+      "whenChallengeId": "ch-cloud-connector-when",
+      "howChallengeId": "ch-cloud-connector-how",
+      "trapChallengeId": "ch-cloud-connector-trap",
+      "masteryChallengeId": "ch-cloud-connector-mastery",
+      "games": [
+        "ch-cloud-connector-intro",
+        "ch-cloud-connector-when",
+        "ch-cloud-connector-how",
+        "ch-cloud-connector-trap",
+        "ch-cloud-connector-mastery"
+      ]
     },
     {
       "index": 31,
@@ -282,7 +583,17 @@
       "domainId": "security",
       "level": "advanced",
       "introChallengeId": "ch-sec-secrets-intro",
-      "masteryChallengeId": "ch-sec-secrets-mastery"
+      "whenChallengeId": "ch-sec-secrets-when",
+      "howChallengeId": "ch-sec-secrets-how",
+      "trapChallengeId": "ch-sec-secrets-trap",
+      "masteryChallengeId": "ch-sec-secrets-mastery",
+      "games": [
+        "ch-sec-secrets-intro",
+        "ch-sec-secrets-when",
+        "ch-sec-secrets-how",
+        "ch-sec-secrets-trap",
+        "ch-sec-secrets-mastery"
+      ]
     },
     {
       "index": 32,
@@ -291,7 +602,17 @@
       "domainId": "ui5-fiori",
       "level": "basic",
       "introChallengeId": "ch-c-csrf-intro",
-      "masteryChallengeId": "ch-c-csrf-mastery"
+      "whenChallengeId": "ch-c-csrf-when",
+      "howChallengeId": "ch-c-csrf-how",
+      "trapChallengeId": "ch-c-csrf-trap",
+      "masteryChallengeId": "ch-c-csrf-mastery",
+      "games": [
+        "ch-c-csrf-intro",
+        "ch-c-csrf-when",
+        "ch-c-csrf-how",
+        "ch-c-csrf-trap",
+        "ch-c-csrf-mastery"
+      ]
     },
     {
       "index": 33,
@@ -300,7 +621,17 @@
       "domainId": "security",
       "level": "advanced",
       "introChallengeId": "ch-sec-threat-model-intro",
-      "masteryChallengeId": "ch-sec-threat-model-mastery"
+      "whenChallengeId": "ch-sec-threat-model-when",
+      "howChallengeId": "ch-sec-threat-model-how",
+      "trapChallengeId": "ch-sec-threat-model-trap",
+      "masteryChallengeId": "ch-sec-threat-model-mastery",
+      "games": [
+        "ch-sec-threat-model-intro",
+        "ch-sec-threat-model-when",
+        "ch-sec-threat-model-how",
+        "ch-sec-threat-model-trap",
+        "ch-sec-threat-model-mastery"
+      ]
     },
     {
       "index": 34,
@@ -309,7 +640,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-c-threat-model-intro",
-      "masteryChallengeId": "ch-c-threat-model-mastery"
+      "whenChallengeId": "ch-c-threat-model-when",
+      "howChallengeId": "ch-c-threat-model-how",
+      "trapChallengeId": "ch-c-threat-model-trap",
+      "masteryChallengeId": "ch-c-threat-model-mastery",
+      "games": [
+        "ch-c-threat-model-intro",
+        "ch-c-threat-model-when",
+        "ch-c-threat-model-how",
+        "ch-c-threat-model-trap",
+        "ch-c-threat-model-mastery"
+      ]
     },
     {
       "index": 35,
@@ -318,7 +659,17 @@
       "domainId": "security",
       "level": "expert",
       "introChallengeId": "ch-sec-tenant-isolation-intro",
-      "masteryChallengeId": "ch-sec-tenant-isolation-mastery"
+      "whenChallengeId": "ch-sec-tenant-isolation-when",
+      "howChallengeId": "ch-sec-tenant-isolation-how",
+      "trapChallengeId": "ch-sec-tenant-isolation-trap",
+      "masteryChallengeId": "ch-sec-tenant-isolation-mastery",
+      "games": [
+        "ch-sec-tenant-isolation-intro",
+        "ch-sec-tenant-isolation-when",
+        "ch-sec-tenant-isolation-how",
+        "ch-sec-tenant-isolation-trap",
+        "ch-sec-tenant-isolation-mastery"
+      ]
     },
     {
       "index": 36,
@@ -327,7 +678,17 @@
       "domainId": "security",
       "level": "expert",
       "introChallengeId": "ch-c-tenant-isolation-intro",
-      "masteryChallengeId": "ch-c-tenant-isolation-mastery"
+      "whenChallengeId": "ch-c-tenant-isolation-when",
+      "howChallengeId": "ch-c-tenant-isolation-how",
+      "trapChallengeId": "ch-c-tenant-isolation-trap",
+      "masteryChallengeId": "ch-c-tenant-isolation-mastery",
+      "games": [
+        "ch-c-tenant-isolation-intro",
+        "ch-c-tenant-isolation-when",
+        "ch-c-tenant-isolation-how",
+        "ch-c-tenant-isolation-trap",
+        "ch-c-tenant-isolation-mastery"
+      ]
     },
     {
       "index": 37,
@@ -336,7 +697,17 @@
       "domainId": "security",
       "level": "expert",
       "introChallengeId": "ch-sec-zero-trust-intro",
-      "masteryChallengeId": "ch-sec-zero-trust-mastery"
+      "whenChallengeId": "ch-sec-zero-trust-when",
+      "howChallengeId": "ch-sec-zero-trust-how",
+      "trapChallengeId": "ch-sec-zero-trust-trap",
+      "masteryChallengeId": "ch-sec-zero-trust-mastery",
+      "games": [
+        "ch-sec-zero-trust-intro",
+        "ch-sec-zero-trust-when",
+        "ch-sec-zero-trust-how",
+        "ch-sec-zero-trust-trap",
+        "ch-sec-zero-trust-mastery"
+      ]
     },
     {
       "index": 38,
@@ -345,7 +716,17 @@
       "domainId": "security",
       "level": "expert",
       "introChallengeId": "ch-sec-supply-chain-intro",
-      "masteryChallengeId": "ch-sec-supply-chain-mastery"
+      "whenChallengeId": "ch-sec-supply-chain-when",
+      "howChallengeId": "ch-sec-supply-chain-how",
+      "trapChallengeId": "ch-sec-supply-chain-trap",
+      "masteryChallengeId": "ch-sec-supply-chain-mastery",
+      "games": [
+        "ch-sec-supply-chain-intro",
+        "ch-sec-supply-chain-when",
+        "ch-sec-supply-chain-how",
+        "ch-sec-supply-chain-trap",
+        "ch-sec-supply-chain-mastery"
+      ]
     },
     {
       "index": 39,
@@ -354,7 +735,17 @@
       "domainId": "security",
       "level": "expert",
       "introChallengeId": "ch-c-residency-intro",
-      "masteryChallengeId": "ch-c-residency-mastery"
+      "whenChallengeId": "ch-c-residency-when",
+      "howChallengeId": "ch-c-residency-how",
+      "trapChallengeId": "ch-c-residency-trap",
+      "masteryChallengeId": "ch-c-residency-mastery",
+      "games": [
+        "ch-c-residency-intro",
+        "ch-c-residency-when",
+        "ch-c-residency-how",
+        "ch-c-residency-trap",
+        "ch-c-residency-mastery"
+      ]
     },
     {
       "index": 40,
@@ -363,7 +754,17 @@
       "domainId": "security",
       "level": "basic",
       "introChallengeId": "ch-c-audit-log-intro",
-      "masteryChallengeId": "ch-c-audit-log-mastery"
+      "whenChallengeId": "ch-c-audit-log-when",
+      "howChallengeId": "ch-c-audit-log-how",
+      "trapChallengeId": "ch-c-audit-log-trap",
+      "masteryChallengeId": "ch-c-audit-log-mastery",
+      "games": [
+        "ch-c-audit-log-intro",
+        "ch-c-audit-log-when",
+        "ch-c-audit-log-how",
+        "ch-c-audit-log-trap",
+        "ch-c-audit-log-mastery"
+      ]
     },
     {
       "index": 41,
@@ -372,7 +773,17 @@
       "domainId": "security",
       "level": "expert",
       "introChallengeId": "ch-sec-incident-ir-intro",
-      "masteryChallengeId": "ch-sec-incident-ir-mastery"
+      "whenChallengeId": "ch-sec-incident-ir-when",
+      "howChallengeId": "ch-sec-incident-ir-how",
+      "trapChallengeId": "ch-sec-incident-ir-trap",
+      "masteryChallengeId": "ch-sec-incident-ir-mastery",
+      "games": [
+        "ch-sec-incident-ir-intro",
+        "ch-sec-incident-ir-when",
+        "ch-sec-incident-ir-how",
+        "ch-sec-incident-ir-trap",
+        "ch-sec-incident-ir-mastery"
+      ]
     },
     {
       "index": 42,
@@ -381,7 +792,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-c-change-mgmt-intro",
-      "masteryChallengeId": "ch-c-change-mgmt-mastery"
+      "whenChallengeId": "ch-c-change-mgmt-when",
+      "howChallengeId": "ch-c-change-mgmt-how",
+      "trapChallengeId": "ch-c-change-mgmt-trap",
+      "masteryChallengeId": "ch-c-change-mgmt-mastery",
+      "games": [
+        "ch-c-change-mgmt-intro",
+        "ch-c-change-mgmt-when",
+        "ch-c-change-mgmt-how",
+        "ch-c-change-mgmt-trap",
+        "ch-c-change-mgmt-mastery"
+      ]
     },
     {
       "index": 43,
@@ -390,7 +811,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-c-entitlement-intro",
-      "masteryChallengeId": "ch-c-entitlement-mastery"
+      "whenChallengeId": "ch-c-entitlement-when",
+      "howChallengeId": "ch-c-entitlement-how",
+      "trapChallengeId": "ch-c-entitlement-trap",
+      "masteryChallengeId": "ch-c-entitlement-mastery",
+      "games": [
+        "ch-c-entitlement-intro",
+        "ch-c-entitlement-when",
+        "ch-c-entitlement-how",
+        "ch-c-entitlement-trap",
+        "ch-c-entitlement-mastery"
+      ]
     },
     {
       "index": 44,
@@ -399,7 +830,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-c-finops-intro",
-      "masteryChallengeId": "ch-c-finops-mastery"
+      "whenChallengeId": "ch-c-finops-when",
+      "howChallengeId": "ch-c-finops-how",
+      "trapChallengeId": "ch-c-finops-trap",
+      "masteryChallengeId": "ch-c-finops-mastery",
+      "games": [
+        "ch-c-finops-intro",
+        "ch-c-finops-when",
+        "ch-c-finops-how",
+        "ch-c-finops-trap",
+        "ch-c-finops-mastery"
+      ]
     },
     {
       "index": 45,
@@ -408,7 +849,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-c-rto-rpo-intro",
-      "masteryChallengeId": "ch-c-rto-rpo-mastery"
+      "whenChallengeId": "ch-c-rto-rpo-when",
+      "howChallengeId": "ch-c-rto-rpo-how",
+      "trapChallengeId": "ch-c-rto-rpo-trap",
+      "masteryChallengeId": "ch-c-rto-rpo-mastery",
+      "games": [
+        "ch-c-rto-rpo-intro",
+        "ch-c-rto-rpo-when",
+        "ch-c-rto-rpo-how",
+        "ch-c-rto-rpo-trap",
+        "ch-c-rto-rpo-mastery"
+      ]
     },
     {
       "index": 46,
@@ -417,7 +868,17 @@
       "domainId": "operations",
       "level": "basic",
       "introChallengeId": "ch-c-slo-intro",
-      "masteryChallengeId": "ch-c-slo-mastery"
+      "whenChallengeId": "ch-c-slo-when",
+      "howChallengeId": "ch-c-slo-how",
+      "trapChallengeId": "ch-c-slo-trap",
+      "masteryChallengeId": "ch-c-slo-mastery",
+      "games": [
+        "ch-c-slo-intro",
+        "ch-c-slo-when",
+        "ch-c-slo-how",
+        "ch-c-slo-trap",
+        "ch-c-slo-mastery"
+      ]
     },
     {
       "index": 47,
@@ -426,7 +887,17 @@
       "domainId": "operations",
       "level": "advanced",
       "introChallengeId": "ch-ops-finops-intro",
-      "masteryChallengeId": "ch-ops-finops-mastery"
+      "whenChallengeId": "ch-ops-finops-when",
+      "howChallengeId": "ch-ops-finops-how",
+      "trapChallengeId": "ch-ops-finops-trap",
+      "masteryChallengeId": "ch-ops-finops-mastery",
+      "games": [
+        "ch-ops-finops-intro",
+        "ch-ops-finops-when",
+        "ch-ops-finops-how",
+        "ch-ops-finops-trap",
+        "ch-ops-finops-mastery"
+      ]
     },
     {
       "index": 48,
@@ -435,7 +906,17 @@
       "domainId": "operations",
       "level": "advanced",
       "introChallengeId": "ch-ops-observability-intro",
-      "masteryChallengeId": "ch-ops-observability-mastery"
+      "whenChallengeId": "ch-ops-observability-when",
+      "howChallengeId": "ch-ops-observability-how",
+      "trapChallengeId": "ch-ops-observability-trap",
+      "masteryChallengeId": "ch-ops-observability-mastery",
+      "games": [
+        "ch-ops-observability-intro",
+        "ch-ops-observability-when",
+        "ch-ops-observability-how",
+        "ch-ops-observability-trap",
+        "ch-ops-observability-mastery"
+      ]
     },
     {
       "index": 49,
@@ -444,7 +925,17 @@
       "domainId": "operations",
       "level": "expert",
       "introChallengeId": "ch-ops-sre-intro",
-      "masteryChallengeId": "ch-ops-sre-mastery"
+      "whenChallengeId": "ch-ops-sre-when",
+      "howChallengeId": "ch-ops-sre-how",
+      "trapChallengeId": "ch-ops-sre-trap",
+      "masteryChallengeId": "ch-ops-sre-mastery",
+      "games": [
+        "ch-ops-sre-intro",
+        "ch-ops-sre-when",
+        "ch-ops-sre-how",
+        "ch-ops-sre-trap",
+        "ch-ops-sre-mastery"
+      ]
     },
     {
       "index": 50,
@@ -453,7 +944,17 @@
       "domainId": "architecture",
       "level": "basic",
       "introChallengeId": "ch-c-functional-nfr-intro",
-      "masteryChallengeId": "ch-c-functional-nfr-mastery"
+      "whenChallengeId": "ch-c-functional-nfr-when",
+      "howChallengeId": "ch-c-functional-nfr-how",
+      "trapChallengeId": "ch-c-functional-nfr-trap",
+      "masteryChallengeId": "ch-c-functional-nfr-mastery",
+      "games": [
+        "ch-c-functional-nfr-intro",
+        "ch-c-functional-nfr-when",
+        "ch-c-functional-nfr-how",
+        "ch-c-functional-nfr-trap",
+        "ch-c-functional-nfr-mastery"
+      ]
     },
     {
       "index": 51,
@@ -462,7 +963,17 @@
       "domainId": "architecture",
       "level": "advanced",
       "introChallengeId": "ch-c-cap-vs-rap-intro",
-      "masteryChallengeId": "ch-c-cap-vs-rap-mastery"
+      "whenChallengeId": "ch-c-cap-vs-rap-when",
+      "howChallengeId": "ch-c-cap-vs-rap-how",
+      "trapChallengeId": "ch-c-cap-vs-rap-trap",
+      "masteryChallengeId": "ch-c-cap-vs-rap-mastery",
+      "games": [
+        "ch-c-cap-vs-rap-intro",
+        "ch-c-cap-vs-rap-when",
+        "ch-c-cap-vs-rap-how",
+        "ch-c-cap-vs-rap-trap",
+        "ch-c-cap-vs-rap-mastery"
+      ]
     },
     {
       "index": 52,
@@ -471,7 +982,17 @@
       "domainId": "cap",
       "level": "basic",
       "introChallengeId": "ch-c-cap-odata-intro",
-      "masteryChallengeId": "ch-c-cap-odata-mastery"
+      "whenChallengeId": "ch-c-cap-odata-when",
+      "howChallengeId": "ch-c-cap-odata-how",
+      "trapChallengeId": "ch-c-cap-odata-trap",
+      "masteryChallengeId": "ch-c-cap-odata-mastery",
+      "games": [
+        "ch-c-cap-odata-intro",
+        "ch-c-cap-odata-when",
+        "ch-c-cap-odata-how",
+        "ch-c-cap-odata-trap",
+        "ch-c-cap-odata-mastery"
+      ]
     },
     {
       "index": 53,
@@ -480,7 +1001,17 @@
       "domainId": "cap",
       "level": "basic",
       "introChallengeId": "ch-cap-cds-entities-intro",
-      "masteryChallengeId": "ch-cap-cds-entities-mastery"
+      "whenChallengeId": "ch-cap-cds-entities-when",
+      "howChallengeId": "ch-cap-cds-entities-how",
+      "trapChallengeId": "ch-cap-cds-entities-trap",
+      "masteryChallengeId": "ch-cap-cds-entities-mastery",
+      "games": [
+        "ch-cap-cds-entities-intro",
+        "ch-cap-cds-entities-when",
+        "ch-cap-cds-entities-how",
+        "ch-cap-cds-entities-trap",
+        "ch-cap-cds-entities-mastery"
+      ]
     },
     {
       "index": 54,
@@ -489,7 +1020,17 @@
       "domainId": "cap",
       "level": "basic",
       "introChallengeId": "ch-c-odata-metadata-intro",
-      "masteryChallengeId": "ch-c-odata-metadata-mastery"
+      "whenChallengeId": "ch-c-odata-metadata-when",
+      "howChallengeId": "ch-c-odata-metadata-how",
+      "trapChallengeId": "ch-c-odata-metadata-trap",
+      "masteryChallengeId": "ch-c-odata-metadata-mastery",
+      "games": [
+        "ch-c-odata-metadata-intro",
+        "ch-c-odata-metadata-when",
+        "ch-c-odata-metadata-how",
+        "ch-c-odata-metadata-trap",
+        "ch-c-odata-metadata-mastery"
+      ]
     },
     {
       "index": 55,
@@ -498,7 +1039,17 @@
       "domainId": "cap",
       "level": "basic",
       "introChallengeId": "ch-odata-v2-vs-v4-intro",
-      "masteryChallengeId": "ch-odata-v2-vs-v4-mastery"
+      "whenChallengeId": "ch-odata-v2-vs-v4-when",
+      "howChallengeId": "ch-odata-v2-vs-v4-how",
+      "trapChallengeId": "ch-odata-v2-vs-v4-trap",
+      "masteryChallengeId": "ch-odata-v2-vs-v4-mastery",
+      "games": [
+        "ch-odata-v2-vs-v4-intro",
+        "ch-odata-v2-vs-v4-when",
+        "ch-odata-v2-vs-v4-how",
+        "ch-odata-v2-vs-v4-trap",
+        "ch-odata-v2-vs-v4-mastery"
+      ]
     },
     {
       "index": 56,
@@ -507,7 +1058,17 @@
       "domainId": "cap",
       "level": "basic",
       "introChallengeId": "ch-odata-v4-basics-intro",
-      "masteryChallengeId": "ch-odata-v4-basics-mastery"
+      "whenChallengeId": "ch-odata-v4-basics-when",
+      "howChallengeId": "ch-odata-v4-basics-how",
+      "trapChallengeId": "ch-odata-v4-basics-trap",
+      "masteryChallengeId": "ch-odata-v4-basics-mastery",
+      "games": [
+        "ch-odata-v4-basics-intro",
+        "ch-odata-v4-basics-when",
+        "ch-odata-v4-basics-how",
+        "ch-odata-v4-basics-trap",
+        "ch-odata-v4-basics-mastery"
+      ]
     },
     {
       "index": 57,
@@ -516,7 +1077,17 @@
       "domainId": "cap",
       "level": "basic",
       "introChallengeId": "ch-cap-services-intro",
-      "masteryChallengeId": "ch-cap-services-mastery"
+      "whenChallengeId": "ch-cap-services-when",
+      "howChallengeId": "ch-cap-services-how",
+      "trapChallengeId": "ch-cap-services-trap",
+      "masteryChallengeId": "ch-cap-services-mastery",
+      "games": [
+        "ch-cap-services-intro",
+        "ch-cap-services-when",
+        "ch-cap-services-how",
+        "ch-cap-services-trap",
+        "ch-cap-services-mastery"
+      ]
     },
     {
       "index": 58,
@@ -525,7 +1096,17 @@
       "domainId": "cap",
       "level": "basic",
       "introChallengeId": "ch-cap-what-intro",
-      "masteryChallengeId": "ch-cap-what-mastery"
+      "whenChallengeId": "ch-cap-what-when",
+      "howChallengeId": "ch-cap-what-how",
+      "trapChallengeId": "ch-cap-what-trap",
+      "masteryChallengeId": "ch-cap-what-mastery",
+      "games": [
+        "ch-cap-what-intro",
+        "ch-cap-what-when",
+        "ch-cap-what-how",
+        "ch-cap-what-trap",
+        "ch-cap-what-mastery"
+      ]
     },
     {
       "index": 59,
@@ -534,7 +1115,17 @@
       "domainId": "cap",
       "level": "advanced",
       "introChallengeId": "ch-cap-actions-intro",
-      "masteryChallengeId": "ch-cap-actions-mastery"
+      "whenChallengeId": "ch-cap-actions-when",
+      "howChallengeId": "ch-cap-actions-how",
+      "trapChallengeId": "ch-cap-actions-trap",
+      "masteryChallengeId": "ch-cap-actions-mastery",
+      "games": [
+        "ch-cap-actions-intro",
+        "ch-cap-actions-when",
+        "ch-cap-actions-how",
+        "ch-cap-actions-trap",
+        "ch-cap-actions-mastery"
+      ]
     },
     {
       "index": 60,
@@ -543,7 +1134,17 @@
       "domainId": "cap",
       "level": "advanced",
       "introChallengeId": "ch-cap-auth-intro",
-      "masteryChallengeId": "ch-cap-auth-mastery"
+      "whenChallengeId": "ch-cap-auth-when",
+      "howChallengeId": "ch-cap-auth-how",
+      "trapChallengeId": "ch-cap-auth-trap",
+      "masteryChallengeId": "ch-cap-auth-mastery",
+      "games": [
+        "ch-cap-auth-intro",
+        "ch-cap-auth-when",
+        "ch-cap-auth-how",
+        "ch-cap-auth-trap",
+        "ch-cap-auth-mastery"
+      ]
     },
     {
       "index": 61,
@@ -552,7 +1153,17 @@
       "domainId": "cap",
       "level": "advanced",
       "introChallengeId": "ch-cap-events-intro",
-      "masteryChallengeId": "ch-cap-events-mastery"
+      "whenChallengeId": "ch-cap-events-when",
+      "howChallengeId": "ch-cap-events-how",
+      "trapChallengeId": "ch-cap-events-trap",
+      "masteryChallengeId": "ch-cap-events-mastery",
+      "games": [
+        "ch-cap-events-intro",
+        "ch-cap-events-when",
+        "ch-cap-events-how",
+        "ch-cap-events-trap",
+        "ch-cap-events-mastery"
+      ]
     },
     {
       "index": 62,
@@ -561,7 +1172,17 @@
       "domainId": "cap",
       "level": "advanced",
       "introChallengeId": "ch-cap-persistence-intro",
-      "masteryChallengeId": "ch-cap-persistence-mastery"
+      "whenChallengeId": "ch-cap-persistence-when",
+      "howChallengeId": "ch-cap-persistence-how",
+      "trapChallengeId": "ch-cap-persistence-trap",
+      "masteryChallengeId": "ch-cap-persistence-mastery",
+      "games": [
+        "ch-cap-persistence-intro",
+        "ch-cap-persistence-when",
+        "ch-cap-persistence-how",
+        "ch-cap-persistence-trap",
+        "ch-cap-persistence-mastery"
+      ]
     },
     {
       "index": 63,
@@ -570,7 +1191,17 @@
       "domainId": "cap",
       "level": "advanced",
       "introChallengeId": "ch-odata-query-perf-intro",
-      "masteryChallengeId": "ch-odata-query-perf-mastery"
+      "whenChallengeId": "ch-odata-query-perf-when",
+      "howChallengeId": "ch-odata-query-perf-how",
+      "trapChallengeId": "ch-odata-query-perf-trap",
+      "masteryChallengeId": "ch-odata-query-perf-mastery",
+      "games": [
+        "ch-odata-query-perf-intro",
+        "ch-odata-query-perf-when",
+        "ch-odata-query-perf-how",
+        "ch-odata-query-perf-trap",
+        "ch-odata-query-perf-mastery"
+      ]
     },
     {
       "index": 64,
@@ -579,7 +1210,17 @@
       "domainId": "cap",
       "level": "expert",
       "introChallengeId": "ch-cap-extensibility-intro",
-      "masteryChallengeId": "ch-cap-extensibility-mastery"
+      "whenChallengeId": "ch-cap-extensibility-when",
+      "howChallengeId": "ch-cap-extensibility-how",
+      "trapChallengeId": "ch-cap-extensibility-trap",
+      "masteryChallengeId": "ch-cap-extensibility-mastery",
+      "games": [
+        "ch-cap-extensibility-intro",
+        "ch-cap-extensibility-when",
+        "ch-cap-extensibility-how",
+        "ch-cap-extensibility-trap",
+        "ch-cap-extensibility-mastery"
+      ]
     },
     {
       "index": 65,
@@ -588,7 +1229,17 @@
       "domainId": "cap",
       "level": "expert",
       "introChallengeId": "ch-cap-multitenant-intro",
-      "masteryChallengeId": "ch-cap-multitenant-mastery"
+      "whenChallengeId": "ch-cap-multitenant-when",
+      "howChallengeId": "ch-cap-multitenant-how",
+      "trapChallengeId": "ch-cap-multitenant-trap",
+      "masteryChallengeId": "ch-cap-multitenant-mastery",
+      "games": [
+        "ch-cap-multitenant-intro",
+        "ch-cap-multitenant-when",
+        "ch-cap-multitenant-how",
+        "ch-cap-multitenant-trap",
+        "ch-cap-multitenant-mastery"
+      ]
     },
     {
       "index": 66,
@@ -597,7 +1248,17 @@
       "domainId": "cap",
       "level": "expert",
       "introChallengeId": "ch-cap-resilience-intro",
-      "masteryChallengeId": "ch-cap-resilience-mastery"
+      "whenChallengeId": "ch-cap-resilience-when",
+      "howChallengeId": "ch-cap-resilience-how",
+      "trapChallengeId": "ch-cap-resilience-trap",
+      "masteryChallengeId": "ch-cap-resilience-mastery",
+      "games": [
+        "ch-cap-resilience-intro",
+        "ch-cap-resilience-when",
+        "ch-cap-resilience-how",
+        "ch-cap-resilience-trap",
+        "ch-cap-resilience-mastery"
+      ]
     },
     {
       "index": 67,
@@ -606,7 +1267,17 @@
       "domainId": "rap-abap",
       "level": "basic",
       "introChallengeId": "ch-c-behavior-def-intro",
-      "masteryChallengeId": "ch-c-behavior-def-mastery"
+      "whenChallengeId": "ch-c-behavior-def-when",
+      "howChallengeId": "ch-c-behavior-def-how",
+      "trapChallengeId": "ch-c-behavior-def-trap",
+      "masteryChallengeId": "ch-c-behavior-def-mastery",
+      "games": [
+        "ch-c-behavior-def-intro",
+        "ch-c-behavior-def-when",
+        "ch-c-behavior-def-how",
+        "ch-c-behavior-def-trap",
+        "ch-c-behavior-def-mastery"
+      ]
     },
     {
       "index": 68,
@@ -615,7 +1286,17 @@
       "domainId": "rap-abap",
       "level": "basic",
       "introChallengeId": "ch-c-draft-intro",
-      "masteryChallengeId": "ch-c-draft-mastery"
+      "whenChallengeId": "ch-c-draft-when",
+      "howChallengeId": "ch-c-draft-how",
+      "trapChallengeId": "ch-c-draft-trap",
+      "masteryChallengeId": "ch-c-draft-mastery",
+      "games": [
+        "ch-c-draft-intro",
+        "ch-c-draft-when",
+        "ch-c-draft-how",
+        "ch-c-draft-trap",
+        "ch-c-draft-mastery"
+      ]
     },
     {
       "index": 69,
@@ -624,7 +1305,17 @@
       "domainId": "rap-abap",
       "level": "basic",
       "introChallengeId": "ch-rap-managed-intro",
-      "masteryChallengeId": "ch-rap-managed-mastery"
+      "whenChallengeId": "ch-rap-managed-when",
+      "howChallengeId": "ch-rap-managed-how",
+      "trapChallengeId": "ch-rap-managed-trap",
+      "masteryChallengeId": "ch-rap-managed-mastery",
+      "games": [
+        "ch-rap-managed-intro",
+        "ch-rap-managed-when",
+        "ch-rap-managed-how",
+        "ch-rap-managed-trap",
+        "ch-rap-managed-mastery"
+      ]
     },
     {
       "index": 70,
@@ -633,7 +1324,17 @@
       "domainId": "rap-abap",
       "level": "basic",
       "introChallengeId": "ch-rap-cds-bo-intro",
-      "masteryChallengeId": "ch-rap-cds-bo-mastery"
+      "whenChallengeId": "ch-rap-cds-bo-when",
+      "howChallengeId": "ch-rap-cds-bo-how",
+      "trapChallengeId": "ch-rap-cds-bo-trap",
+      "masteryChallengeId": "ch-rap-cds-bo-mastery",
+      "games": [
+        "ch-rap-cds-bo-intro",
+        "ch-rap-cds-bo-when",
+        "ch-rap-cds-bo-how",
+        "ch-rap-cds-bo-trap",
+        "ch-rap-cds-bo-mastery"
+      ]
     },
     {
       "index": 71,
@@ -642,7 +1343,17 @@
       "domainId": "rap-abap",
       "level": "basic",
       "introChallengeId": "ch-rap-fiori-elements-intro",
-      "masteryChallengeId": "ch-rap-fiori-elements-mastery"
+      "whenChallengeId": "ch-rap-fiori-elements-when",
+      "howChallengeId": "ch-rap-fiori-elements-how",
+      "trapChallengeId": "ch-rap-fiori-elements-trap",
+      "masteryChallengeId": "ch-rap-fiori-elements-mastery",
+      "games": [
+        "ch-rap-fiori-elements-intro",
+        "ch-rap-fiori-elements-when",
+        "ch-rap-fiori-elements-how",
+        "ch-rap-fiori-elements-trap",
+        "ch-rap-fiori-elements-mastery"
+      ]
     },
     {
       "index": 72,
@@ -651,7 +1362,17 @@
       "domainId": "rap-abap",
       "level": "basic",
       "introChallengeId": "ch-rap-what-intro",
-      "masteryChallengeId": "ch-rap-what-mastery"
+      "whenChallengeId": "ch-rap-what-when",
+      "howChallengeId": "ch-rap-what-how",
+      "trapChallengeId": "ch-rap-what-trap",
+      "masteryChallengeId": "ch-rap-what-mastery",
+      "games": [
+        "ch-rap-what-intro",
+        "ch-rap-what-when",
+        "ch-rap-what-how",
+        "ch-rap-what-trap",
+        "ch-rap-what-mastery"
+      ]
     },
     {
       "index": 73,
@@ -660,7 +1381,17 @@
       "domainId": "rap-abap",
       "level": "advanced",
       "introChallengeId": "ch-c-clean-core-intro",
-      "masteryChallengeId": "ch-c-clean-core-mastery"
+      "whenChallengeId": "ch-c-clean-core-when",
+      "howChallengeId": "ch-c-clean-core-how",
+      "trapChallengeId": "ch-c-clean-core-trap",
+      "masteryChallengeId": "ch-c-clean-core-mastery",
+      "games": [
+        "ch-c-clean-core-intro",
+        "ch-c-clean-core-when",
+        "ch-c-clean-core-how",
+        "ch-c-clean-core-trap",
+        "ch-c-clean-core-mastery"
+      ]
     },
     {
       "index": 74,
@@ -669,7 +1400,17 @@
       "domainId": "rap-abap",
       "level": "advanced",
       "introChallengeId": "ch-rap-determinations-intro",
-      "masteryChallengeId": "ch-rap-determinations-mastery"
+      "whenChallengeId": "ch-rap-determinations-when",
+      "howChallengeId": "ch-rap-determinations-how",
+      "trapChallengeId": "ch-rap-determinations-trap",
+      "masteryChallengeId": "ch-rap-determinations-mastery",
+      "games": [
+        "ch-rap-determinations-intro",
+        "ch-rap-determinations-when",
+        "ch-rap-determinations-how",
+        "ch-rap-determinations-trap",
+        "ch-rap-determinations-mastery"
+      ]
     },
     {
       "index": 75,
@@ -678,7 +1419,17 @@
       "domainId": "rap-abap",
       "level": "advanced",
       "introChallengeId": "ch-rap-draft-intro",
-      "masteryChallengeId": "ch-rap-draft-mastery"
+      "whenChallengeId": "ch-rap-draft-when",
+      "howChallengeId": "ch-rap-draft-how",
+      "trapChallengeId": "ch-rap-draft-trap",
+      "masteryChallengeId": "ch-rap-draft-mastery",
+      "games": [
+        "ch-rap-draft-intro",
+        "ch-rap-draft-when",
+        "ch-rap-draft-how",
+        "ch-rap-draft-trap",
+        "ch-rap-draft-mastery"
+      ]
     },
     {
       "index": 76,
@@ -687,7 +1438,17 @@
       "domainId": "rap-abap",
       "level": "advanced",
       "introChallengeId": "ch-rap-eml-intro",
-      "masteryChallengeId": "ch-rap-eml-mastery"
+      "whenChallengeId": "ch-rap-eml-when",
+      "howChallengeId": "ch-rap-eml-how",
+      "trapChallengeId": "ch-rap-eml-trap",
+      "masteryChallengeId": "ch-rap-eml-mastery",
+      "games": [
+        "ch-rap-eml-intro",
+        "ch-rap-eml-when",
+        "ch-rap-eml-how",
+        "ch-rap-eml-trap",
+        "ch-rap-eml-mastery"
+      ]
     },
     {
       "index": 77,
@@ -696,7 +1457,17 @@
       "domainId": "rap-abap",
       "level": "advanced",
       "introChallengeId": "ch-rap-vs-cap-intro",
-      "masteryChallengeId": "ch-rap-vs-cap-mastery"
+      "whenChallengeId": "ch-rap-vs-cap-when",
+      "howChallengeId": "ch-rap-vs-cap-how",
+      "trapChallengeId": "ch-rap-vs-cap-trap",
+      "masteryChallengeId": "ch-rap-vs-cap-mastery",
+      "games": [
+        "ch-rap-vs-cap-intro",
+        "ch-rap-vs-cap-when",
+        "ch-rap-vs-cap-how",
+        "ch-rap-vs-cap-trap",
+        "ch-rap-vs-cap-mastery"
+      ]
     },
     {
       "index": 78,
@@ -705,7 +1476,17 @@
       "domainId": "rap-abap",
       "level": "advanced",
       "introChallengeId": "ch-rap-unmanaged-intro",
-      "masteryChallengeId": "ch-rap-unmanaged-mastery"
+      "whenChallengeId": "ch-rap-unmanaged-when",
+      "howChallengeId": "ch-rap-unmanaged-how",
+      "trapChallengeId": "ch-rap-unmanaged-trap",
+      "masteryChallengeId": "ch-rap-unmanaged-mastery",
+      "games": [
+        "ch-rap-unmanaged-intro",
+        "ch-rap-unmanaged-when",
+        "ch-rap-unmanaged-how",
+        "ch-rap-unmanaged-trap",
+        "ch-rap-unmanaged-mastery"
+      ]
     },
     {
       "index": 79,
@@ -714,7 +1495,17 @@
       "domainId": "rap-abap",
       "level": "expert",
       "introChallengeId": "ch-rap-extensibility-intro",
-      "masteryChallengeId": "ch-rap-extensibility-mastery"
+      "whenChallengeId": "ch-rap-extensibility-when",
+      "howChallengeId": "ch-rap-extensibility-how",
+      "trapChallengeId": "ch-rap-extensibility-trap",
+      "masteryChallengeId": "ch-rap-extensibility-mastery",
+      "games": [
+        "ch-rap-extensibility-intro",
+        "ch-rap-extensibility-when",
+        "ch-rap-extensibility-how",
+        "ch-rap-extensibility-trap",
+        "ch-rap-extensibility-mastery"
+      ]
     },
     {
       "index": 80,
@@ -723,7 +1514,17 @@
       "domainId": "rap-abap",
       "level": "expert",
       "introChallengeId": "ch-rap-clean-core-intro",
-      "masteryChallengeId": "ch-rap-clean-core-mastery"
+      "whenChallengeId": "ch-rap-clean-core-when",
+      "howChallengeId": "ch-rap-clean-core-how",
+      "trapChallengeId": "ch-rap-clean-core-trap",
+      "masteryChallengeId": "ch-rap-clean-core-mastery",
+      "games": [
+        "ch-rap-clean-core-intro",
+        "ch-rap-clean-core-when",
+        "ch-rap-clean-core-how",
+        "ch-rap-clean-core-trap",
+        "ch-rap-clean-core-mastery"
+      ]
     },
     {
       "index": 81,
@@ -732,7 +1533,17 @@
       "domainId": "rap-abap",
       "level": "expert",
       "introChallengeId": "ch-rap-performance-intro",
-      "masteryChallengeId": "ch-rap-performance-mastery"
+      "whenChallengeId": "ch-rap-performance-when",
+      "howChallengeId": "ch-rap-performance-how",
+      "trapChallengeId": "ch-rap-performance-trap",
+      "masteryChallengeId": "ch-rap-performance-mastery",
+      "games": [
+        "ch-rap-performance-intro",
+        "ch-rap-performance-when",
+        "ch-rap-performance-how",
+        "ch-rap-performance-trap",
+        "ch-rap-performance-mastery"
+      ]
     },
     {
       "index": 82,
@@ -741,7 +1552,17 @@
       "domainId": "ui5-fiori",
       "level": "basic",
       "introChallengeId": "ch-c-accessibility-intro",
-      "masteryChallengeId": "ch-c-accessibility-mastery"
+      "whenChallengeId": "ch-c-accessibility-when",
+      "howChallengeId": "ch-c-accessibility-how",
+      "trapChallengeId": "ch-c-accessibility-trap",
+      "masteryChallengeId": "ch-c-accessibility-mastery",
+      "games": [
+        "ch-c-accessibility-intro",
+        "ch-c-accessibility-when",
+        "ch-c-accessibility-how",
+        "ch-c-accessibility-trap",
+        "ch-c-accessibility-mastery"
+      ]
     },
     {
       "index": 83,
@@ -750,7 +1571,17 @@
       "domainId": "ui5-fiori",
       "level": "basic",
       "introChallengeId": "ch-c-fiori-elements-intro",
-      "masteryChallengeId": "ch-c-fiori-elements-mastery"
+      "whenChallengeId": "ch-c-fiori-elements-when",
+      "howChallengeId": "ch-c-fiori-elements-how",
+      "trapChallengeId": "ch-c-fiori-elements-trap",
+      "masteryChallengeId": "ch-c-fiori-elements-mastery",
+      "games": [
+        "ch-c-fiori-elements-intro",
+        "ch-c-fiori-elements-when",
+        "ch-c-fiori-elements-how",
+        "ch-c-fiori-elements-trap",
+        "ch-c-fiori-elements-mastery"
+      ]
     },
     {
       "index": 84,
@@ -759,7 +1590,17 @@
       "domainId": "ui5-fiori",
       "level": "basic",
       "introChallengeId": "ch-c-ui5-odata-intro",
-      "masteryChallengeId": "ch-c-ui5-odata-mastery"
+      "whenChallengeId": "ch-c-ui5-odata-when",
+      "howChallengeId": "ch-c-ui5-odata-how",
+      "trapChallengeId": "ch-c-ui5-odata-trap",
+      "masteryChallengeId": "ch-c-ui5-odata-mastery",
+      "games": [
+        "ch-c-ui5-odata-intro",
+        "ch-c-ui5-odata-when",
+        "ch-c-ui5-odata-how",
+        "ch-c-ui5-odata-trap",
+        "ch-c-ui5-odata-mastery"
+      ]
     },
     {
       "index": 85,
@@ -768,7 +1609,17 @@
       "domainId": "integration",
       "level": "basic",
       "introChallengeId": "ch-c-adapter-intro",
-      "masteryChallengeId": "ch-c-adapter-mastery"
+      "whenChallengeId": "ch-c-adapter-when",
+      "howChallengeId": "ch-c-adapter-how",
+      "trapChallengeId": "ch-c-adapter-trap",
+      "masteryChallengeId": "ch-c-adapter-mastery",
+      "games": [
+        "ch-c-adapter-intro",
+        "ch-c-adapter-when",
+        "ch-c-adapter-how",
+        "ch-c-adapter-trap",
+        "ch-c-adapter-mastery"
+      ]
     },
     {
       "index": 86,
@@ -777,7 +1628,17 @@
       "domainId": "integration",
       "level": "basic",
       "introChallengeId": "ch-cpi-adapters-intro",
-      "masteryChallengeId": "ch-cpi-adapters-mastery"
+      "whenChallengeId": "ch-cpi-adapters-when",
+      "howChallengeId": "ch-cpi-adapters-how",
+      "trapChallengeId": "ch-cpi-adapters-trap",
+      "masteryChallengeId": "ch-cpi-adapters-mastery",
+      "games": [
+        "ch-cpi-adapters-intro",
+        "ch-cpi-adapters-when",
+        "ch-cpi-adapters-how",
+        "ch-cpi-adapters-trap",
+        "ch-cpi-adapters-mastery"
+      ]
     },
     {
       "index": 87,
@@ -786,7 +1647,17 @@
       "domainId": "integration",
       "level": "basic",
       "introChallengeId": "ch-c-api-mgmt-intro",
-      "masteryChallengeId": "ch-c-api-mgmt-mastery"
+      "whenChallengeId": "ch-c-api-mgmt-when",
+      "howChallengeId": "ch-c-api-mgmt-how",
+      "trapChallengeId": "ch-c-api-mgmt-trap",
+      "masteryChallengeId": "ch-c-api-mgmt-mastery",
+      "games": [
+        "ch-c-api-mgmt-intro",
+        "ch-c-api-mgmt-when",
+        "ch-c-api-mgmt-how",
+        "ch-c-api-mgmt-trap",
+        "ch-c-api-mgmt-mastery"
+      ]
     },
     {
       "index": 88,
@@ -795,7 +1666,17 @@
       "domainId": "integration",
       "level": "basic",
       "introChallengeId": "ch-cpi-iflow-intro",
-      "masteryChallengeId": "ch-cpi-iflow-mastery"
+      "whenChallengeId": "ch-cpi-iflow-when",
+      "howChallengeId": "ch-cpi-iflow-how",
+      "trapChallengeId": "ch-cpi-iflow-trap",
+      "masteryChallengeId": "ch-cpi-iflow-mastery",
+      "games": [
+        "ch-cpi-iflow-intro",
+        "ch-cpi-iflow-when",
+        "ch-cpi-iflow-how",
+        "ch-cpi-iflow-trap",
+        "ch-cpi-iflow-mastery"
+      ]
     },
     {
       "index": 89,
@@ -804,7 +1685,17 @@
       "domainId": "integration",
       "level": "basic",
       "introChallengeId": "ch-c-iflow-intro",
-      "masteryChallengeId": "ch-c-iflow-mastery"
+      "whenChallengeId": "ch-c-iflow-when",
+      "howChallengeId": "ch-c-iflow-how",
+      "trapChallengeId": "ch-c-iflow-trap",
+      "masteryChallengeId": "ch-c-iflow-mastery",
+      "games": [
+        "ch-c-iflow-intro",
+        "ch-c-iflow-when",
+        "ch-c-iflow-how",
+        "ch-c-iflow-trap",
+        "ch-c-iflow-mastery"
+      ]
     },
     {
       "index": 90,
@@ -813,7 +1704,17 @@
       "domainId": "integration",
       "level": "basic",
       "introChallengeId": "ch-is-what-intro",
-      "masteryChallengeId": "ch-is-what-mastery"
+      "whenChallengeId": "ch-is-what-when",
+      "howChallengeId": "ch-is-what-how",
+      "trapChallengeId": "ch-is-what-trap",
+      "masteryChallengeId": "ch-is-what-mastery",
+      "games": [
+        "ch-is-what-intro",
+        "ch-is-what-when",
+        "ch-is-what-how",
+        "ch-is-what-trap",
+        "ch-is-what-mastery"
+      ]
     },
     {
       "index": 91,
@@ -822,7 +1723,17 @@
       "domainId": "integration",
       "level": "basic",
       "introChallengeId": "ch-cpi-mapping-intro",
-      "masteryChallengeId": "ch-cpi-mapping-mastery"
+      "whenChallengeId": "ch-cpi-mapping-when",
+      "howChallengeId": "ch-cpi-mapping-how",
+      "trapChallengeId": "ch-cpi-mapping-trap",
+      "masteryChallengeId": "ch-cpi-mapping-mastery",
+      "games": [
+        "ch-cpi-mapping-intro",
+        "ch-cpi-mapping-when",
+        "ch-cpi-mapping-how",
+        "ch-cpi-mapping-trap",
+        "ch-cpi-mapping-mastery"
+      ]
     },
     {
       "index": 92,
@@ -831,7 +1742,17 @@
       "domainId": "integration",
       "level": "basic",
       "introChallengeId": "ch-c-retry-backoff-intro",
-      "masteryChallengeId": "ch-c-retry-backoff-mastery"
+      "whenChallengeId": "ch-c-retry-backoff-when",
+      "howChallengeId": "ch-c-retry-backoff-how",
+      "trapChallengeId": "ch-c-retry-backoff-trap",
+      "masteryChallengeId": "ch-c-retry-backoff-mastery",
+      "games": [
+        "ch-c-retry-backoff-intro",
+        "ch-c-retry-backoff-when",
+        "ch-c-retry-backoff-how",
+        "ch-c-retry-backoff-trap",
+        "ch-c-retry-backoff-mastery"
+      ]
     },
     {
       "index": 93,
@@ -840,7 +1761,17 @@
       "domainId": "integration",
       "level": "advanced",
       "introChallengeId": "ch-api-mgmt-intro",
-      "masteryChallengeId": "ch-api-mgmt-mastery"
+      "whenChallengeId": "ch-api-mgmt-when",
+      "howChallengeId": "ch-api-mgmt-how",
+      "trapChallengeId": "ch-api-mgmt-trap",
+      "masteryChallengeId": "ch-api-mgmt-mastery",
+      "games": [
+        "ch-api-mgmt-intro",
+        "ch-api-mgmt-when",
+        "ch-api-mgmt-how",
+        "ch-api-mgmt-trap",
+        "ch-api-mgmt-mastery"
+      ]
     },
     {
       "index": 94,
@@ -849,7 +1780,17 @@
       "domainId": "integration",
       "level": "advanced",
       "introChallengeId": "ch-cpi-exception-intro",
-      "masteryChallengeId": "ch-cpi-exception-mastery"
+      "whenChallengeId": "ch-cpi-exception-when",
+      "howChallengeId": "ch-cpi-exception-how",
+      "trapChallengeId": "ch-cpi-exception-trap",
+      "masteryChallengeId": "ch-cpi-exception-mastery",
+      "games": [
+        "ch-cpi-exception-intro",
+        "ch-cpi-exception-when",
+        "ch-cpi-exception-how",
+        "ch-cpi-exception-trap",
+        "ch-cpi-exception-mastery"
+      ]
     },
     {
       "index": 95,
@@ -858,7 +1799,17 @@
       "domainId": "integration",
       "level": "advanced",
       "introChallengeId": "ch-cpi-idempotency-intro",
-      "masteryChallengeId": "ch-cpi-idempotency-mastery"
+      "whenChallengeId": "ch-cpi-idempotency-when",
+      "howChallengeId": "ch-cpi-idempotency-how",
+      "trapChallengeId": "ch-cpi-idempotency-trap",
+      "masteryChallengeId": "ch-cpi-idempotency-mastery",
+      "games": [
+        "ch-cpi-idempotency-intro",
+        "ch-cpi-idempotency-when",
+        "ch-cpi-idempotency-how",
+        "ch-cpi-idempotency-trap",
+        "ch-cpi-idempotency-mastery"
+      ]
     },
     {
       "index": 96,
@@ -867,7 +1818,17 @@
       "domainId": "integration",
       "level": "advanced",
       "introChallengeId": "ch-c-idempotency-intro",
-      "masteryChallengeId": "ch-c-idempotency-mastery"
+      "whenChallengeId": "ch-c-idempotency-when",
+      "howChallengeId": "ch-c-idempotency-how",
+      "trapChallengeId": "ch-c-idempotency-trap",
+      "masteryChallengeId": "ch-c-idempotency-mastery",
+      "games": [
+        "ch-c-idempotency-intro",
+        "ch-c-idempotency-when",
+        "ch-c-idempotency-how",
+        "ch-c-idempotency-trap",
+        "ch-c-idempotency-mastery"
+      ]
     },
     {
       "index": 97,
@@ -876,7 +1837,17 @@
       "domainId": "integration",
       "level": "expert",
       "introChallengeId": "ch-is-governance-intro",
-      "masteryChallengeId": "ch-is-governance-mastery"
+      "whenChallengeId": "ch-is-governance-when",
+      "howChallengeId": "ch-is-governance-how",
+      "trapChallengeId": "ch-is-governance-trap",
+      "masteryChallengeId": "ch-is-governance-mastery",
+      "games": [
+        "ch-is-governance-intro",
+        "ch-is-governance-when",
+        "ch-is-governance-how",
+        "ch-is-governance-trap",
+        "ch-is-governance-mastery"
+      ]
     },
     {
       "index": 98,
@@ -885,7 +1856,17 @@
       "domainId": "integration",
       "level": "expert",
       "introChallengeId": "ch-is-observability-intro",
-      "masteryChallengeId": "ch-is-observability-mastery"
+      "whenChallengeId": "ch-is-observability-when",
+      "howChallengeId": "ch-is-observability-how",
+      "trapChallengeId": "ch-is-observability-trap",
+      "masteryChallengeId": "ch-is-observability-mastery",
+      "games": [
+        "ch-is-observability-intro",
+        "ch-is-observability-when",
+        "ch-is-observability-how",
+        "ch-is-observability-trap",
+        "ch-is-observability-mastery"
+      ]
     },
     {
       "index": 99,
@@ -894,7 +1875,17 @@
       "domainId": "integration",
       "level": "expert",
       "introChallengeId": "ch-is-tpm-intro",
-      "masteryChallengeId": "ch-is-tpm-mastery"
+      "whenChallengeId": "ch-is-tpm-when",
+      "howChallengeId": "ch-is-tpm-how",
+      "trapChallengeId": "ch-is-tpm-trap",
+      "masteryChallengeId": "ch-is-tpm-mastery",
+      "games": [
+        "ch-is-tpm-intro",
+        "ch-is-tpm-when",
+        "ch-is-tpm-how",
+        "ch-is-tpm-trap",
+        "ch-is-tpm-mastery"
+      ]
     },
     {
       "index": 100,
@@ -903,7 +1894,17 @@
       "domainId": "events",
       "level": "basic",
       "introChallengeId": "ch-c-dlq-intro",
-      "masteryChallengeId": "ch-c-dlq-mastery"
+      "whenChallengeId": "ch-c-dlq-when",
+      "howChallengeId": "ch-c-dlq-how",
+      "trapChallengeId": "ch-c-dlq-trap",
+      "masteryChallengeId": "ch-c-dlq-mastery",
+      "games": [
+        "ch-c-dlq-intro",
+        "ch-c-dlq-when",
+        "ch-c-dlq-how",
+        "ch-c-dlq-trap",
+        "ch-c-dlq-mastery"
+      ]
     },
     {
       "index": 101,
@@ -912,7 +1913,17 @@
       "domainId": "events",
       "level": "basic",
       "introChallengeId": "ch-evt-mesh-concepts-intro",
-      "masteryChallengeId": "ch-evt-mesh-concepts-mastery"
+      "whenChallengeId": "ch-evt-mesh-concepts-when",
+      "howChallengeId": "ch-evt-mesh-concepts-how",
+      "trapChallengeId": "ch-evt-mesh-concepts-trap",
+      "masteryChallengeId": "ch-evt-mesh-concepts-mastery",
+      "games": [
+        "ch-evt-mesh-concepts-intro",
+        "ch-evt-mesh-concepts-when",
+        "ch-evt-mesh-concepts-how",
+        "ch-evt-mesh-concepts-trap",
+        "ch-evt-mesh-concepts-mastery"
+      ]
     },
     {
       "index": 102,
@@ -921,7 +1932,17 @@
       "domainId": "events",
       "level": "basic",
       "introChallengeId": "ch-evt-vs-cmd-intro",
-      "masteryChallengeId": "ch-evt-vs-cmd-mastery"
+      "whenChallengeId": "ch-evt-vs-cmd-when",
+      "howChallengeId": "ch-evt-vs-cmd-how",
+      "trapChallengeId": "ch-evt-vs-cmd-trap",
+      "masteryChallengeId": "ch-evt-vs-cmd-mastery",
+      "games": [
+        "ch-evt-vs-cmd-intro",
+        "ch-evt-vs-cmd-when",
+        "ch-evt-vs-cmd-how",
+        "ch-evt-vs-cmd-trap",
+        "ch-evt-vs-cmd-mastery"
+      ]
     },
     {
       "index": 103,
@@ -930,7 +1951,17 @@
       "domainId": "events",
       "level": "basic",
       "introChallengeId": "ch-c-events-mesh-intro",
-      "masteryChallengeId": "ch-c-events-mesh-mastery"
+      "whenChallengeId": "ch-c-events-mesh-when",
+      "howChallengeId": "ch-c-events-mesh-how",
+      "trapChallengeId": "ch-c-events-mesh-trap",
+      "masteryChallengeId": "ch-c-events-mesh-mastery",
+      "games": [
+        "ch-c-events-mesh-intro",
+        "ch-c-events-mesh-when",
+        "ch-c-events-mesh-how",
+        "ch-c-events-mesh-trap",
+        "ch-c-events-mesh-mastery"
+      ]
     },
     {
       "index": 104,
@@ -939,7 +1970,17 @@
       "domainId": "events",
       "level": "basic",
       "introChallengeId": "ch-c-saga-intro",
-      "masteryChallengeId": "ch-c-saga-mastery"
+      "whenChallengeId": "ch-c-saga-when",
+      "howChallengeId": "ch-c-saga-how",
+      "trapChallengeId": "ch-c-saga-trap",
+      "masteryChallengeId": "ch-c-saga-mastery",
+      "games": [
+        "ch-c-saga-intro",
+        "ch-c-saga-when",
+        "ch-c-saga-how",
+        "ch-c-saga-trap",
+        "ch-c-saga-mastery"
+      ]
     },
     {
       "index": 105,
@@ -948,7 +1989,17 @@
       "domainId": "events",
       "level": "basic",
       "introChallengeId": "ch-c-schema-evolution-intro",
-      "masteryChallengeId": "ch-c-schema-evolution-mastery"
+      "whenChallengeId": "ch-c-schema-evolution-when",
+      "howChallengeId": "ch-c-schema-evolution-how",
+      "trapChallengeId": "ch-c-schema-evolution-trap",
+      "masteryChallengeId": "ch-c-schema-evolution-mastery",
+      "games": [
+        "ch-c-schema-evolution-intro",
+        "ch-c-schema-evolution-when",
+        "ch-c-schema-evolution-how",
+        "ch-c-schema-evolution-trap",
+        "ch-c-schema-evolution-mastery"
+      ]
     },
     {
       "index": 106,
@@ -957,7 +2008,17 @@
       "domainId": "events",
       "level": "advanced",
       "introChallengeId": "ch-evt-dlq-intro",
-      "masteryChallengeId": "ch-evt-dlq-mastery"
+      "whenChallengeId": "ch-evt-dlq-when",
+      "howChallengeId": "ch-evt-dlq-how",
+      "trapChallengeId": "ch-evt-dlq-trap",
+      "masteryChallengeId": "ch-evt-dlq-mastery",
+      "games": [
+        "ch-evt-dlq-intro",
+        "ch-evt-dlq-when",
+        "ch-evt-dlq-how",
+        "ch-evt-dlq-trap",
+        "ch-evt-dlq-mastery"
+      ]
     },
     {
       "index": 107,
@@ -966,7 +2027,17 @@
       "domainId": "events",
       "level": "advanced",
       "introChallengeId": "ch-evt-schema-intro",
-      "masteryChallengeId": "ch-evt-schema-mastery"
+      "whenChallengeId": "ch-evt-schema-when",
+      "howChallengeId": "ch-evt-schema-how",
+      "trapChallengeId": "ch-evt-schema-trap",
+      "masteryChallengeId": "ch-evt-schema-mastery",
+      "games": [
+        "ch-evt-schema-intro",
+        "ch-evt-schema-when",
+        "ch-evt-schema-how",
+        "ch-evt-schema-trap",
+        "ch-evt-schema-mastery"
+      ]
     },
     {
       "index": 108,
@@ -975,7 +2046,17 @@
       "domainId": "events",
       "level": "expert",
       "introChallengeId": "ch-evt-saga-intro",
-      "masteryChallengeId": "ch-evt-saga-mastery"
+      "whenChallengeId": "ch-evt-saga-when",
+      "howChallengeId": "ch-evt-saga-how",
+      "trapChallengeId": "ch-evt-saga-trap",
+      "masteryChallengeId": "ch-evt-saga-mastery",
+      "games": [
+        "ch-evt-saga-intro",
+        "ch-evt-saga-when",
+        "ch-evt-saga-how",
+        "ch-evt-saga-trap",
+        "ch-evt-saga-mastery"
+      ]
     },
     {
       "index": 109,
@@ -984,7 +2065,17 @@
       "domainId": "bpa",
       "level": "basic",
       "introChallengeId": "ch-bpa-what-intro",
-      "masteryChallengeId": "ch-bpa-what-mastery"
+      "whenChallengeId": "ch-bpa-what-when",
+      "howChallengeId": "ch-bpa-what-how",
+      "trapChallengeId": "ch-bpa-what-trap",
+      "masteryChallengeId": "ch-bpa-what-mastery",
+      "games": [
+        "ch-bpa-what-intro",
+        "ch-bpa-what-when",
+        "ch-bpa-what-how",
+        "ch-bpa-what-trap",
+        "ch-bpa-what-mastery"
+      ]
     },
     {
       "index": 110,
@@ -993,7 +2084,17 @@
       "domainId": "bpa",
       "level": "basic",
       "introChallengeId": "ch-bpa-forms-intro",
-      "masteryChallengeId": "ch-bpa-forms-mastery"
+      "whenChallengeId": "ch-bpa-forms-when",
+      "howChallengeId": "ch-bpa-forms-how",
+      "trapChallengeId": "ch-bpa-forms-trap",
+      "masteryChallengeId": "ch-bpa-forms-mastery",
+      "games": [
+        "ch-bpa-forms-intro",
+        "ch-bpa-forms-when",
+        "ch-bpa-forms-how",
+        "ch-bpa-forms-trap",
+        "ch-bpa-forms-mastery"
+      ]
     },
     {
       "index": 111,
@@ -1002,7 +2103,17 @@
       "domainId": "bpa",
       "level": "basic",
       "introChallengeId": "ch-bpa-workflow-intro",
-      "masteryChallengeId": "ch-bpa-workflow-mastery"
+      "whenChallengeId": "ch-bpa-workflow-when",
+      "howChallengeId": "ch-bpa-workflow-how",
+      "trapChallengeId": "ch-bpa-workflow-trap",
+      "masteryChallengeId": "ch-bpa-workflow-mastery",
+      "games": [
+        "ch-bpa-workflow-intro",
+        "ch-bpa-workflow-when",
+        "ch-bpa-workflow-how",
+        "ch-bpa-workflow-trap",
+        "ch-bpa-workflow-mastery"
+      ]
     },
     {
       "index": 112,
@@ -1011,7 +2122,17 @@
       "domainId": "bpa",
       "level": "basic",
       "introChallengeId": "ch-c-workflow-intro",
-      "masteryChallengeId": "ch-c-workflow-mastery"
+      "whenChallengeId": "ch-c-workflow-when",
+      "howChallengeId": "ch-c-workflow-how",
+      "trapChallengeId": "ch-c-workflow-trap",
+      "masteryChallengeId": "ch-c-workflow-mastery",
+      "games": [
+        "ch-c-workflow-intro",
+        "ch-c-workflow-when",
+        "ch-c-workflow-how",
+        "ch-c-workflow-trap",
+        "ch-c-workflow-mastery"
+      ]
     },
     {
       "index": 113,
@@ -1020,7 +2141,17 @@
       "domainId": "bpa",
       "level": "advanced",
       "introChallengeId": "ch-bpa-api-intro",
-      "masteryChallengeId": "ch-bpa-api-mastery"
+      "whenChallengeId": "ch-bpa-api-when",
+      "howChallengeId": "ch-bpa-api-how",
+      "trapChallengeId": "ch-bpa-api-trap",
+      "masteryChallengeId": "ch-bpa-api-mastery",
+      "games": [
+        "ch-bpa-api-intro",
+        "ch-bpa-api-when",
+        "ch-bpa-api-how",
+        "ch-bpa-api-trap",
+        "ch-bpa-api-mastery"
+      ]
     },
     {
       "index": 114,
@@ -1029,7 +2160,17 @@
       "domainId": "bpa",
       "level": "advanced",
       "introChallengeId": "ch-bpa-rules-intro",
-      "masteryChallengeId": "ch-bpa-rules-mastery"
+      "whenChallengeId": "ch-bpa-rules-when",
+      "howChallengeId": "ch-bpa-rules-how",
+      "trapChallengeId": "ch-bpa-rules-trap",
+      "masteryChallengeId": "ch-bpa-rules-mastery",
+      "games": [
+        "ch-bpa-rules-intro",
+        "ch-bpa-rules-when",
+        "ch-bpa-rules-how",
+        "ch-bpa-rules-trap",
+        "ch-bpa-rules-mastery"
+      ]
     },
     {
       "index": 115,
@@ -1038,7 +2179,17 @@
       "domainId": "bpa",
       "level": "advanced",
       "introChallengeId": "ch-bpa-governance-intro",
-      "masteryChallengeId": "ch-bpa-governance-mastery"
+      "whenChallengeId": "ch-bpa-governance-when",
+      "howChallengeId": "ch-bpa-governance-how",
+      "trapChallengeId": "ch-bpa-governance-trap",
+      "masteryChallengeId": "ch-bpa-governance-mastery",
+      "games": [
+        "ch-bpa-governance-intro",
+        "ch-bpa-governance-when",
+        "ch-bpa-governance-how",
+        "ch-bpa-governance-trap",
+        "ch-bpa-governance-mastery"
+      ]
     },
     {
       "index": 116,
@@ -1047,7 +2198,17 @@
       "domainId": "bpa",
       "level": "expert",
       "introChallengeId": "ch-bpa-scale-intro",
-      "masteryChallengeId": "ch-bpa-scale-mastery"
+      "whenChallengeId": "ch-bpa-scale-when",
+      "howChallengeId": "ch-bpa-scale-how",
+      "trapChallengeId": "ch-bpa-scale-trap",
+      "masteryChallengeId": "ch-bpa-scale-mastery",
+      "games": [
+        "ch-bpa-scale-intro",
+        "ch-bpa-scale-when",
+        "ch-bpa-scale-how",
+        "ch-bpa-scale-trap",
+        "ch-bpa-scale-mastery"
+      ]
     },
     {
       "index": 117,
@@ -1056,7 +2217,17 @@
       "domainId": "workzone",
       "level": "basic",
       "introChallengeId": "ch-wz-what-intro",
-      "masteryChallengeId": "ch-wz-what-mastery"
+      "whenChallengeId": "ch-wz-what-when",
+      "howChallengeId": "ch-wz-what-how",
+      "trapChallengeId": "ch-wz-what-trap",
+      "masteryChallengeId": "ch-wz-what-mastery",
+      "games": [
+        "ch-wz-what-intro",
+        "ch-wz-what-when",
+        "ch-wz-what-how",
+        "ch-wz-what-trap",
+        "ch-wz-what-mastery"
+      ]
     },
     {
       "index": 118,
@@ -1065,7 +2236,17 @@
       "domainId": "workzone",
       "level": "basic",
       "introChallengeId": "ch-wz-roles-intro",
-      "masteryChallengeId": "ch-wz-roles-mastery"
+      "whenChallengeId": "ch-wz-roles-when",
+      "howChallengeId": "ch-wz-roles-how",
+      "trapChallengeId": "ch-wz-roles-trap",
+      "masteryChallengeId": "ch-wz-roles-mastery",
+      "games": [
+        "ch-wz-roles-intro",
+        "ch-wz-roles-when",
+        "ch-wz-roles-how",
+        "ch-wz-roles-trap",
+        "ch-wz-roles-mastery"
+      ]
     },
     {
       "index": 119,
@@ -1074,7 +2255,17 @@
       "domainId": "workzone",
       "level": "basic",
       "introChallengeId": "ch-c-workzone-intro",
-      "masteryChallengeId": "ch-c-workzone-mastery"
+      "whenChallengeId": "ch-c-workzone-when",
+      "howChallengeId": "ch-c-workzone-how",
+      "trapChallengeId": "ch-c-workzone-trap",
+      "masteryChallengeId": "ch-c-workzone-mastery",
+      "games": [
+        "ch-c-workzone-intro",
+        "ch-c-workzone-when",
+        "ch-c-workzone-how",
+        "ch-c-workzone-trap",
+        "ch-c-workzone-mastery"
+      ]
     },
     {
       "index": 120,
@@ -1083,7 +2274,17 @@
       "domainId": "workzone",
       "level": "advanced",
       "introChallengeId": "ch-wz-federation-intro",
-      "masteryChallengeId": "ch-wz-federation-mastery"
+      "whenChallengeId": "ch-wz-federation-when",
+      "howChallengeId": "ch-wz-federation-how",
+      "trapChallengeId": "ch-wz-federation-trap",
+      "masteryChallengeId": "ch-wz-federation-mastery",
+      "games": [
+        "ch-wz-federation-intro",
+        "ch-wz-federation-when",
+        "ch-wz-federation-how",
+        "ch-wz-federation-trap",
+        "ch-wz-federation-mastery"
+      ]
     },
     {
       "index": 121,
@@ -1092,7 +2293,17 @@
       "domainId": "workzone",
       "level": "advanced",
       "introChallengeId": "ch-wz-perf-intro",
-      "masteryChallengeId": "ch-wz-perf-mastery"
+      "whenChallengeId": "ch-wz-perf-when",
+      "howChallengeId": "ch-wz-perf-how",
+      "trapChallengeId": "ch-wz-perf-trap",
+      "masteryChallengeId": "ch-wz-perf-mastery",
+      "games": [
+        "ch-wz-perf-intro",
+        "ch-wz-perf-when",
+        "ch-wz-perf-how",
+        "ch-wz-perf-trap",
+        "ch-wz-perf-mastery"
+      ]
     },
     {
       "index": 122,
@@ -1101,7 +2312,17 @@
       "domainId": "hana-cloud",
       "level": "basic",
       "introChallengeId": "ch-c-calc-view-intro",
-      "masteryChallengeId": "ch-c-calc-view-mastery"
+      "whenChallengeId": "ch-c-calc-view-when",
+      "howChallengeId": "ch-c-calc-view-how",
+      "trapChallengeId": "ch-c-calc-view-trap",
+      "masteryChallengeId": "ch-c-calc-view-mastery",
+      "games": [
+        "ch-c-calc-view-intro",
+        "ch-c-calc-view-when",
+        "ch-c-calc-view-how",
+        "ch-c-calc-view-trap",
+        "ch-c-calc-view-mastery"
+      ]
     },
     {
       "index": 123,
@@ -1110,7 +2331,17 @@
       "domainId": "hana-cloud",
       "level": "basic",
       "introChallengeId": "ch-hana-what-intro",
-      "masteryChallengeId": "ch-hana-what-mastery"
+      "whenChallengeId": "ch-hana-what-when",
+      "howChallengeId": "ch-hana-what-how",
+      "trapChallengeId": "ch-hana-what-trap",
+      "masteryChallengeId": "ch-hana-what-mastery",
+      "games": [
+        "ch-hana-what-intro",
+        "ch-hana-what-when",
+        "ch-hana-what-how",
+        "ch-hana-what-trap",
+        "ch-hana-what-mastery"
+      ]
     },
     {
       "index": 124,
@@ -1119,7 +2350,17 @@
       "domainId": "hana-cloud",
       "level": "basic",
       "introChallengeId": "ch-c-hana-hdi-intro",
-      "masteryChallengeId": "ch-c-hana-hdi-mastery"
+      "whenChallengeId": "ch-c-hana-hdi-when",
+      "howChallengeId": "ch-c-hana-hdi-how",
+      "trapChallengeId": "ch-c-hana-hdi-trap",
+      "masteryChallengeId": "ch-c-hana-hdi-mastery",
+      "games": [
+        "ch-c-hana-hdi-intro",
+        "ch-c-hana-hdi-when",
+        "ch-c-hana-hdi-how",
+        "ch-c-hana-hdi-trap",
+        "ch-c-hana-hdi-mastery"
+      ]
     },
     {
       "index": 125,
@@ -1128,7 +2369,17 @@
       "domainId": "hana-cloud",
       "level": "basic",
       "introChallengeId": "ch-hana-hdi-intro",
-      "masteryChallengeId": "ch-hana-hdi-mastery"
+      "whenChallengeId": "ch-hana-hdi-when",
+      "howChallengeId": "ch-hana-hdi-how",
+      "trapChallengeId": "ch-hana-hdi-trap",
+      "masteryChallengeId": "ch-hana-hdi-mastery",
+      "games": [
+        "ch-hana-hdi-intro",
+        "ch-hana-hdi-when",
+        "ch-hana-hdi-how",
+        "ch-hana-hdi-trap",
+        "ch-hana-hdi-mastery"
+      ]
     },
     {
       "index": 126,
@@ -1137,7 +2388,17 @@
       "domainId": "hana-cloud",
       "level": "basic",
       "introChallengeId": "ch-hana-sql-intro",
-      "masteryChallengeId": "ch-hana-sql-mastery"
+      "whenChallengeId": "ch-hana-sql-when",
+      "howChallengeId": "ch-hana-sql-how",
+      "trapChallengeId": "ch-hana-sql-trap",
+      "masteryChallengeId": "ch-hana-sql-mastery",
+      "games": [
+        "ch-hana-sql-intro",
+        "ch-hana-sql-when",
+        "ch-hana-sql-how",
+        "ch-hana-sql-trap",
+        "ch-hana-sql-mastery"
+      ]
     },
     {
       "index": 127,
@@ -1146,7 +2407,17 @@
       "domainId": "hana-cloud",
       "level": "advanced",
       "introChallengeId": "ch-hana-calc-intro",
-      "masteryChallengeId": "ch-hana-calc-mastery"
+      "whenChallengeId": "ch-hana-calc-when",
+      "howChallengeId": "ch-hana-calc-how",
+      "trapChallengeId": "ch-hana-calc-trap",
+      "masteryChallengeId": "ch-hana-calc-mastery",
+      "games": [
+        "ch-hana-calc-intro",
+        "ch-hana-calc-when",
+        "ch-hana-calc-how",
+        "ch-hana-calc-trap",
+        "ch-hana-calc-mastery"
+      ]
     },
     {
       "index": 128,
@@ -1155,7 +2426,17 @@
       "domainId": "hana-cloud",
       "level": "advanced",
       "introChallengeId": "ch-hana-perf-intro",
-      "masteryChallengeId": "ch-hana-perf-mastery"
+      "whenChallengeId": "ch-hana-perf-when",
+      "howChallengeId": "ch-hana-perf-how",
+      "trapChallengeId": "ch-hana-perf-trap",
+      "masteryChallengeId": "ch-hana-perf-mastery",
+      "games": [
+        "ch-hana-perf-intro",
+        "ch-hana-perf-when",
+        "ch-hana-perf-how",
+        "ch-hana-perf-trap",
+        "ch-hana-perf-mastery"
+      ]
     },
     {
       "index": 129,
@@ -1164,7 +2445,17 @@
       "domainId": "hana-cloud",
       "level": "advanced",
       "introChallengeId": "ch-hana-privileges-intro",
-      "masteryChallengeId": "ch-hana-privileges-mastery"
+      "whenChallengeId": "ch-hana-privileges-when",
+      "howChallengeId": "ch-hana-privileges-how",
+      "trapChallengeId": "ch-hana-privileges-trap",
+      "masteryChallengeId": "ch-hana-privileges-mastery",
+      "games": [
+        "ch-hana-privileges-intro",
+        "ch-hana-privileges-when",
+        "ch-hana-privileges-how",
+        "ch-hana-privileges-trap",
+        "ch-hana-privileges-mastery"
+      ]
     },
     {
       "index": 130,
@@ -1173,7 +2464,17 @@
       "domainId": "hana-cloud",
       "level": "expert",
       "introChallengeId": "ch-hana-ha-intro",
-      "masteryChallengeId": "ch-hana-ha-mastery"
+      "whenChallengeId": "ch-hana-ha-when",
+      "howChallengeId": "ch-hana-ha-how",
+      "trapChallengeId": "ch-hana-ha-trap",
+      "masteryChallengeId": "ch-hana-ha-mastery",
+      "games": [
+        "ch-hana-ha-intro",
+        "ch-hana-ha-when",
+        "ch-hana-ha-how",
+        "ch-hana-ha-trap",
+        "ch-hana-ha-mastery"
+      ]
     },
     {
       "index": 131,
@@ -1182,7 +2483,17 @@
       "domainId": "hana-cloud",
       "level": "expert",
       "introChallengeId": "ch-hana-vector-intro",
-      "masteryChallengeId": "ch-hana-vector-mastery"
+      "whenChallengeId": "ch-hana-vector-when",
+      "howChallengeId": "ch-hana-vector-how",
+      "trapChallengeId": "ch-hana-vector-trap",
+      "masteryChallengeId": "ch-hana-vector-mastery",
+      "games": [
+        "ch-hana-vector-intro",
+        "ch-hana-vector-when",
+        "ch-hana-vector-how",
+        "ch-hana-vector-trap",
+        "ch-hana-vector-mastery"
+      ]
     },
     {
       "index": 132,
@@ -1191,7 +2502,17 @@
       "domainId": "datasphere",
       "level": "basic",
       "introChallengeId": "ch-c-lineage-intro",
-      "masteryChallengeId": "ch-c-lineage-mastery"
+      "whenChallengeId": "ch-c-lineage-when",
+      "howChallengeId": "ch-c-lineage-how",
+      "trapChallengeId": "ch-c-lineage-trap",
+      "masteryChallengeId": "ch-c-lineage-mastery",
+      "games": [
+        "ch-c-lineage-intro",
+        "ch-c-lineage-when",
+        "ch-c-lineage-how",
+        "ch-c-lineage-trap",
+        "ch-c-lineage-mastery"
+      ]
     },
     {
       "index": 133,
@@ -1200,7 +2521,17 @@
       "domainId": "datasphere",
       "level": "basic",
       "introChallengeId": "ch-ds-what-intro",
-      "masteryChallengeId": "ch-ds-what-mastery"
+      "whenChallengeId": "ch-ds-what-when",
+      "howChallengeId": "ch-ds-what-how",
+      "trapChallengeId": "ch-ds-what-trap",
+      "masteryChallengeId": "ch-ds-what-mastery",
+      "games": [
+        "ch-ds-what-intro",
+        "ch-ds-what-when",
+        "ch-ds-what-how",
+        "ch-ds-what-trap",
+        "ch-ds-what-mastery"
+      ]
     },
     {
       "index": 134,
@@ -1209,7 +2540,17 @@
       "domainId": "datasphere",
       "level": "basic",
       "introChallengeId": "ch-ds-spaces-intro",
-      "masteryChallengeId": "ch-ds-spaces-mastery"
+      "whenChallengeId": "ch-ds-spaces-when",
+      "howChallengeId": "ch-ds-spaces-how",
+      "trapChallengeId": "ch-ds-spaces-trap",
+      "masteryChallengeId": "ch-ds-spaces-mastery",
+      "games": [
+        "ch-ds-spaces-intro",
+        "ch-ds-spaces-when",
+        "ch-ds-spaces-how",
+        "ch-ds-spaces-trap",
+        "ch-ds-spaces-mastery"
+      ]
     },
     {
       "index": 135,
@@ -1218,7 +2559,17 @@
       "domainId": "datasphere",
       "level": "advanced",
       "introChallengeId": "ch-ds-federation-intro",
-      "masteryChallengeId": "ch-ds-federation-mastery"
+      "whenChallengeId": "ch-ds-federation-when",
+      "howChallengeId": "ch-ds-federation-how",
+      "trapChallengeId": "ch-ds-federation-trap",
+      "masteryChallengeId": "ch-ds-federation-mastery",
+      "games": [
+        "ch-ds-federation-intro",
+        "ch-ds-federation-when",
+        "ch-ds-federation-how",
+        "ch-ds-federation-trap",
+        "ch-ds-federation-mastery"
+      ]
     },
     {
       "index": 136,
@@ -1227,7 +2578,17 @@
       "domainId": "datasphere",
       "level": "advanced",
       "introChallengeId": "ch-ds-semantic-intro",
-      "masteryChallengeId": "ch-ds-semantic-mastery"
+      "whenChallengeId": "ch-ds-semantic-when",
+      "howChallengeId": "ch-ds-semantic-how",
+      "trapChallengeId": "ch-ds-semantic-trap",
+      "masteryChallengeId": "ch-ds-semantic-mastery",
+      "games": [
+        "ch-ds-semantic-intro",
+        "ch-ds-semantic-when",
+        "ch-ds-semantic-how",
+        "ch-ds-semantic-trap",
+        "ch-ds-semantic-mastery"
+      ]
     },
     {
       "index": 137,
@@ -1236,7 +2597,17 @@
       "domainId": "datasphere",
       "level": "expert",
       "introChallengeId": "ch-ds-lineage-intro",
-      "masteryChallengeId": "ch-ds-lineage-mastery"
+      "whenChallengeId": "ch-ds-lineage-when",
+      "howChallengeId": "ch-ds-lineage-how",
+      "trapChallengeId": "ch-ds-lineage-trap",
+      "masteryChallengeId": "ch-ds-lineage-mastery",
+      "games": [
+        "ch-ds-lineage-intro",
+        "ch-ds-lineage-when",
+        "ch-ds-lineage-how",
+        "ch-ds-lineage-trap",
+        "ch-ds-lineage-mastery"
+      ]
     },
     {
       "index": 138,
@@ -1245,7 +2616,17 @@
       "domainId": "bdc",
       "level": "basic",
       "introChallengeId": "ch-bdc-what-intro",
-      "masteryChallengeId": "ch-bdc-what-mastery"
+      "whenChallengeId": "ch-bdc-what-when",
+      "howChallengeId": "ch-bdc-what-how",
+      "trapChallengeId": "ch-bdc-what-trap",
+      "masteryChallengeId": "ch-bdc-what-mastery",
+      "games": [
+        "ch-bdc-what-intro",
+        "ch-bdc-what-when",
+        "ch-bdc-what-how",
+        "ch-bdc-what-trap",
+        "ch-bdc-what-mastery"
+      ]
     },
     {
       "index": 139,
@@ -1254,7 +2635,17 @@
       "domainId": "bdc",
       "level": "basic",
       "introChallengeId": "ch-bdc-data-product-intro",
-      "masteryChallengeId": "ch-bdc-data-product-mastery"
+      "whenChallengeId": "ch-bdc-data-product-when",
+      "howChallengeId": "ch-bdc-data-product-how",
+      "trapChallengeId": "ch-bdc-data-product-trap",
+      "masteryChallengeId": "ch-bdc-data-product-mastery",
+      "games": [
+        "ch-bdc-data-product-intro",
+        "ch-bdc-data-product-when",
+        "ch-bdc-data-product-how",
+        "ch-bdc-data-product-trap",
+        "ch-bdc-data-product-mastery"
+      ]
     },
     {
       "index": 140,
@@ -1263,7 +2654,17 @@
       "domainId": "bdc",
       "level": "advanced",
       "introChallengeId": "ch-bdc-governance-intro",
-      "masteryChallengeId": "ch-bdc-governance-mastery"
+      "whenChallengeId": "ch-bdc-governance-when",
+      "howChallengeId": "ch-bdc-governance-how",
+      "trapChallengeId": "ch-bdc-governance-trap",
+      "masteryChallengeId": "ch-bdc-governance-mastery",
+      "games": [
+        "ch-bdc-governance-intro",
+        "ch-bdc-governance-when",
+        "ch-bdc-governance-how",
+        "ch-bdc-governance-trap",
+        "ch-bdc-governance-mastery"
+      ]
     },
     {
       "index": 141,
@@ -1272,7 +2673,17 @@
       "domainId": "bdc",
       "level": "advanced",
       "introChallengeId": "ch-c-data-product-intro",
-      "masteryChallengeId": "ch-c-data-product-mastery"
+      "whenChallengeId": "ch-c-data-product-when",
+      "howChallengeId": "ch-c-data-product-how",
+      "trapChallengeId": "ch-c-data-product-trap",
+      "masteryChallengeId": "ch-c-data-product-mastery",
+      "games": [
+        "ch-c-data-product-intro",
+        "ch-c-data-product-when",
+        "ch-c-data-product-how",
+        "ch-c-data-product-trap",
+        "ch-c-data-product-mastery"
+      ]
     },
     {
       "index": 142,
@@ -1281,7 +2692,17 @@
       "domainId": "bdc",
       "level": "expert",
       "introChallengeId": "ch-bdc-lakehouse-intro",
-      "masteryChallengeId": "ch-bdc-lakehouse-mastery"
+      "whenChallengeId": "ch-bdc-lakehouse-when",
+      "howChallengeId": "ch-bdc-lakehouse-how",
+      "trapChallengeId": "ch-bdc-lakehouse-trap",
+      "masteryChallengeId": "ch-bdc-lakehouse-mastery",
+      "games": [
+        "ch-bdc-lakehouse-intro",
+        "ch-bdc-lakehouse-when",
+        "ch-bdc-lakehouse-how",
+        "ch-bdc-lakehouse-trap",
+        "ch-bdc-lakehouse-mastery"
+      ]
     },
     {
       "index": 143,
@@ -1290,7 +2711,17 @@
       "domainId": "sac",
       "level": "basic",
       "introChallengeId": "ch-c-sac-story-intro",
-      "masteryChallengeId": "ch-c-sac-story-mastery"
+      "whenChallengeId": "ch-c-sac-story-when",
+      "howChallengeId": "ch-c-sac-story-how",
+      "trapChallengeId": "ch-c-sac-story-trap",
+      "masteryChallengeId": "ch-c-sac-story-mastery",
+      "games": [
+        "ch-c-sac-story-intro",
+        "ch-c-sac-story-when",
+        "ch-c-sac-story-how",
+        "ch-c-sac-story-trap",
+        "ch-c-sac-story-mastery"
+      ]
     },
     {
       "index": 144,
@@ -1299,7 +2730,17 @@
       "domainId": "sac",
       "level": "basic",
       "introChallengeId": "ch-sac-what-intro",
-      "masteryChallengeId": "ch-sac-what-mastery"
+      "whenChallengeId": "ch-sac-what-when",
+      "howChallengeId": "ch-sac-what-how",
+      "trapChallengeId": "ch-sac-what-trap",
+      "masteryChallengeId": "ch-sac-what-mastery",
+      "games": [
+        "ch-sac-what-intro",
+        "ch-sac-what-when",
+        "ch-sac-what-how",
+        "ch-sac-what-trap",
+        "ch-sac-what-mastery"
+      ]
     },
     {
       "index": 145,
@@ -1308,7 +2749,17 @@
       "domainId": "sac",
       "level": "basic",
       "introChallengeId": "ch-sac-stories-intro",
-      "masteryChallengeId": "ch-sac-stories-mastery"
+      "whenChallengeId": "ch-sac-stories-when",
+      "howChallengeId": "ch-sac-stories-how",
+      "trapChallengeId": "ch-sac-stories-trap",
+      "masteryChallengeId": "ch-sac-stories-mastery",
+      "games": [
+        "ch-sac-stories-intro",
+        "ch-sac-stories-when",
+        "ch-sac-stories-how",
+        "ch-sac-stories-trap",
+        "ch-sac-stories-mastery"
+      ]
     },
     {
       "index": 146,
@@ -1317,7 +2768,17 @@
       "domainId": "sac",
       "level": "advanced",
       "introChallengeId": "ch-sac-live-vs-import-intro",
-      "masteryChallengeId": "ch-sac-live-vs-import-mastery"
+      "whenChallengeId": "ch-sac-live-vs-import-when",
+      "howChallengeId": "ch-sac-live-vs-import-how",
+      "trapChallengeId": "ch-sac-live-vs-import-trap",
+      "masteryChallengeId": "ch-sac-live-vs-import-mastery",
+      "games": [
+        "ch-sac-live-vs-import-intro",
+        "ch-sac-live-vs-import-when",
+        "ch-sac-live-vs-import-how",
+        "ch-sac-live-vs-import-trap",
+        "ch-sac-live-vs-import-mastery"
+      ]
     },
     {
       "index": 147,
@@ -1326,7 +2787,17 @@
       "domainId": "sac",
       "level": "advanced",
       "introChallengeId": "ch-sac-planning-intro",
-      "masteryChallengeId": "ch-sac-planning-mastery"
+      "whenChallengeId": "ch-sac-planning-when",
+      "howChallengeId": "ch-sac-planning-how",
+      "trapChallengeId": "ch-sac-planning-trap",
+      "masteryChallengeId": "ch-sac-planning-mastery",
+      "games": [
+        "ch-sac-planning-intro",
+        "ch-sac-planning-when",
+        "ch-sac-planning-how",
+        "ch-sac-planning-trap",
+        "ch-sac-planning-mastery"
+      ]
     },
     {
       "index": 148,
@@ -1335,7 +2806,17 @@
       "domainId": "sac",
       "level": "expert",
       "introChallengeId": "ch-sac-security-intro",
-      "masteryChallengeId": "ch-sac-security-mastery"
+      "whenChallengeId": "ch-sac-security-when",
+      "howChallengeId": "ch-sac-security-how",
+      "trapChallengeId": "ch-sac-security-trap",
+      "masteryChallengeId": "ch-sac-security-mastery",
+      "games": [
+        "ch-sac-security-intro",
+        "ch-sac-security-when",
+        "ch-sac-security-how",
+        "ch-sac-security-trap",
+        "ch-sac-security-mastery"
+      ]
     },
     {
       "index": 149,
@@ -1344,7 +2825,17 @@
       "domainId": "ai",
       "level": "basic",
       "introChallengeId": "ch-ai-hallucination-intro",
-      "masteryChallengeId": "ch-ai-hallucination-mastery"
+      "whenChallengeId": "ch-ai-hallucination-when",
+      "howChallengeId": "ch-ai-hallucination-how",
+      "trapChallengeId": "ch-ai-hallucination-trap",
+      "masteryChallengeId": "ch-ai-hallucination-mastery",
+      "games": [
+        "ch-ai-hallucination-intro",
+        "ch-ai-hallucination-when",
+        "ch-ai-hallucination-how",
+        "ch-ai-hallucination-trap",
+        "ch-ai-hallucination-mastery"
+      ]
     },
     {
       "index": 150,
@@ -1353,7 +2844,17 @@
       "domainId": "ai",
       "level": "basic",
       "introChallengeId": "ch-ai-joule-concepts-intro",
-      "masteryChallengeId": "ch-ai-joule-concepts-mastery"
+      "whenChallengeId": "ch-ai-joule-concepts-when",
+      "howChallengeId": "ch-ai-joule-concepts-how",
+      "trapChallengeId": "ch-ai-joule-concepts-trap",
+      "masteryChallengeId": "ch-ai-joule-concepts-mastery",
+      "games": [
+        "ch-ai-joule-concepts-intro",
+        "ch-ai-joule-concepts-when",
+        "ch-ai-joule-concepts-how",
+        "ch-ai-joule-concepts-trap",
+        "ch-ai-joule-concepts-mastery"
+      ]
     },
     {
       "index": 151,
@@ -1362,7 +2863,17 @@
       "domainId": "ai",
       "level": "basic",
       "introChallengeId": "ch-ai-responsible-intro",
-      "masteryChallengeId": "ch-ai-responsible-mastery"
+      "whenChallengeId": "ch-ai-responsible-when",
+      "howChallengeId": "ch-ai-responsible-how",
+      "trapChallengeId": "ch-ai-responsible-trap",
+      "masteryChallengeId": "ch-ai-responsible-mastery",
+      "games": [
+        "ch-ai-responsible-intro",
+        "ch-ai-responsible-when",
+        "ch-ai-responsible-how",
+        "ch-ai-responsible-trap",
+        "ch-ai-responsible-mastery"
+      ]
     },
     {
       "index": 152,
@@ -1371,7 +2882,17 @@
       "domainId": "ai",
       "level": "advanced",
       "introChallengeId": "ch-ai-cost-latency-intro",
-      "masteryChallengeId": "ch-ai-cost-latency-mastery"
+      "whenChallengeId": "ch-ai-cost-latency-when",
+      "howChallengeId": "ch-ai-cost-latency-how",
+      "trapChallengeId": "ch-ai-cost-latency-trap",
+      "masteryChallengeId": "ch-ai-cost-latency-mastery",
+      "games": [
+        "ch-ai-cost-latency-intro",
+        "ch-ai-cost-latency-when",
+        "ch-ai-cost-latency-how",
+        "ch-ai-cost-latency-trap",
+        "ch-ai-cost-latency-mastery"
+      ]
     },
     {
       "index": 153,
@@ -1380,7 +2901,17 @@
       "domainId": "ai",
       "level": "advanced",
       "introChallengeId": "ch-ai-prompt-intro",
-      "masteryChallengeId": "ch-ai-prompt-mastery"
+      "whenChallengeId": "ch-ai-prompt-when",
+      "howChallengeId": "ch-ai-prompt-how",
+      "trapChallengeId": "ch-ai-prompt-trap",
+      "masteryChallengeId": "ch-ai-prompt-mastery",
+      "games": [
+        "ch-ai-prompt-intro",
+        "ch-ai-prompt-when",
+        "ch-ai-prompt-how",
+        "ch-ai-prompt-trap",
+        "ch-ai-prompt-mastery"
+      ]
     },
     {
       "index": 154,
@@ -1389,7 +2920,17 @@
       "domainId": "ai",
       "level": "advanced",
       "introChallengeId": "ch-ai-rag-intro",
-      "masteryChallengeId": "ch-ai-rag-mastery"
+      "whenChallengeId": "ch-ai-rag-when",
+      "howChallengeId": "ch-ai-rag-how",
+      "trapChallengeId": "ch-ai-rag-trap",
+      "masteryChallengeId": "ch-ai-rag-mastery",
+      "games": [
+        "ch-ai-rag-intro",
+        "ch-ai-rag-when",
+        "ch-ai-rag-how",
+        "ch-ai-rag-trap",
+        "ch-ai-rag-mastery"
+      ]
     },
     {
       "index": 155,
@@ -1398,7 +2939,17 @@
       "domainId": "ai",
       "level": "expert",
       "introChallengeId": "ch-ai-agent-risks-intro",
-      "masteryChallengeId": "ch-ai-agent-risks-mastery"
+      "whenChallengeId": "ch-ai-agent-risks-when",
+      "howChallengeId": "ch-ai-agent-risks-how",
+      "trapChallengeId": "ch-ai-agent-risks-trap",
+      "masteryChallengeId": "ch-ai-agent-risks-mastery",
+      "games": [
+        "ch-ai-agent-risks-intro",
+        "ch-ai-agent-risks-when",
+        "ch-ai-agent-risks-how",
+        "ch-ai-agent-risks-trap",
+        "ch-ai-agent-risks-mastery"
+      ]
     },
     {
       "index": 156,
@@ -1407,7 +2958,17 @@
       "domainId": "ai",
       "level": "expert",
       "introChallengeId": "ch-ai-eval-intro",
-      "masteryChallengeId": "ch-ai-eval-mastery"
+      "whenChallengeId": "ch-ai-eval-when",
+      "howChallengeId": "ch-ai-eval-how",
+      "trapChallengeId": "ch-ai-eval-trap",
+      "masteryChallengeId": "ch-ai-eval-mastery",
+      "games": [
+        "ch-ai-eval-intro",
+        "ch-ai-eval-when",
+        "ch-ai-eval-how",
+        "ch-ai-eval-trap",
+        "ch-ai-eval-mastery"
+      ]
     },
     {
       "index": 157,
@@ -1416,7 +2977,17 @@
       "domainId": "incident",
       "level": "basic",
       "introChallengeId": "ch-c-observability-intro",
-      "masteryChallengeId": "ch-c-observability-mastery"
+      "whenChallengeId": "ch-c-observability-when",
+      "howChallengeId": "ch-c-observability-how",
+      "trapChallengeId": "ch-c-observability-trap",
+      "masteryChallengeId": "ch-c-observability-mastery",
+      "games": [
+        "ch-c-observability-intro",
+        "ch-c-observability-when",
+        "ch-c-observability-how",
+        "ch-c-observability-trap",
+        "ch-c-observability-mastery"
+      ]
     }
   ]
 }

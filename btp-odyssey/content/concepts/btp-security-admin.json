@@ -85,15 +85,33 @@
   "linkedGames": [
     {
       "id": "ch-btp-security-admin-intro",
-      "title": "Intro game: BTP security & admin starter pack",
+      "title": "Intro: What is BTP security & admin starter pack?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-btp-security-admin-when",
+      "title": "When to use: BTP security & admin starter pack",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-btp-security-admin-how",
+      "title": "How to use: BTP security & admin starter pack",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-btp-security-admin-trap",
+      "title": "Trap / misuse: BTP security & admin starter pack",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-btp-security-admin-mastery",
-      "title": "Mastery game: BTP security & admin starter pack",
+      "title": "Mastery: BTP security & admin starter pack",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "KEYS ≠ BADGES: Admin keys open buildings; scopes/badges open rooms. Never master-key everyone."

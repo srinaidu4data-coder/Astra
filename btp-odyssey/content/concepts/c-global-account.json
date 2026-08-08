@@ -81,15 +81,33 @@
   "linkedGames": [
     {
       "id": "ch-c-global-account-intro",
-      "title": "Intro game: Global Account",
+      "title": "Intro: What is Global Account?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-global-account-when",
+      "title": "When to use: Global Account",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-global-account-how",
+      "title": "How to use: Global Account",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-global-account-trap",
+      "title": "Trap / misuse: Global Account",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-global-account-mastery",
-      "title": "Mastery game: Global Account",
+      "title": "Mastery: Global Account",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "HQ → FLOORS → ROOMS: Global account HQ, directories floors, subaccounts locked rooms."

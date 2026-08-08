@@ -69,15 +69,33 @@
   "linkedGames": [
     {
       "id": "ch-c-observability-intro",
-      "title": "Intro game: Logs, Metrics, Traces",
+      "title": "Intro: What is Logs, Metrics, Traces?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-observability-when",
+      "title": "When to use: Logs, Metrics, Traces",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-observability-how",
+      "title": "How to use: Logs, Metrics, Traces",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-observability-trap",
+      "title": "Trap / misuse: Logs, Metrics, Traces",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-observability-mastery",
-      "title": "Mastery game: Logs, Metrics, Traces",
+      "title": "Mastery: Logs, Metrics, Traces",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "THREE CAMERAS: Logs dialogue, metrics score, traces camera moves — correlate them."

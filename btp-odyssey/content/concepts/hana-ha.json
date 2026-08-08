@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-hana-ha-intro",
-      "title": "Intro game: Availability and recovery concepts",
+      "title": "Intro: What is Availability and recovery concepts?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-hana-ha-when",
+      "title": "When to use: Availability and recovery concepts",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-hana-ha-how",
+      "title": "How to use: Availability and recovery concepts",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-hana-ha-trap",
+      "title": "Trap / misuse: Availability and recovery concepts",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-hana-ha-mastery",
-      "title": "Mastery game: Availability and recovery concepts",
+      "title": "Mastery: Availability and recovery concepts",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Availability and recovery concepts” + one failure mode out loud — if you can't, you don't own it yet. (Availability → mechanism → failure)"

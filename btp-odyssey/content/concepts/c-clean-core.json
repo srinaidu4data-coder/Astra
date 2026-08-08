@@ -68,15 +68,33 @@
   "linkedGames": [
     {
       "id": "ch-c-clean-core-intro",
-      "title": "Intro game: Clean Core Principles",
+      "title": "Intro: What is Clean Core Principles?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-clean-core-when",
+      "title": "When to use: Clean Core Principles",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-clean-core-how",
+      "title": "How to use: Clean Core Principles",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-clean-core-trap",
+      "title": "Trap / misuse: Clean Core Principles",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-clean-core-mastery",
-      "title": "Mastery game: Clean Core Principles",
+      "title": "Mastery: Clean Core Principles",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "DON'T CARVE THE CROWN: Extend the kingdom; don't chisel the crown jewels (standard code)."

@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-cap-extensibility-intro",
-      "title": "Intro game: CAP extensibility",
+      "title": "Intro: What is CAP extensibility?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-cap-extensibility-when",
+      "title": "When to use: CAP extensibility",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-cap-extensibility-how",
+      "title": "How to use: CAP extensibility",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-cap-extensibility-trap",
+      "title": "Trap / misuse: CAP extensibility",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-cap-extensibility-mastery",
-      "title": "Mastery game: CAP extensibility",
+      "title": "Mastery: CAP extensibility",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “CAP extensibility” + one failure mode out loud — if you can't, you don't own it yet. (CAP → mechanism → failure)"

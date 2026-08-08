@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-principal-hybrid-intro",
-      "title": "Intro game: Principal propagation hybrid",
+      "title": "Intro: What is Principal propagation hybrid?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-principal-hybrid-when",
+      "title": "When to use: Principal propagation hybrid",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-principal-hybrid-how",
+      "title": "How to use: Principal propagation hybrid",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-principal-hybrid-trap",
+      "title": "Trap / misuse: Principal propagation hybrid",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-principal-hybrid-mastery",
-      "title": "Mastery game: Principal propagation hybrid",
+      "title": "Mastery: Principal propagation hybrid",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME TAG TRAVELS: The human's name tag must ride every hop for audit."

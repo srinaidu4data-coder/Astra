@@ -581,15 +581,33 @@ function enrich(c) {
   const linkedGames = [
     {
       id: `ch-${c.id}-intro`,
-      title: `Intro game: ${c.title}`,
+      title: `Intro: What is ${c.title}?`,
       role: "intro",
-      purpose: "First contact — recognize, reject traps, place the control (memory encoding).",
+      purpose: "First contact — recognize the idea, reject traps, place the control.",
+    },
+    {
+      id: `ch-${c.id}-when`,
+      title: `When to use: ${c.title}`,
+      role: "when",
+      purpose: "Scenario timing — pick the right moment; reject vanity or late-only timing.",
+    },
+    {
+      id: `ch-${c.id}-how`,
+      title: `How to use: ${c.title}`,
+      role: "how",
+      purpose: "Procedure — sequence the apply steps, place on the right hop, verify evidence.",
+    },
+    {
+      id: `ch-${c.id}-trap`,
+      title: `Trap / misuse: ${c.title}`,
+      role: "trap",
+      purpose: "When NOT — name the anti-pattern, blast radius, re-arm the control.",
     },
     {
       id: `ch-${c.id}-mastery`,
-      title: `Mastery game: ${c.title}`,
+      title: `Mastery: ${c.title}`,
       role: "mastery",
-      purpose: "Pressure check — mechanism, business risk, apply on hub, verify (peak-end).",
+      purpose: "Pressure check — mechanism, business risk, hub apply, peak-end seal.",
     },
   ];
 

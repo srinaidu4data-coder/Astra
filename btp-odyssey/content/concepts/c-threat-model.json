@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-threat-model-intro",
-      "title": "Intro game: Threat Modeling Basics",
+      "title": "Intro: What is Threat Modeling Basics?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-threat-model-when",
+      "title": "When to use: Threat Modeling Basics",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-threat-model-how",
+      "title": "How to use: Threat Modeling Basics",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-threat-model-trap",
+      "title": "Trap / misuse: Threat Modeling Basics",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-threat-model-mastery",
-      "title": "Mastery game: Threat Modeling Basics",
+      "title": "Mastery: Threat Modeling Basics",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "ASSUME BREACH: Verify every call; network location is not trust."

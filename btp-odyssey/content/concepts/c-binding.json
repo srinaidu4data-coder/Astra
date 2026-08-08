@@ -64,15 +64,33 @@
   "linkedGames": [
     {
       "id": "ch-c-binding-intro",
-      "title": "Intro game: Service Binding",
+      "title": "Intro: What is Service Binding?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-binding-when",
+      "title": "When to use: Service Binding",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-binding-how",
+      "title": "How to use: Service Binding",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-binding-trap",
+      "title": "Trap / misuse: Service Binding",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-binding-mastery",
-      "title": "Mastery game: Service Binding",
+      "title": "Mastery: Service Binding",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "BUNDLE + PLUG: MTA ships the bundle; binding plugs secrets without hardcode."

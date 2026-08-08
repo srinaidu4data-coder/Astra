@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-rap-cds-bo-intro",
-      "title": "Intro game: RAP business objects",
+      "title": "Intro: What is RAP business objects?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-rap-cds-bo-when",
+      "title": "When to use: RAP business objects",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-rap-cds-bo-how",
+      "title": "How to use: RAP business objects",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-rap-cds-bo-trap",
+      "title": "Trap / misuse: RAP business objects",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-rap-cds-bo-mastery",
-      "title": "Mastery game: RAP business objects",
+      "title": "Mastery: RAP business objects",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “RAP business objects” + one failure mode out loud — if you can't, you don't own it yet. (RAP → mechanism → failure)"

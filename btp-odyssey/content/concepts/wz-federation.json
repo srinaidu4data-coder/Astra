@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-wz-federation-intro",
-      "title": "Intro game: Content federation",
+      "title": "Intro: What is Content federation?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-wz-federation-when",
+      "title": "When to use: Content federation",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-wz-federation-how",
+      "title": "How to use: Content federation",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-wz-federation-trap",
+      "title": "Trap / misuse: Content federation",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-wz-federation-mastery",
-      "title": "Mastery game: Content federation",
+      "title": "Mastery: Content federation",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Content federation” + one failure mode out loud — if you can't, you don't own it yet. (Content → mechanism → failure)"

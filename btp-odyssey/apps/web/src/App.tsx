@@ -52,6 +52,7 @@ import {
   groupConceptsByDomain,
   type MotionIntensity,
 } from "./game/ConceptAtlasFX";
+import { ConceptUseArena } from "./game/ConceptUseArena";
 import { ReturnLoopBanner, type ReturnLoopData } from "./game/ReturnLoop";
 import { TeachPanel } from "./TeachPanel";
 import { ArchitectureEngineView } from "./engine/ArchitectureEngineView";
@@ -1481,26 +1482,52 @@ export function App() {
                       </>
                     )}
 
+                    <ConceptUseArena
+                      concept={atlasConcept}
+                      onLaunchFullGame={(role) => {
+                        const g =
+                          atlasConcept.linkedGames?.find((x) => x.role === role) ||
+                          atlasConcept.linkedGames?.[0];
+                        if (!g) return;
+                        setResumeChallengeId(g.id);
+                        go("play");
+                      }}
+                    />
+
                     {(atlasConcept.linkedGames?.length ?? 0) > 0 && (
                       <>
-                        <h4>Games that lock this into memory</h4>
+                        <h4>Campaign games for this concept</h4>
                         <p className="muted" style={{ fontSize: "0.85rem" }}>
-                          Dual coding: read the card, then play intro + mastery. Wrong answers teach
-                          (red); right answers unlock (green).
+                          Five cinematic games: <strong>What → When → How → Trap → Mastery</strong>.
+                          Wrong answers teach (red); right answers unlock the next gate (green).
                         </p>
-                        <div className="action-row concept-games-row">
+                        <div className="concept-games-grid">
                           {atlasConcept.linkedGames!.map((g) => (
                             <button
                               key={g.id}
                               type="button"
-                              className={`btn ${g.role === "mastery" ? "violet" : "primary"}`}
+                              className={`concept-game-chip role-${g.role}`}
                               onClick={() => {
                                 setResumeChallengeId(g.id);
                                 go("play");
                               }}
                               title={g.purpose}
                             >
-                              ▶ {g.role === "intro" ? "Intro game" : "Mastery game"}
+                              <span className="chip-role">{g.role}</span>
+                              <span className="chip-title">
+                                {g.role === "intro"
+                                  ? "What is it?"
+                                  : g.role === "when"
+                                    ? "When to use"
+                                    : g.role === "how"
+                                      ? "How to use"
+                                      : g.role === "trap"
+                                        ? "Trap / misuse"
+                                        : "Mastery"}
+                              </span>
+                              <span className="chip-purpose">
+                                {g.purpose || g.title}
+                              </span>
                             </button>
                           ))}
                         </div>
@@ -1558,13 +1585,14 @@ export function App() {
                         type="button"
                         onClick={() => {
                           const g =
+                            atlasConcept.linkedGames!.find((x) => x.role === "when") ||
                             atlasConcept.linkedGames!.find((x) => x.role === "intro") ||
                             atlasConcept.linkedGames![0];
                           setResumeChallengeId(g!.id);
                           go("play");
                         }}
                       >
-                        ▶ Play concept game
+                        ▶ Play when/how games
                       </button>
                     )}
                     {pathWalk && pathWalk.index < pathWalk.ids.length - 1 && (

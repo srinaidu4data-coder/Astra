@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-ops-observability-intro",
-      "title": "Intro game: Logs metrics traces",
+      "title": "Intro: What is Logs metrics traces?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-ops-observability-when",
+      "title": "When to use: Logs metrics traces",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-ops-observability-how",
+      "title": "How to use: Logs metrics traces",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-ops-observability-trap",
+      "title": "Trap / misuse: Logs metrics traces",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-ops-observability-mastery",
-      "title": "Mastery game: Logs metrics traces",
+      "title": "Mastery: Logs metrics traces",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "THREE CAMERAS: Logs dialogue, metrics score, traces camera moves — correlate them."

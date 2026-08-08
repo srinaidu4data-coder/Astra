@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-rap-managed-intro",
-      "title": "Intro game: Managed RAP scenario",
+      "title": "Intro: What is Managed RAP scenario?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-rap-managed-when",
+      "title": "When to use: Managed RAP scenario",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-rap-managed-how",
+      "title": "How to use: Managed RAP scenario",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-rap-managed-trap",
+      "title": "Trap / misuse: Managed RAP scenario",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-rap-managed-mastery",
-      "title": "Mastery game: Managed RAP scenario",
+      "title": "Mastery: Managed RAP scenario",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "NAME IT TO TAME IT: Say “Managed RAP scenario” + one failure mode out loud — if you can't, you don't own it yet. (Managed → mechanism → failure)"

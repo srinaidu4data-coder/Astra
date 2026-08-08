@@ -67,15 +67,33 @@
   "linkedGames": [
     {
       "id": "ch-evt-saga-intro",
-      "title": "Intro game: Sagas and compensations",
+      "title": "Intro: What is Sagas and compensations?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-evt-saga-when",
+      "title": "When to use: Sagas and compensations",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-evt-saga-how",
+      "title": "How to use: Sagas and compensations",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-evt-saga-trap",
+      "title": "Trap / misuse: Sagas and compensations",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-evt-saga-mastery",
-      "title": "Mastery game: Sagas and compensations",
+      "title": "Mastery: Sagas and compensations",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "TV SEASON not MOVIE: Long business tx as episodes with compensations, not one 2PC film."

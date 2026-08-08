@@ -77,15 +77,33 @@
   "linkedGames": [
     {
       "id": "ch-c-jwt-audience-intro",
-      "title": "Intro game: JWT Audience (aud) Mismatch",
+      "title": "Intro: What is JWT Audience (aud) Mismatch?",
       "role": "intro",
-      "purpose": "First contact — recognize, reject traps, place the control (memory encoding)."
+      "purpose": "First contact — recognize the idea, reject traps, place the control."
+    },
+    {
+      "id": "ch-c-jwt-audience-when",
+      "title": "When to use: JWT Audience (aud) Mismatch",
+      "role": "when",
+      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+    },
+    {
+      "id": "ch-c-jwt-audience-how",
+      "title": "How to use: JWT Audience (aud) Mismatch",
+      "role": "how",
+      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+    },
+    {
+      "id": "ch-c-jwt-audience-trap",
+      "title": "Trap / misuse: JWT Audience (aud) Mismatch",
+      "role": "trap",
+      "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
     },
     {
       "id": "ch-c-jwt-audience-mastery",
-      "title": "Mastery game: JWT Audience (aud) Mismatch",
+      "title": "Mastery: JWT Audience (aud) Mismatch",
       "role": "mastery",
-      "purpose": "Pressure check — mechanism, business risk, apply on hub, verify (peak-end)."
+      "purpose": "Pressure check — mechanism, business risk, hub apply, peak-end seal."
     }
   ],
   "memoryHook": "PASSPORT STAMP: Token is passport; audience is the visa country. Wrong visa → 401."

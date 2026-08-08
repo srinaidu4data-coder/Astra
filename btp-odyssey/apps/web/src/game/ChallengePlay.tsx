@@ -112,6 +112,37 @@ const BIOME_META: Record<string, { label: string; emoji: string; blurb: string }
   film: { label: "Film Set", emoji: "🎬", blurb: "Storyboard incidents" },
 };
 
+function variantGateLabel(variant?: string): string {
+  switch (variant) {
+    case "when":
+      return "When-to-use gate";
+    case "how":
+      return "How-to-use gate";
+    case "trap":
+      return "Trap / misuse gate";
+    case "mastery":
+      return "Mastery gate";
+    case "intro":
+    default:
+      return "Intro gate";
+  }
+}
+
+function variantChip(variant?: string): string {
+  switch (variant) {
+    case "when":
+      return "WHEN";
+    case "how":
+      return "HOW";
+    case "trap":
+      return "TRAP";
+    case "mastery":
+      return "MASTER";
+    default:
+      return "INTRO";
+  }
+}
+
 type Feedback = { kind: "good" | "bad"; text: string } | null;
 
 export function ChallengePlay({
@@ -548,7 +579,8 @@ export function ChallengePlay({
               >
                 <div className="island-glow" aria-hidden />
                 <div className="tier">
-                  {meta.emoji} #{ch.curriculumIndex ?? globalIdx + 1} · {ch.variant || ch.tier}
+                  {meta.emoji} #{ch.curriculumIndex ?? globalIdx + 1} ·{" "}
+                  {variantChip(ch.variant)} · {ch.tier}
                   {isNext ? " · REQUIRED NOW" : ""}
                 </div>
                 <h3 style={{ margin: "0.35rem 0" }}>{ch.title}</h3>
@@ -614,7 +646,7 @@ export function ChallengePlay({
           <strong>{(challenge.concepts || [])[0] || challenge.id}</strong>
         </span>
         <span className="muted">
-          {challenge.variant === "mastery" ? "Mastery gate" : "Intro gate"} · linear only
+          {variantGateLabel(challenge.variant)} · linear path
         </span>
       </div>
       <div className="action-row play-top-bar">
