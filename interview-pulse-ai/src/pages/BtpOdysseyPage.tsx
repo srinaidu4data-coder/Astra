@@ -1,5 +1,4 @@
-import { useAppStore } from '@/stores/app-store'
-import { ArrowLeft, ExternalLink, Gamepad2, Loader2 } from 'lucide-react'
+import { ExternalLink, Gamepad2, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 /**
@@ -23,11 +22,10 @@ export function resolveBtpOdysseyUrl(): string {
 }
 
 /**
- * Full-viewport SAP BTP Odyssey — launched from Mock Interview.
- * Embeds the Odyssey game (API + SPA) while keeping a calm chrome + back to Mock.
+ * Full-viewport SAP BTP Odyssey — top-level nav between Mock and Analytics.
+ * Embeds the Odyssey game (API + SPA).
  */
 export function BtpOdysseyPage() {
-  const setRoute = useAppStore((s) => s.setRoute)
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
   const url = useMemo(() => resolveBtpOdysseyUrl(), [])
@@ -36,25 +34,15 @@ export function BtpOdysseyPage() {
     <div className="flex h-[min(100dvh,920px)] min-h-[70vh] flex-col overflow-hidden rounded-[20px] border border-white/[0.08] bg-[#070b12] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] bg-black/40 px-3 py-2.5 backdrop-blur-md sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => setRoute('practice')}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-medium text-white/70 transition hover:border-[#20B8CD]/35 hover:bg-[#20B8CD]/10 hover:text-[#5DD5E3]"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
-            Back to Mock
-          </button>
-          <div className="hidden min-w-0 items-center gap-2 sm:flex">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#20B8CD]/12 ring-1 ring-[#20B8CD]/25">
-              <Gamepad2 className="h-3.5 w-3.5 text-[#5DD5E3]" strokeWidth={1.75} />
-            </span>
-            <div className="min-w-0">
-              <div className="truncate text-[13px] font-medium tracking-tight text-white/90">
-                SAP BTP Odyssey
-              </div>
-              <div className="truncate text-[10px] text-white/35">
-                Architect · Build · Operate · Defend · under Mock Interview
-              </div>
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#20B8CD]/12 ring-1 ring-[#20B8CD]/25">
+            <Gamepad2 className="h-3.5 w-3.5 text-[#5DD5E3]" strokeWidth={1.75} />
+          </span>
+          <div className="min-w-0">
+            <div className="truncate text-[13px] font-medium tracking-tight text-white/90">
+              SAP BTP Odyssey
+            </div>
+            <div className="truncate text-[10px] text-white/35">
+              Architect · Build · Operate · Defend
             </div>
           </div>
         </div>
@@ -96,13 +84,6 @@ export function BtpOdysseyPage() {
                 <ExternalLink className="h-4 w-4" />
                 Open BTP Odyssey
               </a>
-              <button
-                type="button"
-                onClick={() => setRoute('practice')}
-                className="rounded-full border border-white/10 px-4 py-2 text-[13px] text-white/60 hover:text-white/85"
-              >
-                Back to Mock
-              </button>
             </div>
           </div>
         )}

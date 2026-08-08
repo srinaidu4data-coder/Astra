@@ -5,6 +5,7 @@ import type { NavRoute } from '@/types'
 import {
   Activity,
   BrainCircuit,
+  Gamepad2,
   Mic2,
   Radar,
   Settings2,
@@ -17,6 +18,7 @@ const baseItems: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
   { id: 'sprint', label: 'Sprint', icon: Target },
   { id: 'copilot', label: 'Live', icon: Mic2 },
   { id: 'practice', label: 'Mock', icon: BrainCircuit },
+  { id: 'btp-odyssey', label: 'BTP', icon: Gamepad2 },
   { id: 'analytics', label: 'Stats', icon: Activity },
   { id: 'settings', label: 'Settings', icon: Settings2 },
 ]
@@ -61,10 +63,7 @@ export function MobileNav() {
       <div className="mx-auto flex max-w-lg items-stretch justify-between px-0.5 pt-0.5">
         {items.map((item) => {
           const Icon = item.icon
-          // BTP Odyssey lives under Mock — keep Mock tab highlighted
-          const active =
-            route === item.id ||
-            (item.id === 'practice' && route === 'btp-odyssey')
+          const active = route === item.id
           const pulse = item.id === 'copilot' && listening
           return (
             <button

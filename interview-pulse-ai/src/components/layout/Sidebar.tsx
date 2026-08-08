@@ -5,6 +5,7 @@ import { isJobSearchLabHost } from '@/services/jobsearch'
 import {
   Activity,
   BrainCircuit,
+  Gamepad2,
   Mic2,
   Radar,
   Settings2,
@@ -17,6 +18,7 @@ const baseItems: { id: NavRoute; label: string; icon: typeof Mic2 }[] = [
   { id: 'sprint', label: 'Sprint', icon: Target },
   { id: 'copilot', label: 'Interview', icon: Mic2 },
   { id: 'practice', label: 'Mock', icon: BrainCircuit },
+  { id: 'btp-odyssey', label: 'BTP Odyssey', icon: Gamepad2 },
   { id: 'analytics', label: 'Analytics', icon: Activity },
   { id: 'settings', label: 'Settings', icon: Settings2 },
 ]
@@ -80,10 +82,7 @@ export function Sidebar({ compact = false }: { compact?: boolean }) {
       <nav className="flex flex-1 flex-col gap-1.5">
         {items.map((item) => {
           const Icon = item.icon
-          // BTP Odyssey lives under Mock — keep Mock nav highlighted
-          const active =
-            route === item.id ||
-            (item.id === 'practice' && route === 'btp-odyssey')
+          const active = route === item.id
           return (
             <button
               type="button"
