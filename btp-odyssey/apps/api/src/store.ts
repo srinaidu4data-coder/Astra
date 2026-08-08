@@ -39,6 +39,18 @@ export interface LearnerProfile {
     highContrast: boolean;
     sessionBreakMinutes: number;
     notificationsEnabled: boolean;
+    /** Living Enterprise extensions (optional; defaults applied in UI) */
+    sessionGoalMinutes?: number;
+    quietHoursStart?: string | null;
+    quietHoursEnd?: string | null;
+    graceStreakOptIn?: boolean;
+    lowStimulation?: boolean;
+    dataSaver?: boolean;
+    silentMode?: boolean;
+    lowPower?: boolean;
+    persona?: string;
+    careerGoal?: string;
+    livingEnterprise?: boolean;
   };
   demonstratedCompetencies: string[];
   completedMissions: string[];

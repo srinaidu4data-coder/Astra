@@ -212,11 +212,221 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && path === "/health") {
       return json(res, 200, {
         ok: true,
-        product: "SAP BTP Odyssey",
-        version: "2.0.0",
-        release: "mega-teach-2.0",
+        product: "BTP Odyssey: The Living Enterprise",
+        version: "3.0.0",
+        release: "living-enterprise-r1",
+        edition: "living-enterprise",
+        successorOf: "mega-teach-2.0",
         disclaimer:
-          "Independent learning simulation. Not affiliated with or endorsed by SAP. Not official certification.",
+          "Independent learning simulation. Not affiliated with or endorsed by SAP. Not official certification. Completing missions does not grant SAP certification or employment.",
+      });
+    }
+
+    /** Light challenge spine — avoids 3.6MB full pack on cold start */
+    if (req.method === "GET" && path === "/api/challenges/spine") {
+      const spine = loadJsonFile(
+        join(contentRoot, "challenges/spine-index.json"),
+        { spine: [], totalChallenges: 0 },
+      );
+      return json(res, 200, spine);
+    }
+
+    if (req.method === "GET" && path === "/api/challenges/chapter/beginner") {
+      const chapter = loadJsonFile(
+        join(contentRoot, "challenges/chapter-beginner.json"),
+        { challenges: [] },
+      );
+      return json(res, 200, chapter);
+    }
+
+    /** Living Enterprise bootstrap: catalog summary + learner + light spine head */
+    if (req.method === "GET" && path === "/api/living/bootstrap") {
+      const { bundle, concepts } = loadBundle();
+      const learner = store.getOrCreateLearner("local-learner");
+      const spine = loadJsonFile<{
+        spine: { id: string; title: string; conceptId?: string; variant?: string }[];
+        totalChallenges: number;
+      }>(join(contentRoot, "challenges/spine-index.json"), {
+        spine: [],
+        totalChallenges: 0,
+      });
+      const cleared = new Set(learner.engagement?.challengesCleared ?? []);
+      const next = spine.spine.find((s) => !cleared.has(s.id)) ?? spine.spine[0] ?? null;
+      return json(res, 200, {
+        product: {
+          name: "BTP Odyssey: The Living Enterprise",
+          version: "3.0.0",
+          fidelityDefault: "tier2_behavioral",
+          ethics:
+            "No loot boxes, no punitive streaks, no FOMO. Breaks never cost progress. Optional only.",
+        },
+        learner,
+        domains: bundle.domains.map((d) => ({
+          id: d.id,
+          title: d.title,
+          summary: d.summary,
+        })),
+        conceptCount: concepts.length,
+        missionCount: bundle.missions.length,
+        totalChallenges: spine.totalChallenges,
+        nextChallenge: next,
+        beginnerPathIds: spine.spine.slice(0, 28).map((s) => s.id),
+        flagshipIncident: {
+          id: "live-northwind-order-insights",
+          missionId: "r1-northwind-order-insights",
+          title: "Northwind Order Insights is dark",
+          estimatedMinutes: 25,
+          fidelityTier: "tier2_behavioral",
+          hook: "Sales cannot see order status. The board wants a fix in one working session — without breaking clean-core rules.",
+        },
+        personas: [
+          { id: "beginner", label: "BTP beginner", path: "beginner" },
+          { id: "developer", label: "App developer", path: "cap" },
+          { id: "integration", label: "Integration developer", path: "integration" },
+          { id: "data", label: "Data & analytics", path: "data" },
+          { id: "security", label: "Security / platform admin", path: "security" },
+          { id: "architect", label: "Solution architect", path: "architect" },
+        ],
+      });
+    }
+
+    /** Guest cold-start: open flagship incident session without registration */
+    if (req.method === "POST" && path === "/api/living/guest-incident") {
+      const body = JSON.parse((await readBody(req)) || "{}") as {
+        persona?: string;
+        displayName?: string;
+      };
+      const missionId = "r1-northwind-order-insights";
+      const mission = getMission(missionId);
+      if (!mission) {
+        return json(res, 404, { error: "Flagship mission missing from content pack" });
+      }
+      const learner = store.getOrCreateLearner("local-learner");
+      if (body.displayName) {
+        learner.displayName = String(body.displayName).slice(0, 80);
+      }
+      if (body.persona) {
+        learner.settings = {
+          ...learner.settings,
+          persona: String(body.persona).slice(0, 40),
+          livingEnterprise: true,
+        };
+      }
+      store.saveLearner(learner);
+      const rt = runtimeFor(missionId);
+      const seed = (Date.now() % 1_000_000) + 42;
+      let world = worldFromSeedAndLandscape(seed, buildLandscape(rt.landscapeId));
+      world = applyIncident(world, getIncident(rt.incidentId));
+      const sessionId = `live_${Date.now()}_${seed}`;
+      const session: SessionRecord = {
+        sessionId,
+        learnerId: learner.learnerId,
+        missionId,
+        seed,
+        incidentId: rt.incidentId,
+        landscapeId: rt.landscapeId,
+        world: serializeWorld(world),
+        currentStepId: mission.steps[0]!.id,
+        completedStepIds: [],
+        answers: [],
+        checkResults: {},
+        teachReveals: {},
+        startedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: "in_progress",
+      };
+      store.saveSession(session);
+      const inc = getIncident(rt.incidentId);
+      return json(res, 200, {
+        sessionId: session.sessionId,
+        mission: publicMission(mission),
+        world: snapshotWorld(world),
+        incident: {
+          id: rt.incidentId,
+          title: inc.title,
+          severity: "high",
+          businessImpact: inc.businessImpact,
+          summary:
+            "Customer-facing order status is empty or stale. Suspect destination, auth, or integration hop — not the ERP core first.",
+        },
+        persona: body.persona ?? learner.settings.persona ?? "beginner",
+        fidelity: mission.fidelity,
+        naturalStoppingPoints: mission.naturalStoppingPoints,
+        estimatedMinutes: mission.estimatedMinutes,
+        startedAt: session.startedAt,
+        loop: [
+          "hook",
+          "diagnose",
+          "inspect",
+          "architect",
+          "configure",
+          "test",
+          "observe",
+          "tradeoffs",
+          "debrief",
+          "remediate",
+          "retrieval",
+          "portfolio",
+        ],
+      });
+    }
+
+    if (req.method === "POST" && path === "/api/living/debrief") {
+      const body = JSON.parse((await readBody(req)) || "{}") as {
+        sessionId?: string;
+        whatHappened?: string;
+        rootCause?: string;
+        fix?: string;
+        tradeoffs?: string;
+        transferPrompt?: string;
+      };
+      const artifact = {
+        id: `debrief-${Date.now().toString(36)}`,
+        kind: "blameless_debrief",
+        sessionId: body.sessionId ?? null,
+        whatHappened: body.whatHappened ?? "",
+        rootCause: body.rootCause ?? "",
+        fix: body.fix ?? "",
+        tradeoffs: body.tradeoffs ?? "",
+        transferPrompt:
+          body.transferPrompt ??
+          "Describe how you would apply the same diagnosis process to a different BTP landscape next week.",
+        createdAt: new Date().toISOString(),
+        fidelity: "tier2_behavioral",
+        disclaimer: "Portfolio practice artifact — not SAP certification evidence.",
+      };
+      const learner = store.getOrCreateLearner("local-learner");
+      const evidence = Array.isArray(learner.evidence) ? learner.evidence : [];
+      evidence.push(artifact);
+      learner.evidence = evidence.slice(-50);
+      store.saveLearner(learner);
+      return json(res, 200, {
+        ok: true,
+        artifact,
+        retrieval: {
+          dueInDays: 3,
+          prompt: artifact.transferPrompt,
+          reason: "Spaced retrieval strengthens transfer without punishing delay.",
+        },
+      });
+    }
+
+    if (req.method === "GET" && path === "/api/living/review-queue") {
+      const learner = store.getOrCreateLearner("local-learner");
+      const evidence =
+        (learner.evidence as { id?: string; transferPrompt?: string; createdAt?: string }[]) ?? [];
+      const queue = evidence
+        .filter((e) => e.transferPrompt)
+        .slice(-10)
+        .map((e) => ({
+          id: e.id,
+          prompt: e.transferPrompt,
+          createdAt: e.createdAt,
+          status: "due_or_upcoming",
+        }));
+      return json(res, 200, {
+        ethics: "Review is optional. Missing a day never removes mastery evidence.",
+        items: queue,
       });
     }
 

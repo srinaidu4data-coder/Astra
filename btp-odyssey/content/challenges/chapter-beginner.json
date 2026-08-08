@@ -1,0 +1,4358 @@
+{
+  "id": "chapter-beginner",
+  "title": "Beginner Living Path",
+  "from": "ch-btp-what-intro",
+  "to": "ch-ops-accounts-mastery",
+  "challenges": [
+    {
+      "id": "ch-btp-what-intro",
+      "title": "1. What is SAP BTP?",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "space",
+      "mapStyle": "space",
+      "brief": "Curriculum 1/1099 · btp-what · intro. The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of record.",
+      "unlockAfter": null,
+      "concepts": [
+        "btp-what"
+      ],
+      "curriculumIndex": 1,
+      "conceptId": "btp-what",
+      "variant": "intro",
+      "mapNodes": [
+        {
+          "id": "xp",
+          "label": "Experience",
+          "x": 50,
+          "y": 22,
+          "kind": "app"
+        },
+        {
+          "id": "plat",
+          "label": "What is SAP BTP?",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "core",
+          "label": "Core SoR",
+          "x": 50,
+          "y": 75,
+          "kind": "core"
+        }
+      ],
+      "edges": [
+        [
+          "xp",
+          "plat"
+        ],
+        [
+          "plat",
+          "core"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Recognize the idea",
+          "teach": "SAP Business Technology Platform (BTP) is SAP’s cloud platform for application development, integration, data & analytics, automation, and AI — typically used beside S/4HANA and other systems of record. Think of three layers: 1) Systems of record (S/4, success factors, etc.) hold",
+          "prompt": "What best captures “What is SAP BTP?”?",
+          "mode": "choose",
+          "hint": "BTP is a multi-service platform (build, integrate, automate, data, AI), not a single product",
+          "cinema": "film_setup",
+          "formula": "Concept: btp-what",
+          "options": [
+            {
+              "id": "c1",
+              "label": "The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of rec",
+              "correct": true,
+              "why": "Correct — The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of record."
+            },
+            {
+              "id": "w1",
+              "label": "Ignore What is SAP BTP? and hope production is fine",
+              "correct": false,
+              "why": "Skipping foundations creates silent debt. Name the control and verify it."
+            },
+            {
+              "id": "w2",
+              "label": "Disable security / governance to unblock demo",
+              "correct": false,
+              "why": "Demo shortcuts become production incidents. Never remove controls as a 'fix'."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Avoid the trap",
+          "teach": "Treating BTP as a replacement for S/4 instead of a complementary platform",
+          "prompt": "Which approach is the mistake to reject?",
+          "mode": "choose",
+          "hint": "Reject shortcuts that remove controls or skip verification.",
+          "cinema": "film_tension",
+          "options": [
+            {
+              "id": "m1",
+              "label": "Treating BTP as a replacement for S/4 instead of a complementary platform",
+              "correct": true,
+              "why": "Correct rejection — this is the anti-pattern to avoid."
+            },
+            {
+              "id": "m2",
+              "label": "Design with constraints and verify the control",
+              "correct": false,
+              "why": "That is the good path — not the reject target."
+            },
+            {
+              "id": "m3",
+              "label": "Document ownership and test negative cases",
+              "correct": false,
+              "why": "Healthy practice — not the mistake."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Place the control",
+          "teach": "State the business capability first, then map to BTP service categories",
+          "prompt": "Drag the highlighted tool onto the broken/active node.",
+          "mode": "drop",
+          "hint": "Broken/highlighted middle hop is usually the lesson focus.",
+          "toolId": "tool-platform",
+          "targetNodeId": "plat",
+          "wrongTargets": {
+            "xp": "Not this node for “What is SAP BTP?”. Re-read the teach beat.",
+            "core": "Not this node for “What is SAP BTP?”. Re-read the teach beat."
+          },
+          "successWhy": "Placed control for What is SAP BTP?.",
+          "cinema": "film_climax"
+        },
+        {
+          "id": "s4",
+          "title": "Verify",
+          "teach": "Newcomers who skip this step jump into CAP/RAP tools without knowing why the platform exists — and design random microservices that fight the system of record. Close the loop with verification.",
+          "prompt": "Drag CHECK onto the service/data node that proves health.",
+          "mode": "drop",
+          "hint": "Verify the downstream resource or hub.",
+          "toolId": "tool-check",
+          "targetNodeId": "core",
+          "wrongTargets": {
+            "xp": "Useful later — this step wants the verification target.",
+            "plat": "Useful later — this step wants the verification target."
+          },
+          "successWhy": "What is SAP BTP? intro cleared. Next curriculum step unlocks.",
+          "cinema": "film_end"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-what-when",
+      "title": "2⏱ When: What is SAP BTP?",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "when_to_use",
+      "mapStyle": "space",
+      "brief": "Curriculum 2/1099 · btp-what · when. The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of record.",
+      "unlockAfter": "ch-btp-what-intro",
+      "concepts": [
+        "btp-what"
+      ],
+      "curriculumIndex": 2,
+      "conceptId": "btp-what",
+      "variant": "when",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Hub",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "n1",
+          "label": "Decision",
+          "x": 20,
+          "y": 30,
+          "kind": "app",
+          "broken": true
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Spot the trigger",
+          "teach": "WHEN to reach for “What is SAP BTP?”: Landing zone setup week: apply What is SAP BTP? so Dev/Test/Prod don't share blast radius.",
+          "prompt": "Which situation is the right moment to apply What is SAP BTP??",
+          "mode": "choose",
+          "hint": "Match a real trigger: landing zone, incident, design review, go-live.",
+          "cinema": "when_radar",
+          "formula": "WHEN = trigger + constraint + failure cost",
+          "options": [
+            {
+              "id": "t",
+              "label": "Landing zone setup week: apply What is SAP BTP? so Dev/Test/Prod don't share blast radius.",
+              "correct": true,
+              "why": "Correct trigger — use the concept here."
+            },
+            {
+              "id": "f1",
+              "label": "Only after production is already on fire for weeks",
+              "correct": false,
+              "why": "Too late. Design-time and early ops use this concept before blast radius grows."
+            },
+            {
+              "id": "f2",
+              "label": "Never — buzzwords belong only on marketing slides",
+              "correct": false,
+              "why": "This is an operational design control, not decoration."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Reject wrong timing",
+          "teach": "Wrong timing wastes effort or misses risk. Newcomers who skip this step jump into CAP/RAP tools without knowing why the platform exists — and design random microservices that fight the system of record.",
+          "prompt": "Which timing is a trap for this concept?",
+          "mode": "choose",
+          "hint": "Reject “skip until certification” and “only after outage”.",
+          "cinema": "when_clock",
+          "options": [
+            {
+              "id": "t",
+              "label": "Defer until after go-live with no residual-risk note",
+              "correct": true,
+              "why": "Trap identified — silent deferral is how debt becomes incidents."
+            },
+            {
+              "id": "f1",
+              "label": "Incident bridge: symptoms appear; use “What is SAP BTP?” to classify the failing hop before changing config.",
+              "correct": false,
+              "why": "That is a legitimate use window — not the trap."
+            },
+            {
+              "id": "f2",
+              "label": "During architecture review when constraints are still cheap to change",
+              "correct": false,
+              "why": "That is excellent timing — not the trap."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Arm the decision hop",
+          "teach": "On the timeline, the decision hop is where “What is SAP BTP?” enters the design.",
+          "prompt": "Drop the tool onto the Decision hop to mark WHEN you engage.",
+          "mode": "drop",
+          "hint": "Broken middle node = decision moment.",
+          "toolId": "tool-platform",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Not the decision hop — arm the moment you choose the control.",
+            "n2": "Not the decision hop — arm the moment you choose the control.",
+            "n3": "Not the decision hop — arm the moment you choose the control."
+          },
+          "successWhy": "When-to-use armed for What is SAP BTP?.",
+          "cinema": "when_lock"
+        },
+        {
+          "id": "s4",
+          "title": "Confirm window",
+          "teach": "Close the loop: the team can restate WHEN this concept is mandatory.",
+          "prompt": "CHECK the decision hop — proof you can explain the use window.",
+          "mode": "drop",
+          "hint": "Verify the same decision node.",
+          "toolId": "tool-check",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Verify the decision hop you armed.",
+            "n2": "Verify the decision hop you armed.",
+            "n3": "Verify the decision hop you armed."
+          },
+          "successWhy": "When-game cleared: What is SAP BTP?.",
+          "cinema": "when_seal"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-what-how",
+      "title": "3⚙ How: What is SAP BTP?",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "how_to_use",
+      "mapStyle": "space",
+      "brief": "Curriculum 3/1099 · btp-what · how. The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of record.",
+      "unlockAfter": "ch-btp-what-when",
+      "concepts": [
+        "btp-what"
+      ],
+      "curriculumIndex": 3,
+      "conceptId": "btp-what",
+      "variant": "how",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Start",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "b",
+          "label": "What is SAP BTP?",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Name the move",
+          "teach": "HOW to use “What is SAP BTP?”: State the business capability first, then map to BTP service categories",
+          "prompt": "Which action is the correct first move when using What is SAP BTP??",
+          "mode": "choose",
+          "hint": "BTP is a multi-service platform (build, integrate, automate, data, AI), not a single product",
+          "cinema": "how_pipeline",
+          "formula": "HOW = locate hop → apply control → verify evidence",
+          "options": [
+            {
+              "id": "t",
+              "label": "State the business capability first, then map to BTP service categories",
+              "correct": true,
+              "why": "Correct procedure — this is how you use it."
+            },
+            {
+              "id": "f1",
+              "label": "Skip design, paste a screenshot from another project",
+              "correct": false,
+              "why": "Copy-paste without landscape context fails under review."
+            },
+            {
+              "id": "f2",
+              "label": "Grant Admin.All so you never need this concept",
+              "correct": false,
+              "why": "Privilege inflation is not a how-to — it is a trap."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Order the steps",
+          "teach": "Second beat: Draw system of record vs platform vs experience in one slide",
+          "prompt": "Which follow-through is correct after the first apply?",
+          "mode": "choose",
+          "hint": "Evidence, negative test, or ownership — not “hope”.",
+          "cinema": "how_steps",
+          "options": [
+            {
+              "id": "t",
+              "label": "Draw system of record vs platform vs experience in one slide",
+              "correct": true,
+              "why": "Correct how-sequence."
+            },
+            {
+              "id": "f1",
+              "label": "Ship to prod with no check and no owner",
+              "correct": false,
+              "why": "Missing verify + ownership is how silent debt ships."
+            },
+            {
+              "id": "f2",
+              "label": "Delete logs so nobody can challenge the design",
+              "correct": false,
+              "why": "Never. Observability is part of how you use platform controls."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Place on the platform hop",
+          "teach": "Drag the control onto the hop where What is SAP BTP? actually lives in the stack.",
+          "prompt": "Drop the highlighted tool onto the broken platform/control node.",
+          "mode": "drop",
+          "hint": "Broken middle layer is the apply target.",
+          "toolId": "tool-platform",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Wrong layer for “What is SAP BTP?” apply.",
+            "c": "Wrong layer for “What is SAP BTP?” apply.",
+            "d": "Wrong layer for “What is SAP BTP?” apply."
+          },
+          "successWhy": "How-to placement for What is SAP BTP?.",
+          "cinema": "how_place"
+        },
+        {
+          "id": "s4",
+          "title": "Prove it",
+          "teach": "HOW is incomplete without verification evidence.",
+          "prompt": "CHECK the service/data node that proves the control works.",
+          "mode": "drop",
+          "hint": "Downstream verification target.",
+          "toolId": "tool-check",
+          "targetNodeId": "d",
+          "wrongTargets": {
+            "a": "Useful later — this beat wants verification evidence.",
+            "b": "Useful later — this beat wants verification evidence.",
+            "c": "Useful later — this beat wants verification evidence."
+          },
+          "successWhy": "How-game cleared: What is SAP BTP?.",
+          "cinema": "how_prove"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-what-trap",
+      "title": "4⚠ Trap: What is SAP BTP?",
+      "tier": "advanced",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "trap_misuse",
+      "mapStyle": "space",
+      "brief": "Curriculum 4/1099 · btp-what · trap. The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of record.",
+      "unlockAfter": "ch-btp-what-how",
+      "concepts": [
+        "btp-what"
+      ],
+      "curriculumIndex": 4,
+      "conceptId": "btp-what",
+      "variant": "trap",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Start",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "b",
+          "label": "Middle",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Name the anti-pattern",
+          "teach": "Misuse of “What is SAP BTP?”: Treating BTP as a replacement for S/4 instead of a complementary platform",
+          "prompt": "Which option is the misuse to reject?",
+          "mode": "choose",
+          "hint": "Anti-pattern language — disable, skip, over-privilege, buzzword-only.",
+          "cinema": "trap_alert",
+          "formula": "TRAP = looks fast · hides risk · fails audit/incident",
+          "options": [
+            {
+              "id": "t",
+              "label": "Treating BTP as a replacement for S/4 instead of a complementary platform",
+              "correct": true,
+              "why": "Correct — this is the trap to reject."
+            },
+            {
+              "id": "f1",
+              "label": "State the business capability first, then map to BTP service categories",
+              "correct": false,
+              "why": "That is the good path — not the trap."
+            },
+            {
+              "id": "f2",
+              "label": "Document residual risk when deferring with an owner and date",
+              "correct": false,
+              "why": "Healthy deferral practice — not a trap."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Why the trap fails",
+          "teach": "Newcomers who skip this step jump into CAP/RAP tools without knowing why the platform exists — and design random microservices that fight the system of record.",
+          "prompt": "Why does the trap fail under real pressure?",
+          "mode": "choose",
+          "hint": "Blast radius, audit, upgrade, or customer impact.",
+          "cinema": "trap_blast",
+          "options": [
+            {
+              "id": "t",
+              "label": "Newcomers who skip this step jump into CAP/RAP tools without knowing why the platform exists — and design random microservices that fight th",
+              "correct": true,
+              "why": "Risk framing locked."
+            },
+            {
+              "id": "f1",
+              "label": "Traps only matter for exam questions",
+              "correct": false,
+              "why": "Operational failure, not exams."
+            },
+            {
+              "id": "f2",
+              "label": "Nothing fails if you never look at logs",
+              "correct": false,
+              "why": "Customers and auditors still notice."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Re-arm the control",
+          "teach": "Replace the trap with a real apply of What is SAP BTP?.",
+          "prompt": "Drop the tool onto the broken API hop to re-arm the control.",
+          "mode": "drop",
+          "hint": "Broken API/control node.",
+          "toolId": "tool-platform",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Wrong hop — re-arm the broken control node.",
+            "c": "Wrong hop — re-arm the broken control node.",
+            "d": "Wrong hop — re-arm the broken control node."
+          },
+          "successWhy": "Trap rejected; control re-armed for What is SAP BTP?.",
+          "cinema": "trap_rearm"
+        },
+        {
+          "id": "s4",
+          "title": "Seal against relapse",
+          "teach": "Peak-end: verify so the trap memory includes the fix path.",
+          "prompt": "CHECK the data/service end to prove the trap is gone.",
+          "mode": "drop",
+          "hint": "Downstream proof node.",
+          "toolId": "tool-check",
+          "targetNodeId": "d",
+          "wrongTargets": {
+            "a": "Verify the end of the chain.",
+            "b": "Verify the end of the chain.",
+            "c": "Verify the end of the chain."
+          },
+          "successWhy": "Trap-game cleared: What is SAP BTP?.",
+          "cinema": "trap_seal"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-what-scenario",
+      "title": "5🎬 Scenario: What is SAP BTP?",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "scenario_story",
+      "mapStyle": "space",
+      "brief": "Curriculum 5/1099 · btp-what · scenario. The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of record.",
+      "unlockAfter": "ch-btp-what-trap",
+      "concepts": [
+        "btp-what"
+      ],
+      "curriculumIndex": 5,
+      "conceptId": "btp-what",
+      "variant": "scenario",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Story",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": false
+        },
+        {
+          "id": "n1",
+          "label": "Node A",
+          "x": 20,
+          "y": 30,
+          "kind": "app"
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Read the room",
+          "teach": "Project scene: Landing zone setup week: apply What is SAP BTP? so Dev/Test/Prod don't share blast radius.",
+          "prompt": "In this story, when is “What is SAP BTP?” the right control?",
+          "mode": "choose",
+          "hint": "Match the use case to the trigger in the scene.",
+          "cinema": "scenario_open",
+          "formula": "SCENE → TRIGGER → CONTROL → PROOF",
+          "options": [
+            {
+              "id": "t",
+              "label": "Landing zone setup week: apply What is SAP BTP? so Dev/Test/Prod don't share blast radius.",
+              "correct": true,
+              "why": "Scene trigger matched — engage now."
+            },
+            {
+              "id": "f1",
+              "label": "After every status meeting, regardless of risk",
+              "correct": false,
+              "why": "Cargo-cult timing wastes capacity."
+            },
+            {
+              "id": "f2",
+              "label": "Never in this landscape — only on paper",
+              "correct": false,
+              "why": "The scene exists so you apply the control for real."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Act in the scene",
+          "teach": "How the team should move: State the business capability first, then map to BTP service categories",
+          "prompt": "Which action plays correctly in this scenario?",
+          "mode": "choose",
+          "hint": "State the business capability first, then map to BTP service categories",
+          "cinema": "scenario_act",
+          "options": [
+            {
+              "id": "t",
+              "label": "State the business capability first, then map to BTP service categories",
+              "correct": true,
+              "why": "Correct scene action."
+            },
+            {
+              "id": "f1",
+              "label": "Ignore the hub and only update slides",
+              "correct": false,
+              "why": "Theater without landscape change is not apply."
+            },
+            {
+              "id": "f2",
+              "label": "Disable monitoring so the story looks green",
+              "correct": false,
+              "why": "Hiding signals is a trap."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Stage the hub",
+          "teach": "Second window: Incident bridge: symptoms appear; use “What is SAP BTP?” to classify the failing hop before changing config.",
+          "prompt": "Drop the tool on the hub — the scene’s control point.",
+          "mode": "drop",
+          "hint": "Hub is the active center.",
+          "toolId": "tool-platform",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Wrong stage mark — use the hub.",
+            "n2": "Wrong stage mark — use the hub.",
+            "n3": "Wrong stage mark — use the hub."
+          },
+          "successWhy": "Scenario apply for What is SAP BTP?.",
+          "cinema": "scenario_stage"
+        },
+        {
+          "id": "s4",
+          "title": "Cut — verify",
+          "teach": "Scene ends only when evidence proves the control held.",
+          "prompt": "CHECK the hub — proof for the debrief.",
+          "mode": "drop",
+          "hint": "Hub again for seal.",
+          "toolId": "tool-check",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Verify the hub.",
+            "n2": "Verify the hub.",
+            "n3": "Verify the hub."
+          },
+          "successWhy": "Scenario cleared: What is SAP BTP?.",
+          "cinema": "scenario_cut"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-what-compare",
+      "title": "6⚖ Compare: What is SAP BTP?",
+      "tier": "advanced",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "compare_tradeoff",
+      "mapStyle": "space",
+      "brief": "Curriculum 6/1099 · btp-what · compare. The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of record.",
+      "unlockAfter": "ch-btp-what-scenario",
+      "concepts": [
+        "btp-what"
+      ],
+      "curriculumIndex": 6,
+      "conceptId": "btp-what",
+      "variant": "compare",
+      "mapNodes": [
+        {
+          "id": "xp",
+          "label": "Experience",
+          "x": 50,
+          "y": 22,
+          "kind": "app"
+        },
+        {
+          "id": "plat",
+          "label": "Tradeoff",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "core",
+          "label": "Core SoR",
+          "x": 50,
+          "y": 75,
+          "kind": "core"
+        }
+      ],
+      "edges": [
+        [
+          "xp",
+          "plat"
+        ],
+        [
+          "plat",
+          "core"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Pick the control",
+          "teach": "Newcomers who skip this step jump into CAP/RAP tools without knowing why the platform exists — and design random microservices that fight the system of record.",
+          "prompt": "When should you choose “What is SAP BTP?” over deferring it?",
+          "mode": "choose",
+          "hint": "Any serious landscape",
+          "cinema": "compare_scales",
+          "formula": "COMPARE = risk × cost × reversibility",
+          "options": [
+            {
+              "id": "t",
+              "label": "Any serious landscape",
+              "correct": true,
+              "why": "Correct window for choosing this control."
+            },
+            {
+              "id": "f1",
+              "label": "Always pick the newest brand name regardless of fit",
+              "correct": false,
+              "why": "Brand ≠ fit. Compare on risk and landscape."
+            },
+            {
+              "id": "f2",
+              "label": "Never choose it — complexity is always wrong",
+              "correct": false,
+              "why": "Under-engineering is also a risk."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Know the alternate",
+          "teach": "Defer window: Personal sandbox only",
+          "prompt": "Which deferral is disciplined (not a trap)?",
+          "mode": "choose",
+          "hint": "Owner + date + residual risk — not silent skip.",
+          "cinema": "compare_fork",
+          "options": [
+            {
+              "id": "t",
+              "label": "Personal sandbox only",
+              "correct": true,
+              "why": "Disciplined alternate path."
+            },
+            {
+              "id": "f1",
+              "label": "Skip forever and hope no one audits",
+              "correct": false,
+              "why": "Silent skip is the trap."
+            },
+            {
+              "id": "f2",
+              "label": "Ship with Admin.All so you need no design",
+              "correct": false,
+              "why": "Privilege inflation is never the alternate."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Commit the hop",
+          "teach": "Lock the chosen path for What is SAP BTP? onto the tradeoff hop.",
+          "prompt": "Drop the tool on the Tradeoff node to commit.",
+          "mode": "drop",
+          "hint": "Broken middle hop.",
+          "toolId": "tool-platform",
+          "targetNodeId": "plat",
+          "wrongTargets": {
+            "xp": "Commit on the tradeoff hop.",
+            "core": "Commit on the tradeoff hop."
+          },
+          "successWhy": "Compare commit for What is SAP BTP?.",
+          "cinema": "compare_lock"
+        },
+        {
+          "id": "s4",
+          "title": "Prove the fork",
+          "teach": "Close with verification so the compare memory sticks.",
+          "prompt": "CHECK the end node — evidence for the chosen path.",
+          "mode": "drop",
+          "hint": "Downstream proof.",
+          "toolId": "tool-check",
+          "targetNodeId": "core",
+          "wrongTargets": {
+            "xp": "Verify the end of the path.",
+            "plat": "Verify the end of the path."
+          },
+          "successWhy": "Compare cleared: What is SAP BTP?.",
+          "cinema": "compare_prove"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-what-mastery",
+      "title": "7★ Mastery: What is SAP BTP?",
+      "tier": "advanced",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "space",
+      "mapStyle": "space",
+      "brief": "Curriculum 7/1099 · btp-what · mastery. The platform layer where you build, integrate, extend, and operate intelligent enterprise apps beside SAP systems of record.",
+      "unlockAfter": "ch-btp-what-compare",
+      "concepts": [
+        "btp-what"
+      ],
+      "curriculumIndex": 7,
+      "conceptId": "btp-what",
+      "variant": "mastery",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Start",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "b",
+          "label": "Middle",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Mechanism under pressure",
+          "teach": "SAP Business Technology Platform (BTP) is SAP’s cloud platform for application development, integration, data & analytics, automation, and AI — typically used beside S/4HANA and other systems of record. Think of three layers: 1) Systems of record (S/4, success factors, etc.) hold",
+          "prompt": "Board asks: which statement is true about What is SAP BTP??",
+          "mode": "choose",
+          "hint": "BTP is a multi-service platform (build, integrate, automate, data, AI), not a single product",
+          "cinema": "war_brief",
+          "options": [
+            {
+              "id": "t",
+              "label": "BTP is a multi-service platform (build, integrate, automate, data, AI), not a single product",
+              "correct": true,
+              "why": "Mechanism-aligned answer."
+            },
+            {
+              "id": "f1",
+              "label": "It never matters in production landscapes",
+              "correct": false,
+              "why": "It matters — that is why it is in the spine."
+            },
+            {
+              "id": "f2",
+              "label": "Bypass it with Admin.All / no auth in prod",
+              "correct": false,
+              "why": "Forbidden shortcut."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Why it matters",
+          "teach": "Newcomers who skip this step jump into CAP/RAP tools without knowing why the platform exists — and design random microservices that fight the system of record.",
+          "prompt": "Select the business-risk reason to care.",
+          "mode": "choose",
+          "hint": "Link to failure, audit, upgrade, or customer impact.",
+          "cinema": "war_move",
+          "options": [
+            {
+              "id": "t",
+              "label": "Newcomers who skip this step jump into CAP/RAP tools without knowing why the platform exists — and design random microservices that fight th",
+              "correct": true,
+              "why": "Correct risk framing."
+            },
+            {
+              "id": "f1",
+              "label": "Only for certification trivia",
+              "correct": false,
+              "why": "Not trivia — operational judgment."
+            },
+            {
+              "id": "f2",
+              "label": "Only marketing slides",
+              "correct": false,
+              "why": "Design-time control."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Apply on the hub",
+          "teach": "State the business capability first, then map to BTP service categories",
+          "prompt": "Drop the tool on the hub.",
+          "mode": "drop",
+          "hint": "Hub is the broken/active center.",
+          "toolId": "tool-platform",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Wrong node for this mastery apply.",
+            "c": "Wrong node for this mastery apply.",
+            "d": "Wrong node for this mastery apply."
+          },
+          "successWhy": "Mastery placement for What is SAP BTP?.",
+          "cinema": "war_strike"
+        },
+        {
+          "id": "s4",
+          "title": "Seal",
+          "teach": "Peak-end: verify so memory encodes the correct model.",
+          "prompt": "CHECK the hub after apply.",
+          "mode": "drop",
+          "hint": "Hub again for proof.",
+          "toolId": "tool-check",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Verify the hub.",
+            "c": "Verify the hub.",
+            "d": "Verify the hub."
+          },
+          "successWhy": "Mastery sealed: What is SAP BTP?.",
+          "cinema": "war_win"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-services-map-intro",
+      "title": "8. BTP services map: what lives where",
+      "tier": "basic",
+      "domain": "architecture",
+      "biome": "chess",
+      "challengeType": "chess",
+      "mapStyle": "chess",
+      "brief": "Curriculum 8/1099 · btp-services-map · intro. A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops.",
+      "unlockAfter": "ch-btp-what-mastery",
+      "concepts": [
+        "btp-services-map"
+      ],
+      "curriculumIndex": 8,
+      "conceptId": "btp-services-map",
+      "variant": "intro",
+      "mapNodes": [
+        {
+          "id": "user",
+          "label": "User",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "idp",
+          "label": "BTP services map: ",
+          "x": 38,
+          "y": 48,
+          "kind": "dest",
+          "broken": true
+        },
+        {
+          "id": "api",
+          "label": "API",
+          "x": 62,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "db",
+          "label": "Data",
+          "x": 86,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "user",
+          "idp"
+        ],
+        [
+          "idp",
+          "api"
+        ],
+        [
+          "api",
+          "db"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Recognize the idea",
+          "teach": "Once you know BTP exists and how accounts work, learn the capability map (names evolve; categories stay useful): • Application development — CAP, HTML5/Fiori, mobile, ABAP environment / RAP patterns for extensions. • Integration — Integration Suite (iFlows, APIs, events, B2B). • ",
+          "prompt": "What best captures “BTP services map: what lives where”?",
+          "mode": "choose",
+          "hint": "Map business capability → platform category → service",
+          "cinema": "film_setup",
+          "formula": "Concept: btp-services-map",
+          "options": [
+            {
+              "id": "c1",
+              "label": "A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops.",
+              "correct": true,
+              "why": "Correct — A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops."
+            },
+            {
+              "id": "w1",
+              "label": "Ignore BTP services map: what lives where and hope production is fine",
+              "correct": false,
+              "why": "Skipping foundations creates silent debt. Name the control and verify it."
+            },
+            {
+              "id": "w2",
+              "label": "Disable security / governance to unblock demo",
+              "correct": false,
+              "why": "Demo shortcuts become production incidents. Never remove controls as a 'fix'."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Avoid the trap",
+          "teach": "Using CPI for pure UI apps or CAP for heavy B2B EDI without reason",
+          "prompt": "Which approach is the mistake to reject?",
+          "mode": "choose",
+          "hint": "Reject shortcuts that remove controls or skip verification.",
+          "cinema": "film_tension",
+          "options": [
+            {
+              "id": "m1",
+              "label": "Using CPI for pure UI apps or CAP for heavy B2B EDI without reason",
+              "correct": true,
+              "why": "Correct rejection — this is the anti-pattern to avoid."
+            },
+            {
+              "id": "m2",
+              "label": "Design with constraints and verify the control",
+              "correct": false,
+              "why": "That is the good path — not the reject target."
+            },
+            {
+              "id": "m3",
+              "label": "Document ownership and test negative cases",
+              "correct": false,
+              "why": "Healthy practice — not the mistake."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Place the control",
+          "teach": "For each initiative, write: capability, category, candidate service, rejected alternatives",
+          "prompt": "Drag the highlighted tool onto the broken/active node.",
+          "mode": "drop",
+          "hint": "Broken/highlighted middle hop is usually the lesson focus.",
+          "toolId": "tool-check",
+          "targetNodeId": "api",
+          "wrongTargets": {
+            "user": "Not this node for “BTP services map: what lives where”. Re-read the teach beat.",
+            "idp": "Not this node for “BTP services map: what lives where”. Re-read the teach beat.",
+            "db": "Not this node for “BTP services map: what lives where”. Re-read the teach beat."
+          },
+          "successWhy": "Placed control for BTP services map: what lives where.",
+          "cinema": "film_climax"
+        },
+        {
+          "id": "s4",
+          "title": "Verify",
+          "teach": "Without a map, teams pick familiar tools for every problem and create accidental complexity. Close the loop with verification.",
+          "prompt": "Drag CHECK onto the service/data node that proves health.",
+          "mode": "drop",
+          "hint": "Verify the downstream resource or hub.",
+          "toolId": "tool-check",
+          "targetNodeId": "db",
+          "wrongTargets": {
+            "user": "Useful later — this step wants the verification target.",
+            "idp": "Useful later — this step wants the verification target.",
+            "api": "Useful later — this step wants the verification target."
+          },
+          "successWhy": "BTP services map: what lives where intro cleared. Next curriculum step unlocks.",
+          "cinema": "film_end"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-services-map-when",
+      "title": "9⏱ When: BTP services map: what lives where",
+      "tier": "basic",
+      "domain": "architecture",
+      "biome": "chess",
+      "challengeType": "when_to_use",
+      "mapStyle": "chess",
+      "brief": "Curriculum 9/1099 · btp-services-map · when. A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops.",
+      "unlockAfter": "ch-btp-services-map-intro",
+      "concepts": [
+        "btp-services-map"
+      ],
+      "curriculumIndex": 9,
+      "conceptId": "btp-services-map",
+      "variant": "when",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Start",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "b",
+          "label": "Decision",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Spot the trigger",
+          "teach": "WHEN to reach for “BTP services map: what lives where”: Greenfield design workshop: decide if “BTP services map: what lives where” is required given constraints (latency, clean-core, team skills).",
+          "prompt": "Which situation is the right moment to apply BTP services map: what lives where?",
+          "mode": "choose",
+          "hint": "Match a real trigger: landing zone, incident, design review, go-live.",
+          "cinema": "when_radar",
+          "formula": "WHEN = trigger + constraint + failure cost",
+          "options": [
+            {
+              "id": "t",
+              "label": "Greenfield design workshop: decide if “BTP services map: what lives where” is required given constraints (latency, clean-core, team skills).",
+              "correct": true,
+              "why": "Correct trigger — use the concept here."
+            },
+            {
+              "id": "f1",
+              "label": "Only after production is already on fire for weeks",
+              "correct": false,
+              "why": "Too late. Design-time and early ops use this concept before blast radius grows."
+            },
+            {
+              "id": "f2",
+              "label": "Never — buzzwords belong only on marketing slides",
+              "correct": false,
+              "why": "This is an operational design control, not decoration."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Reject wrong timing",
+          "teach": "Wrong timing wastes effort or misses risk. Without a map, teams pick familiar tools for every problem and create accidental complexity.",
+          "prompt": "Which timing is a trap for this concept?",
+          "mode": "choose",
+          "hint": "Reject “skip until certification” and “only after outage”.",
+          "cinema": "when_clock",
+          "options": [
+            {
+              "id": "t",
+              "label": "Defer until after go-live with no residual-risk note",
+              "correct": true,
+              "why": "Trap identified — silent deferral is how debt becomes incidents."
+            },
+            {
+              "id": "f1",
+              "label": "Incident bridge: symptoms appear; use “BTP services map: what lives where” to classify the failing hop before changing config.",
+              "correct": false,
+              "why": "That is a legitimate use window — not the trap."
+            },
+            {
+              "id": "f2",
+              "label": "During architecture review when constraints are still cheap to change",
+              "correct": false,
+              "why": "That is excellent timing — not the trap."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Arm the decision hop",
+          "teach": "On the timeline, the decision hop is where “BTP services map: what lives where” enters the design.",
+          "prompt": "Drop the tool onto the Decision hop to mark WHEN you engage.",
+          "mode": "drop",
+          "hint": "Broken middle node = decision moment.",
+          "toolId": "tool-check",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Not the decision hop — arm the moment you choose the control.",
+            "c": "Not the decision hop — arm the moment you choose the control.",
+            "d": "Not the decision hop — arm the moment you choose the control."
+          },
+          "successWhy": "When-to-use armed for BTP services map: what lives where.",
+          "cinema": "when_lock"
+        },
+        {
+          "id": "s4",
+          "title": "Confirm window",
+          "teach": "Close the loop: the team can restate WHEN this concept is mandatory.",
+          "prompt": "CHECK the decision hop — proof you can explain the use window.",
+          "mode": "drop",
+          "hint": "Verify the same decision node.",
+          "toolId": "tool-check",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Verify the decision hop you armed.",
+            "c": "Verify the decision hop you armed.",
+            "d": "Verify the decision hop you armed."
+          },
+          "successWhy": "When-game cleared: BTP services map: what lives where.",
+          "cinema": "when_seal"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-services-map-how",
+      "title": "10⚙ How: BTP services map: what lives where",
+      "tier": "basic",
+      "domain": "architecture",
+      "biome": "chess",
+      "challengeType": "how_to_use",
+      "mapStyle": "chess",
+      "brief": "Curriculum 10/1099 · btp-services-map · how. A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops.",
+      "unlockAfter": "ch-btp-services-map-when",
+      "concepts": [
+        "btp-services-map"
+      ],
+      "curriculumIndex": 10,
+      "conceptId": "btp-services-map",
+      "variant": "how",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Hub",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "n1",
+          "label": "BTP services map",
+          "x": 20,
+          "y": 30,
+          "kind": "app",
+          "broken": true
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Name the move",
+          "teach": "HOW to use “BTP services map: what lives where”: For each initiative, write: capability, category, candidate service, rejected alternatives",
+          "prompt": "Which action is the correct first move when using BTP services map: what lives where?",
+          "mode": "choose",
+          "hint": "Map business capability → platform category → service",
+          "cinema": "how_pipeline",
+          "formula": "HOW = locate hop → apply control → verify evidence",
+          "options": [
+            {
+              "id": "t",
+              "label": "For each initiative, write: capability, category, candidate service, rejected alternatives",
+              "correct": true,
+              "why": "Correct procedure — this is how you use it."
+            },
+            {
+              "id": "f1",
+              "label": "Skip design, paste a screenshot from another project",
+              "correct": false,
+              "why": "Copy-paste without landscape context fails under review."
+            },
+            {
+              "id": "f2",
+              "label": "Grant Admin.All so you never need this concept",
+              "correct": false,
+              "why": "Privilege inflation is not a how-to — it is a trap."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Order the steps",
+          "teach": "Second beat: Apply BTP services map: what lives where on the active hop, then verify with evidence.",
+          "prompt": "Which follow-through is correct after the first apply?",
+          "mode": "choose",
+          "hint": "Evidence, negative test, or ownership — not “hope”.",
+          "cinema": "how_steps",
+          "options": [
+            {
+              "id": "t",
+              "label": "Apply BTP services map: what lives where on the active hop, then verify with evidence.",
+              "correct": true,
+              "why": "Correct how-sequence."
+            },
+            {
+              "id": "f1",
+              "label": "Ship to prod with no check and no owner",
+              "correct": false,
+              "why": "Missing verify + ownership is how silent debt ships."
+            },
+            {
+              "id": "f2",
+              "label": "Delete logs so nobody can challenge the design",
+              "correct": false,
+              "why": "Never. Observability is part of how you use platform controls."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Place on the platform hop",
+          "teach": "Drag the control onto the hop where BTP services map: what lives where actually lives in the stack.",
+          "prompt": "Drop the highlighted tool onto the broken platform/control node.",
+          "mode": "drop",
+          "hint": "Broken middle layer is the apply target.",
+          "toolId": "tool-fix",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Wrong layer for “BTP services map: what lives where” apply.",
+            "n2": "Wrong layer for “BTP services map: what lives where” apply.",
+            "n3": "Wrong layer for “BTP services map: what lives where” apply."
+          },
+          "successWhy": "How-to placement for BTP services map: what lives where.",
+          "cinema": "how_place"
+        },
+        {
+          "id": "s4",
+          "title": "Prove it",
+          "teach": "HOW is incomplete without verification evidence.",
+          "prompt": "CHECK the service/data node that proves the control works.",
+          "mode": "drop",
+          "hint": "Downstream verification target.",
+          "toolId": "tool-check",
+          "targetNodeId": "n3",
+          "wrongTargets": {
+            "hub": "Useful later — this beat wants verification evidence.",
+            "n1": "Useful later — this beat wants verification evidence.",
+            "n2": "Useful later — this beat wants verification evidence."
+          },
+          "successWhy": "How-game cleared: BTP services map: what lives where.",
+          "cinema": "how_prove"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-services-map-trap",
+      "title": "11⚠ Trap: BTP services map: what lives where",
+      "tier": "advanced",
+      "domain": "architecture",
+      "biome": "chess",
+      "challengeType": "trap_misuse",
+      "mapStyle": "chess",
+      "brief": "Curriculum 11/1099 · btp-services-map · trap. A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops.",
+      "unlockAfter": "ch-btp-services-map-how",
+      "concepts": [
+        "btp-services-map"
+      ],
+      "curriculumIndex": 11,
+      "conceptId": "btp-services-map",
+      "variant": "trap",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Hub",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "n1",
+          "label": "Node A",
+          "x": 20,
+          "y": 30,
+          "kind": "app"
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Name the anti-pattern",
+          "teach": "Misuse of “BTP services map: what lives where”: Using CPI for pure UI apps or CAP for heavy B2B EDI without reason",
+          "prompt": "Which option is the misuse to reject?",
+          "mode": "choose",
+          "hint": "Anti-pattern language — disable, skip, over-privilege, buzzword-only.",
+          "cinema": "trap_alert",
+          "formula": "TRAP = looks fast · hides risk · fails audit/incident",
+          "options": [
+            {
+              "id": "t",
+              "label": "Using CPI for pure UI apps or CAP for heavy B2B EDI without reason",
+              "correct": true,
+              "why": "Correct — this is the trap to reject."
+            },
+            {
+              "id": "f1",
+              "label": "For each initiative, write: capability, category, candidate service, rejected alternatives",
+              "correct": false,
+              "why": "That is the good path — not the trap."
+            },
+            {
+              "id": "f2",
+              "label": "Document residual risk when deferring with an owner and date",
+              "correct": false,
+              "why": "Healthy deferral practice — not a trap."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Why the trap fails",
+          "teach": "Without a map, teams pick familiar tools for every problem and create accidental complexity.",
+          "prompt": "Why does the trap fail under real pressure?",
+          "mode": "choose",
+          "hint": "Blast radius, audit, upgrade, or customer impact.",
+          "cinema": "trap_blast",
+          "options": [
+            {
+              "id": "t",
+              "label": "Without a map, teams pick familiar tools for every problem and create accidental complexity.",
+              "correct": true,
+              "why": "Risk framing locked."
+            },
+            {
+              "id": "f1",
+              "label": "Traps only matter for exam questions",
+              "correct": false,
+              "why": "Operational failure, not exams."
+            },
+            {
+              "id": "f2",
+              "label": "Nothing fails if you never look at logs",
+              "correct": false,
+              "why": "Customers and auditors still notice."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Re-arm the control",
+          "teach": "Replace the trap with a real apply of BTP services map: what lives where.",
+          "prompt": "Drop the tool onto the broken API hop to re-arm the control.",
+          "mode": "drop",
+          "hint": "Broken API/control node.",
+          "toolId": "tool-block",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Wrong hop — re-arm the broken control node.",
+            "n2": "Wrong hop — re-arm the broken control node.",
+            "n3": "Wrong hop — re-arm the broken control node."
+          },
+          "successWhy": "Trap rejected; control re-armed for BTP services map: what lives where.",
+          "cinema": "trap_rearm"
+        },
+        {
+          "id": "s4",
+          "title": "Seal against relapse",
+          "teach": "Peak-end: verify so the trap memory includes the fix path.",
+          "prompt": "CHECK the data/service end to prove the trap is gone.",
+          "mode": "drop",
+          "hint": "Downstream proof node.",
+          "toolId": "tool-check",
+          "targetNodeId": "n3",
+          "wrongTargets": {
+            "hub": "Verify the end of the chain.",
+            "n1": "Verify the end of the chain.",
+            "n2": "Verify the end of the chain."
+          },
+          "successWhy": "Trap-game cleared: BTP services map: what lives where.",
+          "cinema": "trap_seal"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-services-map-scenario",
+      "title": "12🎬 Scenario: BTP services map: what lives where",
+      "tier": "basic",
+      "domain": "architecture",
+      "biome": "film",
+      "challengeType": "scenario_story",
+      "mapStyle": "film",
+      "brief": "Curriculum 12/1099 · btp-services-map · scenario. A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops.",
+      "unlockAfter": "ch-btp-services-map-trap",
+      "concepts": [
+        "btp-services-map"
+      ],
+      "curriculumIndex": 12,
+      "conceptId": "btp-services-map",
+      "variant": "scenario",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Story",
+          "x": 15,
+          "y": 48,
+          "kind": "app",
+          "broken": false
+        },
+        {
+          "id": "b",
+          "label": "Middle",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Read the room",
+          "teach": "Project scene: Greenfield design workshop: decide if “BTP services map: what lives where” is required given constraints (latency, clean-core, team skills).",
+          "prompt": "In this story, when is “BTP services map: what lives where” the right control?",
+          "mode": "choose",
+          "hint": "Match the use case to the trigger in the scene.",
+          "cinema": "scenario_open",
+          "formula": "SCENE → TRIGGER → CONTROL → PROOF",
+          "options": [
+            {
+              "id": "t",
+              "label": "Greenfield design workshop: decide if “BTP services map: what lives where” is required given constraints (latency, clean-core, team skills).",
+              "correct": true,
+              "why": "Scene trigger matched — engage now."
+            },
+            {
+              "id": "f1",
+              "label": "After every status meeting, regardless of risk",
+              "correct": false,
+              "why": "Cargo-cult timing wastes capacity."
+            },
+            {
+              "id": "f2",
+              "label": "Never in this landscape — only on paper",
+              "correct": false,
+              "why": "The scene exists so you apply the control for real."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Act in the scene",
+          "teach": "How the team should move: For each initiative, write: capability, category, candidate service, rejected alternatives",
+          "prompt": "Which action plays correctly in this scenario?",
+          "mode": "choose",
+          "hint": "For each initiative, write: capability, category, candidate service, rejected alternatives",
+          "cinema": "scenario_act",
+          "options": [
+            {
+              "id": "t",
+              "label": "For each initiative, write: capability, category, candidate service, rejected alternatives",
+              "correct": true,
+              "why": "Correct scene action."
+            },
+            {
+              "id": "f1",
+              "label": "Ignore the hub and only update slides",
+              "correct": false,
+              "why": "Theater without landscape change is not apply."
+            },
+            {
+              "id": "f2",
+              "label": "Disable monitoring so the story looks green",
+              "correct": false,
+              "why": "Hiding signals is a trap."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Stage the hub",
+          "teach": "Second window: Incident bridge: symptoms appear; use “BTP services map: what lives where” to classify the failing hop before changing config.",
+          "prompt": "Drop the tool on the hub — the scene’s control point.",
+          "mode": "drop",
+          "hint": "Hub is the active center.",
+          "toolId": "tool-check",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Wrong stage mark — use the hub.",
+            "c": "Wrong stage mark — use the hub.",
+            "d": "Wrong stage mark — use the hub."
+          },
+          "successWhy": "Scenario apply for BTP services map: what lives where.",
+          "cinema": "scenario_stage"
+        },
+        {
+          "id": "s4",
+          "title": "Cut — verify",
+          "teach": "Scene ends only when evidence proves the control held.",
+          "prompt": "CHECK the hub — proof for the debrief.",
+          "mode": "drop",
+          "hint": "Hub again for seal.",
+          "toolId": "tool-check",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Verify the hub.",
+            "c": "Verify the hub.",
+            "d": "Verify the hub."
+          },
+          "successWhy": "Scenario cleared: BTP services map: what lives where.",
+          "cinema": "scenario_cut"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-services-map-compare",
+      "title": "13⚖ Compare: BTP services map: what lives where",
+      "tier": "advanced",
+      "domain": "architecture",
+      "biome": "chess",
+      "challengeType": "compare_tradeoff",
+      "mapStyle": "chess",
+      "brief": "Curriculum 13/1099 · btp-services-map · compare. A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops.",
+      "unlockAfter": "ch-btp-services-map-scenario",
+      "concepts": [
+        "btp-services-map"
+      ],
+      "curriculumIndex": 13,
+      "conceptId": "btp-services-map",
+      "variant": "compare",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Hub",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "n1",
+          "label": "Tradeoff",
+          "x": 20,
+          "y": 30,
+          "kind": "app",
+          "broken": true
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Pick the control",
+          "teach": "Without a map, teams pick familiar tools for every problem and create accidental complexity.",
+          "prompt": "When should you choose “BTP services map: what lives where” over deferring it?",
+          "mode": "choose",
+          "hint": "Clean-core strategy",
+          "cinema": "compare_scales",
+          "formula": "COMPARE = risk × cost × reversibility",
+          "options": [
+            {
+              "id": "t",
+              "label": "Clean-core strategy",
+              "correct": true,
+              "why": "Correct window for choosing this control."
+            },
+            {
+              "id": "f1",
+              "label": "Always pick the newest brand name regardless of fit",
+              "correct": false,
+              "why": "Brand ≠ fit. Compare on risk and landscape."
+            },
+            {
+              "id": "f2",
+              "label": "Never choose it — complexity is always wrong",
+              "correct": false,
+              "why": "Under-engineering is also a risk."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Know the alternate",
+          "teach": "Defer window: Never for sustainable ERP",
+          "prompt": "Which deferral is disciplined (not a trap)?",
+          "mode": "choose",
+          "hint": "Owner + date + residual risk — not silent skip.",
+          "cinema": "compare_fork",
+          "options": [
+            {
+              "id": "t",
+              "label": "Never for sustainable ERP",
+              "correct": true,
+              "why": "Disciplined alternate path."
+            },
+            {
+              "id": "f1",
+              "label": "Skip forever and hope no one audits",
+              "correct": false,
+              "why": "Silent skip is the trap."
+            },
+            {
+              "id": "f2",
+              "label": "Ship with Admin.All so you need no design",
+              "correct": false,
+              "why": "Privilege inflation is never the alternate."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Commit the hop",
+          "teach": "Lock the chosen path for BTP services map: what lives where onto the tradeoff hop.",
+          "prompt": "Drop the tool on the Tradeoff node to commit.",
+          "mode": "drop",
+          "hint": "Broken middle hop.",
+          "toolId": "tool-check",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Commit on the tradeoff hop.",
+            "n2": "Commit on the tradeoff hop.",
+            "n3": "Commit on the tradeoff hop."
+          },
+          "successWhy": "Compare commit for BTP services map: what lives where.",
+          "cinema": "compare_lock"
+        },
+        {
+          "id": "s4",
+          "title": "Prove the fork",
+          "teach": "Close with verification so the compare memory sticks.",
+          "prompt": "CHECK the end node — evidence for the chosen path.",
+          "mode": "drop",
+          "hint": "Downstream proof.",
+          "toolId": "tool-check",
+          "targetNodeId": "n3",
+          "wrongTargets": {
+            "hub": "Verify the end of the path.",
+            "n1": "Verify the end of the path.",
+            "n2": "Verify the end of the path."
+          },
+          "successWhy": "Compare cleared: BTP services map: what lives where.",
+          "cinema": "compare_prove"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-services-map-mastery",
+      "title": "14★ Mastery: BTP services map: what lives where",
+      "tier": "advanced",
+      "domain": "architecture",
+      "biome": "chess",
+      "challengeType": "chess",
+      "mapStyle": "chess",
+      "brief": "Curriculum 14/1099 · btp-services-map · mastery. A beginner map of major BTP capability areas: app dev, integration, automation, data, AI, identity, ops.",
+      "unlockAfter": "ch-btp-services-map-compare",
+      "concepts": [
+        "btp-services-map"
+      ],
+      "curriculumIndex": 14,
+      "conceptId": "btp-services-map",
+      "variant": "mastery",
+      "mapNodes": [
+        {
+          "id": "user",
+          "label": "User",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "idp",
+          "label": "IdP",
+          "x": 38,
+          "y": 48,
+          "kind": "dest"
+        },
+        {
+          "id": "api",
+          "label": "API",
+          "x": 62,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "db",
+          "label": "Data",
+          "x": 86,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "user",
+          "idp"
+        ],
+        [
+          "idp",
+          "api"
+        ],
+        [
+          "api",
+          "db"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Mechanism under pressure",
+          "teach": "Once you know BTP exists and how accounts work, learn the capability map (names evolve; categories stay useful): • Application development — CAP, HTML5/Fiori, mobile, ABAP environment / RAP patterns for extensions. • Integration — Integration Suite (iFlows, APIs, events, B2B). • ",
+          "prompt": "Board asks: which statement is true about BTP services map: what lives where?",
+          "mode": "choose",
+          "hint": "Map business capability → platform category → service",
+          "cinema": "war_brief",
+          "options": [
+            {
+              "id": "t",
+              "label": "Map business capability → platform category → service",
+              "correct": true,
+              "why": "Mechanism-aligned answer."
+            },
+            {
+              "id": "f1",
+              "label": "It never matters in production landscapes",
+              "correct": false,
+              "why": "It matters — that is why it is in the spine."
+            },
+            {
+              "id": "f2",
+              "label": "Bypass it with Admin.All / no auth in prod",
+              "correct": false,
+              "why": "Forbidden shortcut."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Why it matters",
+          "teach": "Without a map, teams pick familiar tools for every problem and create accidental complexity.",
+          "prompt": "Select the business-risk reason to care.",
+          "mode": "choose",
+          "hint": "Link to failure, audit, upgrade, or customer impact.",
+          "cinema": "war_move",
+          "options": [
+            {
+              "id": "t",
+              "label": "Without a map, teams pick familiar tools for every problem and create accidental complexity.",
+              "correct": true,
+              "why": "Correct risk framing."
+            },
+            {
+              "id": "f1",
+              "label": "Only for certification trivia",
+              "correct": false,
+              "why": "Not trivia — operational judgment."
+            },
+            {
+              "id": "f2",
+              "label": "Only marketing slides",
+              "correct": false,
+              "why": "Design-time control."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Apply on the hub",
+          "teach": "For each initiative, write: capability, category, candidate service, rejected alternatives",
+          "prompt": "Drop the tool on the hub.",
+          "mode": "drop",
+          "hint": "Hub is the broken/active center.",
+          "toolId": "tool-fix",
+          "targetNodeId": "api",
+          "wrongTargets": {
+            "user": "Wrong node for this mastery apply.",
+            "idp": "Wrong node for this mastery apply.",
+            "db": "Wrong node for this mastery apply."
+          },
+          "successWhy": "Mastery placement for BTP services map: what lives where.",
+          "cinema": "war_strike"
+        },
+        {
+          "id": "s4",
+          "title": "Seal",
+          "teach": "Peak-end: verify so memory encodes the correct model.",
+          "prompt": "CHECK the hub after apply.",
+          "mode": "drop",
+          "hint": "Hub again for proof.",
+          "toolId": "tool-check",
+          "targetNodeId": "api",
+          "wrongTargets": {
+            "user": "Verify the hub.",
+            "idp": "Verify the hub.",
+            "db": "Verify the hub."
+          },
+          "successWhy": "Mastery sealed: BTP services map: what lives where.",
+          "cinema": "war_win"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-platform-structure-intro",
+      "title": "15. BTP structure: accounts, directories, subaccounts",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "space",
+      "mapStyle": "space",
+      "brief": "Curriculum 15/1099 · btp-platform-structure · intro. How a BTP landscape is organized: global account → directories → subaccounts → services & environments.",
+      "unlockAfter": "ch-btp-services-map-mastery",
+      "concepts": [
+        "btp-platform-structure"
+      ],
+      "curriculumIndex": 15,
+      "conceptId": "btp-platform-structure",
+      "variant": "intro",
+      "mapNodes": [
+        {
+          "id": "user",
+          "label": "User",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "idp",
+          "label": "BTP structure: acc",
+          "x": 38,
+          "y": 48,
+          "kind": "dest",
+          "broken": true
+        },
+        {
+          "id": "api",
+          "label": "API",
+          "x": 62,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "db",
+          "label": "Data",
+          "x": 86,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "user",
+          "idp"
+        ],
+        [
+          "idp",
+          "api"
+        ],
+        [
+          "api",
+          "db"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Recognize the idea",
+          "teach": "BTP structure is hierarchical so companies can separate billing, teams, and stages. 1) Global account — commercial root (contracts, overall entitlements). 2) Directories — optional folders for org units or regions. 3) Subaccounts — isolation units where you enable services, assig",
+          "prompt": "What best captures “BTP structure: accounts, directories, subaccounts”?",
+          "mode": "choose",
+          "hint": "Global account is the commercial root",
+          "cinema": "film_setup",
+          "formula": "Concept: btp-platform-structure",
+          "options": [
+            {
+              "id": "c1",
+              "label": "How a BTP landscape is organized: global account → directories → subaccounts → services & environments.",
+              "correct": true,
+              "why": "Correct — How a BTP landscape is organized: global account → directories → subaccounts → services & environments."
+            },
+            {
+              "id": "w1",
+              "label": "Ignore BTP structure: accounts, directories, subaccounts and hope production is fine",
+              "correct": false,
+              "why": "Skipping foundations creates silent debt. Name the control and verify it."
+            },
+            {
+              "id": "w2",
+              "label": "Disable security / governance to unblock demo",
+              "correct": false,
+              "why": "Demo shortcuts become production incidents. Never remove controls as a 'fix'."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Avoid the trap",
+          "teach": "One shared subaccount for everything ‘to go faster’",
+          "prompt": "Which approach is the mistake to reject?",
+          "mode": "choose",
+          "hint": "Reject shortcuts that remove controls or skip verification.",
+          "cinema": "film_tension",
+          "options": [
+            {
+              "id": "m1",
+              "label": "One shared subaccount for everything ‘to go faster’",
+              "correct": true,
+              "why": "Correct rejection — this is the anti-pattern to avoid."
+            },
+            {
+              "id": "m2",
+              "label": "Design with constraints and verify the control",
+              "correct": false,
+              "why": "That is the good path — not the reject target."
+            },
+            {
+              "id": "m3",
+              "label": "Document ownership and test negative cases",
+              "correct": false,
+              "why": "Healthy practice — not the mistake."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Place the control",
+          "teach": "Draw your landing zone: global → directories → dev/test/prod subaccounts",
+          "prompt": "Drag the highlighted tool onto the broken/active node.",
+          "mode": "drop",
+          "hint": "Broken/highlighted middle hop is usually the lesson focus.",
+          "toolId": "tool-account",
+          "targetNodeId": "api",
+          "wrongTargets": {
+            "user": "Not this node for “BTP structure: accounts, directories, subaccounts”. Re-read the teach beat.",
+            "idp": "Not this node for “BTP structure: accounts, directories, subaccounts”. Re-read the teach beat.",
+            "db": "Not this node for “BTP structure: accounts, directories, subaccounts”. Re-read the teach beat."
+          },
+          "successWhy": "Placed control for BTP structure: accounts, directories, subaccounts.",
+          "cinema": "film_climax"
+        },
+        {
+          "id": "s4",
+          "title": "Verify",
+          "teach": "Most beginner confusion is not CAP vs RAP — it is ‘where do I create this service and who can see it?’ Wrong structure causes security and cost leaks. Close the loop with verification.",
+          "prompt": "Drag CHECK onto the service/data node that proves health.",
+          "mode": "drop",
+          "hint": "Verify the downstream resource or hub.",
+          "toolId": "tool-check",
+          "targetNodeId": "db",
+          "wrongTargets": {
+            "user": "Useful later — this step wants the verification target.",
+            "idp": "Useful later — this step wants the verification target.",
+            "api": "Useful later — this step wants the verification target."
+          },
+          "successWhy": "BTP structure: accounts, directories, subaccounts intro cleared. Next curriculum step unlocks.",
+          "cinema": "film_end"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-platform-structure-when",
+      "title": "16⏱ When: BTP structure: accounts, directories, subaccounts",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "when_to_use",
+      "mapStyle": "space",
+      "brief": "Curriculum 16/1099 · btp-platform-structure · when. How a BTP landscape is organized: global account → directories → subaccounts → services & environments.",
+      "unlockAfter": "ch-btp-platform-structure-intro",
+      "concepts": [
+        "btp-platform-structure"
+      ],
+      "curriculumIndex": 16,
+      "conceptId": "btp-platform-structure",
+      "variant": "when",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Start",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "b",
+          "label": "Decision",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Spot the trigger",
+          "teach": "WHEN to reach for “BTP structure: accounts, directories, subaccounts”: Landing zone setup week: apply BTP structure: accounts, directories, subaccounts so Dev/Test/Prod don't share blast radius.",
+          "prompt": "Which situation is the right moment to apply BTP structure: accounts, directories, subaccounts?",
+          "mode": "choose",
+          "hint": "Match a real trigger: landing zone, incident, design review, go-live.",
+          "cinema": "when_radar",
+          "formula": "WHEN = trigger + constraint + failure cost",
+          "options": [
+            {
+              "id": "t",
+              "label": "Landing zone setup week: apply BTP structure: accounts, directories, subaccounts so Dev/Test/Prod don't share blast radius.",
+              "correct": true,
+              "why": "Correct trigger — use the concept here."
+            },
+            {
+              "id": "f1",
+              "label": "Only after production is already on fire for weeks",
+              "correct": false,
+              "why": "Too late. Design-time and early ops use this concept before blast radius grows."
+            },
+            {
+              "id": "f2",
+              "label": "Never — buzzwords belong only on marketing slides",
+              "correct": false,
+              "why": "This is an operational design control, not decoration."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Reject wrong timing",
+          "teach": "Wrong timing wastes effort or misses risk. Most beginner confusion is not CAP vs RAP — it is ‘where do I create this service and who can see it?’ Wrong structure causes security and cost leaks.",
+          "prompt": "Which timing is a trap for this concept?",
+          "mode": "choose",
+          "hint": "Reject “skip until certification” and “only after outage”.",
+          "cinema": "when_clock",
+          "options": [
+            {
+              "id": "t",
+              "label": "Defer until after go-live with no residual-risk note",
+              "correct": true,
+              "why": "Trap identified — silent deferral is how debt becomes incidents."
+            },
+            {
+              "id": "f1",
+              "label": "Incident bridge: symptoms appear; use “BTP structure: accounts, directories, subaccounts” to classify the failing hop before changing config.",
+              "correct": false,
+              "why": "That is a legitimate use window — not the trap."
+            },
+            {
+              "id": "f2",
+              "label": "During architecture review when constraints are still cheap to change",
+              "correct": false,
+              "why": "That is excellent timing — not the trap."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Arm the decision hop",
+          "teach": "On the timeline, the decision hop is where “BTP structure: accounts, directories, subaccounts” enters the design.",
+          "prompt": "Drop the tool onto the Decision hop to mark WHEN you engage.",
+          "mode": "drop",
+          "hint": "Broken middle node = decision moment.",
+          "toolId": "tool-account",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Not the decision hop — arm the moment you choose the control.",
+            "c": "Not the decision hop — arm the moment you choose the control.",
+            "d": "Not the decision hop — arm the moment you choose the control."
+          },
+          "successWhy": "When-to-use armed for BTP structure: accounts, directories, subaccounts.",
+          "cinema": "when_lock"
+        },
+        {
+          "id": "s4",
+          "title": "Confirm window",
+          "teach": "Close the loop: the team can restate WHEN this concept is mandatory.",
+          "prompt": "CHECK the decision hop — proof you can explain the use window.",
+          "mode": "drop",
+          "hint": "Verify the same decision node.",
+          "toolId": "tool-check",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Verify the decision hop you armed.",
+            "c": "Verify the decision hop you armed.",
+            "d": "Verify the decision hop you armed."
+          },
+          "successWhy": "When-game cleared: BTP structure: accounts, directories, subaccounts.",
+          "cinema": "when_seal"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-platform-structure-how",
+      "title": "17⚙ How: BTP structure: accounts, directories, subaccounts",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "how_to_use",
+      "mapStyle": "space",
+      "brief": "Curriculum 17/1099 · btp-platform-structure · how. How a BTP landscape is organized: global account → directories → subaccounts → services & environments.",
+      "unlockAfter": "ch-btp-platform-structure-when",
+      "concepts": [
+        "btp-platform-structure"
+      ],
+      "curriculumIndex": 17,
+      "conceptId": "btp-platform-structure",
+      "variant": "how",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Hub",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "n1",
+          "label": "BTP structure: a",
+          "x": 20,
+          "y": 30,
+          "kind": "app",
+          "broken": true
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Name the move",
+          "teach": "HOW to use “BTP structure: accounts, directories, subaccounts”: Draw your landing zone: global → directories → dev/test/prod subaccounts",
+          "prompt": "Which action is the correct first move when using BTP structure: accounts, directories, subaccounts?",
+          "mode": "choose",
+          "hint": "Global account is the commercial root",
+          "cinema": "how_pipeline",
+          "formula": "HOW = locate hop → apply control → verify evidence",
+          "options": [
+            {
+              "id": "t",
+              "label": "Draw your landing zone: global → directories → dev/test/prod subaccounts",
+              "correct": true,
+              "why": "Correct procedure — this is how you use it."
+            },
+            {
+              "id": "f1",
+              "label": "Skip design, paste a screenshot from another project",
+              "correct": false,
+              "why": "Copy-paste without landscape context fails under review."
+            },
+            {
+              "id": "f2",
+              "label": "Grant Admin.All so you never need this concept",
+              "correct": false,
+              "why": "Privilege inflation is not a how-to — it is a trap."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Order the steps",
+          "teach": "Second beat: List who is admin at each level",
+          "prompt": "Which follow-through is correct after the first apply?",
+          "mode": "choose",
+          "hint": "Evidence, negative test, or ownership — not “hope”.",
+          "cinema": "how_steps",
+          "options": [
+            {
+              "id": "t",
+              "label": "List who is admin at each level",
+              "correct": true,
+              "why": "Correct how-sequence."
+            },
+            {
+              "id": "f1",
+              "label": "Ship to prod with no check and no owner",
+              "correct": false,
+              "why": "Missing verify + ownership is how silent debt ships."
+            },
+            {
+              "id": "f2",
+              "label": "Delete logs so nobody can challenge the design",
+              "correct": false,
+              "why": "Never. Observability is part of how you use platform controls."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Place on the platform hop",
+          "teach": "Drag the control onto the hop where BTP structure: accounts, directories, subaccounts actually lives in the stack.",
+          "prompt": "Drop the highlighted tool onto the broken platform/control node.",
+          "mode": "drop",
+          "hint": "Broken middle layer is the apply target.",
+          "toolId": "tool-account",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Wrong layer for “BTP structure: accounts, directories, subaccounts” apply.",
+            "n2": "Wrong layer for “BTP structure: accounts, directories, subaccounts” apply.",
+            "n3": "Wrong layer for “BTP structure: accounts, directories, subaccounts” apply."
+          },
+          "successWhy": "How-to placement for BTP structure: accounts, directories, subaccounts.",
+          "cinema": "how_place"
+        },
+        {
+          "id": "s4",
+          "title": "Prove it",
+          "teach": "HOW is incomplete without verification evidence.",
+          "prompt": "CHECK the service/data node that proves the control works.",
+          "mode": "drop",
+          "hint": "Downstream verification target.",
+          "toolId": "tool-check",
+          "targetNodeId": "n3",
+          "wrongTargets": {
+            "hub": "Useful later — this beat wants verification evidence.",
+            "n1": "Useful later — this beat wants verification evidence.",
+            "n2": "Useful later — this beat wants verification evidence."
+          },
+          "successWhy": "How-game cleared: BTP structure: accounts, directories, subaccounts.",
+          "cinema": "how_prove"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-platform-structure-trap",
+      "title": "18⚠ Trap: BTP structure: accounts, directories, subaccounts",
+      "tier": "advanced",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "trap_misuse",
+      "mapStyle": "space",
+      "brief": "Curriculum 18/1099 · btp-platform-structure · trap. How a BTP landscape is organized: global account → directories → subaccounts → services & environments.",
+      "unlockAfter": "ch-btp-platform-structure-how",
+      "concepts": [
+        "btp-platform-structure"
+      ],
+      "curriculumIndex": 18,
+      "conceptId": "btp-platform-structure",
+      "variant": "trap",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Hub",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "n1",
+          "label": "Node A",
+          "x": 20,
+          "y": 30,
+          "kind": "app"
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Name the anti-pattern",
+          "teach": "Misuse of “BTP structure: accounts, directories, subaccounts”: One shared subaccount for everything ‘to go faster’",
+          "prompt": "Which option is the misuse to reject?",
+          "mode": "choose",
+          "hint": "Anti-pattern language — disable, skip, over-privilege, buzzword-only.",
+          "cinema": "trap_alert",
+          "formula": "TRAP = looks fast · hides risk · fails audit/incident",
+          "options": [
+            {
+              "id": "t",
+              "label": "One shared subaccount for everything ‘to go faster’",
+              "correct": true,
+              "why": "Correct — this is the trap to reject."
+            },
+            {
+              "id": "f1",
+              "label": "Draw your landing zone: global → directories → dev/test/prod subaccounts",
+              "correct": false,
+              "why": "That is the good path — not the trap."
+            },
+            {
+              "id": "f2",
+              "label": "Document residual risk when deferring with an owner and date",
+              "correct": false,
+              "why": "Healthy deferral practice — not a trap."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Why the trap fails",
+          "teach": "Most beginner confusion is not CAP vs RAP — it is ‘where do I create this service and who can see it?’ Wrong structure causes security and cost leaks.",
+          "prompt": "Why does the trap fail under real pressure?",
+          "mode": "choose",
+          "hint": "Blast radius, audit, upgrade, or customer impact.",
+          "cinema": "trap_blast",
+          "options": [
+            {
+              "id": "t",
+              "label": "Most beginner confusion is not CAP vs RAP — it is ‘where do I create this service and who can see it?’ Wrong structure causes security and c",
+              "correct": true,
+              "why": "Risk framing locked."
+            },
+            {
+              "id": "f1",
+              "label": "Traps only matter for exam questions",
+              "correct": false,
+              "why": "Operational failure, not exams."
+            },
+            {
+              "id": "f2",
+              "label": "Nothing fails if you never look at logs",
+              "correct": false,
+              "why": "Customers and auditors still notice."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Re-arm the control",
+          "teach": "Replace the trap with a real apply of BTP structure: accounts, directories, subaccounts.",
+          "prompt": "Drop the tool onto the broken API hop to re-arm the control.",
+          "mode": "drop",
+          "hint": "Broken API/control node.",
+          "toolId": "tool-account",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Wrong hop — re-arm the broken control node.",
+            "n2": "Wrong hop — re-arm the broken control node.",
+            "n3": "Wrong hop — re-arm the broken control node."
+          },
+          "successWhy": "Trap rejected; control re-armed for BTP structure: accounts, directories, subaccounts.",
+          "cinema": "trap_rearm"
+        },
+        {
+          "id": "s4",
+          "title": "Seal against relapse",
+          "teach": "Peak-end: verify so the trap memory includes the fix path.",
+          "prompt": "CHECK the data/service end to prove the trap is gone.",
+          "mode": "drop",
+          "hint": "Downstream proof node.",
+          "toolId": "tool-check",
+          "targetNodeId": "n3",
+          "wrongTargets": {
+            "hub": "Verify the end of the chain.",
+            "n1": "Verify the end of the chain.",
+            "n2": "Verify the end of the chain."
+          },
+          "successWhy": "Trap-game cleared: BTP structure: accounts, directories, subaccounts.",
+          "cinema": "trap_seal"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-platform-structure-scenario",
+      "title": "19🎬 Scenario: BTP structure: accounts, directories, subaccounts",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "scenario_story",
+      "mapStyle": "space",
+      "brief": "Curriculum 19/1099 · btp-platform-structure · scenario. How a BTP landscape is organized: global account → directories → subaccounts → services & environments.",
+      "unlockAfter": "ch-btp-platform-structure-trap",
+      "concepts": [
+        "btp-platform-structure"
+      ],
+      "curriculumIndex": 19,
+      "conceptId": "btp-platform-structure",
+      "variant": "scenario",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Story",
+          "x": 15,
+          "y": 48,
+          "kind": "app",
+          "broken": false
+        },
+        {
+          "id": "b",
+          "label": "Middle",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Read the room",
+          "teach": "Project scene: Landing zone setup week: apply BTP structure: accounts, directories, subaccounts so Dev/Test/Prod don't share blast radius.",
+          "prompt": "In this story, when is “BTP structure: accounts, directories, subaccounts” the right control?",
+          "mode": "choose",
+          "hint": "Match the use case to the trigger in the scene.",
+          "cinema": "scenario_open",
+          "formula": "SCENE → TRIGGER → CONTROL → PROOF",
+          "options": [
+            {
+              "id": "t",
+              "label": "Landing zone setup week: apply BTP structure: accounts, directories, subaccounts so Dev/Test/Prod don't share blast radius.",
+              "correct": true,
+              "why": "Scene trigger matched — engage now."
+            },
+            {
+              "id": "f1",
+              "label": "After every status meeting, regardless of risk",
+              "correct": false,
+              "why": "Cargo-cult timing wastes capacity."
+            },
+            {
+              "id": "f2",
+              "label": "Never in this landscape — only on paper",
+              "correct": false,
+              "why": "The scene exists so you apply the control for real."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Act in the scene",
+          "teach": "How the team should move: Draw your landing zone: global → directories → dev/test/prod subaccounts",
+          "prompt": "Which action plays correctly in this scenario?",
+          "mode": "choose",
+          "hint": "Draw your landing zone: global → directories → dev/test/prod subaccounts",
+          "cinema": "scenario_act",
+          "options": [
+            {
+              "id": "t",
+              "label": "Draw your landing zone: global → directories → dev/test/prod subaccounts",
+              "correct": true,
+              "why": "Correct scene action."
+            },
+            {
+              "id": "f1",
+              "label": "Ignore the hub and only update slides",
+              "correct": false,
+              "why": "Theater without landscape change is not apply."
+            },
+            {
+              "id": "f2",
+              "label": "Disable monitoring so the story looks green",
+              "correct": false,
+              "why": "Hiding signals is a trap."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Stage the hub",
+          "teach": "Second window: Incident bridge: symptoms appear; use “BTP structure: accounts, directories, subaccounts” to classify the failing hop before changing config.",
+          "prompt": "Drop the tool on the hub — the scene’s control point.",
+          "mode": "drop",
+          "hint": "Hub is the active center.",
+          "toolId": "tool-account",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Wrong stage mark — use the hub.",
+            "c": "Wrong stage mark — use the hub.",
+            "d": "Wrong stage mark — use the hub."
+          },
+          "successWhy": "Scenario apply for BTP structure: accounts, directories, subaccounts.",
+          "cinema": "scenario_stage"
+        },
+        {
+          "id": "s4",
+          "title": "Cut — verify",
+          "teach": "Scene ends only when evidence proves the control held.",
+          "prompt": "CHECK the hub — proof for the debrief.",
+          "mode": "drop",
+          "hint": "Hub again for seal.",
+          "toolId": "tool-check",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Verify the hub.",
+            "c": "Verify the hub.",
+            "d": "Verify the hub."
+          },
+          "successWhy": "Scenario cleared: BTP structure: accounts, directories, subaccounts.",
+          "cinema": "scenario_cut"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-platform-structure-compare",
+      "title": "20⚖ Compare: BTP structure: accounts, directories, subaccounts",
+      "tier": "advanced",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "compare_tradeoff",
+      "mapStyle": "space",
+      "brief": "Curriculum 20/1099 · btp-platform-structure · compare. How a BTP landscape is organized: global account → directories → subaccounts → services & environments.",
+      "unlockAfter": "ch-btp-platform-structure-scenario",
+      "concepts": [
+        "btp-platform-structure"
+      ],
+      "curriculumIndex": 20,
+      "conceptId": "btp-platform-structure",
+      "variant": "compare",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Hub",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "n1",
+          "label": "Tradeoff",
+          "x": 20,
+          "y": 30,
+          "kind": "app",
+          "broken": true
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Pick the control",
+          "teach": "Most beginner confusion is not CAP vs RAP — it is ‘where do I create this service and who can see it?’ Wrong structure causes security and cost leaks.",
+          "prompt": "When should you choose “BTP structure: accounts, directories, subaccounts” over deferring it?",
+          "mode": "choose",
+          "hint": "Any serious landscape",
+          "cinema": "compare_scales",
+          "formula": "COMPARE = risk × cost × reversibility",
+          "options": [
+            {
+              "id": "t",
+              "label": "Any serious landscape",
+              "correct": true,
+              "why": "Correct window for choosing this control."
+            },
+            {
+              "id": "f1",
+              "label": "Always pick the newest brand name regardless of fit",
+              "correct": false,
+              "why": "Brand ≠ fit. Compare on risk and landscape."
+            },
+            {
+              "id": "f2",
+              "label": "Never choose it — complexity is always wrong",
+              "correct": false,
+              "why": "Under-engineering is also a risk."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Know the alternate",
+          "teach": "Defer window: Personal sandbox only",
+          "prompt": "Which deferral is disciplined (not a trap)?",
+          "mode": "choose",
+          "hint": "Owner + date + residual risk — not silent skip.",
+          "cinema": "compare_fork",
+          "options": [
+            {
+              "id": "t",
+              "label": "Personal sandbox only",
+              "correct": true,
+              "why": "Disciplined alternate path."
+            },
+            {
+              "id": "f1",
+              "label": "Skip forever and hope no one audits",
+              "correct": false,
+              "why": "Silent skip is the trap."
+            },
+            {
+              "id": "f2",
+              "label": "Ship with Admin.All so you need no design",
+              "correct": false,
+              "why": "Privilege inflation is never the alternate."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Commit the hop",
+          "teach": "Lock the chosen path for BTP structure: accounts, directories, subaccounts onto the tradeoff hop.",
+          "prompt": "Drop the tool on the Tradeoff node to commit.",
+          "mode": "drop",
+          "hint": "Broken middle hop.",
+          "toolId": "tool-account",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Commit on the tradeoff hop.",
+            "n2": "Commit on the tradeoff hop.",
+            "n3": "Commit on the tradeoff hop."
+          },
+          "successWhy": "Compare commit for BTP structure: accounts, directories, subaccounts.",
+          "cinema": "compare_lock"
+        },
+        {
+          "id": "s4",
+          "title": "Prove the fork",
+          "teach": "Close with verification so the compare memory sticks.",
+          "prompt": "CHECK the end node — evidence for the chosen path.",
+          "mode": "drop",
+          "hint": "Downstream proof.",
+          "toolId": "tool-check",
+          "targetNodeId": "n3",
+          "wrongTargets": {
+            "hub": "Verify the end of the path.",
+            "n1": "Verify the end of the path.",
+            "n2": "Verify the end of the path."
+          },
+          "successWhy": "Compare cleared: BTP structure: accounts, directories, subaccounts.",
+          "cinema": "compare_prove"
+        }
+      ]
+    },
+    {
+      "id": "ch-btp-platform-structure-mastery",
+      "title": "21★ Mastery: BTP structure: accounts, directories, subaccounts",
+      "tier": "advanced",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "space",
+      "mapStyle": "space",
+      "brief": "Curriculum 21/1099 · btp-platform-structure · mastery. How a BTP landscape is organized: global account → directories → subaccounts → services & environments.",
+      "unlockAfter": "ch-btp-platform-structure-compare",
+      "concepts": [
+        "btp-platform-structure"
+      ],
+      "curriculumIndex": 21,
+      "conceptId": "btp-platform-structure",
+      "variant": "mastery",
+      "mapNodes": [
+        {
+          "id": "user",
+          "label": "User",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "idp",
+          "label": "IdP",
+          "x": 38,
+          "y": 48,
+          "kind": "dest"
+        },
+        {
+          "id": "api",
+          "label": "API",
+          "x": 62,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "db",
+          "label": "Data",
+          "x": 86,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "user",
+          "idp"
+        ],
+        [
+          "idp",
+          "api"
+        ],
+        [
+          "api",
+          "db"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Mechanism under pressure",
+          "teach": "BTP structure is hierarchical so companies can separate billing, teams, and stages. 1) Global account — commercial root (contracts, overall entitlements). 2) Directories — optional folders for org units or regions. 3) Subaccounts — isolation units where you enable services, assig",
+          "prompt": "Board asks: which statement is true about BTP structure: accounts, directories, subaccounts?",
+          "mode": "choose",
+          "hint": "Global account is the commercial root",
+          "cinema": "war_brief",
+          "options": [
+            {
+              "id": "t",
+              "label": "Global account is the commercial root",
+              "correct": true,
+              "why": "Mechanism-aligned answer."
+            },
+            {
+              "id": "f1",
+              "label": "It never matters in production landscapes",
+              "correct": false,
+              "why": "It matters — that is why it is in the spine."
+            },
+            {
+              "id": "f2",
+              "label": "Bypass it with Admin.All / no auth in prod",
+              "correct": false,
+              "why": "Forbidden shortcut."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Why it matters",
+          "teach": "Most beginner confusion is not CAP vs RAP — it is ‘where do I create this service and who can see it?’ Wrong structure causes security and cost leaks.",
+          "prompt": "Select the business-risk reason to care.",
+          "mode": "choose",
+          "hint": "Link to failure, audit, upgrade, or customer impact.",
+          "cinema": "war_move",
+          "options": [
+            {
+              "id": "t",
+              "label": "Most beginner confusion is not CAP vs RAP — it is ‘where do I create this service and who can see it?’ Wrong structure causes security and c",
+              "correct": true,
+              "why": "Correct risk framing."
+            },
+            {
+              "id": "f1",
+              "label": "Only for certification trivia",
+              "correct": false,
+              "why": "Not trivia — operational judgment."
+            },
+            {
+              "id": "f2",
+              "label": "Only marketing slides",
+              "correct": false,
+              "why": "Design-time control."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Apply on the hub",
+          "teach": "Draw your landing zone: global → directories → dev/test/prod subaccounts",
+          "prompt": "Drop the tool on the hub.",
+          "mode": "drop",
+          "hint": "Hub is the broken/active center.",
+          "toolId": "tool-account",
+          "targetNodeId": "api",
+          "wrongTargets": {
+            "user": "Wrong node for this mastery apply.",
+            "idp": "Wrong node for this mastery apply.",
+            "db": "Wrong node for this mastery apply."
+          },
+          "successWhy": "Mastery placement for BTP structure: accounts, directories, subaccounts.",
+          "cinema": "war_strike"
+        },
+        {
+          "id": "s4",
+          "title": "Seal",
+          "teach": "Peak-end: verify so memory encodes the correct model.",
+          "prompt": "CHECK the hub after apply.",
+          "mode": "drop",
+          "hint": "Hub again for proof.",
+          "toolId": "tool-check",
+          "targetNodeId": "api",
+          "wrongTargets": {
+            "user": "Verify the hub.",
+            "idp": "Verify the hub.",
+            "db": "Verify the hub."
+          },
+          "successWhy": "Mastery sealed: BTP structure: accounts, directories, subaccounts.",
+          "cinema": "war_win"
+        }
+      ]
+    },
+    {
+      "id": "ch-ops-accounts-intro",
+      "title": "22. Global accounts and subaccounts",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "space",
+      "mapStyle": "space",
+      "brief": "Curriculum 22/1099 · ops-accounts · intro. Landscape hierarchy",
+      "unlockAfter": "ch-btp-platform-structure-mastery",
+      "concepts": [
+        "ops-accounts"
+      ],
+      "curriculumIndex": 22,
+      "conceptId": "ops-accounts",
+      "variant": "intro",
+      "mapNodes": [
+        {
+          "id": "xp",
+          "label": "Experience",
+          "x": 50,
+          "y": 22,
+          "kind": "app"
+        },
+        {
+          "id": "plat",
+          "label": "Global accounts an",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "core",
+          "label": "Core SoR",
+          "x": 50,
+          "y": 75,
+          "kind": "core"
+        }
+      ],
+      "edges": [
+        [
+          "xp",
+          "plat"
+        ],
+        [
+          "plat",
+          "core"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Recognize the idea",
+          "teach": "Commercial root vs isolation slices. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+          "prompt": "What best captures “Global accounts and subaccounts”?",
+          "mode": "choose",
+          "hint": "Landscape hierarchy",
+          "cinema": "film_setup",
+          "formula": "Concept: ops-accounts",
+          "options": [
+            {
+              "id": "c1",
+              "label": "Landscape hierarchy",
+              "correct": true,
+              "why": "Correct — Landscape hierarchy"
+            },
+            {
+              "id": "w1",
+              "label": "Ignore Global accounts and subaccounts and hope production is fine",
+              "correct": false,
+              "why": "Skipping foundations creates silent debt. Name the control and verify it."
+            },
+            {
+              "id": "w2",
+              "label": "Disable security / governance to unblock demo",
+              "correct": false,
+              "why": "Demo shortcuts become production incidents. Never remove controls as a 'fix'."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Avoid the trap",
+          "teach": "Memorizing the name of Global accounts and subaccounts without a failure story",
+          "prompt": "Which approach is the mistake to reject?",
+          "mode": "choose",
+          "hint": "Reject shortcuts that remove controls or skip verification.",
+          "cinema": "film_tension",
+          "options": [
+            {
+              "id": "m1",
+              "label": "Memorizing the name of Global accounts and subaccounts without a failure story",
+              "correct": true,
+              "why": "Correct rejection — this is the anti-pattern to avoid."
+            },
+            {
+              "id": "m2",
+              "label": "Design with constraints and verify the control",
+              "correct": false,
+              "why": "That is the good path — not the reject target."
+            },
+            {
+              "id": "m3",
+              "label": "Document ownership and test negative cases",
+              "correct": false,
+              "why": "Healthy practice — not the mistake."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Place the control",
+          "teach": "Use Global accounts and subaccounts explicitly in a design defense sentence",
+          "prompt": "Drag the highlighted tool onto the broken/active node.",
+          "mode": "drop",
+          "hint": "Broken/highlighted middle hop is usually the lesson focus.",
+          "toolId": "tool-account",
+          "targetNodeId": "plat",
+          "wrongTargets": {
+            "xp": "Not this node for “Global accounts and subaccounts”. Re-read the teach beat.",
+            "core": "Not this node for “Global accounts and subaccounts”. Re-read the teach beat."
+          },
+          "successWhy": "Placed control for Global accounts and subaccounts.",
+          "cinema": "film_climax"
+        },
+        {
+          "id": "s4",
+          "title": "Verify",
+          "teach": "Without Global accounts and subaccounts, you mis-diagnose incidents and make weak architecture choices. Close the loop with verification.",
+          "prompt": "Drag CHECK onto the service/data node that proves health.",
+          "mode": "drop",
+          "hint": "Verify the downstream resource or hub.",
+          "toolId": "tool-check",
+          "targetNodeId": "core",
+          "wrongTargets": {
+            "xp": "Useful later — this step wants the verification target.",
+            "plat": "Useful later — this step wants the verification target."
+          },
+          "successWhy": "Global accounts and subaccounts intro cleared. Next curriculum step unlocks.",
+          "cinema": "film_end"
+        }
+      ]
+    },
+    {
+      "id": "ch-ops-accounts-when",
+      "title": "23⏱ When: Global accounts and subaccounts",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "when_to_use",
+      "mapStyle": "space",
+      "brief": "Curriculum 23/1099 · ops-accounts · when. Landscape hierarchy",
+      "unlockAfter": "ch-ops-accounts-intro",
+      "concepts": [
+        "ops-accounts"
+      ],
+      "curriculumIndex": 23,
+      "conceptId": "ops-accounts",
+      "variant": "when",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Hub",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "n1",
+          "label": "Decision",
+          "x": 20,
+          "y": 30,
+          "kind": "app",
+          "broken": true
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Spot the trigger",
+          "teach": "WHEN to reach for “Global accounts and subaccounts”: Landing zone setup week: apply Global accounts and subaccounts so Dev/Test/Prod don't share blast radius.",
+          "prompt": "Which situation is the right moment to apply Global accounts and subaccounts?",
+          "mode": "choose",
+          "hint": "Match a real trigger: landing zone, incident, design review, go-live.",
+          "cinema": "when_radar",
+          "formula": "WHEN = trigger + constraint + failure cost",
+          "options": [
+            {
+              "id": "t",
+              "label": "Landing zone setup week: apply Global accounts and subaccounts so Dev/Test/Prod don't share blast radius.",
+              "correct": true,
+              "why": "Correct trigger — use the concept here."
+            },
+            {
+              "id": "f1",
+              "label": "Only after production is already on fire for weeks",
+              "correct": false,
+              "why": "Too late. Design-time and early ops use this concept before blast radius grows."
+            },
+            {
+              "id": "f2",
+              "label": "Never — buzzwords belong only on marketing slides",
+              "correct": false,
+              "why": "This is an operational design control, not decoration."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Reject wrong timing",
+          "teach": "Wrong timing wastes effort or misses risk. Without Global accounts and subaccounts, you mis-diagnose incidents and make weak architecture choices.",
+          "prompt": "Which timing is a trap for this concept?",
+          "mode": "choose",
+          "hint": "Reject “skip until certification” and “only after outage”.",
+          "cinema": "when_clock",
+          "options": [
+            {
+              "id": "t",
+              "label": "Defer until after go-live with no residual-risk note",
+              "correct": true,
+              "why": "Trap identified — silent deferral is how debt becomes incidents."
+            },
+            {
+              "id": "f1",
+              "label": "Incident bridge: symptoms appear; use “Global accounts and subaccounts” to classify the failing hop before changing config.",
+              "correct": false,
+              "why": "That is a legitimate use window — not the trap."
+            },
+            {
+              "id": "f2",
+              "label": "During architecture review when constraints are still cheap to change",
+              "correct": false,
+              "why": "That is excellent timing — not the trap."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Arm the decision hop",
+          "teach": "On the timeline, the decision hop is where “Global accounts and subaccounts” enters the design.",
+          "prompt": "Drop the tool onto the Decision hop to mark WHEN you engage.",
+          "mode": "drop",
+          "hint": "Broken middle node = decision moment.",
+          "toolId": "tool-account",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Not the decision hop — arm the moment you choose the control.",
+            "n2": "Not the decision hop — arm the moment you choose the control.",
+            "n3": "Not the decision hop — arm the moment you choose the control."
+          },
+          "successWhy": "When-to-use armed for Global accounts and subaccounts.",
+          "cinema": "when_lock"
+        },
+        {
+          "id": "s4",
+          "title": "Confirm window",
+          "teach": "Close the loop: the team can restate WHEN this concept is mandatory.",
+          "prompt": "CHECK the decision hop — proof you can explain the use window.",
+          "mode": "drop",
+          "hint": "Verify the same decision node.",
+          "toolId": "tool-check",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Verify the decision hop you armed.",
+            "n2": "Verify the decision hop you armed.",
+            "n3": "Verify the decision hop you armed."
+          },
+          "successWhy": "When-game cleared: Global accounts and subaccounts.",
+          "cinema": "when_seal"
+        }
+      ]
+    },
+    {
+      "id": "ch-ops-accounts-how",
+      "title": "24⚙ How: Global accounts and subaccounts",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "how_to_use",
+      "mapStyle": "space",
+      "brief": "Curriculum 24/1099 · ops-accounts · how. Landscape hierarchy",
+      "unlockAfter": "ch-ops-accounts-when",
+      "concepts": [
+        "ops-accounts"
+      ],
+      "curriculumIndex": 24,
+      "conceptId": "ops-accounts",
+      "variant": "how",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Start",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "b",
+          "label": "Global accounts ",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Name the move",
+          "teach": "HOW to use “Global accounts and subaccounts”: Use Global accounts and subaccounts explicitly in a design defense sentence",
+          "prompt": "Which action is the correct first move when using Global accounts and subaccounts?",
+          "mode": "choose",
+          "hint": "Landscape hierarchy",
+          "cinema": "how_pipeline",
+          "formula": "HOW = locate hop → apply control → verify evidence",
+          "options": [
+            {
+              "id": "t",
+              "label": "Use Global accounts and subaccounts explicitly in a design defense sentence",
+              "correct": true,
+              "why": "Correct procedure — this is how you use it."
+            },
+            {
+              "id": "f1",
+              "label": "Skip design, paste a screenshot from another project",
+              "correct": false,
+              "why": "Copy-paste without landscape context fails under review."
+            },
+            {
+              "id": "f2",
+              "label": "Grant Admin.All so you never need this concept",
+              "correct": false,
+              "why": "Privilege inflation is not a how-to — it is a trap."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Order the steps",
+          "teach": "Second beat: Apply Global accounts and subaccounts on the active hop, then verify with evidence.",
+          "prompt": "Which follow-through is correct after the first apply?",
+          "mode": "choose",
+          "hint": "Evidence, negative test, or ownership — not “hope”.",
+          "cinema": "how_steps",
+          "options": [
+            {
+              "id": "t",
+              "label": "Apply Global accounts and subaccounts on the active hop, then verify with evidence.",
+              "correct": true,
+              "why": "Correct how-sequence."
+            },
+            {
+              "id": "f1",
+              "label": "Ship to prod with no check and no owner",
+              "correct": false,
+              "why": "Missing verify + ownership is how silent debt ships."
+            },
+            {
+              "id": "f2",
+              "label": "Delete logs so nobody can challenge the design",
+              "correct": false,
+              "why": "Never. Observability is part of how you use platform controls."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Place on the platform hop",
+          "teach": "Drag the control onto the hop where Global accounts and subaccounts actually lives in the stack.",
+          "prompt": "Drop the highlighted tool onto the broken platform/control node.",
+          "mode": "drop",
+          "hint": "Broken middle layer is the apply target.",
+          "toolId": "tool-account",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Wrong layer for “Global accounts and subaccounts” apply.",
+            "c": "Wrong layer for “Global accounts and subaccounts” apply.",
+            "d": "Wrong layer for “Global accounts and subaccounts” apply."
+          },
+          "successWhy": "How-to placement for Global accounts and subaccounts.",
+          "cinema": "how_place"
+        },
+        {
+          "id": "s4",
+          "title": "Prove it",
+          "teach": "HOW is incomplete without verification evidence.",
+          "prompt": "CHECK the service/data node that proves the control works.",
+          "mode": "drop",
+          "hint": "Downstream verification target.",
+          "toolId": "tool-check",
+          "targetNodeId": "d",
+          "wrongTargets": {
+            "a": "Useful later — this beat wants verification evidence.",
+            "b": "Useful later — this beat wants verification evidence.",
+            "c": "Useful later — this beat wants verification evidence."
+          },
+          "successWhy": "How-game cleared: Global accounts and subaccounts.",
+          "cinema": "how_prove"
+        }
+      ]
+    },
+    {
+      "id": "ch-ops-accounts-trap",
+      "title": "25⚠ Trap: Global accounts and subaccounts",
+      "tier": "advanced",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "trap_misuse",
+      "mapStyle": "space",
+      "brief": "Curriculum 25/1099 · ops-accounts · trap. Landscape hierarchy",
+      "unlockAfter": "ch-ops-accounts-how",
+      "concepts": [
+        "ops-accounts"
+      ],
+      "curriculumIndex": 25,
+      "conceptId": "ops-accounts",
+      "variant": "trap",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Start",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "b",
+          "label": "Middle",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Name the anti-pattern",
+          "teach": "Misuse of “Global accounts and subaccounts”: Memorizing the name of Global accounts and subaccounts without a failure story",
+          "prompt": "Which option is the misuse to reject?",
+          "mode": "choose",
+          "hint": "Anti-pattern language — disable, skip, over-privilege, buzzword-only.",
+          "cinema": "trap_alert",
+          "formula": "TRAP = looks fast · hides risk · fails audit/incident",
+          "options": [
+            {
+              "id": "t",
+              "label": "Memorizing the name of Global accounts and subaccounts without a failure story",
+              "correct": true,
+              "why": "Correct — this is the trap to reject."
+            },
+            {
+              "id": "f1",
+              "label": "Use Global accounts and subaccounts explicitly in a design defense sentence",
+              "correct": false,
+              "why": "That is the good path — not the trap."
+            },
+            {
+              "id": "f2",
+              "label": "Document residual risk when deferring with an owner and date",
+              "correct": false,
+              "why": "Healthy deferral practice — not a trap."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Why the trap fails",
+          "teach": "Without Global accounts and subaccounts, you mis-diagnose incidents and make weak architecture choices.",
+          "prompt": "Why does the trap fail under real pressure?",
+          "mode": "choose",
+          "hint": "Blast radius, audit, upgrade, or customer impact.",
+          "cinema": "trap_blast",
+          "options": [
+            {
+              "id": "t",
+              "label": "Without Global accounts and subaccounts, you mis-diagnose incidents and make weak architecture choices.",
+              "correct": true,
+              "why": "Risk framing locked."
+            },
+            {
+              "id": "f1",
+              "label": "Traps only matter for exam questions",
+              "correct": false,
+              "why": "Operational failure, not exams."
+            },
+            {
+              "id": "f2",
+              "label": "Nothing fails if you never look at logs",
+              "correct": false,
+              "why": "Customers and auditors still notice."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Re-arm the control",
+          "teach": "Replace the trap with a real apply of Global accounts and subaccounts.",
+          "prompt": "Drop the tool onto the broken API hop to re-arm the control.",
+          "mode": "drop",
+          "hint": "Broken API/control node.",
+          "toolId": "tool-account",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Wrong hop — re-arm the broken control node.",
+            "c": "Wrong hop — re-arm the broken control node.",
+            "d": "Wrong hop — re-arm the broken control node."
+          },
+          "successWhy": "Trap rejected; control re-armed for Global accounts and subaccounts.",
+          "cinema": "trap_rearm"
+        },
+        {
+          "id": "s4",
+          "title": "Seal against relapse",
+          "teach": "Peak-end: verify so the trap memory includes the fix path.",
+          "prompt": "CHECK the data/service end to prove the trap is gone.",
+          "mode": "drop",
+          "hint": "Downstream proof node.",
+          "toolId": "tool-check",
+          "targetNodeId": "d",
+          "wrongTargets": {
+            "a": "Verify the end of the chain.",
+            "b": "Verify the end of the chain.",
+            "c": "Verify the end of the chain."
+          },
+          "successWhy": "Trap-game cleared: Global accounts and subaccounts.",
+          "cinema": "trap_seal"
+        }
+      ]
+    },
+    {
+      "id": "ch-ops-accounts-scenario",
+      "title": "26🎬 Scenario: Global accounts and subaccounts",
+      "tier": "basic",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "scenario_story",
+      "mapStyle": "space",
+      "brief": "Curriculum 26/1099 · ops-accounts · scenario. Landscape hierarchy",
+      "unlockAfter": "ch-ops-accounts-trap",
+      "concepts": [
+        "ops-accounts"
+      ],
+      "curriculumIndex": 26,
+      "conceptId": "ops-accounts",
+      "variant": "scenario",
+      "mapNodes": [
+        {
+          "id": "hub",
+          "label": "Story",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": false
+        },
+        {
+          "id": "n1",
+          "label": "Node A",
+          "x": 20,
+          "y": 30,
+          "kind": "app"
+        },
+        {
+          "id": "n2",
+          "label": "Node B",
+          "x": 20,
+          "y": 70,
+          "kind": "partner"
+        },
+        {
+          "id": "n3",
+          "label": "Node C",
+          "x": 80,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "n1",
+          "hub"
+        ],
+        [
+          "n2",
+          "hub"
+        ],
+        [
+          "hub",
+          "n3"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Read the room",
+          "teach": "Project scene: Landing zone setup week: apply Global accounts and subaccounts so Dev/Test/Prod don't share blast radius.",
+          "prompt": "In this story, when is “Global accounts and subaccounts” the right control?",
+          "mode": "choose",
+          "hint": "Match the use case to the trigger in the scene.",
+          "cinema": "scenario_open",
+          "formula": "SCENE → TRIGGER → CONTROL → PROOF",
+          "options": [
+            {
+              "id": "t",
+              "label": "Landing zone setup week: apply Global accounts and subaccounts so Dev/Test/Prod don't share blast radius.",
+              "correct": true,
+              "why": "Scene trigger matched — engage now."
+            },
+            {
+              "id": "f1",
+              "label": "After every status meeting, regardless of risk",
+              "correct": false,
+              "why": "Cargo-cult timing wastes capacity."
+            },
+            {
+              "id": "f2",
+              "label": "Never in this landscape — only on paper",
+              "correct": false,
+              "why": "The scene exists so you apply the control for real."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Act in the scene",
+          "teach": "How the team should move: Use Global accounts and subaccounts explicitly in a design defense sentence",
+          "prompt": "Which action plays correctly in this scenario?",
+          "mode": "choose",
+          "hint": "Use Global accounts and subaccounts explicitly in a design defense sentence",
+          "cinema": "scenario_act",
+          "options": [
+            {
+              "id": "t",
+              "label": "Use Global accounts and subaccounts explicitly in a design defense sentence",
+              "correct": true,
+              "why": "Correct scene action."
+            },
+            {
+              "id": "f1",
+              "label": "Ignore the hub and only update slides",
+              "correct": false,
+              "why": "Theater without landscape change is not apply."
+            },
+            {
+              "id": "f2",
+              "label": "Disable monitoring so the story looks green",
+              "correct": false,
+              "why": "Hiding signals is a trap."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Stage the hub",
+          "teach": "Second window: Incident bridge: symptoms appear; use “Global accounts and subaccounts” to classify the failing hop before changing config.",
+          "prompt": "Drop the tool on the hub — the scene’s control point.",
+          "mode": "drop",
+          "hint": "Hub is the active center.",
+          "toolId": "tool-account",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Wrong stage mark — use the hub.",
+            "n2": "Wrong stage mark — use the hub.",
+            "n3": "Wrong stage mark — use the hub."
+          },
+          "successWhy": "Scenario apply for Global accounts and subaccounts.",
+          "cinema": "scenario_stage"
+        },
+        {
+          "id": "s4",
+          "title": "Cut — verify",
+          "teach": "Scene ends only when evidence proves the control held.",
+          "prompt": "CHECK the hub — proof for the debrief.",
+          "mode": "drop",
+          "hint": "Hub again for seal.",
+          "toolId": "tool-check",
+          "targetNodeId": "hub",
+          "wrongTargets": {
+            "n1": "Verify the hub.",
+            "n2": "Verify the hub.",
+            "n3": "Verify the hub."
+          },
+          "successWhy": "Scenario cleared: Global accounts and subaccounts.",
+          "cinema": "scenario_cut"
+        }
+      ]
+    },
+    {
+      "id": "ch-ops-accounts-compare",
+      "title": "27⚖ Compare: Global accounts and subaccounts",
+      "tier": "advanced",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "compare_tradeoff",
+      "mapStyle": "space",
+      "brief": "Curriculum 27/1099 · ops-accounts · compare. Landscape hierarchy",
+      "unlockAfter": "ch-ops-accounts-scenario",
+      "concepts": [
+        "ops-accounts"
+      ],
+      "curriculumIndex": 27,
+      "conceptId": "ops-accounts",
+      "variant": "compare",
+      "mapNodes": [
+        {
+          "id": "xp",
+          "label": "Experience",
+          "x": 50,
+          "y": 22,
+          "kind": "app"
+        },
+        {
+          "id": "plat",
+          "label": "Tradeoff",
+          "x": 50,
+          "y": 48,
+          "kind": "api",
+          "broken": true
+        },
+        {
+          "id": "core",
+          "label": "Core SoR",
+          "x": 50,
+          "y": 75,
+          "kind": "core"
+        }
+      ],
+      "edges": [
+        [
+          "xp",
+          "plat"
+        ],
+        [
+          "plat",
+          "core"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Pick the control",
+          "teach": "Without Global accounts and subaccounts, you mis-diagnose incidents and make weak architecture choices.",
+          "prompt": "When should you choose “Global accounts and subaccounts” over deferring it?",
+          "mode": "choose",
+          "hint": "Any serious landscape",
+          "cinema": "compare_scales",
+          "formula": "COMPARE = risk × cost × reversibility",
+          "options": [
+            {
+              "id": "t",
+              "label": "Any serious landscape",
+              "correct": true,
+              "why": "Correct window for choosing this control."
+            },
+            {
+              "id": "f1",
+              "label": "Always pick the newest brand name regardless of fit",
+              "correct": false,
+              "why": "Brand ≠ fit. Compare on risk and landscape."
+            },
+            {
+              "id": "f2",
+              "label": "Never choose it — complexity is always wrong",
+              "correct": false,
+              "why": "Under-engineering is also a risk."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Know the alternate",
+          "teach": "Defer window: Personal sandbox only",
+          "prompt": "Which deferral is disciplined (not a trap)?",
+          "mode": "choose",
+          "hint": "Owner + date + residual risk — not silent skip.",
+          "cinema": "compare_fork",
+          "options": [
+            {
+              "id": "t",
+              "label": "Personal sandbox only",
+              "correct": true,
+              "why": "Disciplined alternate path."
+            },
+            {
+              "id": "f1",
+              "label": "Skip forever and hope no one audits",
+              "correct": false,
+              "why": "Silent skip is the trap."
+            },
+            {
+              "id": "f2",
+              "label": "Ship with Admin.All so you need no design",
+              "correct": false,
+              "why": "Privilege inflation is never the alternate."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Commit the hop",
+          "teach": "Lock the chosen path for Global accounts and subaccounts onto the tradeoff hop.",
+          "prompt": "Drop the tool on the Tradeoff node to commit.",
+          "mode": "drop",
+          "hint": "Broken middle hop.",
+          "toolId": "tool-account",
+          "targetNodeId": "plat",
+          "wrongTargets": {
+            "xp": "Commit on the tradeoff hop.",
+            "core": "Commit on the tradeoff hop."
+          },
+          "successWhy": "Compare commit for Global accounts and subaccounts.",
+          "cinema": "compare_lock"
+        },
+        {
+          "id": "s4",
+          "title": "Prove the fork",
+          "teach": "Close with verification so the compare memory sticks.",
+          "prompt": "CHECK the end node — evidence for the chosen path.",
+          "mode": "drop",
+          "hint": "Downstream proof.",
+          "toolId": "tool-check",
+          "targetNodeId": "core",
+          "wrongTargets": {
+            "xp": "Verify the end of the path.",
+            "plat": "Verify the end of the path."
+          },
+          "successWhy": "Compare cleared: Global accounts and subaccounts.",
+          "cinema": "compare_prove"
+        }
+      ]
+    },
+    {
+      "id": "ch-ops-accounts-mastery",
+      "title": "28★ Mastery: Global accounts and subaccounts",
+      "tier": "advanced",
+      "domain": "operations",
+      "biome": "space",
+      "challengeType": "space",
+      "mapStyle": "space",
+      "brief": "Curriculum 28/1099 · ops-accounts · mastery. Landscape hierarchy",
+      "unlockAfter": "ch-ops-accounts-compare",
+      "concepts": [
+        "ops-accounts"
+      ],
+      "curriculumIndex": 28,
+      "conceptId": "ops-accounts",
+      "variant": "mastery",
+      "mapNodes": [
+        {
+          "id": "a",
+          "label": "Start",
+          "x": 15,
+          "y": 48,
+          "kind": "app"
+        },
+        {
+          "id": "b",
+          "label": "Middle",
+          "x": 40,
+          "y": 48,
+          "kind": "flow",
+          "broken": true
+        },
+        {
+          "id": "c",
+          "label": "Service",
+          "x": 65,
+          "y": 48,
+          "kind": "api"
+        },
+        {
+          "id": "d",
+          "label": "Data",
+          "x": 88,
+          "y": 48,
+          "kind": "data"
+        }
+      ],
+      "edges": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          "b",
+          "c"
+        ],
+        [
+          "c",
+          "d"
+        ]
+      ],
+      "steps": [
+        {
+          "id": "s1",
+          "title": "Mechanism under pressure",
+          "teach": "Commercial root vs isolation slices. (Tier 1–2 simulation fidelity — verify production details in official SAP docs.)",
+          "prompt": "Board asks: which statement is true about Global accounts and subaccounts?",
+          "mode": "choose",
+          "hint": "Landscape hierarchy",
+          "cinema": "war_brief",
+          "options": [
+            {
+              "id": "t",
+              "label": "Landscape hierarchy",
+              "correct": true,
+              "why": "Mechanism-aligned answer."
+            },
+            {
+              "id": "f1",
+              "label": "It never matters in production landscapes",
+              "correct": false,
+              "why": "It matters — that is why it is in the spine."
+            },
+            {
+              "id": "f2",
+              "label": "Bypass it with Admin.All / no auth in prod",
+              "correct": false,
+              "why": "Forbidden shortcut."
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "title": "Why it matters",
+          "teach": "Without Global accounts and subaccounts, you mis-diagnose incidents and make weak architecture choices.",
+          "prompt": "Select the business-risk reason to care.",
+          "mode": "choose",
+          "hint": "Link to failure, audit, upgrade, or customer impact.",
+          "cinema": "war_move",
+          "options": [
+            {
+              "id": "t",
+              "label": "Without Global accounts and subaccounts, you mis-diagnose incidents and make weak architecture choices.",
+              "correct": true,
+              "why": "Correct risk framing."
+            },
+            {
+              "id": "f1",
+              "label": "Only for certification trivia",
+              "correct": false,
+              "why": "Not trivia — operational judgment."
+            },
+            {
+              "id": "f2",
+              "label": "Only marketing slides",
+              "correct": false,
+              "why": "Design-time control."
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "title": "Apply on the hub",
+          "teach": "Use Global accounts and subaccounts explicitly in a design defense sentence",
+          "prompt": "Drop the tool on the hub.",
+          "mode": "drop",
+          "hint": "Hub is the broken/active center.",
+          "toolId": "tool-account",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Wrong node for this mastery apply.",
+            "c": "Wrong node for this mastery apply.",
+            "d": "Wrong node for this mastery apply."
+          },
+          "successWhy": "Mastery placement for Global accounts and subaccounts.",
+          "cinema": "war_strike"
+        },
+        {
+          "id": "s4",
+          "title": "Seal",
+          "teach": "Peak-end: verify so memory encodes the correct model.",
+          "prompt": "CHECK the hub after apply.",
+          "mode": "drop",
+          "hint": "Hub again for proof.",
+          "toolId": "tool-check",
+          "targetNodeId": "b",
+          "wrongTargets": {
+            "a": "Verify the hub.",
+            "c": "Verify the hub.",
+            "d": "Verify the hub."
+          },
+          "successWhy": "Mastery sealed: Global accounts and subaccounts.",
+          "cinema": "war_win"
+        }
+      ]
+    }
+  ]
+}
