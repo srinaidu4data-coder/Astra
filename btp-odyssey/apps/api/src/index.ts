@@ -213,8 +213,8 @@ const server = createServer(async (req, res) => {
       return json(res, 200, {
         ok: true,
         product: "BTP Odyssey: The Living Enterprise",
-        version: "3.0.0",
-        release: "living-enterprise-r1",
+        version: "3.1.0",
+        release: "living-enterprise-r1.1",
         edition: "living-enterprise",
         successorOf: "mega-teach-2.0",
         disclaimer:
@@ -255,7 +255,7 @@ const server = createServer(async (req, res) => {
       return json(res, 200, {
         product: {
           name: "BTP Odyssey: The Living Enterprise",
-          version: "3.0.0",
+          version: "3.1.0",
           fidelityDefault: "tier2_behavioral",
           ethics:
             "No loot boxes, no punitive streaks, no FOMO. Breaks never cost progress. Optional only.",
@@ -427,6 +427,213 @@ const server = createServer(async (req, res) => {
       return json(res, 200, {
         ethics: "Review is optional. Missing a day never removes mastery evidence.",
         items: queue,
+      });
+    }
+
+    /** Optional local registration (no password SSO in R1 — display profile only) */
+    if (req.method === "POST" && path === "/api/living/register") {
+      const body = JSON.parse((await readBody(req)) || "{}") as {
+        displayName?: string;
+        persona?: string;
+        careerGoal?: string;
+        certInterest?: string;
+      };
+      const learner = store.getOrCreateLearner("local-learner");
+      if (body.displayName) learner.displayName = String(body.displayName).slice(0, 80);
+      learner.settings = {
+        ...learner.settings,
+        persona: body.persona ?? learner.settings.persona,
+        careerGoal: body.careerGoal ?? learner.settings.careerGoal,
+        livingEnterprise: true,
+      };
+      store.saveLearner(learner);
+      return json(res, 200, {
+        ok: true,
+        learner,
+        note: "Local profile only. No cloud account, no password. Export anytime. SSO deferred.",
+      });
+    }
+
+    /** Prerequisite diagnostic (light self-report + concept probe) */
+    if (req.method === "POST" && path === "/api/living/diagnostic") {
+      const body = JSON.parse((await readBody(req)) || "{}") as {
+        answers?: { id: string; value: string }[];
+      };
+      const answers = body.answers ?? [];
+      const scoreMap: Record<string, number> = {
+        never: 0,
+        heard: 1,
+        used: 2,
+        designed: 3,
+      };
+      let total = 0;
+      for (const a of answers) {
+        total += scoreMap[a.value] ?? 1;
+      }
+      const avg = answers.length ? total / answers.length : 1;
+      const level =
+        avg < 0.8 ? "beginner" : avg < 1.8 ? "developer" : avg < 2.5 ? "advanced" : "architect";
+      const recommendations =
+        level === "beginner"
+          ? ["live-northwind-order-insights", "chapter-beginner", "btp-what"]
+          : level === "architect"
+            ? ["architect", "r6-regulated-expansion", "sec-threat-model"]
+            : ["live-northwind-order-insights", "integration", "cap-what"];
+      return json(res, 200, {
+        level,
+        avg,
+        recommendations,
+        disclaimer:
+          "Self-report diagnostic for pathing only — not SAP certification placement.",
+      });
+    }
+
+    if (req.method === "GET" && path === "/api/living/glossary") {
+      const glossary = loadJsonFile<{ terms: { term: string; definition: string }[] }>(
+        join(contentRoot, "glossary/index.json"),
+        { terms: [] },
+      );
+      const q = (url.searchParams.get("q") ?? "").toLowerCase().trim();
+      const terms = q
+        ? glossary.terms.filter(
+            (t) =>
+              t.term.toLowerCase().includes(q) ||
+              t.definition.toLowerCase().includes(q),
+          )
+        : glossary.terms.slice(0, 40);
+      return json(res, 200, { terms, total: glossary.terms.length });
+    }
+
+    if (req.method === "GET" && path === "/api/living/notes") {
+      const learner = store.getOrCreateLearner("local-learner");
+      const notes =
+        (learner as { livingNotes?: unknown }).livingNotes ??
+        (learner.engagement as { notes?: unknown })?.notes ??
+        [];
+      return json(res, 200, { notes: Array.isArray(notes) ? notes : [] });
+    }
+
+    if (req.method === "POST" && path === "/api/living/notes") {
+      const body = JSON.parse((await readBody(req)) || "{}") as {
+        text?: string;
+        conceptId?: string;
+        bookmark?: boolean;
+      };
+      const learner = store.getOrCreateLearner("local-learner");
+      const blob = learner as {
+        livingNotes?: {
+          id: string;
+          text: string;
+          conceptId?: string;
+          bookmark?: boolean;
+          at: string;
+        }[];
+      };
+      const notes = Array.isArray(blob.livingNotes) ? blob.livingNotes : [];
+      notes.push({
+        id: `note-${Date.now().toString(36)}`,
+        text: String(body.text ?? "").slice(0, 2000),
+        conceptId: body.conceptId,
+        bookmark: Boolean(body.bookmark),
+        at: new Date().toISOString(),
+      });
+      blob.livingNotes = notes.slice(-100);
+      store.saveLearner(learner);
+      return json(res, 200, { ok: true, notes: blob.livingNotes });
+    }
+
+    if (req.method === "POST" && path === "/api/living/feedback") {
+      const body = JSON.parse((await readBody(req)) || "{}") as {
+        message?: string;
+        category?: string;
+      };
+      const dir = join(ROOT, "data/runtime");
+      const line = JSON.stringify({
+        at: new Date().toISOString(),
+        category: body.category ?? "general",
+        message: String(body.message ?? "").slice(0, 4000),
+      });
+      try {
+        const { appendFileSync, mkdirSync } = await import("node:fs");
+        mkdirSync(dir, { recursive: true });
+        appendFileSync(join(dir, "feedback.jsonl"), line + "\n");
+      } catch {
+        /* ignore disk issues */
+      }
+      return json(res, 200, {
+        ok: true,
+        message: "Feedback recorded locally. Thank you — no dark-pattern follow-ups.",
+      });
+    }
+
+    if (req.method === "GET" && path === "/api/living/sandbox") {
+      return json(res, 200, {
+        status: "preview_only",
+        fidelityTier: "tier2_behavioral",
+        claim: "This product does NOT connect to your SAP BTP landscape in R1.",
+        consentRequired: true,
+        capabilities: {
+          deterministicSimulator: true,
+          liveBtpConnect: false,
+          dataLeavesBrowser: false,
+        },
+        revoke: "No live connection to revoke. Local session data exportable/deletable.",
+      });
+    }
+
+    if (req.method === "POST" && path === "/api/living/sandbox/consent") {
+      const body = JSON.parse((await readBody(req)) || "{}") as { accept?: boolean };
+      const learner = store.getOrCreateLearner("local-learner");
+      learner.settings = {
+        ...learner.settings,
+        // store as careerGoal-adjacent freeform not ideal; use living flag in evidence
+      };
+      const evidence = Array.isArray(learner.evidence) ? learner.evidence : [];
+      evidence.push({
+        kind: "sandbox_consent",
+        accepted: Boolean(body.accept),
+        at: new Date().toISOString(),
+        note: "Consent for Tier-2 simulator only — not live SAP.",
+      });
+      learner.evidence = evidence.slice(-50);
+      store.saveLearner(learner);
+      return json(res, 200, { ok: true, accepted: Boolean(body.accept) });
+    }
+
+    if (req.method === "GET" && path === "/api/living/teams") {
+      return json(res, 200, {
+        status: "stub",
+        message: "Team and cohort features are deferred to R2. Schema reserved.",
+        teams: [],
+      });
+    }
+
+    if (req.method === "GET" && path === "/api/living/constellation") {
+      const { concepts, bundle } = loadBundle();
+      const q = (url.searchParams.get("q") ?? "").toLowerCase().trim();
+      const domain = url.searchParams.get("domain") ?? "";
+      let list = concepts.map((c) => ({
+        id: c.id,
+        title: c.title,
+        domainId: c.domainId,
+        level: c.level,
+        summary: c.summary,
+        tags: c.tags ?? [],
+      }));
+      if (domain) list = list.filter((c) => c.domainId === domain);
+      if (q) {
+        list = list.filter(
+          (c) =>
+            c.title.toLowerCase().includes(q) ||
+            c.summary.toLowerCase().includes(q) ||
+            c.tags.some((t) => t.toLowerCase().includes(q)) ||
+            c.id.includes(q),
+        );
+      }
+      return json(res, 200, {
+        domains: bundle.domains.map((d) => ({ id: d.id, title: d.title })),
+        concepts: list.slice(0, 80),
+        totalMatched: list.length,
       });
     }
 

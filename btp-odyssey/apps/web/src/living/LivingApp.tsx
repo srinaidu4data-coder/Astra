@@ -1,7 +1,7 @@
 /**
- * BTP Odyssey: The Living Enterprise — production successor shell (R1).
- * Guest cold-start → living incident loop → debrief → retrieval → portfolio.
- * Ethical engagement; progressive disclosure; a11y modes.
+ * BTP Odyssey: The Living Enterprise — production successor (R1.1).
+ * Evidence-first: guest incident <60s, real sim diagnose/fix, progressive IA,
+ * ethical engagement, a11y modes, portfolio, review queue, constellation search.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./living.css";
@@ -14,6 +14,13 @@ type Route =
   | "review"
   | "portfolio"
   | "preferences"
+  | "register"
+  | "diagnostic"
+  | "glossary"
+  | "notes"
+  | "sandbox"
+  | "teams"
+  | "support"
   | "legacy";
 
 type Persona = { id: string; label: string; path: string };
@@ -82,6 +89,14 @@ const PHASES: { id: LoopPhase; label: string }[] = [
   { id: "portfolio", label: "Portfolio" },
 ];
 
+const DIAG_QUESTIONS = [
+  { id: "btp", label: "SAP BTP as a platform" },
+  { id: "cap", label: "CAP / OData services" },
+  { id: "dest", label: "Destinations & identity" },
+  { id: "int", label: "Integration / events" },
+  { id: "ops", label: "Ops, SLO, incidents" },
+];
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
@@ -97,8 +112,17 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-function Cinema({ caption, lowStim }: { caption: string; lowStim: boolean }) {
+function Cinema({
+  caption,
+  transcript,
+  lowStim,
+}: {
+  caption: string;
+  transcript: string;
+  lowStim: boolean;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const [showTranscript, setShowTranscript] = useState(false);
   useEffect(() => {
     if (lowStim) return;
     const canvas = ref.current;
@@ -157,12 +181,23 @@ function Cinema({ caption, lowStim }: { caption: string; lowStim: boolean }) {
   }, [lowStim]);
 
   return (
-    <div className="le-cinema" role="img" aria-label={caption}>
+    <div className="le-cinema" role="region" aria-label="Skippable cinematic">
       {!lowStim && <canvas ref={ref} className="le-cinema-canvas" aria-hidden />}
-      {lowStim && (
-        <div style={{ minHeight: 160, background: "#0b1220" }} aria-hidden />
-      )}
-      <div className="le-cinema-caption">{caption}</div>
+      {lowStim && <div style={{ minHeight: 160, background: "#0b1220" }} aria-hidden />}
+      <div className="le-cinema-caption">
+        <p style={{ margin: 0 }}>{caption}</p>
+        <button
+          type="button"
+          className="le-btn ghost"
+          style={{ marginTop: "0.4rem", padding: "0.25rem 0.5rem", fontSize: "0.72rem" }}
+          onClick={() => setShowTranscript((s) => !s)}
+        >
+          {showTranscript ? "Hide" : "Show"} transcript / audio description
+        </button>
+        {showTranscript && (
+          <p style={{ margin: "0.4rem 0 0", color: "#cbd5e1" }}>{transcript}</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -171,9 +206,12 @@ export function LivingApp() {
   const [route, setRoute] = useState<Route>("gate");
   const [boot, setBoot] = useState<Bootstrap | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(!navigator.onLine);
   const [busy, setBusy] = useState(false);
   const [persona, setPersona] = useState("beginner");
   const [displayName, setDisplayName] = useState("");
+  const [careerGoal, setCareerGoal] = useState("btp-developer");
+  const [certInterest, setCertInterest] = useState("none");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [phase, setPhase] = useState<LoopPhase>("hook");
   const [phaseDone, setPhaseDone] = useState<Set<LoopPhase>>(() => new Set());
@@ -183,11 +221,27 @@ export function LivingApp() {
     estimatedMinutes: number;
     fidelity: { tier?: string };
     naturalStoppingPoints?: string[];
+    businessImpact?: string;
   } | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [metrics, setMetrics] = useState<string[]>([]);
   const [diagnosis, setDiagnosis] = useState("");
+  const [diagResult, setDiagResult] = useState<{
+    correct: boolean;
+    feedback: string;
+    rootCause?: string;
+  } | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
+  const [hintLevel, setHintLevel] = useState(0);
   const [architecture, setArchitecture] = useState("destination+cap");
   const [configNote, setConfigNote] = useState("");
+  const [fixMsg, setFixMsg] = useState<string | null>(null);
+  const [evalResult, setEvalResult] = useState<{
+    overallScore: number;
+    passed: boolean;
+    summary: string;
+    disclaimer: string;
+  } | null>(null);
   const [debrief, setDebrief] = useState({
     whatHappened: "",
     rootCause: "",
@@ -198,31 +252,65 @@ export function LivingApp() {
   const [review, setReview] = useState<{ items: { id?: string; prompt?: string }[] } | null>(
     null,
   );
+  const [searchQ, setSearchQ] = useState("");
+  const [constellation, setConstellation] = useState<{
+    concepts: { id: string; title: string; domainId: string; summary: string }[];
+    domains: { id: string; title: string }[];
+    totalMatched: number;
+  } | null>(null);
+  const [glossary, setGlossary] = useState<{ term: string; definition: string }[]>([]);
+  const [notes, setNotes] = useState<{ id: string; text: string; bookmark?: boolean }[]>([]);
+  const [noteText, setNoteText] = useState("");
+  const [diagAnswers, setDiagAnswers] = useState<Record<string, string>>({});
+  const [diagResultPath, setDiagResultPath] = useState<{
+    level: string;
+    recommendations: string[];
+  } | null>(null);
+  const [sandbox, setSandbox] = useState<Record<string, unknown> | null>(null);
+  const [feedbackMsg, setFeedbackMsg] = useState("");
+  const [feedbackOk, setFeedbackOk] = useState<string | null>(null);
   const [sessionStart] = useState(() => Date.now());
   const [breakNudge, setBreakNudge] = useState(false);
+  const [coldStartMs, setColdStartMs] = useState<number | null>(null);
 
   const settings = boot?.learner?.settings ?? {};
-  const lowStim = Boolean(settings.lowStimulation || settings.reducedMotion);
+  const lowStim = Boolean(settings.lowStimulation || settings.reducedMotion || settings.lowPower);
   const silent = Boolean(settings.silentMode);
   const goalMin = Number(settings.sessionGoalMinutes ?? 25);
+  const dataSaver = Boolean(settings.dataSaver);
+
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
-    if (settings.reducedMotion || settings.lowStimulation) {
-      root.dataset.reducedMotion = "true";
-    }
+    root.dataset.reducedMotion =
+      settings.reducedMotion || settings.lowStimulation || settings.lowPower ? "true" : "false";
     if (settings.highContrast) root.dataset.contrast = "high";
   }, [settings]);
+
+  const refreshBoot = useCallback(async () => {
+    const b = await api<Bootstrap>("/api/living/bootstrap");
+    setBoot(b);
+    setDisplayName(b.learner.displayName || "");
+    setPersona(String(b.learner.settings?.persona || "beginner"));
+    return b;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const b = await api<Bootstrap>("/api/living/bootstrap");
+        const b = await refreshBoot();
         if (cancelled) return;
-        setBoot(b);
-        setDisplayName(b.learner.displayName || "");
-        setPersona(String(b.learner.settings?.persona || "beginner"));
         const cleared = b.learner.engagement?.challengesCleared?.length ?? 0;
         if (cleared > 0 || (b.learner.completedMissions?.length ?? 0) > 0) {
           setRoute("continue");
@@ -234,66 +322,74 @@ export function LivingApp() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshBoot]);
 
   useEffect(() => {
     if (!goalMin || goalMin < 5) return;
-    const t = window.setTimeout(
-      () => setBreakNudge(true),
-      goalMin * 60 * 1000,
-    );
+    const t = window.setTimeout(() => setBreakNudge(true), goalMin * 60 * 1000);
     return () => window.clearTimeout(t);
   }, [goalMin, sessionStart]);
 
+  const loadWorld = async (sid: string) => {
+    const w = await api<{
+      logs: { level: string; message: string; resourceId?: string }[];
+      metrics: { name: string; value: number; unit?: string; resourceId?: string }[];
+    }>(`/api/sessions/${sid}/world`);
+    setLogs(
+      (w.logs ?? []).slice(-12).map((l) => `${l.level}: [${l.resourceId ?? "?"}] ${l.message}`),
+    );
+    setMetrics(
+      (w.metrics ?? [])
+        .slice(-8)
+        .map((m) => `${m.name}=${m.value}${m.unit ? m.unit : ""} @ ${m.resourceId ?? ""}`),
+    );
+  };
+
   const startGuestIncident = useCallback(async () => {
+    if (offline) {
+      setError("You appear offline. Reconnect to start a living incident.");
+      return;
+    }
     setBusy(true);
     setError(null);
+    setDiagResult(null);
+    setFixMsg(null);
+    setEvalResult(null);
+    setHint(null);
+    setHintLevel(0);
     const t0 = performance.now();
     try {
       const res = await api<{
         sessionId: string;
-        incident: { title: string; summary: string };
+        incident: { title: string; summary: string; businessImpact?: string };
         estimatedMinutes: number;
         fidelity: { tier?: string };
         naturalStoppingPoints?: string[];
-        world?: { logs?: { message?: string; level?: string }[] };
       }>("/api/living/guest-incident", {
         method: "POST",
         body: JSON.stringify({ persona, displayName: displayName || undefined }),
       });
+      const ms = Math.round(performance.now() - t0);
+      setColdStartMs(ms);
       setSessionId(res.sessionId);
       setIncidentMeta({
         title: res.incident.title,
         summary: res.incident.summary,
+        businessImpact: res.incident.businessImpact,
         estimatedMinutes: res.estimatedMinutes,
         fidelity: res.fidelity,
         naturalStoppingPoints: res.naturalStoppingPoints,
       });
-      const worldLogs = (res.world?.logs ?? [])
-        .slice(-8)
-        .map((l) => `${l.level ?? "info"}: ${l.message ?? JSON.stringify(l)}`);
-      setLogs(
-        worldLogs.length
-          ? worldLogs
-          : [
-              "warn: order-status CAP service returned empty collection",
-              "error: destination Northwind_API audience mismatch (simulated)",
-              "info: IAS token issued for app OrderInsights",
-            ],
-      );
+      await loadWorld(res.sessionId);
       setPhase("hook");
       setPhaseDone(new Set());
       setRoute("incident");
-      const elapsed = performance.now() - t0;
-      if (elapsed > 60000) {
-        console.warn("Guest incident exceeded 60s cold start", elapsed);
-      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
-  }, [persona, displayName]);
+  }, [persona, displayName, offline]);
 
   const markPhase = (p: LoopPhase) => {
     setPhaseDone((prev) => new Set(prev).add(p));
@@ -304,6 +400,94 @@ export function LivingApp() {
     markPhase(phase);
     const next = PHASES[idx + 1];
     if (next) setPhase(next.id);
+  };
+
+  const runDiagnose = async () => {
+    if (!sessionId || diagnosis.trim().length < 4) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await api<{ correct: boolean; feedback: string; rootCause?: string }>(
+        `/api/sessions/${sessionId}/diagnose`,
+        { method: "POST", body: JSON.stringify({ hypothesis: diagnosis }) },
+      );
+      setDiagResult(result);
+      if (result.correct) {
+        markPhase("diagnose");
+        setPhase("inspect");
+        await loadWorld(sessionId);
+      }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const askHint = async () => {
+    if (!sessionId) return;
+    const next = Math.min(hintLevel + 1, 3);
+    setHintLevel(next);
+    try {
+      const r = await api<{ content: string }>(`/api/sessions/${sessionId}/mentor`, {
+        method: "POST",
+        body: JSON.stringify({
+          message: diagnosis || "I need a socratic hint for the outage",
+          hintLevel: next,
+          role: "socratic_coach",
+        }),
+      });
+      setHint(r.content);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  const applySecureFix = async () => {
+    if (!sessionId) return;
+    if (architecture === "admin-all") {
+      setFixMsg(
+        "Rejected: Admin.All is not a secure remediation in this landscape. Choose a least-privilege fix.",
+      );
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await api<{ ok: boolean; message: string }>(`/api/sessions/${sessionId}/fix`, {
+        method: "POST",
+        body: "{}",
+      });
+      setFixMsg(r.message);
+      await loadWorld(sessionId);
+      markPhase("configure");
+      markPhase("test");
+      setPhase("observe");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runEvaluate = async () => {
+    if (!sessionId) return;
+    setBusy(true);
+    try {
+      const r = await api<{
+        overallScore: number;
+        passed: boolean;
+        summary: string;
+        disclaimer: string;
+      }>(`/api/sessions/${sessionId}/evaluate`, { method: "POST", body: "{}" });
+      setEvalResult(r);
+      markPhase("observe");
+      markPhase("tradeoffs");
+      setPhase("debrief");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const savePrefs = async (patch: Record<string, unknown>) => {
@@ -317,8 +501,7 @@ export function LivingApp() {
           displayName: displayName || undefined,
         }),
       });
-      const b = await api<Bootstrap>("/api/living/bootstrap");
-      setBoot(b);
+      await refreshBoot();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -330,16 +513,14 @@ export function LivingApp() {
     setBusy(true);
     setError(null);
     try {
-      const res = await api<{ artifact: unknown; retrieval: unknown }>(
-        "/api/living/debrief",
-        {
-          method: "POST",
-          body: JSON.stringify({ sessionId, ...debrief }),
-        },
-      );
+      const res = await api<{ artifact: unknown }>("/api/living/debrief", {
+        method: "POST",
+        body: JSON.stringify({ sessionId, ...debrief }),
+      });
       setArtifact(res.artifact);
       markPhase("debrief");
       setPhase("remediate");
+      await refreshBoot();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -347,12 +528,16 @@ export function LivingApp() {
     }
   };
 
-  const loadReview = async () => {
+  const searchConstellation = async (q: string, domain = "") => {
     try {
-      const q = await api<{ items: { id?: string; prompt?: string }[] }>(
-        "/api/living/review-queue",
+      const data = await api<{
+        concepts: { id: string; title: string; domainId: string; summary: string }[];
+        domains: { id: string; title: string }[];
+        totalMatched: number;
+      }>(
+        `/api/living/constellation?q=${encodeURIComponent(q)}${domain ? `&domain=${encodeURIComponent(domain)}` : ""}`,
       );
-      setReview(q);
+      setConstellation(data);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -365,7 +550,10 @@ export function LivingApp() {
       { id: "constellation", label: "Constellation" },
       { id: "review", label: "Review" },
       { id: "portfolio", label: "Portfolio" },
-      { id: "preferences", label: "Preferences" },
+      { id: "glossary", label: "Glossary" },
+      { id: "notes", label: "Notes" },
+      { id: "preferences", label: "Prefs" },
+      { id: "support", label: "Support" },
     ],
     [],
   );
@@ -374,7 +562,9 @@ export function LivingApp() {
     return (
       <div className="living-root">
         <div className="living-shell">
-          <div className="le-panel">Loading Living Enterprise…</div>
+          <div className="le-panel" role="status">
+            Loading Living Enterprise…
+          </div>
         </div>
       </div>
     );
@@ -385,14 +575,14 @@ export function LivingApp() {
       className="living-root"
       data-low-stim={lowStim ? "true" : "false"}
       data-silent={silent ? "true" : "false"}
+      data-data-saver={dataSaver ? "true" : "false"}
     >
       <div className="living-shell">
         <header className="le-topbar">
           <div className="le-brand">
             <strong>BTP Odyssey: The Living Enterprise</strong>
             <span>
-              {boot?.product.version ?? "3.0.0"} · Tier{" "}
-              {boot?.product.fidelityDefault ?? "tier2_behavioral"} simulation · Independent of SAP
+              {boot?.product.version ?? "3.0.0"} · Tier-2 behavioral simulation · Independent of SAP
             </span>
           </div>
           <nav className="le-nav" aria-label="Primary">
@@ -403,26 +593,58 @@ export function LivingApp() {
                 aria-current={route === n.id ? "page" : undefined}
                 onClick={() => {
                   setRoute(n.id);
-                  if (n.id === "review") void loadReview();
+                  if (n.id === "review") {
+                    void api<{ items: { id?: string; prompt?: string }[] }>(
+                      "/api/living/review-queue",
+                    ).then(setReview);
+                  }
+                  if (n.id === "constellation") void searchConstellation("");
+                  if (n.id === "glossary") {
+                    void api<{ terms: { term: string; definition: string }[] }>(
+                      "/api/living/glossary",
+                    ).then((g) => setGlossary(g.terms));
+                  }
+                  if (n.id === "notes") {
+                    void api<{ notes: { id: string; text: string; bookmark?: boolean }[] }>(
+                      "/api/living/notes",
+                    ).then((n2) => setNotes(n2.notes));
+                  }
+                  if (n.id === "support") setFeedbackOk(null);
                 }}
               >
                 {n.label}
               </button>
             ))}
             <button type="button" onClick={() => setRoute("legacy")}>
-              Legacy shell
+              Legacy
             </button>
           </nav>
         </header>
 
+        {offline && (
+          <div className="le-banner error" role="status">
+            Offline / degraded: read-only notes in memory only. Reconnect to run incidents or save
+            debriefs.
+          </div>
+        )}
         {error && (
           <div className="le-banner error" role="alert">
-            {error}
+            {error}{" "}
+            <button type="button" className="le-btn ghost" onClick={() => setError(null)}>
+              Dismiss
+            </button>
+            <button
+              type="button"
+              className="le-btn ghost"
+              onClick={() => void refreshBoot().catch((e) => setError((e as Error).message))}
+            >
+              Retry bootstrap
+            </button>
           </div>
         )}
         {breakNudge && (
           <div className="le-banner ethics" role="status">
-            Natural stop: your {goalMin}-minute session goal is up. Progress is saved — breaks never
+            Natural stop: {goalMin}-minute session goal reached. Progress is saved — breaks never
             cost mastery.{" "}
             <button type="button" className="le-btn ghost" onClick={() => setBreakNudge(false)}>
               Continue calmly
@@ -434,12 +656,12 @@ export function LivingApp() {
           <section className="le-panel le-hero">
             <div className="le-hero-grid">
               <div>
-                <div className="le-kicker">Guest · no login · under 60s</div>
-                <h1>Master SAP BTP by healing a living enterprise.</h1>
+                <div className="le-kicker">Guest · no login required · cold-start target &lt;60s</div>
+                <h1>Master SAP BTP inside a living enterprise.</h1>
                 <p className="lead">
-                  Diagnose incidents, reason about architecture, configure a deterministic
-                  simulator, and leave with portfolio-quality evidence — not loot boxes or streak
-                  shame.
+                  Enter a real incident loop: diagnose, inspect the simulator, choose architecture,
+                  apply a secure fix, debrief without blame, and leave portfolio evidence — never
+                  loot boxes or streak shame.
                 </p>
                 <div className="le-meta">
                   <span className="le-chip good">Ethical engagement</span>
@@ -452,56 +674,176 @@ export function LivingApp() {
                   </span>
                 </div>
                 <div className="le-banner ethics">{boot.product.ethics}</div>
-                <label className="le-field">
-                  <span>Display name (optional)</span>
-                  <input
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Local Learner"
-                  />
-                </label>
-                <p className="lead" style={{ fontSize: "0.82rem" }}>
-                  Who are you becoming?
-                </p>
-                <div className="le-persona-grid">
-                  {boot.personas.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      className={`le-persona${persona === p.id ? " active" : ""}`}
-                      onClick={() => setPersona(p.id)}
-                    >
-                      <strong>{p.label}</strong>
-                      <span>Path: {p.path}</span>
-                    </button>
-                  ))}
-                </div>
                 <div className="le-actions">
                   <button
                     type="button"
                     className="le-btn primary"
-                    disabled={busy}
+                    disabled={busy || offline}
                     onClick={() => void startGuestIncident()}
                   >
-                    {busy ? "Opening incident…" : "Enter living incident (no login)"}
+                    {busy ? "Opening incident…" : "Enter living incident (guest)"}
                   </button>
+                  <button type="button" className="le-btn" onClick={() => setRoute("diagnostic")}>
+                    Prerequisite diagnostic
+                  </button>
+                  <button type="button" className="le-btn" onClick={() => setRoute("register")}>
+                    Optional local profile
+                  </button>
+                  <button type="button" className="le-btn ghost" onClick={() => setRoute("preferences")}>
+                    Accessibility
+                  </button>
+                </div>
+                {coldStartMs != null && (
+                  <p className="lead" style={{ fontSize: "0.78rem", marginTop: "0.75rem" }}>
+                    Last cold start: <strong>{coldStartMs} ms</strong>
+                    {coldStartMs < 60000 ? " (under 60s ✓)" : " (over 60s — check network)"}
+                  </p>
+                )}
+              </div>
+              {!dataSaver && (
+                <Cinema
+                  lowStim={lowStim}
+                  caption={boot.flagshipIncident.hook}
+                  transcript="Audio description: Dim operations room. Order Insights tiles go dark. Sales analysts blocked. Destination and CAP logs flash 401 audience mismatch. You have one working session."
+                />
+              )}
+            </div>
+          </section>
+        )}
+
+        {route === "register" && (
+          <section className="le-panel">
+            <div className="le-kicker">Optional local profile</div>
+            <h2 style={{ marginTop: 0 }}>Register without a password</h2>
+            <p className="lead">
+              Local runtime profile only — no cloud account in R1. Guest play works without this.
+            </p>
+            <div className="le-field">
+              <label>Display name</label>
+              <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            </div>
+            <div className="le-field">
+              <label>Career goal</label>
+              <select value={careerGoal} onChange={(e) => setCareerGoal(e.target.value)}>
+                <option value="btp-developer">BTP application developer</option>
+                <option value="integration">Integration specialist</option>
+                <option value="architect">Solution architect</option>
+                <option value="admin">Platform / security admin</option>
+                <option value="data">Data & analytics on BTP</option>
+                <option value="ai">AI on BTP (responsible)</option>
+              </select>
+            </div>
+            <div className="le-field">
+              <label>Certification interest (prep only — not a claim)</label>
+              <select value={certInterest} onChange={(e) => setCertInterest(e.target.value)}>
+                <option value="none">None / explore only</option>
+                <option value="btp-dev-prep">Developer-oriented prep topics</option>
+                <option value="architect-prep">Architect-oriented prep topics</option>
+              </select>
+            </div>
+            <div className="le-persona-grid">
+              {(boot?.personas ?? []).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`le-persona${persona === p.id ? " active" : ""}`}
+                  onClick={() => setPersona(p.id)}
+                >
+                  <strong>{p.label}</strong>
+                  <span>{p.path}</span>
+                </button>
+              ))}
+            </div>
+            <div className="le-actions">
+              <button
+                type="button"
+                className="le-btn primary"
+                disabled={busy}
+                onClick={() => {
+                  void api("/api/living/register", {
+                    method: "POST",
+                    body: JSON.stringify({
+                      displayName,
+                      persona,
+                      careerGoal: `${careerGoal}|cert:${certInterest}`,
+                    }),
+                  })
+                    .then(() => refreshBoot())
+                    .then(() => setRoute("continue"))
+                    .catch((e) => setError((e as Error).message));
+                }}
+              >
+                Save local profile
+              </button>
+              <button type="button" className="le-btn ghost" onClick={() => setRoute("gate")}>
+                Continue as pure guest
+              </button>
+            </div>
+          </section>
+        )}
+
+        {route === "diagnostic" && (
+          <section className="le-panel">
+            <div className="le-kicker">Prerequisite diagnostic</div>
+            <h2 style={{ marginTop: 0 }}>Pathing self-report</h2>
+            <p className="lead">
+              Honest answers only. This is not an SAP certification placement exam.
+            </p>
+            {DIAG_QUESTIONS.map((q) => (
+              <div key={q.id} className="le-field">
+                <label htmlFor={`dq-${q.id}`}>{q.label}</label>
+                <select
+                  id={`dq-${q.id}`}
+                  value={diagAnswers[q.id] ?? "heard"}
+                  onChange={(e) =>
+                    setDiagAnswers((a) => ({ ...a, [q.id]: e.target.value }))
+                  }
+                >
+                  <option value="never">Never touched</option>
+                  <option value="heard">Heard of it</option>
+                  <option value="used">Used in a project</option>
+                  <option value="designed">Designed / defended in production</option>
+                </select>
+              </div>
+            ))}
+            <div className="le-actions">
+              <button
+                type="button"
+                className="le-btn primary"
+                onClick={() => {
+                  const answers = DIAG_QUESTIONS.map((q) => ({
+                    id: q.id,
+                    value: diagAnswers[q.id] ?? "heard",
+                  }));
+                  void api<{ level: string; recommendations: string[] }>(
+                    "/api/living/diagnostic",
+                    { method: "POST", body: JSON.stringify({ answers }) },
+                  )
+                    .then((r) => {
+                      setDiagResultPath(r);
+                      setPersona(r.level === "beginner" ? "beginner" : r.level);
+                    })
+                    .catch((e) => setError((e as Error).message));
+                }}
+              >
+                Get recommendations
+              </button>
+            </div>
+            {diagResultPath && (
+              <div className="le-banner info" style={{ marginTop: "0.75rem" }}>
+                Suggested level: <strong>{diagResultPath.level}</strong>. Try:{" "}
+                {diagResultPath.recommendations.join(", ")}.
+                <div className="le-actions" style={{ marginTop: "0.5rem" }}>
                   <button
                     type="button"
-                    className="le-btn"
-                    onClick={() => setRoute("preferences")}
+                    className="le-btn primary"
+                    onClick={() => void startGuestIncident()}
                   >
-                    Accessibility & session goals
-                  </button>
-                  <button type="button" className="le-btn ghost" onClick={() => setRoute("continue")}>
-                    Continue dashboard
+                    Start recommended incident
                   </button>
                 </div>
               </div>
-              <Cinema
-                lowStim={lowStim}
-                caption={boot.flagshipIncident.hook}
-              />
-            </div>
+            )}
           </section>
         )}
 
@@ -511,79 +853,76 @@ export function LivingApp() {
             <h2 style={{ marginTop: 0 }}>Welcome back, {boot.learner.displayName}</h2>
             <div className="le-meta">
               <span className="le-chip">
-                Rank {boot.learner.engagement?.architectRank ?? "Apprentice"} (optional prestige)
+                {boot.learner.engagement?.architectRank ?? "Apprentice"} (optional)
               </span>
               <span className="le-chip">
-                Cleared {boot.learner.engagement?.challengesCleared?.length ?? 0} /{" "}
+                Cleared {boot.learner.engagement?.challengesCleared?.length ?? 0}/
                 {boot.totalChallenges}
-              </span>
-              <span className="le-chip">
-                Missions done {boot.learner.completedMissions?.length ?? 0}
               </span>
             </div>
             <div className="le-card-list">
               <article className="le-card">
-                <h3>Flagship living incident</h3>
-                <p>{boot.flagshipIncident.title} — {boot.flagshipIncident.hook}</p>
+                <h3>Personalized recommendation</h3>
+                <p>
+                  Flagship: {boot.flagshipIncident.title}. Next practice:{" "}
+                  {boot.nextChallenge?.title ?? "schedule transfer review"}.
+                </p>
                 <div className="le-actions">
                   <button
                     type="button"
                     className="le-btn primary"
-                    disabled={busy}
+                    disabled={busy || offline}
                     onClick={() => void startGuestIncident()}
                   >
-                    Start / resume incident
+                    Resume living incident
+                  </button>
+                  <button type="button" className="le-btn" onClick={() => setRoute("constellation")}>
+                    Search constellation
                   </button>
                 </div>
               </article>
               <article className="le-card">
-                <h3>Next practice gate</h3>
-                <p>
-                  {boot.nextChallenge
-                    ? `${boot.nextChallenge.title} (${boot.nextChallenge.variant ?? "step"})`
-                    : "All gates clear — schedule transfer review."}
-                </p>
+                <h3>Sandbox & teams</h3>
+                <p>Simulator consent status and deferred team features.</p>
                 <div className="le-actions">
                   <button
                     type="button"
                     className="le-btn"
-                    onClick={() => setRoute("legacy")}
+                    onClick={() => {
+                      void api<Record<string, unknown>>("/api/living/sandbox").then((s) => {
+                        setSandbox(s);
+                        setRoute("sandbox");
+                      });
+                    }}
                   >
-                    Open practice campaign (legacy PLAY)
+                    Sandbox preview
+                  </button>
+                  <button type="button" className="le-btn ghost" onClick={() => setRoute("teams")}>
+                    Teams (R2 stub)
                   </button>
                 </div>
               </article>
-              <article className="le-card">
-                <h3>Natural stop</h3>
-                <p>
-                  Session goal {goalMin} minutes. Quiet hours and grace streaks are optional —
-                  missing a day never removes evidence.
-                </p>
-              </article>
-            </div>
-            <div className="le-actions" style={{ marginTop: "1rem" }}>
-              <button type="button" className="le-btn ghost" onClick={() => setRoute("gate")}>
-                Back to gate
-              </button>
             </div>
           </section>
         )}
 
         {route === "incident" && (
           <section className="le-panel">
-            <div className="le-kicker">Core loop · process evidence</div>
-            <h2 style={{ marginTop: 0 }}>
-              {incidentMeta?.title ?? "Living incident"}
-            </h2>
+            <div className="le-kicker">Core loop · real simulator</div>
+            <h2 style={{ marginTop: 0 }}>{incidentMeta?.title ?? "Living incident"}</h2>
             <p className="lead">{incidentMeta?.summary}</p>
+            {incidentMeta?.businessImpact && (
+              <p className="lead">Business impact: {incidentMeta.businessImpact}</p>
+            )}
             <div className="le-meta">
-              <span className="le-chip warn">
-                ~{incidentMeta?.estimatedMinutes ?? 25} min
-              </span>
+              <span className="le-chip warn">~{incidentMeta?.estimatedMinutes ?? 25} min</span>
               <span className="le-chip">
                 Fidelity {incidentMeta?.fidelity?.tier ?? "tier2_behavioral"}
               </span>
               <span className="le-chip">Session {sessionId ?? "—"}</span>
+              {coldStartMs != null && (
+                <span className="le-chip good">Cold start {coldStartMs} ms</span>
+              )}
             </div>
             <div className="le-stepper" aria-label="Incident phases">
               {PHASES.map((p) => (
@@ -599,16 +938,13 @@ export function LivingApp() {
             {phase === "hook" && (
               <>
                 <Cinema
-                  lowStim={lowStim}
-                  caption="Cinematic hook (skippable): Order Insights is dark. Customers and sales are blocked. You have one working session."
+                  lowStim={lowStim || dataSaver}
+                  caption="Order Insights is dark. Board wants a fix without Admin.All."
+                  transcript="Visual: enterprise dashboard tiles fail. Logs show 401. Audio: ambient ops room, no alarm spam. Equivalent text provided above for skip."
                 />
-                <p className="lead" style={{ marginTop: "0.75rem" }}>
-                  Equivalent text: A CAP-based Order Insights app returns empty order status. Board
-                  wants a fix without violating clean-core or opening Admin.All.
-                </p>
                 <div className="le-actions">
                   <button type="button" className="le-btn primary" onClick={advance}>
-                    Skip to diagnose
+                    Skip cinema → diagnose
                   </button>
                 </div>
               </>
@@ -616,45 +952,100 @@ export function LivingApp() {
 
             {phase === "diagnose" && (
               <>
-                <p className="lead">Form a hypothesis before changing production-like config.</p>
+                <p className="lead">
+                  Form a hypothesis. Keywords like audience, JWT, destination score against the
+                  incident forge.
+                </p>
                 <div className="le-field">
                   <label htmlFor="diag">Hypothesis</label>
                   <textarea
                     id="diag"
                     value={diagnosis}
                     onChange={(e) => setDiagnosis(e.target.value)}
-                    placeholder="e.g. Destination audience mismatch or missing principal propagation"
+                    placeholder="JWT audience on destination orders-api mismatches CAP service…"
                   />
                 </div>
+                {diagResult && (
+                  <div className={`le-banner ${diagResult.correct ? "ethics" : "error"}`}>
+                    {diagResult.feedback}
+                    {diagResult.rootCause && (
+                      <div style={{ marginTop: "0.35rem" }}>
+                        Root cause (revealed on correct): {diagResult.rootCause}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {hint && (
+                  <div className="le-banner info" role="status">
+                    Coach (hint {hintLevel}/3): {hint}
+                  </div>
+                )}
                 <div className="le-actions">
                   <button
                     type="button"
                     className="le-btn primary"
-                    disabled={diagnosis.trim().length < 8}
-                    onClick={advance}
+                    disabled={busy || diagnosis.trim().length < 4}
+                    onClick={() => void runDiagnose()}
                   >
-                    Lock hypothesis → inspect
+                    Submit diagnosis
                   </button>
+                  <button type="button" className="le-btn" onClick={() => void askHint()}>
+                    Socratic hint
+                  </button>
+                  <button
+                    type="button"
+                    className="le-btn ghost"
+                    onClick={() => {
+                      setDiagnosis("");
+                      setDiagResult(null);
+                    }}
+                  >
+                    Retry empty
+                  </button>
+                  {diagResult?.correct && (
+                    <button type="button" className="le-btn violet" onClick={advance}>
+                      Inspect systems
+                    </button>
+                  )}
                 </div>
               </>
             )}
 
             {phase === "inspect" && (
               <>
-                <p className="lead">Simulated logs / metrics / traces (deterministic sandbox).</p>
-                <div className="le-log" role="log">
-                  {logs.map((l) => (
-                    <div
-                      key={l}
-                      className={l.startsWith("error") ? "err" : l.startsWith("warn") ? "" : "ok"}
-                    >
-                      {l}
+                <p className="lead">Live snapshot from the deterministic simulator.</p>
+                <div className="le-grid-2">
+                  <div>
+                    <h3 style={{ fontSize: "0.85rem" }}>Logs</h3>
+                    <div className="le-log" role="log">
+                      {logs.length === 0 && <div>Empty — refresh world.</div>}
+                      {logs.map((l) => (
+                        <div key={l} className={l.startsWith("error") ? "err" : undefined}>
+                          {l}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: "0.85rem" }}>Metrics</h3>
+                    <div className="le-log">
+                      {metrics.length === 0 && <div>No metrics yet.</div>}
+                      {metrics.map((m) => (
+                        <div key={m}>{m}</div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <div className="le-actions">
+                  <button
+                    type="button"
+                    className="le-btn"
+                    onClick={() => sessionId && void loadWorld(sessionId)}
+                  >
+                    Refresh world
+                  </button>
                   <button type="button" className="le-btn primary" onClick={advance}>
-                    Proceed to architecture
+                    Select architecture
                   </button>
                 </div>
               </>
@@ -662,7 +1053,6 @@ export function LivingApp() {
 
             {phase === "architect" && (
               <>
-                <p className="lead">Select an architecture approach and name the tradeoff.</p>
                 <div className="le-field">
                   <label htmlFor="arch">Architecture choice</label>
                   <select
@@ -671,19 +1061,17 @@ export function LivingApp() {
                     onChange={(e) => setArchitecture(e.target.value)}
                   >
                     <option value="destination+cap">
-                      Fix destination + CAP service binding (minimal blast radius)
+                      Fix destination audience + CAP binding (least blast radius)
                     </option>
                     <option value="rebuild-rap">
-                      Rebuild in RAP on stack (higher effort, clean-core alignment)
+                      Longer rebuild on RAP (higher effort, clean-core alignment)
                     </option>
-                    <option value="admin-all">
-                      Temporarily Admin.All (unsafe — will be rejected in debrief)
-                    </option>
+                    <option value="admin-all">Admin.All temporary (trap — rejected)</option>
                   </select>
                 </div>
                 <div className="le-actions">
                   <button type="button" className="le-btn primary" onClick={advance}>
-                    Configure simulator
+                    Configure
                   </button>
                 </div>
               </>
@@ -691,65 +1079,70 @@ export function LivingApp() {
 
             {phase === "configure" && (
               <>
-                <p className="lead">
-                  Document the config change you would apply in the labeled Tier-2 simulator.
-                </p>
                 <div className="le-field">
-                  <label htmlFor="cfg">Configuration note</label>
+                  <label htmlFor="cfg">Configuration plan (evidence)</label>
                   <textarea
                     id="cfg"
                     value={configNote}
                     onChange={(e) => setConfigNote(e.target.value)}
-                    placeholder="Update destination OAuth audience; rebind CAP; redeploy MTA module X"
+                    placeholder="Set destination audience to order-service!t1; redeploy CAP; add CI audience check"
                   />
+                </div>
+                {fixMsg && <div className="le-banner info">{fixMsg}</div>}
+                <div className="le-actions">
+                  <button
+                    type="button"
+                    className="le-btn primary"
+                    disabled={busy || configNote.trim().length < 8}
+                    onClick={() => void applySecureFix()}
+                  >
+                    Apply secure remediation in simulator
+                  </button>
+                </div>
+              </>
+            )}
+
+            {(phase === "test" || phase === "observe") && (
+              <>
+                <p className="lead">
+                  {architecture === "admin-all"
+                    ? "Unsafe path blocked."
+                    : fixMsg || "Observe post-fix world state."}
+                </p>
+                <div className="le-log">
+                  {logs.slice(-6).map((l) => (
+                    <div key={l}>{l}</div>
+                  ))}
                 </div>
                 <div className="le-actions">
                   <button
                     type="button"
                     className="le-btn primary"
-                    disabled={configNote.trim().length < 8}
-                    onClick={advance}
+                    onClick={() => void runEvaluate()}
                   >
-                    Run test
+                    Score process evidence
+                  </button>
+                  <button type="button" className="le-btn" onClick={advance}>
+                    Skip to tradeoffs
                   </button>
                 </div>
-              </>
-            )}
-
-            {phase === "test" && (
-              <>
-                <p className="lead">
-                  {architecture === "admin-all"
-                    ? "Test result: SHORT-TERM green, audit FAIL. This path is a trap."
-                    : "Test result: Order status returns 200 with rows. Negative auth test still required."}
-                </p>
-                <div className="le-actions">
-                  <button type="button" className="le-btn primary" onClick={advance}>
-                    Observe consequences
-                  </button>
-                </div>
-              </>
-            )}
-
-            {phase === "observe" && (
-              <>
-                <p className="lead">
-                  Customers recover. Cost meter: low. Residual risk: document destination ownership
-                  and monitoring on the CAP route.
-                </p>
-                <div className="le-actions">
-                  <button type="button" className="le-btn primary" onClick={advance}>
-                    Explain tradeoffs
-                  </button>
-                </div>
+                {evalResult && (
+                  <div className="le-banner ethics">
+                    Score {Math.round(evalResult.overallScore * 100)}% ·{" "}
+                    {evalResult.passed ? "Passed" : "Needs remediation"} — {evalResult.summary}
+                    <div style={{ opacity: 0.85, marginTop: "0.35rem" }}>
+                      {evalResult.disclaimer}
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
             {phase === "tradeoffs" && (
               <>
                 <p className="lead">
-                  Minimal destination fix ships fastest; RAP rebuild is cleaner long-term; Admin.All
-                  is never acceptable in this landscape.
+                  Minimal destination fix restores service fastest; RAP rebuild is cleaner long-term;
+                  Admin.All fails ethics and audit. Document residual risk and monitoring.
                 </p>
                 <div className="le-actions">
                   <button type="button" className="le-btn primary" onClick={advance}>
@@ -762,40 +1155,24 @@ export function LivingApp() {
             {phase === "debrief" && (
               <>
                 <div className="le-grid-2">
-                  <div className="le-field">
-                    <label>What happened</label>
-                    <textarea
-                      value={debrief.whatHappened}
-                      onChange={(e) =>
-                        setDebrief((d) => ({ ...d, whatHappened: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="le-field">
-                    <label>Root cause (systems, not people)</label>
-                    <textarea
-                      value={debrief.rootCause}
-                      onChange={(e) =>
-                        setDebrief((d) => ({ ...d, rootCause: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="le-field">
-                    <label>Fix applied</label>
-                    <textarea
-                      value={debrief.fix}
-                      onChange={(e) => setDebrief((d) => ({ ...d, fix: e.target.value }))}
-                    />
-                  </div>
-                  <div className="le-field">
-                    <label>Tradeoffs accepted</label>
-                    <textarea
-                      value={debrief.tradeoffs}
-                      onChange={(e) =>
-                        setDebrief((d) => ({ ...d, tradeoffs: e.target.value }))
-                      }
-                    />
-                  </div>
+                  {(
+                    [
+                      ["whatHappened", "What happened"],
+                      ["rootCause", "Root cause (systems)"],
+                      ["fix", "Fix applied"],
+                      ["tradeoffs", "Tradeoffs accepted"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <div key={key} className="le-field">
+                      <label>{label}</label>
+                      <textarea
+                        value={debrief[key]}
+                        onChange={(e) =>
+                          setDebrief((d) => ({ ...d, [key]: e.target.value }))
+                        }
+                      />
+                    </div>
+                  ))}
                 </div>
                 <div className="le-actions">
                   <button
@@ -804,7 +1181,7 @@ export function LivingApp() {
                     disabled={busy}
                     onClick={() => void submitDebrief()}
                   >
-                    Save debrief artifact
+                    Save portfolio debrief
                   </button>
                 </div>
               </>
@@ -813,12 +1190,12 @@ export function LivingApp() {
             {phase === "remediate" && (
               <>
                 <p className="lead">
-                  Targeted remediation: re-open concept cards for Destinations, JWT audience, and CAP
-                  bindings. Optional how/when arcade remains free to play.
+                  Targeted remediation: Destinations, JWT audience, CAP bindings. Open constellation
+                  or legacy Atlas how/when games.
                 </p>
                 <div className="le-actions">
-                  <button type="button" className="le-btn" onClick={() => setRoute("legacy")}>
-                    Open Atlas / practice games
+                  <button type="button" className="le-btn" onClick={() => setRoute("constellation")}>
+                    Mastery constellation
                   </button>
                   <button type="button" className="le-btn primary" onClick={advance}>
                     Schedule retrieval
@@ -830,15 +1207,12 @@ export function LivingApp() {
             {phase === "retrieval" && (
               <>
                 <p className="lead">
-                  Spaced prompt (due in ~3 days, optional): How would you run the same diagnosis on
-                  a different BTP landscape?
+                  Delayed transfer (optional, ~3 days): apply the same diagnosis process to another
+                  landscape. Missing the day never removes evidence.
                 </p>
-                <div className="le-banner ethics">
-                  Missing the review day never removes your debrief evidence.
-                </div>
                 <div className="le-actions">
                   <button type="button" className="le-btn primary" onClick={advance}>
-                    Portfolio artifact
+                    Portfolio
                   </button>
                 </div>
               </>
@@ -846,9 +1220,6 @@ export function LivingApp() {
 
             {phase === "portfolio" && (
               <>
-                <p className="lead">
-                  Portfolio-quality practice artifact saved locally. Not SAP certification.
-                </p>
                 {artifact ? (
                   <pre className="le-log">{JSON.stringify(artifact, null, 2)}</pre>
                 ) : (
@@ -856,76 +1227,166 @@ export function LivingApp() {
                 )}
                 <div className="le-actions">
                   <button type="button" className="le-btn primary" onClick={() => setRoute("portfolio")}>
-                    View portfolio
+                    Portfolio view
                   </button>
                   <button type="button" className="le-btn" onClick={() => setRoute("continue")}>
-                    Natural stop → dashboard
+                    Natural stop
                   </button>
                 </div>
               </>
             )}
+          </section>
+        )}
 
-            {incidentMeta?.naturalStoppingPoints && (
-              <p className="le-disclaimer">
-                Natural stops: {incidentMeta.naturalStoppingPoints.join(" · ")}
-              </p>
+        {route === "constellation" && (
+          <section className="le-panel">
+            <div className="le-kicker">Searchable mastery constellation</div>
+            <h2 style={{ marginTop: 0 }}>Find a concept</h2>
+            <div className="le-field">
+              <label htmlFor="cq">Search</label>
+              <input
+                id="cq"
+                value={searchQ}
+                onChange={(e) => setSearchQ(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void searchConstellation(searchQ);
+                }}
+                placeholder="destination, jwt, cap…"
+              />
+            </div>
+            <div className="le-actions">
+              <button
+                type="button"
+                className="le-btn primary"
+                onClick={() => void searchConstellation(searchQ)}
+              >
+                Search
+              </button>
+            </div>
+            <p className="lead" style={{ fontSize: "0.8rem" }}>
+              {constellation
+                ? `${constellation.totalMatched} matched (showing ${constellation.concepts.length})`
+                : "Search to load concepts."}
+            </p>
+            <div className="le-card-list">
+              {(constellation?.concepts ?? []).map((c) => (
+                <article key={c.id} className="le-card">
+                  <h3>
+                    {c.title}{" "}
+                    <span className="le-chip">{c.domainId}</span>
+                  </h3>
+                  <p>{c.summary}</p>
+                </article>
+              ))}
+            </div>
+            {!constellation?.concepts.length && (
+              <div className="le-banner info">Empty — try another query or clear search.</div>
             )}
           </section>
         )}
 
-        {route === "constellation" && boot && (
+        {route === "glossary" && (
           <section className="le-panel">
-            <div className="le-kicker">Mastery constellation</div>
-            <h2 style={{ marginTop: 0 }}>Domains in the living enterprise</h2>
-            <p className="lead">
-              Progressive disclosure: explore one district at a time. Full campaign remains available
-              without a feature wall.
-            </p>
+            <div className="le-kicker">Glossary · sources in content pack</div>
+            <h2 style={{ marginTop: 0 }}>Terms</h2>
             <div className="le-card-list">
-              {boot.domains.map((d) => (
-                <article key={d.id} className="le-card">
-                  <h3>{d.title}</h3>
-                  <p>{d.summary || d.id}</p>
+              {glossary.map((t) => (
+                <article key={t.term} className="le-card">
+                  <h3>{t.term}</h3>
+                  <p>{t.definition}</p>
                 </article>
               ))}
             </div>
-            <div className="le-actions" style={{ marginTop: "1rem" }}>
-              <button type="button" className="le-btn" onClick={() => setRoute("legacy")}>
-                Open full Atlas (legacy)
+            {!glossary.length && <div className="le-banner info">Loading or empty glossary.</div>}
+          </section>
+        )}
+
+        {route === "notes" && (
+          <section className="le-panel">
+            <div className="le-kicker">Notes & bookmarks</div>
+            <h2 style={{ marginTop: 0 }}>Your notes</h2>
+            <div className="le-field">
+              <label>New note</label>
+              <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} />
+            </div>
+            <div className="le-actions">
+              <button
+                type="button"
+                className="le-btn primary"
+                disabled={!noteText.trim()}
+                onClick={() => {
+                  void api<{ notes: { id: string; text: string; bookmark?: boolean }[] }>(
+                    "/api/living/notes",
+                    {
+                      method: "POST",
+                      body: JSON.stringify({ text: noteText, bookmark: false }),
+                    },
+                  ).then((r) => {
+                    setNotes(r.notes);
+                    setNoteText("");
+                  });
+                }}
+              >
+                Save note
               </button>
+              <button
+                type="button"
+                className="le-btn"
+                disabled={!noteText.trim()}
+                onClick={() => {
+                  void api<{ notes: { id: string; text: string; bookmark?: boolean }[] }>(
+                    "/api/living/notes",
+                    {
+                      method: "POST",
+                      body: JSON.stringify({ text: noteText, bookmark: true }),
+                    },
+                  ).then((r) => {
+                    setNotes(r.notes);
+                    setNoteText("");
+                  });
+                }}
+              >
+                Bookmark
+              </button>
+            </div>
+            <div className="le-card-list" style={{ marginTop: "0.75rem" }}>
+              {notes.map((n) => (
+                <article key={n.id} className="le-card">
+                  <h3>{n.bookmark ? "Bookmark" : "Note"}</h3>
+                  <p>{n.text}</p>
+                </article>
+              ))}
             </div>
           </section>
         )}
 
         {route === "review" && (
           <section className="le-panel">
-            <div className="le-kicker">Spaced review queue</div>
-            <h2 style={{ marginTop: 0 }}>Retrieval practice</h2>
+            <div className="le-kicker">Spaced review</div>
+            <h2 style={{ marginTop: 0 }}>Retrieval queue</h2>
             <div className="le-banner ethics">
-              Optional. No FOMO timers. No progress loss for resting.
+              Optional. No FOMO. No progress loss for rest.
             </div>
             <div className="le-card-list">
-              {(review?.items?.length ? review.items : [{ prompt: "No items yet — complete a debrief first." }]).map(
-                (item, i) => (
-                  <article key={item.id ?? i} className="le-card">
-                    <h3>Transfer check</h3>
-                    <p>{item.prompt}</p>
-                  </article>
-                ),
-              )}
+              {(review?.items?.length
+                ? review.items
+                : [{ prompt: "Empty queue — complete a debrief first." }]
+              ).map((item, i) => (
+                <article key={item.id ?? i} className="le-card">
+                  <h3>Transfer check</h3>
+                  <p>{item.prompt}</p>
+                </article>
+              ))}
             </div>
           </section>
         )}
 
         {route === "portfolio" && boot && (
           <section className="le-panel">
-            <div className="le-kicker">Portfolio · privacy local</div>
+            <div className="le-kicker">Portfolio · local privacy</div>
             <h2 style={{ marginTop: 0 }}>Evidence of skills</h2>
-            <p className="lead">
-              Artifacts stay on this runtime until you export. Not official certification.
-            </p>
             <pre className="le-log">
-              {JSON.stringify(boot.learner.evidence?.slice(-5) ?? [], null, 2)}
+              {JSON.stringify(boot.learner.evidence?.slice(-8) ?? [], null, 2)}
             </pre>
             <div className="le-actions">
               <button
@@ -943,9 +1404,106 @@ export function LivingApp() {
                   });
                 }}
               >
-                Export progress JSON
+                Export JSON
+              </button>
+              <button
+                type="button"
+                className="le-btn ghost"
+                onClick={() => {
+                  if (
+                    confirm(
+                      "Delete local learner progress? This cannot be undone without a prior export.",
+                    )
+                  ) {
+                    void api("/api/learner/delete", { method: "POST", body: "{}" }).then(() =>
+                      refreshBoot(),
+                    );
+                  }
+                }}
+              >
+                Delete account data
               </button>
             </div>
+          </section>
+        )}
+
+        {route === "sandbox" && (
+          <section className="le-panel">
+            <div className="le-kicker">Sandbox · consent</div>
+            <h2 style={{ marginTop: 0 }}>Simulator preview</h2>
+            <pre className="le-log">{JSON.stringify(sandbox, null, 2)}</pre>
+            <div className="le-actions">
+              <button
+                type="button"
+                className="le-btn primary"
+                onClick={() => {
+                  void api("/api/living/sandbox/consent", {
+                    method: "POST",
+                    body: JSON.stringify({ accept: true }),
+                  }).then(() => setFeedbackOk("Simulator consent recorded (Tier-2 only)."));
+                }}
+              >
+                Accept Tier-2 simulator terms
+              </button>
+              <button
+                type="button"
+                className="le-btn ghost"
+                onClick={() => {
+                  void api("/api/living/sandbox/consent", {
+                    method: "POST",
+                    body: JSON.stringify({ accept: false }),
+                  });
+                }}
+              >
+                Decline / revoke intent
+              </button>
+            </div>
+            {feedbackOk && <div className="le-banner ethics">{feedbackOk}</div>}
+          </section>
+        )}
+
+        {route === "teams" && (
+          <section className="le-panel">
+            <div className="le-kicker">Teams · R2</div>
+            <h2 style={{ marginTop: 0 }}>Cohorts deferred</h2>
+            <p className="lead">
+              Team and cohort creation is stubbed for R2. Individual mastery and portfolio work in
+              R1.
+            </p>
+          </section>
+        )}
+
+        {route === "support" && (
+          <section className="le-panel">
+            <div className="le-kicker">Support · feedback</div>
+            <h2 style={{ marginTop: 0 }}>Report an issue</h2>
+            <div className="le-field">
+              <label>Message</label>
+              <textarea
+                value={feedbackMsg}
+                onChange={(e) => setFeedbackMsg(e.target.value)}
+                placeholder="What broke, what you expected…"
+              />
+            </div>
+            <div className="le-actions">
+              <button
+                type="button"
+                className="le-btn primary"
+                disabled={!feedbackMsg.trim()}
+                onClick={() => {
+                  void api<{ message: string }>("/api/living/feedback", {
+                    method: "POST",
+                    body: JSON.stringify({ message: feedbackMsg, category: "product" }),
+                  }).then((r) => {
+                    setFeedbackOk(r.message);
+                    setFeedbackMsg("");
+                  });
+                }}
+              >
+                Submit feedback
+              </button>
+            </div>
+            {feedbackOk && <div className="le-banner ethics">{feedbackOk}</div>}
           </section>
         )}
 
@@ -953,66 +1511,29 @@ export function LivingApp() {
           <section className="le-panel">
             <div className="le-kicker">Agency · accessibility · ethics</div>
             <h2 style={{ marginTop: 0 }}>Preferences</h2>
-            <div className="le-toggle-row">
-              <span>Reduced motion</span>
-              <button
-                type="button"
-                className="le-btn ghost"
-                onClick={() => void savePrefs({ reducedMotion: !settings.reducedMotion })}
-              >
-                {settings.reducedMotion ? "On" : "Off"}
-              </button>
-            </div>
-            <div className="le-toggle-row">
-              <span>Low stimulation</span>
-              <button
-                type="button"
-                className="le-btn ghost"
-                onClick={() => void savePrefs({ lowStimulation: !settings.lowStimulation })}
-              >
-                {settings.lowStimulation ? "On" : "Off"}
-              </button>
-            </div>
-            <div className="le-toggle-row">
-              <span>High contrast</span>
-              <button
-                type="button"
-                className="le-btn ghost"
-                onClick={() => void savePrefs({ highContrast: !settings.highContrast })}
-              >
-                {settings.highContrast ? "On" : "Off"}
-              </button>
-            </div>
-            <div className="le-toggle-row">
-              <span>Silent mode (no SFX intent)</span>
-              <button
-                type="button"
-                className="le-btn ghost"
-                onClick={() => void savePrefs({ silentMode: !settings.silentMode })}
-              >
-                {settings.silentMode ? "On" : "Off"}
-              </button>
-            </div>
-            <div className="le-toggle-row">
-              <span>Data saver</span>
-              <button
-                type="button"
-                className="le-btn ghost"
-                onClick={() => void savePrefs({ dataSaver: !settings.dataSaver })}
-              >
-                {settings.dataSaver ? "On" : "Off"}
-              </button>
-            </div>
-            <div className="le-toggle-row">
-              <span>Grace streak opt-in (non-punitive)</span>
-              <button
-                type="button"
-                className="le-btn ghost"
-                onClick={() => void savePrefs({ graceStreakOptIn: !settings.graceStreakOptIn })}
-              >
-                {settings.graceStreakOptIn ? "On" : "Off"}
-              </button>
-            </div>
+            {(
+              [
+                ["reducedMotion", "Reduced motion"],
+                ["lowStimulation", "Low stimulation"],
+                ["highContrast", "High contrast"],
+                ["silentMode", "Silent mode"],
+                ["dataSaver", "Data saver"],
+                ["lowPower", "Low power"],
+                ["graceStreakOptIn", "Grace streak opt-in (non-punitive)"],
+                ["notificationsEnabled", "Notifications (opt-in)"],
+              ] as const
+            ).map(([key, label]) => (
+              <div key={key} className="le-toggle-row">
+                <span>{label}</span>
+                <button
+                  type="button"
+                  className="le-btn ghost"
+                  onClick={() => void savePrefs({ [key]: !settings[key] })}
+                >
+                  {settings[key] ? "On" : "Off"}
+                </button>
+              </div>
+            ))}
             <div className="le-field" style={{ marginTop: "0.75rem" }}>
               <label htmlFor="goal">Session goal (minutes)</label>
               <input
@@ -1027,20 +1548,27 @@ export function LivingApp() {
               />
             </div>
             <div className="le-field">
-              <label htmlFor="break">Break reminder (minutes)</label>
+              <label htmlFor="qh1">Quiet hours start (HH:MM, optional)</label>
               <input
-                id="break"
-                type="number"
-                min={15}
-                max={180}
-                defaultValue={Number(settings.sessionBreakMinutes ?? 50)}
+                id="qh1"
+                placeholder="22:00"
+                defaultValue={String(settings.quietHoursStart ?? "")}
                 onBlur={(e) =>
-                  void savePrefs({ sessionBreakMinutes: Number(e.target.value) || 50 })
+                  void savePrefs({ quietHoursStart: e.target.value || null })
                 }
               />
             </div>
+            <div className="le-field">
+              <label htmlFor="qh2">Quiet hours end (HH:MM, optional)</label>
+              <input
+                id="qh2"
+                placeholder="07:00"
+                defaultValue={String(settings.quietHoursEnd ?? "")}
+                onBlur={(e) => void savePrefs({ quietHoursEnd: e.target.value || null })}
+              />
+            </div>
             <div className="le-banner ethics">
-              Notifications stay opt-in. No artificial scarcity. Pause anytime.
+              No punitive streaks. Pause anytime. Breaks never remove progress.
             </div>
           </section>
         )}
@@ -1050,9 +1578,8 @@ export function LivingApp() {
             <div className="le-kicker">Bridge</div>
             <h2 style={{ marginTop: 0 }}>Legacy mega-teach shell</h2>
             <p className="lead">
-              Full PLAY campaign, Atlas arcade, Architect studio, and missions remain available.
-              Reload with <code>?legacy=1</code> for the previous default shell, or continue below
-              after we hot-swap.
+              Full PLAY (1099 games), Atlas arcade, Architect studio. Opens with{" "}
+              <code>?legacy=1</code>.
             </p>
             <div className="le-actions">
               <button
@@ -1074,10 +1601,9 @@ export function LivingApp() {
         )}
 
         <p className="le-disclaimer">
-          Independent learning product. Not affiliated with or endorsed by SAP SE. SAP and product
-          names are trademarks of their respective owners. Simulations are not live SAP BTP.
-          Completing missions does not grant certification or employment. Evidence audit:
-          docs/LIVING_ENTERPRISE_AUDIT.md (2026-08-08).
+          Independent learning product. Not affiliated with or endorsed by SAP SE. Completing
+          missions does not grant SAP certification or employment. Simulations are not live SAP BTP.
+          Audit: docs/LIVING_ENTERPRISE_AUDIT.md. Health product name: The Living Enterprise 3.0.
         </p>
       </div>
     </div>
