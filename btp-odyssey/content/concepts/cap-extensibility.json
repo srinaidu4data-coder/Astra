@@ -75,19 +75,31 @@
       "id": "ch-cap-extensibility-when",
       "title": "When to use: CAP extensibility",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-cap-extensibility-how",
       "title": "How to use: CAP extensibility",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-cap-extensibility-trap",
       "title": "Trap / misuse: CAP extensibility",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-cap-extensibility-scenario",
+      "title": "Scenario story: CAP extensibility",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-cap-extensibility-compare",
+      "title": "Compare tradeoff: CAP extensibility",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-cap-extensibility-mastery",

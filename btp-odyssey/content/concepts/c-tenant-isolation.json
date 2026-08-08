@@ -76,19 +76,31 @@
       "id": "ch-c-tenant-isolation-when",
       "title": "When to use: Tenant Isolation",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-c-tenant-isolation-how",
       "title": "How to use: Tenant Isolation",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-c-tenant-isolation-trap",
       "title": "Trap / misuse: Tenant Isolation",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-c-tenant-isolation-scenario",
+      "title": "Scenario story: Tenant Isolation",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-c-tenant-isolation-compare",
+      "title": "Compare tradeoff: Tenant Isolation",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-c-tenant-isolation-mastery",

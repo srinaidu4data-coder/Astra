@@ -589,19 +589,31 @@ function enrich(c) {
       id: `ch-${c.id}-when`,
       title: `When to use: ${c.title}`,
       role: "when",
-      purpose: "Scenario timing — pick the right moment; reject vanity or late-only timing.",
+      purpose: "Timing radar — pick the right moment; reject vanity or late-only timing.",
     },
     {
       id: `ch-${c.id}-how`,
       title: `How to use: ${c.title}`,
       role: "how",
-      purpose: "Procedure — sequence the apply steps, place on the right hop, verify evidence.",
+      purpose: "Procedure pipeline — sequence apply steps, place on the hop, verify evidence.",
     },
     {
       id: `ch-${c.id}-trap`,
       title: `Trap / misuse: ${c.title}`,
       role: "trap",
       purpose: "When NOT — name the anti-pattern, blast radius, re-arm the control.",
+    },
+    {
+      id: `ch-${c.id}-scenario`,
+      title: `Scenario story: ${c.title}`,
+      role: "scenario",
+      purpose: "Live project scene — when to engage and how to act under a real trigger.",
+    },
+    {
+      id: `ch-${c.id}-compare`,
+      title: `Compare tradeoff: ${c.title}`,
+      role: "compare",
+      purpose: "When this control vs defer/alternative — risk, cost, reversibility.",
     },
     {
       id: `ch-${c.id}-mastery`,

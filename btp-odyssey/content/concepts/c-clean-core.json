@@ -76,19 +76,31 @@
       "id": "ch-c-clean-core-when",
       "title": "When to use: Clean Core Principles",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-c-clean-core-how",
       "title": "How to use: Clean Core Principles",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-c-clean-core-trap",
       "title": "Trap / misuse: Clean Core Principles",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-c-clean-core-scenario",
+      "title": "Scenario story: Clean Core Principles",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-c-clean-core-compare",
+      "title": "Compare tradeoff: Clean Core Principles",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-c-clean-core-mastery",

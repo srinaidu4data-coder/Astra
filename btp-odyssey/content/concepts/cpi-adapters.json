@@ -75,19 +75,31 @@
       "id": "ch-cpi-adapters-when",
       "title": "When to use: Adapters basics",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-cpi-adapters-how",
       "title": "How to use: Adapters basics",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-cpi-adapters-trap",
       "title": "Trap / misuse: Adapters basics",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-cpi-adapters-scenario",
+      "title": "Scenario story: Adapters basics",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-cpi-adapters-compare",
+      "title": "Compare tradeoff: Adapters basics",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-cpi-adapters-mastery",

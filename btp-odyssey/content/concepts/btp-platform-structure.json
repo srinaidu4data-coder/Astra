@@ -93,19 +93,31 @@
       "id": "ch-btp-platform-structure-when",
       "title": "When to use: BTP structure: accounts, directories, subaccounts",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-btp-platform-structure-how",
       "title": "How to use: BTP structure: accounts, directories, subaccounts",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-btp-platform-structure-trap",
       "title": "Trap / misuse: BTP structure: accounts, directories, subaccounts",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-btp-platform-structure-scenario",
+      "title": "Scenario story: BTP structure: accounts, directories, subaccounts",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-btp-platform-structure-compare",
+      "title": "Compare tradeoff: BTP structure: accounts, directories, subaccounts",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-btp-platform-structure-mastery",

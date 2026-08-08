@@ -75,19 +75,31 @@
       "id": "ch-odata-query-perf-when",
       "title": "When to use: OData query performance",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-odata-query-perf-how",
       "title": "How to use: OData query performance",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-odata-query-perf-trap",
       "title": "Trap / misuse: OData query performance",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-odata-query-perf-scenario",
+      "title": "Scenario story: OData query performance",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-odata-query-perf-compare",
+      "title": "Compare tradeoff: OData query performance",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-odata-query-perf-mastery",

@@ -75,19 +75,31 @@
       "id": "ch-cap-cds-entities-when",
       "title": "When to use: CDS entities and associations",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-cap-cds-entities-how",
       "title": "How to use: CDS entities and associations",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-cap-cds-entities-trap",
       "title": "Trap / misuse: CDS entities and associations",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-cap-cds-entities-scenario",
+      "title": "Scenario story: CDS entities and associations",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-cap-cds-entities-compare",
+      "title": "Compare tradeoff: CDS entities and associations",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-cap-cds-entities-mastery",

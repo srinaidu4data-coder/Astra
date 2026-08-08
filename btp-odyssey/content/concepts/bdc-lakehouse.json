@@ -75,19 +75,31 @@
       "id": "ch-bdc-lakehouse-when",
       "title": "When to use: Lakehouse patterns with SAP Databricks concepts",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-bdc-lakehouse-how",
       "title": "How to use: Lakehouse patterns with SAP Databricks concepts",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-bdc-lakehouse-trap",
       "title": "Trap / misuse: Lakehouse patterns with SAP Databricks concepts",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-bdc-lakehouse-scenario",
+      "title": "Scenario story: Lakehouse patterns with SAP Databricks concepts",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-bdc-lakehouse-compare",
+      "title": "Compare tradeoff: Lakehouse patterns with SAP Databricks concepts",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-bdc-lakehouse-mastery",

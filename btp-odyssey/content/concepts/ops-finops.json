@@ -75,19 +75,31 @@
       "id": "ch-ops-finops-when",
       "title": "When to use: FinOps on BTP",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-ops-finops-how",
       "title": "How to use: FinOps on BTP",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-ops-finops-trap",
       "title": "Trap / misuse: FinOps on BTP",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-ops-finops-scenario",
+      "title": "Scenario story: FinOps on BTP",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-ops-finops-compare",
+      "title": "Compare tradeoff: FinOps on BTP",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-ops-finops-mastery",

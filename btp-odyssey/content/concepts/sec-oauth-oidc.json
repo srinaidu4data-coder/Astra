@@ -75,19 +75,31 @@
       "id": "ch-sec-oauth-oidc-when",
       "title": "When to use: OAuth 2.0 and OIDC basics",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-sec-oauth-oidc-how",
       "title": "How to use: OAuth 2.0 and OIDC basics",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-sec-oauth-oidc-trap",
       "title": "Trap / misuse: OAuth 2.0 and OIDC basics",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-sec-oauth-oidc-scenario",
+      "title": "Scenario story: OAuth 2.0 and OIDC basics",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-sec-oauth-oidc-compare",
+      "title": "Compare tradeoff: OAuth 2.0 and OIDC basics",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-sec-oauth-oidc-mastery",

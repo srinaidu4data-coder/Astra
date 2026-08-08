@@ -75,19 +75,31 @@
       "id": "ch-bpa-rules-when",
       "title": "When to use: Business rules and decisions",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-bpa-rules-how",
       "title": "How to use: Business rules and decisions",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-bpa-rules-trap",
       "title": "Trap / misuse: Business rules and decisions",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-bpa-rules-scenario",
+      "title": "Scenario story: Business rules and decisions",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-bpa-rules-compare",
+      "title": "Compare tradeoff: Business rules and decisions",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-bpa-rules-mastery",

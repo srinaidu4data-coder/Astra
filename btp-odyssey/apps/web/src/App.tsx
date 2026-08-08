@@ -139,6 +139,8 @@ export function App() {
   const [challengesCleared, setChallengesCleared] = useState<string[]>([]);
   const [returnLoop, setReturnLoop] = useState<ReturnLoopData | null>(null);
   const [resumeChallengeId, setResumeChallengeId] = useState<string | null>(null);
+  /** When true, ChallengePlay skips linear path lock (Atlas concept games) */
+  const [playFreeMode, setPlayFreeMode] = useState(false);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [mission, setMission] = useState<Mission | null>(null);
@@ -1219,6 +1221,7 @@ export function App() {
             pack={challengePack}
             clearedIds={challengesCleared}
             initialChallengeId={resumeChallengeId}
+            freePlay={playFreeMode}
             onProgress={(p) => {
               void saveChallengeProgress(p);
             }}
@@ -1226,6 +1229,7 @@ export function App() {
               const res = await clearChallenge(id, stats);
               setChallengesCleared(res.clearedIds ?? [...challengesCleared, id]);
               setResumeChallengeId(null);
+              setPlayFreeMode(false);
               if (res.returnLoop) setReturnLoop(res.returnLoop);
               else {
                 const ch2 = await fetchChallenges();
@@ -1489,6 +1493,7 @@ export function App() {
                           atlasConcept.linkedGames?.find((x) => x.role === role) ||
                           atlasConcept.linkedGames?.[0];
                         if (!g) return;
+                        setPlayFreeMode(true);
                         setResumeChallengeId(g.id);
                         go("play");
                       }}
@@ -1498,38 +1503,43 @@ export function App() {
                       <>
                         <h4>Campaign games for this concept</h4>
                         <p className="muted" style={{ fontSize: "0.85rem" }}>
-                          Five cinematic games: <strong>What → When → How → Trap → Mastery</strong>.
-                          Wrong answers teach (red); right answers unlock the next gate (green).
+                          Seven cinematic games:{" "}
+                          <strong>What → When → How → Trap → Scenario → Compare → Mastery</strong>.
+                          Play free from this card (how/when focus) or follow the linear path in PLAY.
                         </p>
                         <div className="concept-games-grid">
-                          {atlasConcept.linkedGames!.map((g) => (
-                            <button
-                              key={g.id}
-                              type="button"
-                              className={`concept-game-chip role-${g.role}`}
-                              onClick={() => {
-                                setResumeChallengeId(g.id);
-                                go("play");
-                              }}
-                              title={g.purpose}
-                            >
-                              <span className="chip-role">{g.role}</span>
-                              <span className="chip-title">
-                                {g.role === "intro"
-                                  ? "What is it?"
-                                  : g.role === "when"
-                                    ? "When to use"
-                                    : g.role === "how"
-                                      ? "How to use"
-                                      : g.role === "trap"
-                                        ? "Trap / misuse"
-                                        : "Mastery"}
-                              </span>
-                              <span className="chip-purpose">
-                                {g.purpose || g.title}
-                              </span>
-                            </button>
-                          ))}
+                          {atlasConcept.linkedGames!.map((g) => {
+                            const labels: Record<string, string> = {
+                              intro: "What is it?",
+                              when: "When to use",
+                              how: "How to use",
+                              trap: "Trap / misuse",
+                              scenario: "Scenario story",
+                              compare: "Compare tradeoff",
+                              mastery: "Mastery",
+                            };
+                            return (
+                              <button
+                                key={g.id}
+                                type="button"
+                                className={`concept-game-chip role-${g.role}`}
+                                onClick={() => {
+                                  setPlayFreeMode(true);
+                                  setResumeChallengeId(g.id);
+                                  go("play");
+                                }}
+                                title={g.purpose}
+                              >
+                                <span className="chip-role">{g.role}</span>
+                                <span className="chip-title">
+                                  {labels[g.role] || g.role}
+                                </span>
+                                <span className="chip-purpose">
+                                  {g.purpose || g.title}
+                                </span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </>
                     )}
@@ -1586,8 +1596,9 @@ export function App() {
                         onClick={() => {
                           const g =
                             atlasConcept.linkedGames!.find((x) => x.role === "when") ||
-                            atlasConcept.linkedGames!.find((x) => x.role === "intro") ||
+                            atlasConcept.linkedGames!.find((x) => x.role === "how") ||
                             atlasConcept.linkedGames![0];
+                          setPlayFreeMode(true);
                           setResumeChallengeId(g!.id);
                           go("play");
                         }}

@@ -75,19 +75,31 @@
       "id": "ch-ai-eval-when",
       "title": "When to use: Evaluating AI in enterprise",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-ai-eval-how",
       "title": "How to use: Evaluating AI in enterprise",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-ai-eval-trap",
       "title": "Trap / misuse: Evaluating AI in enterprise",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-ai-eval-scenario",
+      "title": "Scenario story: Evaluating AI in enterprise",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-ai-eval-compare",
+      "title": "Compare tradeoff: Evaluating AI in enterprise",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-ai-eval-mastery",

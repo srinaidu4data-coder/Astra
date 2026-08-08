@@ -76,19 +76,31 @@
       "id": "ch-c-cap-vs-rap-when",
       "title": "When to use: CAP vs RAP Decision",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-c-cap-vs-rap-how",
       "title": "How to use: CAP vs RAP Decision",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-c-cap-vs-rap-trap",
       "title": "Trap / misuse: CAP vs RAP Decision",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-c-cap-vs-rap-scenario",
+      "title": "Scenario story: CAP vs RAP Decision",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-c-cap-vs-rap-compare",
+      "title": "Compare tradeoff: CAP vs RAP Decision",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-c-cap-vs-rap-mastery",

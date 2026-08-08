@@ -75,19 +75,31 @@
       "id": "ch-bpa-api-when",
       "title": "When to use: API integration in automations",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-bpa-api-how",
       "title": "How to use: API integration in automations",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-bpa-api-trap",
       "title": "Trap / misuse: API integration in automations",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-bpa-api-scenario",
+      "title": "Scenario story: API integration in automations",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-bpa-api-compare",
+      "title": "Compare tradeoff: API integration in automations",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-bpa-api-mastery",

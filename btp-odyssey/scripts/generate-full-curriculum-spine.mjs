@@ -773,6 +773,251 @@ function buildTrapChallenge(c, index, prevId, seq) {
   };
 }
 
+/** SCENARIO — live project story: pick how/when in context */
+function buildScenarioChallenge(c, index, prevId, seq) {
+  const h = hash(c.id + ":scenario");
+  const biome = BIOME_BY_DOMAIN[c.domainId] || "film";
+  const layout = mapLayout("hub", h + 7);
+  const tool = pickTool(c, h + 7);
+  const uc0 = useCaseLine(c, 0);
+  const uc1 = useCaseLine(c, 1);
+  const how = howLine(c, 0);
+
+  return {
+    id: `ch-${c.id}-scenario`,
+    title: `${seq}🎬 Scenario: ${c.title}`,
+    tier: c.level || "basic",
+    domain: c.domainId || "operations",
+    biome: biome === "chess" ? "film" : biome,
+    challengeType: "scenario_story",
+    mapStyle: biome === "chess" ? "film" : biome,
+    brief: `Scenario theater for ${c.title} — real project story: when to engage, how to act.`,
+    unlockAfter: prevId,
+    concepts: [c.id],
+    curriculumIndex: seq,
+    conceptId: c.id,
+    variant: "scenario",
+    mapNodes: layout.nodes.map((n, i) =>
+      i === 0 ? { ...n, label: "Story", broken: false } : n,
+    ),
+    edges: layout.edges,
+    steps: [
+      {
+        id: "s1",
+        title: "Read the room",
+        teach: `Project scene: ${uc0}`,
+        prompt: `In this story, when is “${c.title}” the right control?`,
+        mode: "choose",
+        hint: "Match the use case to the trigger in the scene.",
+        cinema: "scenario_open",
+        formula: "SCENE → TRIGGER → CONTROL → PROOF",
+        options: [
+          { id: "t", label: uc0, correct: true, why: "Scene trigger matched — engage now." },
+          {
+            id: "f1",
+            label: "After every status meeting, regardless of risk",
+            correct: false,
+            why: "Cargo-cult timing wastes capacity.",
+          },
+          {
+            id: "f2",
+            label: "Never in this landscape — only on paper",
+            correct: false,
+            why: "The scene exists so you apply the control for real.",
+          },
+        ],
+      },
+      {
+        id: "s2",
+        title: "Act in the scene",
+        teach: `How the team should move: ${how}`,
+        prompt: "Which action plays correctly in this scenario?",
+        mode: "choose",
+        hint: how,
+        cinema: "scenario_act",
+        options: [
+          { id: "t", label: how, correct: true, why: "Correct scene action." },
+          {
+            id: "f1",
+            label: "Ignore the hub and only update slides",
+            correct: false,
+            why: "Theater without landscape change is not apply.",
+          },
+          {
+            id: "f2",
+            label: "Disable monitoring so the story looks green",
+            correct: false,
+            why: "Hiding signals is a trap.",
+          },
+        ],
+      },
+      {
+        id: "s3",
+        title: "Stage the hub",
+        teach: `Second window: ${uc1}`,
+        prompt: "Drop the tool on the hub — the scene’s control point.",
+        mode: "drop",
+        hint: "Hub is the active center.",
+        toolId: tool,
+        targetNodeId: layout.dropTarget,
+        wrongTargets: Object.fromEntries(
+          layout.nodes
+            .filter((n) => n.id !== layout.dropTarget)
+            .map((n) => [n.id, "Wrong stage mark — use the hub."]),
+        ),
+        successWhy: `Scenario apply for ${c.title}.`,
+        cinema: "scenario_stage",
+      },
+      {
+        id: "s4",
+        title: "Cut — verify",
+        teach: "Scene ends only when evidence proves the control held.",
+        prompt: "CHECK the hub — proof for the debrief.",
+        mode: "drop",
+        hint: "Hub again for seal.",
+        toolId: "tool-check",
+        targetNodeId: layout.dropTarget,
+        wrongTargets: Object.fromEntries(
+          layout.nodes
+            .filter((n) => n.id !== layout.dropTarget)
+            .map((n) => [n.id, "Verify the hub."]),
+        ),
+        successWhy: `Scenario cleared: ${c.title}.`,
+        cinema: "scenario_cut",
+      },
+    ],
+  };
+}
+
+/** COMPARE — when this concept vs alternatives */
+function buildCompareChallenge(c, index, prevId, seq) {
+  const h = hash(c.id + ":compare");
+  const biome = BIOME_BY_DOMAIN[c.domainId] || "market";
+  const layout = mapLayout("layers", h + 11);
+  const tool = pickTool(c, h + 11);
+  const title = c.title;
+  const why = c.whyItMatters || `Prefer ${title} when the failure mode is material.`;
+  const trade =
+    Array.isArray(c.designTradeoffs) && c.designTradeoffs[0]
+      ? c.designTradeoffs[0]
+      : null;
+  const chooseA = trade?.whenChooseA || `Choose ${title} when constraints make it the safer control.`;
+  const chooseB = trade?.whenChooseB || `Defer ${title} only with residual risk, owner, and date.`;
+
+  return {
+    id: `ch-${c.id}-compare`,
+    title: `${seq}⚖ Compare: ${c.title}`,
+    tier: c.level === "basic" ? "advanced" : c.level || "advanced",
+    domain: c.domainId || "operations",
+    biome: biome === "farm" ? "market" : biome,
+    challengeType: "compare_tradeoff",
+    mapStyle: biome === "farm" ? "market" : biome,
+    brief: `Compare game for ${title} — when this control vs defer/alternative.`,
+    unlockAfter: prevId,
+    concepts: [c.id],
+    curriculumIndex: seq,
+    conceptId: c.id,
+    variant: "compare",
+    mapNodes: layout.nodes.map((n, i) =>
+      i === 1 ? { ...n, label: "Tradeoff", broken: true } : n,
+    ),
+    edges: layout.edges,
+    steps: [
+      {
+        id: "s1",
+        title: "Pick the control",
+        teach: why.slice(0, 280),
+        prompt: `When should you choose “${title}” over deferring it?`,
+        mode: "choose",
+        hint: String(chooseA).slice(0, 120),
+        cinema: "compare_scales",
+        formula: "COMPARE = risk × cost × reversibility",
+        options: [
+          {
+            id: "t",
+            label: String(chooseA).slice(0, 150),
+            correct: true,
+            why: "Correct window for choosing this control.",
+          },
+          {
+            id: "f1",
+            label: "Always pick the newest brand name regardless of fit",
+            correct: false,
+            why: "Brand ≠ fit. Compare on risk and landscape.",
+          },
+          {
+            id: "f2",
+            label: "Never choose it — complexity is always wrong",
+            correct: false,
+            why: "Under-engineering is also a risk.",
+          },
+        ],
+      },
+      {
+        id: "s2",
+        title: "Know the alternate",
+        teach: `Defer window: ${String(chooseB).slice(0, 200)}`,
+        prompt: "Which deferral is disciplined (not a trap)?",
+        mode: "choose",
+        hint: "Owner + date + residual risk — not silent skip.",
+        cinema: "compare_fork",
+        options: [
+          {
+            id: "t",
+            label: String(chooseB).slice(0, 150),
+            correct: true,
+            why: "Disciplined alternate path.",
+          },
+          {
+            id: "f1",
+            label: "Skip forever and hope no one audits",
+            correct: false,
+            why: "Silent skip is the trap.",
+          },
+          {
+            id: "f2",
+            label: "Ship with Admin.All so you need no design",
+            correct: false,
+            why: "Privilege inflation is never the alternate.",
+          },
+        ],
+      },
+      {
+        id: "s3",
+        title: "Commit the hop",
+        teach: `Lock the chosen path for ${title} onto the tradeoff hop.`,
+        prompt: "Drop the tool on the Tradeoff node to commit.",
+        mode: "drop",
+        hint: "Broken middle hop.",
+        toolId: tool,
+        targetNodeId: layout.dropTarget,
+        wrongTargets: Object.fromEntries(
+          layout.nodes
+            .filter((n) => n.id !== layout.dropTarget)
+            .map((n) => [n.id, "Commit on the tradeoff hop."]),
+        ),
+        successWhy: `Compare commit for ${title}.`,
+        cinema: "compare_lock",
+      },
+      {
+        id: "s4",
+        title: "Prove the fork",
+        teach: "Close with verification so the compare memory sticks.",
+        prompt: "CHECK the end node — evidence for the chosen path.",
+        mode: "drop",
+        hint: "Downstream proof.",
+        toolId: "tool-check",
+        targetNodeId: layout.nodes[layout.nodes.length - 1].id,
+        wrongTargets: Object.fromEntries(
+          layout.nodes.slice(0, -1).map((n) => [n.id, "Verify the end of the path."]),
+        ),
+        successWhy: `Compare cleared: ${title}.`,
+        cinema: "compare_prove",
+      },
+    ],
+  };
+}
+
 function buildMasteryChallenge(c, index, prevId, seq) {
   const h = hash(c.id + ":mastery");
   const biome = BIOME_BY_DOMAIN[c.domainId] || "space";
@@ -897,7 +1142,7 @@ function main() {
   let prev = null;
   let seq = 0;
 
-  // Per concept: intro → when → how → trap → mastery (5 games, linear)
+  // Per concept: intro → when → how → trap → scenario → compare → mastery (7 games)
   for (let i = 0; i < ordered.length; i++) {
     const c = ordered[i];
     const builders = [
@@ -905,6 +1150,8 @@ function main() {
       buildWhenChallenge,
       buildHowChallenge,
       buildTrapChallenge,
+      buildScenarioChallenge,
+      buildCompareChallenge,
       buildMasteryChallenge,
     ];
     for (const build of builders) {
@@ -934,18 +1181,18 @@ function main() {
   }
 
   const pack = {
-    version: "6.0.0",
+    version: "7.0.0",
     title: "Odyssey Full Curriculum Campaign",
     intro:
-      "Every concept has five games: Intro (what) → When (timing) → How (procedure) → Trap (misuse) → Mastery (pressure). Wrong = RED + why. Right = unlock next. Linear spine; progress always saves.",
+      "Every concept has seven games: Intro → When → How → Trap → Scenario → Compare → Mastery. How/when-to-use is drilled across multiple formats. Wrong = RED + why. Right = unlock next.",
     biomes: ["war", "chess", "farm", "roblox", "neural", "space", "market", "film"],
     ethics:
       "Linear mastery path for learning integrity. No FOMO punishment — progress saves; missing a day never costs.",
     tools: tools(),
     totalChallenges: challenges.length,
     totalConcepts: ordered.length,
-    gamesPerConcept: 5,
-    variants: ["intro", "when", "how", "trap", "mastery"],
+    gamesPerConcept: 7,
+    variants: ["intro", "when", "how", "trap", "scenario", "compare", "mastery"],
     challenges,
   };
 
@@ -962,12 +1209,16 @@ function main() {
     whenChallengeId: `ch-${c.id}-when`,
     howChallengeId: `ch-${c.id}-how`,
     trapChallengeId: `ch-${c.id}-trap`,
+    scenarioChallengeId: `ch-${c.id}-scenario`,
+    compareChallengeId: `ch-${c.id}-compare`,
     masteryChallengeId: `ch-${c.id}-mastery`,
     games: [
       `ch-${c.id}-intro`,
       `ch-${c.id}-when`,
       `ch-${c.id}-how`,
       `ch-${c.id}-trap`,
+      `ch-${c.id}-scenario`,
+      `ch-${c.id}-compare`,
       `ch-${c.id}-mastery`,
     ],
   }));
@@ -978,12 +1229,12 @@ function main() {
     join(curDir, "master-sequence.json"),
     JSON.stringify(
       {
-        version: "6.0.0",
+        version: "7.0.0",
         title: "Master concept sequence",
         description:
-          "Pedagogical order: BTP intro → structure → security/admin → CAP → RAP → UI → Integration → Events → BPA → Work Zone → Data → AI. Five games per concept (what / when / how / trap / mastery).",
+          "Pedagogical order: BTP intro → structure → security/admin → CAP → RAP → UI → Integration → Events → BPA → Work Zone → Data → AI. Seven games per concept (what / when / how / trap / scenario / compare / mastery).",
         conceptCount: sequence.length,
-        gamesPerConcept: 5,
+        gamesPerConcept: 7,
         challengeCount: challenges.length,
         sequence,
       },

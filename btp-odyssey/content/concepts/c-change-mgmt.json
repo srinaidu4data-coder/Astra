@@ -72,19 +72,31 @@
       "id": "ch-c-change-mgmt-when",
       "title": "When to use: Change Coordination",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-c-change-mgmt-how",
       "title": "How to use: Change Coordination",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-c-change-mgmt-trap",
       "title": "Trap / misuse: Change Coordination",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-c-change-mgmt-scenario",
+      "title": "Scenario story: Change Coordination",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-c-change-mgmt-compare",
+      "title": "Compare tradeoff: Change Coordination",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-c-change-mgmt-mastery",

@@ -75,19 +75,31 @@
       "id": "ch-cpi-iflow-when",
       "title": "When to use: Cloud Integration iflows",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-cpi-iflow-how",
       "title": "How to use: Cloud Integration iflows",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-cpi-iflow-trap",
       "title": "Trap / misuse: Cloud Integration iflows",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-cpi-iflow-scenario",
+      "title": "Scenario story: Cloud Integration iflows",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-cpi-iflow-compare",
+      "title": "Compare tradeoff: Cloud Integration iflows",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-cpi-iflow-mastery",

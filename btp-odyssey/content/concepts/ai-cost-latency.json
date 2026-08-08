@@ -75,19 +75,31 @@
       "id": "ch-ai-cost-latency-when",
       "title": "When to use: AI cost and latency trade-offs",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-ai-cost-latency-how",
       "title": "How to use: AI cost and latency trade-offs",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-ai-cost-latency-trap",
       "title": "Trap / misuse: AI cost and latency trade-offs",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-ai-cost-latency-scenario",
+      "title": "Scenario story: AI cost and latency trade-offs",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-ai-cost-latency-compare",
+      "title": "Compare tradeoff: AI cost and latency trade-offs",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-ai-cost-latency-mastery",

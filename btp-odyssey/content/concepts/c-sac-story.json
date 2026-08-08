@@ -72,19 +72,31 @@
       "id": "ch-c-sac-story-when",
       "title": "When to use: Analytics Stories",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-c-sac-story-how",
       "title": "How to use: Analytics Stories",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-c-sac-story-trap",
       "title": "Trap / misuse: Analytics Stories",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-c-sac-story-scenario",
+      "title": "Scenario story: Analytics Stories",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-c-sac-story-compare",
+      "title": "Compare tradeoff: Analytics Stories",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-c-sac-story-mastery",

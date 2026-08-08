@@ -75,19 +75,31 @@
       "id": "ch-wz-what-when",
       "title": "When to use: Build Work Zone concepts",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-wz-what-how",
       "title": "How to use: Build Work Zone concepts",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-wz-what-trap",
       "title": "Trap / misuse: Build Work Zone concepts",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-wz-what-scenario",
+      "title": "Scenario story: Build Work Zone concepts",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-wz-what-compare",
+      "title": "Compare tradeoff: Build Work Zone concepts",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-wz-what-mastery",

@@ -79,19 +79,31 @@
       "id": "ch-c-scope-403-when",
       "title": "When to use: HTTP 403 Missing Scope",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-c-scope-403-how",
       "title": "How to use: HTTP 403 Missing Scope",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-c-scope-403-trap",
       "title": "Trap / misuse: HTTP 403 Missing Scope",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-c-scope-403-scenario",
+      "title": "Scenario story: HTTP 403 Missing Scope",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-c-scope-403-compare",
+      "title": "Compare tradeoff: HTTP 403 Missing Scope",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-c-scope-403-mastery",

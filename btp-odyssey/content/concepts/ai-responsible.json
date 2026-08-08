@@ -75,19 +75,31 @@
       "id": "ch-ai-responsible-when",
       "title": "When to use: Responsible AI basics",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-ai-responsible-how",
       "title": "How to use: Responsible AI basics",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-ai-responsible-trap",
       "title": "Trap / misuse: Responsible AI basics",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-ai-responsible-scenario",
+      "title": "Scenario story: Responsible AI basics",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-ai-responsible-compare",
+      "title": "Compare tradeoff: Responsible AI basics",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-ai-responsible-mastery",

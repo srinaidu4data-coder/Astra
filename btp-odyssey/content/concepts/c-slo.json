@@ -72,19 +72,31 @@
       "id": "ch-c-slo-when",
       "title": "When to use: SLOs & Alerting",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-c-slo-how",
       "title": "How to use: SLOs & Alerting",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-c-slo-trap",
       "title": "Trap / misuse: SLOs & Alerting",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-c-slo-scenario",
+      "title": "Scenario story: SLOs & Alerting",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-c-slo-compare",
+      "title": "Compare tradeoff: SLOs & Alerting",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-c-slo-mastery",

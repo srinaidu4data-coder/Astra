@@ -75,19 +75,31 @@
       "id": "ch-sec-destinations-when",
       "title": "When to use: Destinations security role",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-sec-destinations-how",
       "title": "How to use: Destinations security role",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-sec-destinations-trap",
       "title": "Trap / misuse: Destinations security role",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-sec-destinations-scenario",
+      "title": "Scenario story: Destinations security role",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-sec-destinations-compare",
+      "title": "Compare tradeoff: Destinations security role",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-sec-destinations-mastery",

@@ -72,19 +72,31 @@
       "id": "ch-c-shared-responsibility-when",
       "title": "When to use: Shared Responsibility",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-c-shared-responsibility-how",
       "title": "How to use: Shared Responsibility",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-c-shared-responsibility-trap",
       "title": "Trap / misuse: Shared Responsibility",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-c-shared-responsibility-scenario",
+      "title": "Scenario story: Shared Responsibility",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-c-shared-responsibility-compare",
+      "title": "Compare tradeoff: Shared Responsibility",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-c-shared-responsibility-mastery",

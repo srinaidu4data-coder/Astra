@@ -88,19 +88,31 @@
       "id": "ch-btp-services-map-when",
       "title": "When to use: BTP services map: what lives where",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-btp-services-map-how",
       "title": "How to use: BTP services map: what lives where",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-btp-services-map-trap",
       "title": "Trap / misuse: BTP services map: what lives where",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-btp-services-map-scenario",
+      "title": "Scenario story: BTP services map: what lives where",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-btp-services-map-compare",
+      "title": "Compare tradeoff: BTP services map: what lives where",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-btp-services-map-mastery",

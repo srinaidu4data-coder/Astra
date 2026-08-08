@@ -75,19 +75,31 @@
       "id": "ch-hana-perf-when",
       "title": "When to use: Expensive statements and plans",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-hana-perf-how",
       "title": "How to use: Expensive statements and plans",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-hana-perf-trap",
       "title": "Trap / misuse: Expensive statements and plans",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-hana-perf-scenario",
+      "title": "Scenario story: Expensive statements and plans",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-hana-perf-compare",
+      "title": "Compare tradeoff: Expensive statements and plans",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-hana-perf-mastery",

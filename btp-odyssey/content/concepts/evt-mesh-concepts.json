@@ -75,19 +75,31 @@
       "id": "ch-evt-mesh-concepts-when",
       "title": "When to use: Event Mesh style concepts",
       "role": "when",
-      "purpose": "Scenario timing — pick the right moment; reject vanity or late-only timing."
+      "purpose": "Timing radar — pick the right moment; reject vanity or late-only timing."
     },
     {
       "id": "ch-evt-mesh-concepts-how",
       "title": "How to use: Event Mesh style concepts",
       "role": "how",
-      "purpose": "Procedure — sequence the apply steps, place on the right hop, verify evidence."
+      "purpose": "Procedure pipeline — sequence apply steps, place on the hop, verify evidence."
     },
     {
       "id": "ch-evt-mesh-concepts-trap",
       "title": "Trap / misuse: Event Mesh style concepts",
       "role": "trap",
       "purpose": "When NOT — name the anti-pattern, blast radius, re-arm the control."
+    },
+    {
+      "id": "ch-evt-mesh-concepts-scenario",
+      "title": "Scenario story: Event Mesh style concepts",
+      "role": "scenario",
+      "purpose": "Live project scene — when to engage and how to act under a real trigger."
+    },
+    {
+      "id": "ch-evt-mesh-concepts-compare",
+      "title": "Compare tradeoff: Event Mesh style concepts",
+      "role": "compare",
+      "purpose": "When this control vs defer/alternative — risk, cost, reversibility."
     },
     {
       "id": "ch-evt-mesh-concepts-mastery",

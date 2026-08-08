@@ -120,6 +120,10 @@ function variantGateLabel(variant?: string): string {
       return "How-to-use gate";
     case "trap":
       return "Trap / misuse gate";
+    case "scenario":
+      return "Scenario story gate";
+    case "compare":
+      return "Compare tradeoff gate";
     case "mastery":
       return "Mastery gate";
     case "intro":
@@ -136,6 +140,10 @@ function variantChip(variant?: string): string {
       return "HOW";
     case "trap":
       return "TRAP";
+    case "scenario":
+      return "SCENE";
+    case "compare":
+      return "COMPARE";
     case "mastery":
       return "MASTER";
     default:
@@ -152,6 +160,7 @@ export function ChallengePlay({
   onOpenConcept,
   onProgress,
   initialChallengeId,
+  freePlay = false,
 }: {
   pack: ChallengePack;
   clearedIds: string[];
@@ -172,8 +181,12 @@ export function ChallengePlay({
     stepIndex: number;
   }) => void;
   initialChallengeId?: string | null;
+  /** Atlas concept cards can launch any linked game without linear path lock */
+  freePlay?: boolean;
 }) {
   const [activeId, setActiveId] = useState<string | null>(initialChallengeId ?? null);
+  const freePlayRef = useRef(freePlay);
+  freePlayRef.current = freePlay;
   const [stepIndex, setStepIndex] = useState(0);
   const [fixedNodes, setFixedNodes] = useState<Set<string>>(new Set());
   const [flash, setFlash] = useState<{ id: string; kind: "red" | "green" } | null>(null);
@@ -237,19 +250,21 @@ export function ChallengePlay({
     });
   }, [pack.challenges, cleared]);
 
-  // Auto-start the required next step once — never fight "Path map" button
+  // Auto-start: freePlay (Atlas) opens any linked game; else path gate
   useEffect(() => {
     if (browseMap) return;
     if (activeId) return;
     if (autoStartedRef.current && !initialChallengeId) return;
 
     const nextOpen = pack.challenges.find((c) => unlocked(c) && !cleared.has(c.id));
-    if (
-      initialChallengeId &&
-      pack.challenges.find((c) => c.id === initialChallengeId) &&
-      unlocked(pack.challenges.find((c) => c.id === initialChallengeId)!)
-    ) {
-      if (!nextOpen || initialChallengeId === nextOpen.id || cleared.has(initialChallengeId)) {
+    if (initialChallengeId && pack.challenges.some((c) => c.id === initialChallengeId)) {
+      if (freePlayRef.current || cleared.has(initialChallengeId)) {
+        autoStartedRef.current = true;
+        setActiveId(initialChallengeId);
+        return;
+      }
+      const ch = pack.challenges.find((c) => c.id === initialChallengeId)!;
+      if (unlocked(ch) && (!nextOpen || initialChallengeId === nextOpen.id)) {
         autoStartedRef.current = true;
         setActiveId(initialChallengeId);
         return;
@@ -290,28 +305,31 @@ export function ChallengePlay({
   function startChallenge(id: string) {
     const ch = pack.challenges.find((c) => c.id === id);
     if (!ch) return;
-    if (!unlocked(ch)) {
-      pulseJuice("bad", "LOCKED");
-      try {
-        sfx.fail();
-      } catch {
-        /* ignore */
+    // Atlas free-play: any concept-linked game can open from the card
+    if (!freePlayRef.current) {
+      if (!unlocked(ch)) {
+        pulseJuice("bad", "LOCKED");
+        try {
+          sfx.fail();
+        } catch {
+          /* ignore */
+        }
+        return;
       }
-      return;
-    }
-    // Hard path lock: cannot open a future island beyond the current next gate
-    // (cleared ones may be replayed)
-    const nextOpen = pack.challenges.find((c) => unlocked(c) && !cleared.has(c.id));
-    if (nextOpen && id !== nextOpen.id && !cleared.has(id)) {
-      pulseJuice("bad", "FOLLOW THE PATH");
-      try {
-        sfx.fail();
-      } catch {
-        /* ignore */
+      // Hard path lock: cannot open a future island beyond the current next gate
+      // (cleared ones may be replayed)
+      const nextOpen = pack.challenges.find((c) => unlocked(c) && !cleared.has(c.id));
+      if (nextOpen && id !== nextOpen.id && !cleared.has(id)) {
+        pulseJuice("bad", "FOLLOW THE PATH");
+        try {
+          sfx.fail();
+        } catch {
+          /* ignore */
+        }
+        setBrowseMap(false);
+        setActiveId(nextOpen.id);
+        return;
       }
-      setBrowseMap(false);
-      setActiveId(nextOpen.id);
-      return;
     }
     setBrowseMap(false);
     setActiveId(id);
