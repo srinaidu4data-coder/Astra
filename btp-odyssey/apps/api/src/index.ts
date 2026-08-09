@@ -213,10 +213,11 @@ const server = createServer(async (req, res) => {
       return json(res, 200, {
         ok: true,
         product: "BTP Odyssey: The Living Enterprise",
-        version: "3.1.0",
-        release: "living-enterprise-r1.1",
+        version: "3.2.0",
+        release: "living-enterprise-unified",
         edition: "living-enterprise",
         successorOf: "mega-teach-2.0",
+        unifiedShell: true,
         disclaimer:
           "Independent learning simulation. Not affiliated with or endorsed by SAP. Not official certification. Completing missions does not grant SAP certification or employment.",
       });
@@ -255,8 +256,9 @@ const server = createServer(async (req, res) => {
       return json(res, 200, {
         product: {
           name: "BTP Odyssey: The Living Enterprise",
-          version: "3.1.0",
+          version: "3.2.0",
           fidelityDefault: "tier2_behavioral",
+          unifiedShell: true,
           ethics:
             "No loot boxes, no punitive streaks, no FOMO. Breaks never cost progress. Optional only.",
         },

@@ -54,6 +54,8 @@ import {
 } from "./game/ConceptAtlasFX";
 import { ConceptUseArena } from "./game/ConceptUseArena";
 import { ReturnLoopBanner, type ReturnLoopData } from "./game/ReturnLoop";
+import { LivingApp, type LivingRoute } from "./living/LivingApp";
+import "./living/living.css";
 import { TeachPanel } from "./TeachPanel";
 import { ArchitectureEngineView } from "./engine/ArchitectureEngineView";
 import { GraphicsCanvas } from "./engine/GraphicsCanvas";
@@ -75,7 +77,37 @@ type View =
   | "architect"
   | "trees"
   | "settings"
-  | "result";
+  | "result"
+  /** Living Enterprise surfaces — same product path, not a second shell */
+  | "incident"
+  | "continue"
+  | "diagnostic"
+  | "register"
+  | "constellation"
+  | "review"
+  | "portfolio"
+  | "glossary"
+  | "notes"
+  | "sandbox"
+  | "teams"
+  | "support"
+  | "preferences";
+
+const LIVING_VIEWS = new Set<View>([
+  "incident",
+  "continue",
+  "diagnostic",
+  "register",
+  "constellation",
+  "review",
+  "portfolio",
+  "glossary",
+  "notes",
+  "sandbox",
+  "teams",
+  "support",
+  "preferences",
+]);
 
 const FIDELITY: Record<string, string> = {
   tier1_conceptual: "Tier 1 Conceptual",
@@ -617,18 +649,27 @@ export function App() {
           <span className="logo-mark">Ω</span>
           <span className="logo-text">
             <strong>BTP Odyssey</strong>
-            <span>Mega Teach · beginner spine</span>
+            <span>Living Enterprise · one path</span>
           </span>
         </button>
         <nav className="nav-tabs" aria-label="Primary">
           {(
             [
+              ["home", "Home"],
+              ["incident", "Incident"],
               ["play", "PLAY"],
-              ["home", "Universe"],
-              ["architect", "Arena"],
               ["atlas", "Atlas"],
+              ["architect", "Arena"],
+              ["constellation", "Constellation"],
               ["trees", "Trees"],
               ["skills", "Skills"],
+              ["paths", "Paths"],
+              ["review", "Review"],
+              ["portfolio", "Portfolio"],
+              ["glossary", "Glossary"],
+              ["notes", "Notes"],
+              ["sandbox", "Sandbox"],
+              ["support", "Support"],
               ["settings", "Settings"],
             ] as const
           ).map(([id, label]) => (
@@ -676,8 +717,9 @@ export function App() {
 
       <main className="main">
         <p className="disclaimer">
-          Independent mega-teaching universe — not SAP-affiliated. Every micro-step teaches, checks,
-          then makes you apply. Fidelity always disclosed. Competence is evidenced, never XP-farmed.
+          BTP Odyssey: The Living Enterprise — one product path. Independent of SAP. Fidelity always
+          disclosed. Living incident loop + PLAY + Atlas + Arena + missions. Competence is evidenced,
+          never XP-farmed. No loot boxes, no punitive streaks.
         </p>
         <EthicsBanner />
         {error && (
@@ -686,7 +728,18 @@ export function App() {
           </div>
         )}
 
-        {questBoard?.currentQuest && view !== "mission" && view !== "result" && (
+        {LIVING_VIEWS.has(view) && (
+          <LivingApp
+            hideShell
+            externalRoute={view as LivingRoute}
+            onExitTo={(dest) => go(dest as View)}
+          />
+        )}
+
+        {questBoard?.currentQuest &&
+          view !== "mission" &&
+          view !== "result" &&
+          !LIVING_VIEWS.has(view) && (
           <ObjectiveCompass
             title={questBoard.currentQuest.title}
             detail={`${questBoard.currentQuest.objective}${questBoard.followingQuest ? ` → Next after this: ${questBoard.followingQuest.title}` : ""}`}
@@ -704,19 +757,21 @@ export function App() {
                 className="gfx-hero-wrap"
                 onReady={(eng) => buildHeroScene(eng)}
               />
-              <div className="gfx-badge">Odyssey GFX Engine</div>
-              <div className="gfx-caption">Real-time canvas · particles · camera · nebula</div>
+              <div className="gfx-badge">Living Enterprise · Odyssey GFX</div>
+              <div className="gfx-caption">One path · incident · PLAY · atlas · arena · missions</div>
             </div>
             <section className="hero">
-              <p className="hero-kicker">Mega teach + Architecture Arena · complex trade-offs</p>
+              <p className="hero-kicker">
+                Living Enterprise + full Odyssey toolkit · single product path
+              </p>
               <h1>
-                Learn BTP by <em>playing</em>
+                Master SAP BTP in a <em>living enterprise</em>
               </h1>
               <p className="hero-lead">
-                Newcomers start with <strong>What is SAP BTP?</strong>, then landscape structure, then
-                security &amp; admin — each step ends in a game. After foundations: incident missions,
-                multi-biome PLAY islands, and Architecture Arena. Judgment under constraints — not
-                XP farming.
+                Start with a no-login living incident (diagnose → fix → debrief → portfolio), then use
+                the same nav for <strong>PLAY</strong> (every concept game), <strong>Atlas</strong>{" "}
+                how/when arcade, <strong>Architecture Arena</strong>, mega-teach missions, trees,
+                skills, and paths. Nothing is split into a second “legacy” product.
               </p>
               <p className="psych-note">{psychNote}</p>
               <div className="domain-coverage">
@@ -739,14 +794,36 @@ export function App() {
                   </div>
                 ))}
               </div>
+              <div className="beginner-rail" role="region" aria-label="Living incident cold start">
+                <div className="beginner-rail-copy">
+                  <div className="hero-kicker">Guest cold start · under 60s target</div>
+                  <strong>Living incident · Northwind Order Insights</strong>
+                  <p className="muted" style={{ margin: "0.35rem 0 0", fontSize: "0.88rem" }}>
+                    Cinematic hook → diagnose (real sim) → inspect logs → architect → secure fix →
+                    blameless debrief → spaced retrieval → portfolio artifact.
+                  </p>
+                </div>
+                <div className="action-row">
+                  <button className="btn primary" type="button" onClick={() => go("incident")}>
+                    ▶ Enter living incident
+                  </button>
+                  <button className="btn" type="button" onClick={() => go("diagnostic")}>
+                    Prerequisite diagnostic
+                  </button>
+                  <button className="btn" type="button" onClick={() => go("continue")}>
+                    Continue dashboard
+                  </button>
+                </div>
+              </div>
               <div className="beginner-rail" role="region" aria-label="Full curriculum path">
                 <div className="beginner-rail-copy">
-                  <div className="hero-kicker">Full curriculum · {challengePack?.totalChallenges ?? 314} games</div>
-                  <strong>What is SAP BTP? → every concept → mastery</strong>
+                  <div className="hero-kicker">
+                    Full curriculum · {challengePack?.totalChallenges ?? 1099} games
+                  </div>
+                  <strong>What is SAP BTP? → every concept → mastery (7 games each)</strong>
                   <p className="muted" style={{ margin: "0.35rem 0 0", fontSize: "0.88rem" }}>
-                    {challengePack?.totalConcepts ?? 157} concepts × intro + mastery PLAY each.
-                    Linear unlock — nothing skipped, nothing out of order. Red teaches, green
-                    advances.
+                    {challengePack?.totalConcepts ?? 157} concepts · intro / when / how / trap /
+                    scenario / compare / mastery. Linear PLAY unlock + free-play from Atlas cards.
                   </p>
                 </div>
                 <div className="action-row">
@@ -774,6 +851,15 @@ export function App() {
                 </button>
                 <button className="btn" type="button" onClick={() => go("architect")}>
                   Architecture Arena
+                </button>
+                <button className="btn" type="button" onClick={() => go("atlas")}>
+                  Concept Atlas
+                </button>
+                <button className="btn" type="button" onClick={() => go("constellation")}>
+                  Search constellation
+                </button>
+                <button className="btn" type="button" onClick={() => go("portfolio")}>
+                  Portfolio
                 </button>
                 {recommended && (
                   <button
@@ -1811,6 +1897,14 @@ export function App() {
         {view === "settings" && learner && (
           <section className="panel">
             <h2>Settings</h2>
+            <p className="muted" style={{ fontSize: "0.88rem" }}>
+              Classic settings plus Living Enterprise preferences (session goals, low-stim, quiet
+              hours) are on the same path — open{" "}
+              <button type="button" className="btn ghost" onClick={() => go("preferences")}>
+                Preferences
+              </button>{" "}
+              for extended a11y / ethics controls. Nothing is hidden in another product version.
+            </p>
             <div className="form-grid">
               <label>
                 Callsign

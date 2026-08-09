@@ -25,6 +25,17 @@
   font-family: var(--le-font);
 }
 
+/* Embedded inside unified Odyssey shell — no second product frame */
+.living-embed {
+  color: var(--le-text);
+  font-family: var(--le-font);
+}
+.living-embed-inner {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
 .living-root[data-low-stim="true"] {
   background: #070a10;
 }

@@ -202,9 +202,29 @@ function Cinema({
   );
 }
 
-export function LivingApp() {
-  const [route, setRoute] = useState<Route>("gate");
+export type LivingRoute = Route;
+
+/**
+ * Living Enterprise feature host.
+ * - Standalone: full chrome (legacy entry — prefer embedding in App).
+ * - Embedded: hideShell + externalRoute so Odyssey has ONE nav / one path.
+ */
+export function LivingApp({
+  hideShell = false,
+  externalRoute,
+  onExitTo,
+}: {
+  hideShell?: boolean;
+  externalRoute?: Route;
+  /** Navigate to classic Odyssey surfaces without a second product shell */
+  onExitTo?: (dest: "play" | "atlas" | "architect" | "home" | "settings" | "trees" | "skills" | "paths") => void;
+} = {}) {
+  const [route, setRoute] = useState<Route>(externalRoute ?? "gate");
   const [boot, setBoot] = useState<Bootstrap | null>(null);
+
+  useEffect(() => {
+    if (externalRoute) setRoute(externalRoute);
+  }, [externalRoute]);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(!navigator.onLine);
   const [busy, setBusy] = useState(false);
@@ -543,6 +563,36 @@ export function LivingApp() {
     }
   };
 
+  const goRoute = (n: Route) => {
+    setRoute(n);
+    if (n === "review") {
+      void api<{ items: { id?: string; prompt?: string }[] }>("/api/living/review-queue").then(
+        setReview,
+      );
+    }
+    if (n === "constellation") void searchConstellation("");
+    if (n === "glossary") {
+      void api<{ terms: { term: string; definition: string }[] }>("/api/living/glossary").then(
+        (g) => setGlossary(g.terms),
+      );
+    }
+    if (n === "notes") {
+      void api<{ notes: { id: string; text: string; bookmark?: boolean }[] }>(
+        "/api/living/notes",
+      ).then((n2) => setNotes(n2.notes));
+    }
+    if (n === "support") setFeedbackOk(null);
+    if (n === "sandbox") {
+      void api<Record<string, unknown>>("/api/living/sandbox").then(setSandbox);
+    }
+  };
+
+  useEffect(() => {
+    if (!externalRoute) return;
+    goRoute(externalRoute);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalRoute]);
+
   const nav: { id: Route; label: string }[] = useMemo(
     () => [
       { id: "continue", label: "Continue" },
@@ -560,8 +610,8 @@ export function LivingApp() {
 
   if (!boot && !error) {
     return (
-      <div className="living-root">
-        <div className="living-shell">
+      <div className={hideShell ? "living-embed" : "living-root"}>
+        <div className={hideShell ? "" : "living-shell"}>
           <div className="le-panel" role="status">
             Loading Living Enterprise…
           </div>
@@ -572,12 +622,13 @@ export function LivingApp() {
 
   return (
     <div
-      className="living-root"
+      className={hideShell ? "living-embed" : "living-root"}
       data-low-stim={lowStim ? "true" : "false"}
       data-silent={silent ? "true" : "false"}
       data-data-saver={dataSaver ? "true" : "false"}
     >
-      <div className="living-shell">
+      <div className={hideShell ? "living-embed-inner" : "living-shell"}>
+        {!hideShell && (
         <header className="le-topbar">
           <div className="le-brand">
             <strong>BTP Odyssey: The Living Enterprise</strong>
@@ -591,35 +642,27 @@ export function LivingApp() {
                 key={n.id}
                 type="button"
                 aria-current={route === n.id ? "page" : undefined}
-                onClick={() => {
-                  setRoute(n.id);
-                  if (n.id === "review") {
-                    void api<{ items: { id?: string; prompt?: string }[] }>(
-                      "/api/living/review-queue",
-                    ).then(setReview);
-                  }
-                  if (n.id === "constellation") void searchConstellation("");
-                  if (n.id === "glossary") {
-                    void api<{ terms: { term: string; definition: string }[] }>(
-                      "/api/living/glossary",
-                    ).then((g) => setGlossary(g.terms));
-                  }
-                  if (n.id === "notes") {
-                    void api<{ notes: { id: string; text: string; bookmark?: boolean }[] }>(
-                      "/api/living/notes",
-                    ).then((n2) => setNotes(n2.notes));
-                  }
-                  if (n.id === "support") setFeedbackOk(null);
-                }}
+                onClick={() => goRoute(n.id)}
               >
                 {n.label}
               </button>
             ))}
-            <button type="button" onClick={() => setRoute("legacy")}>
-              Legacy
-            </button>
+            {onExitTo && (
+              <>
+                <button type="button" onClick={() => onExitTo("play")}>
+                  PLAY
+                </button>
+                <button type="button" onClick={() => onExitTo("atlas")}>
+                  Atlas
+                </button>
+                <button type="button" onClick={() => onExitTo("architect")}>
+                  Arena
+                </button>
+              </>
+            )}
           </nav>
         </header>
+        )}
 
         {offline && (
           <div className="le-banner error" role="status">
@@ -1191,12 +1234,22 @@ export function LivingApp() {
               <>
                 <p className="lead">
                   Targeted remediation: Destinations, JWT audience, CAP bindings. Open constellation
-                  or legacy Atlas how/when games.
+                  or full Atlas how/when games and PLAY campaign (same product — no separate shell).
                 </p>
                 <div className="le-actions">
                   <button type="button" className="le-btn" onClick={() => setRoute("constellation")}>
                     Mastery constellation
                   </button>
+                  {onExitTo && (
+                    <>
+                      <button type="button" className="le-btn" onClick={() => onExitTo("atlas")}>
+                        Atlas concept games
+                      </button>
+                      <button type="button" className="le-btn" onClick={() => onExitTo("play")}>
+                        PLAY campaign
+                      </button>
+                    </>
+                  )}
                   <button type="button" className="le-btn primary" onClick={advance}>
                     Schedule retrieval
                   </button>
@@ -1575,36 +1628,53 @@ export function LivingApp() {
 
         {route === "legacy" && (
           <section className="le-panel">
-            <div className="le-kicker">Bridge</div>
-            <h2 style={{ marginTop: 0 }}>Legacy mega-teach shell</h2>
+            <div className="le-kicker">All features · one product</div>
+            <h2 style={{ marginTop: 0 }}>Full Odyssey toolkit</h2>
             <p className="lead">
-              Full PLAY (1099 games), Atlas arcade, Architect studio. Opens with{" "}
-              <code>?legacy=1</code>.
+              PLAY campaign, Atlas, Architect Arena, missions, skill trees, and paths live in the
+              same app navigation — nothing is behind a second version.
             </p>
             <div className="le-actions">
-              <button
-                type="button"
-                className="le-btn primary"
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set("legacy", "1");
-                  window.location.href = url.toString();
-                }}
-              >
-                Open legacy shell
-              </button>
-              <button type="button" className="le-btn" onClick={() => setRoute("continue")}>
-                Back to Living Enterprise
-              </button>
+              {onExitTo ? (
+                <>
+                  <button type="button" className="le-btn primary" onClick={() => onExitTo("play")}>
+                    PLAY campaign
+                  </button>
+                  <button type="button" className="le-btn" onClick={() => onExitTo("atlas")}>
+                    Atlas
+                  </button>
+                  <button type="button" className="le-btn" onClick={() => onExitTo("architect")}>
+                    Architecture Arena
+                  </button>
+                  <button type="button" className="le-btn" onClick={() => onExitTo("trees")}>
+                    Quest trees
+                  </button>
+                  <button type="button" className="le-btn" onClick={() => onExitTo("skills")}>
+                    Skills
+                  </button>
+                  <button type="button" className="le-btn" onClick={() => onExitTo("paths")}>
+                    Paths
+                  </button>
+                  <button type="button" className="le-btn" onClick={() => onExitTo("settings")}>
+                    Settings
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="le-btn" onClick={() => setRoute("continue")}>
+                  Back to continue
+                </button>
+              )}
             </div>
           </section>
         )}
 
+        {!hideShell && (
         <p className="le-disclaimer">
           Independent learning product. Not affiliated with or endorsed by SAP SE. Completing
           missions does not grant SAP certification or employment. Simulations are not live SAP BTP.
-          Audit: docs/LIVING_ENTERPRISE_AUDIT.md. Health product name: The Living Enterprise 3.0.
+          One unified path — Living Enterprise + full Odyssey toolkit.
         </p>
+        )}
       </div>
     </div>
   );
