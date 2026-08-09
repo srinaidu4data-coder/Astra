@@ -33,15 +33,11 @@ import {
 } from "./api";
 import {
   ArchitectStudio,
-  CuriosityHook,
-  FlowMeter,
   MasteryToast,
 } from "./ArchitectStudio";
 import { isAudioEnabled, setAudioEnabled, sfx } from "./audio";
 import {
-  EthicsBanner,
   ObjectiveCompass,
-  QuestLog,
   SkillTreePanel,
 } from "./GameChrome";
 import { ChallengePlay, type ChallengePack } from "./game/ChallengePlay";
@@ -58,9 +54,6 @@ import { LivingApp, type LivingRoute } from "./living/LivingApp";
 import "./living/living.css";
 import { TeachPanel } from "./TeachPanel";
 import { ArchitectureEngineView } from "./engine/ArchitectureEngineView";
-import { GraphicsCanvas } from "./engine/GraphicsCanvas";
-import { UniverseEngineView } from "./engine/UniverseEngineView";
-import { buildHeroScene } from "./engine/scenes";
 import {
   ArchitectureGraph,
   CompetencyConstellation,
@@ -155,9 +148,7 @@ export function App() {
   const [architectScenarios, setArchitectScenarios] = useState<ArchitectScenario[]>(
     [],
   );
-  const [psychNote, setPsychNote] = useState("");
   const [toast, setToast] = useState<{ title: string; detail: string } | null>(null);
-  const [curiosityIdx, setCuriosityIdx] = useState(0);
   const [questBoard, setQuestBoard] = useState<QuestBoard | null>(null);
   const [arenaScenarioId, setArenaScenarioId] = useState<string | null>(null);
   const [pathWalk, setPathWalk] = useState<{
@@ -173,6 +164,7 @@ export function App() {
   const [resumeChallengeId, setResumeChallengeId] = useState<string | null>(null);
   /** When true, ChallengePlay skips linear path lock (Atlas concept games) */
   const [playFreeMode, setPlayFreeMode] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [mission, setMission] = useState<Mission | null>(null);
@@ -235,7 +227,6 @@ export function App() {
         setCatalog(c);
         setLearner(l);
         setArchitectScenarios(a.scenarios);
-        setPsychNote(a.psychNote);
         setQuestBoard(q);
         setChallengePack(ch.pack as ChallengePack);
         setChallengesCleared(ch.clearedIds ?? []);
@@ -340,9 +331,39 @@ export function App() {
       /* audio optional — never block navigation */
     }
     setView(v);
+    setMoreOpen(false);
     // Clear transient errors when switching major views
     setError(null);
   }
+
+  const primaryNav: { id: View; label: string }[] = [
+    { id: "home", label: "Home" },
+    { id: "incident", label: "Incident" },
+    { id: "play", label: "Play" },
+    { id: "atlas", label: "Atlas" },
+    { id: "architect", label: "Arena" },
+  ];
+
+  const moreNav: { id: View; label: string }[] = [
+    { id: "continue", label: "Continue" },
+    { id: "constellation", label: "Constellation" },
+    { id: "trees", label: "Quest trees" },
+    { id: "skills", label: "Skills" },
+    { id: "paths", label: "Paths" },
+    { id: "review", label: "Review" },
+    { id: "portfolio", label: "Portfolio" },
+    { id: "glossary", label: "Glossary" },
+    { id: "notes", label: "Notes" },
+    { id: "sandbox", label: "Sandbox" },
+    { id: "diagnostic", label: "Diagnostic" },
+    { id: "register", label: "Profile" },
+    { id: "preferences", label: "Preferences" },
+    { id: "support", label: "Support" },
+    { id: "settings", label: "Settings" },
+    { id: "teams", label: "Teams" },
+  ];
+
+  const moreActive = moreNav.some((n) => n.id === view);
 
   async function onStartMission(missionId: string) {
     setLoading(true);
@@ -642,65 +663,55 @@ export function App() {
     catalog?.domains.find((d) => d.id === filterDomain)?.districtName ?? null;
 
   return (
-    <div className="odyssey">
-      <Starfield />
-      <header className="topnav">
-        <button type="button" className="logo" onClick={() => go("home")}>
+    <div className="odyssey ux-min">
+      {view === "home" && <Starfield />}
+      <header className="topnav topnav-min">
+        <button type="button" className="logo" onClick={() => go("home")} title="Home">
           <span className="logo-mark">Ω</span>
           <span className="logo-text">
             <strong>BTP Odyssey</strong>
-            <span>Living Enterprise · one path</span>
           </span>
         </button>
-        <nav className="nav-tabs" aria-label="Primary">
-          {(
-            [
-              ["home", "Home"],
-              ["incident", "Incident"],
-              ["play", "PLAY"],
-              ["atlas", "Atlas"],
-              ["architect", "Arena"],
-              ["constellation", "Constellation"],
-              ["trees", "Trees"],
-              ["skills", "Skills"],
-              ["paths", "Paths"],
-              ["review", "Review"],
-              ["portfolio", "Portfolio"],
-              ["glossary", "Glossary"],
-              ["notes", "Notes"],
-              ["sandbox", "Sandbox"],
-              ["support", "Support"],
-              ["settings", "Settings"],
-            ] as const
-          ).map(([id, label]) => (
+        <nav className="nav-tabs nav-tabs-min" aria-label="Primary">
+          {primaryNav.map((n) => (
             <button
-              key={id}
+              key={n.id}
               type="button"
-              aria-current={view === id ? "page" : undefined}
-              onClick={() => go(id)}
+              aria-current={view === n.id ? "page" : undefined}
+              onClick={() => go(n.id)}
             >
-              {label}
+              {n.label}
             </button>
           ))}
+          <div className="nav-more-wrap">
+            <button
+              type="button"
+              className="nav-more-btn"
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+              aria-current={moreActive ? "page" : undefined}
+              onClick={() => setMoreOpen((o) => !o)}
+            >
+              More
+            </button>
+            {moreOpen && (
+              <div className="nav-more-menu" role="menu">
+                {moreNav.map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    role="menuitem"
+                    aria-current={view === n.id ? "page" : undefined}
+                    onClick={() => go(n.id)}
+                  >
+                    {n.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
-        <div className="nav-meta">
-          <FlowMeter
-            score={
-              learner?.engagement?.flowScore ??
-              learner?.profile.engagement?.flowScore ??
-              42
-            }
-            rank={
-              learner?.engagement?.architectRank ??
-              learner?.profile.engagement?.architectRank ??
-              "Apprentice Designer"
-            }
-            prestige={
-              learner?.engagement?.prestige ??
-              learner?.profile.engagement?.prestige ??
-              0
-            }
-          />
+        <div className="nav-meta nav-meta-min">
           <button
             type="button"
             className="icon-btn"
@@ -715,13 +726,7 @@ export function App() {
         </div>
       </header>
 
-      <main className="main">
-        <p className="disclaimer">
-          BTP Odyssey: The Living Enterprise — one product path. Independent of SAP. Fidelity always
-          disclosed. Living incident loop + PLAY + Atlas + Arena + missions. Competence is evidenced,
-          never XP-farmed. No loot boxes, no punitive streaks.
-        </p>
-        <EthicsBanner />
+      <main className="main main-min">
         {error && (
           <div className="alert" role="alert">
             {error}
@@ -751,258 +756,105 @@ export function App() {
 
         {view === "home" && (
           <>
-            <div className="gfx-hero-wrap" aria-hidden>
-              <GraphicsCanvas
-                height={200}
-                className="gfx-hero-wrap"
-                onReady={(eng) => buildHeroScene(eng)}
-              />
-              <div className="gfx-badge">Living Enterprise · Odyssey GFX</div>
-              <div className="gfx-caption">One path · incident · PLAY · atlas · arena · missions</div>
-            </div>
-            <section className="hero">
-              <p className="hero-kicker">
-                Living Enterprise + full Odyssey toolkit · single product path
-              </p>
-              <h1>
-                Master SAP BTP in a <em>living enterprise</em>
-              </h1>
+            <section className="hero hero-min">
+              <h1>Learn SAP BTP by doing</h1>
               <p className="hero-lead">
-                Start with a no-login living incident (diagnose → fix → debrief → portfolio), then use
-                the same nav for <strong>PLAY</strong> (every concept game), <strong>Atlas</strong>{" "}
-                how/when arcade, <strong>Architecture Arena</strong>, mega-teach missions, trees,
-                skills, and paths. Nothing is split into a second “legacy” product.
+                One path: fix a living incident, then deepen with Play, Atlas, and Arena.
               </p>
-              <p className="psych-note">{psychNote}</p>
-              <div className="domain-coverage">
-                {[
-                  "Security",
-                  "CAP/OData",
-                  "RAP",
-                  "CPI/IS",
-                  "BPA",
-                  "Joule/AI",
-                  "BDC",
-                  "Databricks*",
-                  "Datasphere",
-                  "SAC",
-                  "HANA",
-                ].map((d) => (
-                  <div key={d} className="domain-chip">
-                    <strong>TRACK</strong>
-                    {d}
-                  </div>
-                ))}
-              </div>
-              <div className="beginner-rail" role="region" aria-label="Living incident cold start">
-                <div className="beginner-rail-copy">
-                  <div className="hero-kicker">Guest cold start · under 60s target</div>
-                  <strong>Living incident · Northwind Order Insights</strong>
-                  <p className="muted" style={{ margin: "0.35rem 0 0", fontSize: "0.88rem" }}>
-                    Cinematic hook → diagnose (real sim) → inspect logs → architect → secure fix →
-                    blameless debrief → spaced retrieval → portfolio artifact.
-                  </p>
-                </div>
-                <div className="action-row">
-                  <button className="btn primary" type="button" onClick={() => go("incident")}>
-                    ▶ Enter living incident
-                  </button>
-                  <button className="btn" type="button" onClick={() => go("diagnostic")}>
-                    Prerequisite diagnostic
-                  </button>
-                  <button className="btn" type="button" onClick={() => go("continue")}>
-                    Continue dashboard
-                  </button>
-                </div>
-              </div>
-              <div className="beginner-rail" role="region" aria-label="Full curriculum path">
-                <div className="beginner-rail-copy">
-                  <div className="hero-kicker">
-                    Full curriculum · {challengePack?.totalChallenges ?? 1099} games
-                  </div>
-                  <strong>What is SAP BTP? → every concept → mastery (7 games each)</strong>
-                  <p className="muted" style={{ margin: "0.35rem 0 0", fontSize: "0.88rem" }}>
-                    {challengePack?.totalConcepts ?? 157} concepts · intro / when / how / trap /
-                    scenario / compare / mastery. Linear PLAY unlock + free-play from Atlas cards.
-                  </p>
-                </div>
-                <div className="action-row">
-                  <button className="btn primary" type="button" onClick={startBeginnerJourney}>
-                    ▶ Start path (Atlas)
-                  </button>
-                  <button
-                    className="btn violet"
-                    type="button"
-                    onClick={() => {
-                      setResumeChallengeId("ch-btp-what-intro");
-                      go("play");
-                    }}
-                  >
-                    Play step 1: What is BTP?
-                  </button>
-                </div>
-              </div>
-              <div className="hero-actions">
-                <button className="btn primary" type="button" onClick={() => go("play")}>
-                  ▶ PLAY campaign map
+              <div className="hero-actions hero-actions-min">
+                <button className="btn primary" type="button" onClick={() => go("incident")}>
+                  Start incident
                 </button>
-                <button className="btn violet" type="button" onClick={runNextStep}>
-                  Quest next step
-                </button>
-                <button className="btn" type="button" onClick={() => go("architect")}>
-                  Architecture Arena
-                </button>
-                <button className="btn" type="button" onClick={() => go("atlas")}>
-                  Concept Atlas
-                </button>
-                <button className="btn" type="button" onClick={() => go("constellation")}>
-                  Search constellation
-                </button>
-                <button className="btn" type="button" onClick={() => go("portfolio")}>
-                  Portfolio
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => {
+                    setResumeChallengeId("ch-btp-what-intro");
+                    go("play");
+                  }}
+                >
+                  Play path
                 </button>
                 {recommended && (
                   <button
-                    className="btn"
+                    className="btn ghost"
                     type="button"
                     disabled={loading}
                     onClick={() => onStartMission(recommended.id)}
                   >
-                    Continue mission · {recommended.title.split("—")[0]?.trim()}
+                    Mission
                   </button>
                 )}
               </div>
-              <div className="hero-stats">
-                <div className="stat">
-                  <div className="n">{catalog?.conceptCount ?? "—"}</div>
-                  <div className="l">Concept cards</div>
-                </div>
-                <div className="stat">
-                  <div className="n">
-                    {catalog?.missions.reduce((a, m) => a + m.stepCount, 0) ?? "—"}
-                  </div>
-                  <div className="l">Teaching micro-steps</div>
-                </div>
-                <div className="stat">
-                  <div className="n">{catalog?.missions.length ?? "—"}</div>
-                  <div className="l">Campaign missions</div>
-                </div>
-                <div className="stat">
-                  <div className="n">
-                    {learner?.profile.demonstratedCompetencies.length ?? 0}
-                  </div>
-                  <div className="l">Skills evidenced</div>
-                </div>
+              <div className="home-secondary" aria-label="More ways in">
+                <button type="button" className="linkish" onClick={() => go("atlas")}>
+                  Atlas
+                </button>
+                <button type="button" className="linkish" onClick={() => go("architect")}>
+                  Arena
+                </button>
+                <button type="button" className="linkish" onClick={runNextStep}>
+                  Next quest
+                </button>
+                <button type="button" className="linkish" onClick={startBeginnerJourney}>
+                  Beginner spine
+                </button>
+                <button type="button" className="linkish" onClick={() => go("continue")}>
+                  Continue
+                </button>
+                <button type="button" className="linkish" onClick={() => go("portfolio")}>
+                  Portfolio
+                </button>
               </div>
+              <p className="home-foot muted">
+                Independent simulation · not SAP certification ·{" "}
+                {challengePack?.totalChallenges ?? "…"} games · {catalog?.conceptCount ?? "…"}{" "}
+                concepts
+                {learner?.profile.demonstratedCompetencies.length
+                  ? ` · ${learner.profile.demonstratedCompetencies.length} skills evidenced`
+                  : ""}
+              </p>
             </section>
 
-            <UniverseEngineView
-              domains={(catalog?.domains ?? []).map((d) => ({
-                id: d.id,
-                title: d.districtName,
-                subtitle: d.title,
-              }))}
-              selectedId={filterDomain}
-              onSelect={(id) => {
-                sfx.hover();
-                setFilterDomain(id);
-              }}
-            />
-
-            <div className="studio-grid" style={{ marginBottom: "1rem" }}>
-              <section className="panel">
-                {questBoard && (
-                  <QuestLog
-                    quests={questBoard.quests}
-                    activeId={questBoard.currentQuest?.id}
-                    onSelect={(id) => {
-                      const q = questBoard.quests.find((x) => x.id === id);
-                      if (!q) return;
-                      if (q.challengeId) {
-                        setResumeChallengeId(q.challengeId);
-                        go("play");
-                      } else if (q.arenaScenarioId) {
-                        setArenaScenarioId(q.arenaScenarioId);
-                        go("architect");
-                      } else if (q.missionId) void onStartMission(q.missionId);
-                      else if (q.conceptIds?.length)
-                        void openLearningPath(q.title, q.conceptIds);
-                      else go("atlas");
-                    }}
-                  />
-                )}
+            {questBoard?.currentQuest && (
+              <section className="panel panel-min home-next" aria-label="Next quest">
+                <div className="home-next-row">
+                  <div>
+                    <div className="hero-kicker">Next</div>
+                    <strong>{questBoard.currentQuest.title}</strong>
+                  </div>
+                  <button className="btn primary" type="button" onClick={runNextStep}>
+                    Go
+                  </button>
+                </div>
               </section>
-              <section className="panel">
-                <h2>Curiosity loops</h2>
-                <p className="sub">
-                  Intellectual open loops (Zeigarnik) — optional. Never punished for waiting.
-                </p>
-                {(learner?.curiosityCards ?? []).length > 0 && (
-                  <CuriosityHook
-                    hook={
-                      learner!.curiosityCards![
-                        curiosityIdx % learner!.curiosityCards!.length
-                      ]!.hook
-                    }
-                    onExplore={async () => {
-                      const card =
-                        learner!.curiosityCards![
-                          curiosityIdx % learner!.curiosityCards!.length
-                        ]!;
-                      setCuriosityIdx((i) => i + 1);
-                      await openAtlasConcept(card.payoffConcept);
-                      go("atlas");
-                    }}
-                  />
-                )}
-                <div className="action-row">
+            )}
+
+            <section className="panel panel-min">
+              <div className="home-next-row" style={{ marginBottom: "0.75rem" }}>
+                <h2 style={{ margin: 0, fontSize: "1rem" }}>
+                  Missions {domainFilterName ? `· ${domainFilterName}` : ""}
+                </h2>
+                <button
+                  type="button"
+                  className="linkish"
+                  onClick={() => setFilterDomain(null)}
+                >
+                  All districts
+                </button>
+              </div>
+              <div className="domain-pills" role="list">
+                {(catalog?.domains ?? []).slice(0, 8).map((d) => (
                   <button
-                    className="btn"
+                    key={d.id}
                     type="button"
-                    onClick={() => setCuriosityIdx((i) => i + 1)}
+                    className={`domain-pill${filterDomain === d.id ? " on" : ""}`}
+                    onClick={() => setFilterDomain(filterDomain === d.id ? null : d.id)}
                   >
-                    Another question
+                    {d.districtName || d.title}
                   </button>
-                </div>
-              </section>
-              <section className="panel">
-                <h2>Open loops</h2>
-                <p className="sub">Resume when ready — breaks are healthy.</p>
-                <div className="open-loops">
-                  {(
-                    learner?.engagement?.openLoops ??
-                    learner?.profile.engagement?.openLoops ??
-                    []
-                  ).length === 0 && (
-                    <p className="muted">No open architecture questions yet. Clear a board case.</p>
-                  )}
-                  {(
-                    learner?.engagement?.openLoops ??
-                    learner?.profile.engagement?.openLoops ??
-                    []
-                  ).map((l) => (
-                    <div key={l.id} className="open-loop">
-                      <strong>Unresolved</strong>
-                      {l.title}
-                    </div>
-                  ))}
-                </div>
-                <div className="action-row" style={{ marginTop: "0.75rem" }}>
-                  <button className="btn violet" type="button" onClick={() => go("architect")}>
-                    Architecture Arena
-                  </button>
-                </div>
-              </section>
-            </div>
-
-            <section className="panel">
-              <h2>
-                Mission board {domainFilterName ? `· ${domainFilterName}` : ""}
-              </h2>
-              <p className="sub">
-                Each act is ~35 granular steps across Orient → Requirements → Landscape → Architecture →
-                Build → Failure science → Remediate → Defend & transfer.
-              </p>
+                ))}
+              </div>
               <div className="mission-grid">
                 {missionsShown.map((m) => {
                   const done = learner?.profile.completedMissions.includes(m.id);
@@ -1296,7 +1148,6 @@ export function App() {
               go("play");
             }}
             onCuriosity={() => {
-              setCuriosityIdx((i) => i + 1);
               go("atlas");
             }}
           />
