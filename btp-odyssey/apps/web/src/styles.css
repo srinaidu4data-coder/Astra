@@ -1543,7 +1543,7 @@ html[data-reduced-motion="true"] .scan::after {
 }
 
 .hero-min {
-  padding: 1.5rem 0 1rem !important;
+  padding: 2rem 0 1.25rem !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -1551,20 +1551,62 @@ html[data-reduced-motion="true"] .scan::after {
 .hero-min::after {
   display: none !important;
 }
+.hero-focus {
+  min-height: 42vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 .hero-min h1 {
-  font-size: clamp(1.5rem, 4vw, 2rem) !important;
-  margin: 0 0 0.5rem !important;
-  letter-spacing: -0.03em;
+  font-size: clamp(1.65rem, 4.5vw, 2.15rem) !important;
+  margin: 0.15rem 0 0.45rem !important;
+  letter-spacing: -0.035em;
+  font-weight: 650;
 }
 .hero-min .hero-lead {
-  max-width: 36ch;
-  margin: 0 0 1.15rem !important;
-  font-size: 1rem !important;
+  max-width: 28ch;
+  margin: 0 0 1.35rem !important;
+  font-size: 1.05rem !important;
   color: var(--muted);
+  line-height: 1.45;
 }
 .hero-actions-min {
   gap: 0.5rem !important;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1rem;
+}
+.btn-xl {
+  padding: 0.85rem 1.5rem !important;
+  font-size: 1.05rem !important;
+  min-width: 10rem;
+  border-radius: 14px !important;
+}
+.home-details {
+  margin-top: 0.5rem;
+}
+.home-details-sum {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0.15rem 0;
+}
+.home-details-sum::-webkit-details-marker {
+  display: none;
+}
+.home-details-sum::before {
+  content: "▸";
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin-right: 0.35rem;
+}
+.home-details[open] .home-details-sum::before {
+  content: "▾";
+}
+.home-details .mission-grid {
+  margin-top: 0.75rem;
 }
 .home-secondary {
   display: flex;

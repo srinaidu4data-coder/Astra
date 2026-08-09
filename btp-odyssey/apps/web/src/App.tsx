@@ -165,6 +165,7 @@ export function App() {
   /** When true, ChallengePlay skips linear path lock (Atlas concept games) */
   const [playFreeMode, setPlayFreeMode] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [showMissions, setShowMissions] = useState(false);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [mission, setMission] = useState<Mission | null>(null);
@@ -336,15 +337,16 @@ export function App() {
     setError(null);
   }
 
+  /** Primary chrome only — everything else under More (max UX / min UI) */
   const primaryNav: { id: View; label: string }[] = [
     { id: "home", label: "Home" },
-    { id: "incident", label: "Incident" },
     { id: "play", label: "Play" },
     { id: "atlas", label: "Atlas" },
-    { id: "architect", label: "Arena" },
   ];
 
   const moreNav: { id: View; label: string }[] = [
+    { id: "incident", label: "Living incident" },
+    { id: "architect", label: "Architecture Arena" },
     { id: "continue", label: "Continue" },
     { id: "constellation", label: "Constellation" },
     { id: "trees", label: "Quest trees" },
@@ -364,6 +366,32 @@ export function App() {
   ];
 
   const moreActive = moreNav.some((n) => n.id === view);
+
+  /** One best next action for home — max UX, one decision */
+  const homePrimary = useMemo(() => {
+    if (returnLoop?.unfinishedChallengeId) {
+      return {
+        label: "Resume",
+        detail: returnLoop.unfinishedTitle || "Continue where you left off",
+        run: () => {
+          setResumeChallengeId(returnLoop.unfinishedChallengeId);
+          go("play");
+        },
+      };
+    }
+    if (recommended) {
+      return {
+        label: "Continue mission",
+        detail: recommended.title.split("—")[0]?.trim() || recommended.title,
+        run: () => void onStartMission(recommended.id),
+      };
+    }
+    return {
+      label: "Start",
+      detail: "Live incident · diagnose, fix, debrief",
+      run: () => go("incident"),
+    };
+  }, [returnLoop, recommended]);
 
   async function onStartMission(missionId: string) {
     setLoading(true);
@@ -741,108 +769,79 @@ export function App() {
           />
         )}
 
+        {/* Objective compass only during active mission — not on home (min UI) */}
         {questBoard?.currentQuest &&
-          view !== "mission" &&
-          view !== "result" &&
-          !LIVING_VIEWS.has(view) && (
+          view === "mission" && (
           <ObjectiveCompass
             title={questBoard.currentQuest.title}
-            detail={`${questBoard.currentQuest.objective}${questBoard.followingQuest ? ` → Next after this: ${questBoard.followingQuest.title}` : ""}`}
+            detail={questBoard.currentQuest.objective}
             ctaLabel={questBoard.currentQuest.cta.label}
             onCta={runNextStep}
-            progressLabel={`Tier: ${questBoard.currentQuest.tier} · Quest spine ${questBoard.quests.filter((q) => q.done).length}/${questBoard.quests.length}`}
+            progressLabel={`${questBoard.quests.filter((q) => q.done).length}/${questBoard.quests.length}`}
           />
         )}
 
         {view === "home" && (
           <>
-            <section className="hero hero-min">
-              <h1>Learn SAP BTP by doing</h1>
-              <p className="hero-lead">
-                One path: fix a living incident, then deepen with Play, Atlas, and Arena.
-              </p>
+            <section className="hero hero-min hero-focus">
+              <p className="hero-kicker">BTP Odyssey</p>
+              <h1>What will you do next?</h1>
+              <p className="hero-lead">{homePrimary.detail}</p>
               <div className="hero-actions hero-actions-min">
-                <button className="btn primary" type="button" onClick={() => go("incident")}>
-                  Start incident
+                <button
+                  className="btn primary btn-xl"
+                  type="button"
+                  disabled={loading}
+                  onClick={homePrimary.run}
+                >
+                  {homePrimary.label}
+                </button>
+              </div>
+              <div className="home-secondary" aria-label="Other starts">
+                <button type="button" className="linkish" onClick={() => go("incident")}>
+                  New incident
                 </button>
                 <button
-                  className="btn"
                   type="button"
+                  className="linkish"
                   onClick={() => {
                     setResumeChallengeId("ch-btp-what-intro");
                     go("play");
                   }}
                 >
-                  Play path
+                  Play from start
                 </button>
-                {recommended && (
-                  <button
-                    className="btn ghost"
-                    type="button"
-                    disabled={loading}
-                    onClick={() => onStartMission(recommended.id)}
-                  >
-                    Mission
-                  </button>
-                )}
-              </div>
-              <div className="home-secondary" aria-label="More ways in">
                 <button type="button" className="linkish" onClick={() => go("atlas")}>
                   Atlas
                 </button>
                 <button type="button" className="linkish" onClick={() => go("architect")}>
                   Arena
                 </button>
-                <button type="button" className="linkish" onClick={runNextStep}>
-                  Next quest
-                </button>
                 <button type="button" className="linkish" onClick={startBeginnerJourney}>
                   Beginner spine
                 </button>
-                <button type="button" className="linkish" onClick={() => go("continue")}>
-                  Continue
-                </button>
-                <button type="button" className="linkish" onClick={() => go("portfolio")}>
-                  Portfolio
+                <button type="button" className="linkish" onClick={() => setMoreOpen(true)}>
+                  More…
                 </button>
               </div>
               <p className="home-foot muted">
-                Independent simulation · not SAP certification ·{" "}
-                {challengePack?.totalChallenges ?? "…"} games · {catalog?.conceptCount ?? "…"}{" "}
-                concepts
-                {learner?.profile.demonstratedCompetencies.length
-                  ? ` · ${learner.profile.demonstratedCompetencies.length} skills evidenced`
-                  : ""}
+                Not SAP-certified · fidelity labeled · breaks never cost progress
               </p>
             </section>
 
-            {questBoard?.currentQuest && (
-              <section className="panel panel-min home-next" aria-label="Next quest">
-                <div className="home-next-row">
-                  <div>
-                    <div className="hero-kicker">Next</div>
-                    <strong>{questBoard.currentQuest.title}</strong>
-                  </div>
-                  <button className="btn primary" type="button" onClick={runNextStep}>
-                    Go
-                  </button>
-                </div>
-              </section>
-            )}
-
-            <section className="panel panel-min">
-              <div className="home-next-row" style={{ marginBottom: "0.75rem" }}>
-                <h2 style={{ margin: 0, fontSize: "1rem" }}>
-                  Missions {domainFilterName ? `· ${domainFilterName}` : ""}
-                </h2>
-                <button
-                  type="button"
-                  className="linkish"
-                  onClick={() => setFilterDomain(null)}
-                >
-                  All districts
-                </button>
-              </div>
+            <details
+              className="panel panel-min home-details"
+              open={showMissions}
+              onToggle={(e) => setShowMissions((e.target as HTMLDetailsElement).open)}
+            >
+              <summary className="home-details-sum">
+                Missions
+                {domainFilterName ? ` · ${domainFilterName}` : ""}
+                <span className="muted">
+                  {" "}
+                  · {missionsShown.length} available
+                </span>
+              </summary>
               <div className="domain-pills" role="list">
                 {(catalog?.domains ?? []).slice(0, 8).map((d) => (
                   <button
@@ -854,6 +853,11 @@ export function App() {
                     {d.districtName || d.title}
                   </button>
                 ))}
+                {filterDomain && (
+                  <button type="button" className="linkish" onClick={() => setFilterDomain(null)}>
+                    Clear filter
+                  </button>
+                )}
               </div>
               <div className="mission-grid">
                 {missionsShown.map((m) => {
@@ -861,10 +865,8 @@ export function App() {
                   return (
                     <article key={m.id} className={`mission-card${done ? " done" : ""}`}>
                       <div className="tags">
-                        <span className={`tag level-${m.targetLevel}`}>{m.targetLevel}</span>
-                        <span className="tag fid">{FIDELITY[m.fidelityTier]}</span>
-                        <span className="tag">{m.stepCount} steps</span>
                         <span className="tag">~{m.estimatedMinutes}m</span>
+                        <span className="tag fid">{FIDELITY[m.fidelityTier]}</span>
                       </div>
                       <h3>{m.title}</h3>
                       <p>{m.summary}</p>
@@ -875,14 +877,14 @@ export function App() {
                           disabled={loading}
                           onClick={() => onStartMission(m.id)}
                         >
-                          {done ? "Replay mega act" : "Enter teaching cockpit"}
+                          {done ? "Replay" : "Open"}
                         </button>
                       </div>
                     </article>
                   );
                 })}
               </div>
-            </section>
+            </details>
           </>
         )}
 
@@ -1134,7 +1136,8 @@ export function App() {
           </div>
         )}
 
-        {(view === "play" || view === "home") && returnLoop && (
+        {/* Resume is the home primary CTA — banner only on Play (min UI) */}
+        {view === "play" && returnLoop && (
           <ReturnLoopBanner
             data={returnLoop}
             onResume={() => {
